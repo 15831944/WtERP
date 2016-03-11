@@ -23,9 +23,10 @@ namespace GS
 		typedef Wt::Dbo::collection<ExpenseCycleTuple> ExpenseTupleCollection;
 
 		//void createSelfEntityAndAccount(bool scheduleNext);
+		void createDefaultAccounts(bool scheduleNext);
 		void recalculateAccountBalances(bool scheduleNext);
 		void createPendingCycleEntries(bool scheduleNext);
-		void _createPendingCycleEntries(bool scheduleNext, bool returnOnStaleException);
+		void _createPendingCycleEntries(bool scheduleNext);
 		void checkAbnormalRecords(bool scheduleNext);
 
 		Wt::Dbo::Query<int> _accountCheckAbnormal;

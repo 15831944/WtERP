@@ -29,13 +29,9 @@ SET(WT_PROJECT_TARGET GhaziSecurity)
 #Add Program CXX files
 ADD_EXECUTABLE(${WT_PROJECT_TARGET} ${GhaziSecurity_SRCS})
 
-#PCH
-find_package(PCHSupport)
-add_cxx_pch(${WT_PROJECT_TARGET} PCH.h PCH.cpp)
-
 #Parallel compile
 IF(MSVC)
-	SET_TARGET_PROPERTIES(GhaziSecurity PROPERTIES COMPILE_FLAGS "${BUILD_PARALLEL} /wd4297 /wd4251 /wd4275 /wd4267")
+	SET_TARGET_PROPERTIES(GhaziSecurity PROPERTIES COMPILE_FLAGS "/MP3 /wd4297 /wd4251 /wd4275 /wd4267")
 ENDIF(MSVC)
 
 #Link Libraries

@@ -1,4 +1,5 @@
 #include "Widgets/EntityView.h"
+#include "Widgets/EntityList.h"
 #include "Application/WApplication.h"
 #include "Application/WServer.h"
 #include "Widgets/AdminPages.h"
@@ -16,7 +17,6 @@
 #include <Wt/WPopupMenu>
 #include <Wt/WComboBox>
 #include <Wt/WCheckBox>
-#include <Wt/WSuggestionPopup>
 #include <Wt/WFileUpload>
 #include <Wt/WImage>
 #include <Wt/WIntValidator>
@@ -44,8 +44,10 @@ namespace GS
 		if(field == nameField)
 		{
 			auto w = new Wt::WLineEdit();
-			setValidator(field, new Wt::WValidator(true));
 			w->setMaxLength(70);
+			auto validator = new Wt::WLengthValidator(0, 70);
+			validator->setMandatory(true);
+			setValidator(field, validator);
 			return w;
 		}
 		return nullptr;
@@ -64,6 +66,8 @@ namespace GS
 
 		_entityPtr.modify()->specificTypeMask = 0;
 		_entityPtr.modify()->name = valueText(nameField).toUTF8();
+
+		app->findEntityModel()->reload();
 
 		t.commit();
 	}
@@ -111,9 +115,9 @@ namespace GS
 			setValue(heightField, personPtr->height);
 			setValue(bloodTypeField, (int)personPtr->bloodType);
 			setValue(marriedField, (int)personPtr->maritalStatus);
-			setValue(nextOfKinField, personPtr->nextOfKinOfPtr);
-			setValue(fatherField, personPtr->fatherPersonPtr);
-			setValue(motherField, personPtr->motherPersonPtr);
+			setValue(nextOfKinField, personPtr->nextOfKinOfPtr.id());
+			setValue(fatherField, personPtr->fatherPersonPtr.id());
+			setValue(motherField, personPtr->motherPersonPtr.id());
 			setValue(remarksField, Wt::WString::fromUTF8(personPtr->remarks));
 
 			if(personPtr->profilePictureFilePtr) setValue(profileUploadField, UploadedImage(personPtr->profilePictureFilePtr));
@@ -143,12 +147,14 @@ namespace GS
 		{
 			auto w = new Wt::WLineEdit();
 			w->setMaxLength(70);
+			setValidator(field, new Wt::WLengthValidator(0, 70));
 			return w;
 		}
 		if(field == identificationMarkField)
 		{
 			auto w = new Wt::WLineEdit();
 			w->setMaxLength(255);
+			setValidator(field, new Wt::WLengthValidator(0, 255));
 			return w;
 		}
 		if(field == heightField)
@@ -160,43 +166,46 @@ namespace GS
 		if(field == bloodTypeField)
 		{
 			auto w = new Wt::WComboBox();
-			w->insertItem(UnknownBT, Wt::WString::tr("GS.Unknown"));
-			w->insertItem(OPositive, "O+");
-			w->insertItem(ONegative, "O-");
-			w->insertItem(APositive, "A+");
-			w->insertItem(ANegative, "A-");
-			w->insertItem(BPositive, "B+");
-			w->insertItem(BNegative, "B-");
-			w->insertItem(ABPositive, "AB+");
-			w->insertItem(ABNegative, "AB-");
+			w->insertItem(UnknownBT, Wt::boost_any_traits<BloodType>::asString(UnknownBT, ""));
+			w->insertItem(OPositive, Wt::boost_any_traits<BloodType>::asString(OPositive, ""));
+			w->insertItem(ONegative, Wt::boost_any_traits<BloodType>::asString(ONegative, ""));
+			w->insertItem(APositive, Wt::boost_any_traits<BloodType>::asString(APositive, ""));
+			w->insertItem(ANegative, Wt::boost_any_traits<BloodType>::asString(ANegative, ""));
+			w->insertItem(BPositive, Wt::boost_any_traits<BloodType>::asString(BPositive, ""));
+			w->insertItem(BNegative, Wt::boost_any_traits<BloodType>::asString(BNegative, ""));
+			w->insertItem(ABPositive, Wt::boost_any_traits<BloodType>::asString(ABPositive, ""));
+			w->insertItem(ABNegative, Wt::boost_any_traits<BloodType>::asString(ABNegative, ""));
 			return w;
 		}
 		if(field == marriedField)
 		{
 			auto w = new Wt::WComboBox();
-			w->insertItem(UnknownMS, Wt::WString::tr("GS.Unknown"));
-			w->insertItem(Married, Wt::WString::tr("GS.Married"));
-			w->insertItem(Unmarried, Wt::WString::tr("GS.Unmarried"));
+			w->insertItem(UnknownMS, Wt::boost_any_traits<MaritalStatus>::asString(UnknownMS, ""));
+			w->insertItem(Married, Wt::boost_any_traits<MaritalStatus>::asString(Married, ""));
+			w->insertItem(Unmarried, Wt::boost_any_traits<MaritalStatus>::asString(Unmarried, ""));
 			return w;
 		}
 		if(field == nextOfKinField)
 		{
 			auto w = new FindEntityEdit(Entity::PersonType);
-			_view->bindWidget("new-kin", w->newEntity());
+			_view->bindWidget("new-kin", w->newEntityBtn());
+			_view->bindWidget("show-list-kin", w->showListBtn());
 			setValidator(field, new FindEntityValidator(w, false));
 			return w;
 		}
 		if(field == fatherField)
 		{
 			auto w = new FindEntityEdit(Entity::PersonType);
-			_view->bindWidget("new-father", w->newEntity());
+			_view->bindWidget("new-father", w->newEntityBtn());
+			_view->bindWidget("show-list-father", w->showListBtn());
 			setValidator(field, new FindEntityValidator(w, false));
 			return w;
 		}
 		if(field == motherField)
 		{
 			auto w = new FindEntityEdit(Entity::PersonType);
-			_view->bindWidget("new-mother", w->newEntity());
+			_view->bindWidget("new-mother", w->newEntityBtn());
+			_view->bindWidget("show-list-mother", w->showListBtn());
 			setValidator(field, new FindEntityValidator(w, false));
 			return w;
 		}
@@ -208,20 +217,20 @@ namespace GS
 		}
 		if(field == profileUploadField)
 		{
-			auto w = new ImageUpload(Wt::WString::tr("GS.ClickToUploadProfile"), Wt::WString::tr("GS.ClickToChangeProfile"));
+			auto w = new ImageUpload(Wt::WString::tr("ClickToUploadProfile"), Wt::WString::tr("ClickToChangeProfile"));
 			w->setPlaceholderImageLink(Wt::WLink("images/profile-placeholder.png"));
 			w->setThumbnailHeight(160);
 			return w;
 		}
 		if(field == cnicUploadField)
 		{
-			auto w = new ImageUpload(Wt::WString::tr("GS.ClickToUploadCNIC"), Wt::WString::tr("GS.ClickToChangeCNIC"));
+			auto w = new ImageUpload(Wt::WString::tr("ClickToUploadCNIC"), Wt::WString::tr("ClickToChangeCNIC"));
 			w->setThumbnailHeight(160);
 			return w;
 		}
 		if(field == cnicUpload2Field)
 		{
-			auto w = new ImageUpload(Wt::WString::tr("GS.ClickToUploadCNIC"), Wt::WString::tr("GS.ClickToChangeCNIC"));
+			auto w = new ImageUpload(Wt::WString::tr("ClickToUploadCNIC"), Wt::WString::tr("ClickToChangeCNIC"));
 			w->setThumbnailHeight(160);
 			return w;
 		}
@@ -253,27 +262,36 @@ namespace GS
 		_personPtr.modify()->bloodType = BloodType(boost::any_cast<int>(value(bloodTypeField)));
 		_personPtr.modify()->maritalStatus = MaritalStatus(boost::any_cast<int>(value(marriedField)));
 
-		_personPtr.modify()->nextOfKinOfPtr = boost::any_cast<Wt::Dbo::ptr<Person>>(value(nextOfKinField));
-		_personPtr.modify()->fatherPersonPtr = boost::any_cast<Wt::Dbo::ptr<Person>>(value(fatherField));
-		_personPtr.modify()->motherPersonPtr = boost::any_cast<Wt::Dbo::ptr<Person>>(value(motherField));
+		auto nextOfKinEntity = boost::any_cast<Wt::Dbo::ptr<Entity>>(value(nextOfKinField));
+		auto fatherEntity = boost::any_cast<Wt::Dbo::ptr<Entity>>(value(fatherField));
+		auto motherEntity = boost::any_cast<Wt::Dbo::ptr<Entity>>(value(motherField));
+		_personPtr.modify()->nextOfKinOfPtr = nextOfKinEntity ? nextOfKinEntity->personWPtr : Wt::Dbo::ptr<Person>();
+		_personPtr.modify()->fatherPersonPtr = fatherEntity ? fatherEntity->personWPtr : Wt::Dbo::ptr<Person>();
+		_personPtr.modify()->motherPersonPtr = motherEntity ? motherEntity->personWPtr : Wt::Dbo::ptr<Person>();
+
 		_personPtr.modify()->remarks = valueText(remarksField).toUTF8();
 
 		auto profileUpload = _view->resolve<ImageUpload*>(profileUploadField);
 		if(!profileUpload->fileUpload()->canUpload())
 			profileUpload->fileUpload()->upload();
-		_personPtr.modify()->profilePictureFilePtr = profileUpload->saveToDb(_personPtr->entityPtr(), "Profile picture");
+		if(profileUpload->saveAndRelocate(_personPtr->entityPtr(), "Profile picture"))
+			_personPtr.modify()->profilePictureFilePtr = profileUpload->imageInfo().filePtr;
+		setValue(profileUploadField, profileUpload->imageInfo());
 
 		auto cnicUpload1 = _view->resolve<ImageUpload*>(cnicUploadField);
 		if(!cnicUpload1->fileUpload()->canUpload())
 			cnicUpload1->fileUpload()->upload();
-		_personPtr.modify()->cnicFile1Ptr = cnicUpload1->saveToDb(_personPtr->entityPtr(), "CNIC front picture");
+		if(cnicUpload1->saveAndRelocate(_personPtr->entityPtr(), "CNIC front picture"))
+			_personPtr.modify()->cnicFile1Ptr = cnicUpload1->imageInfo().filePtr;
+		setValue(cnicUploadField, cnicUpload1->imageInfo());
 
 		auto cnicUpload2 = _view->resolve<ImageUpload*>(cnicUpload2Field);
 		if(!cnicUpload2->fileUpload()->canUpload())
 			cnicUpload2->fileUpload()->upload();
-		_personPtr.modify()->cnicFile2Ptr = cnicUpload2->saveToDb(_personPtr->entityPtr(), "CNIC back picture");
+		if(cnicUpload2->saveAndRelocate(_personPtr->entityPtr(), "CNIC back picture"))
+			_personPtr.modify()->cnicFile2Ptr = cnicUpload2->imageInfo().filePtr;
+		setValue(cnicUpload2Field, cnicUpload2->imageInfo());
 
-		app->findPersonModel()->reload();
 		t.commit();
 	}
 
@@ -312,6 +330,7 @@ namespace GS
 		{
 			auto w = new Wt::WLineEdit();
 			w->setMaxLength(35);
+			setValidator(field, new Wt::WLengthValidator(0, 35));
 			return w;
 		}
 		if(field == recruitmentDateField)
@@ -387,6 +406,7 @@ namespace GS
 		{
 			auto w = new Wt::WLineEdit();
 			w->setMaxLength(70);
+			setValidator(field, new Wt::WLengthValidator(0, 70));
 			return w;
 		}
 		if(field == policeVerifiedField)
@@ -403,6 +423,7 @@ namespace GS
 		{
 			auto w = new Wt::WLineEdit();
 			w->setMaxLength(35);
+			setValidator(field, new Wt::WLengthValidator(0, 35));
 			return w;
 		}
 		return nullptr;
@@ -437,6 +458,7 @@ namespace GS
 	{
 		addField(field);
 
+		Wt::Dbo::Transaction t(APP->session());
 		if(_view->entityPtr())
 		{
 			_ptrVector = PtrVector(_view->entityPtr()->contactNumberCollection.begin(), _view->entityPtr()->contactNumberCollection.end());
@@ -555,194 +577,6 @@ namespace GS
 		return result;
 	}
 
-	//EXPENSE CYCLES MANAGER MODEL
-	const Wt::WFormModel::Field ExpenseCyclesManagerModel::field = "expenseCycles";
-
-	ExpenseCyclesManagerModel::ExpenseCyclesManagerModel(EntityView *view)
-		: Wt::WFormModel(view), _view(view)
-	{
-		addField(field);
-
-		if(_view->entityPtr())
-			setValue(field, PtrVector(_view->entityPtr()->expenseCycleCollection.begin(), _view->entityPtr()->expenseCycleCollection.end()));
-		else
-			setValue(field, PtrVector());
-	}
-
-	bool ExpenseCyclesManagerModel::validate()
-	{
-		auto container = _view->resolve<ExpenseCyclesContainer*>(field);
-		if(!container)
-			return false;
-
-		bool result = container->validateAll();
-		setValidation(field, Wt::WValidator::Result(result ? Wt::WValidator::Valid : Wt::WValidator::Invalid));
-		return result;
-	}
-
-	Wt::WWidget *ExpenseCyclesManagerModel::createFormWidget(Field f)
-	{
-		if(f == field)
-		{
-			auto w = new ExpenseCyclesContainer(this);
-			auto btn = new Wt::WPushButton();
-			btn->setText(Wt::WString::tr("GS.AddRecurringExpense"));
-			btn->clicked().connect(boost::bind(&ExpenseCyclesManagerModel::createAddCycleDialog, this));
-			_view->bindWidget("add-expense-cycle", btn);
-			return w;
-		}
-		return nullptr;
-	}
-
-	void ExpenseCyclesManagerModel::saveChanges()
-	{
-		if(!valid())
-			return;
-
-		auto container = _view->resolve<ExpenseCyclesContainer*>(field);
-		auto vector = boost::any_cast<PtrVector>(value(field));
-		if(vector.size() < container->count())
-			vector.resize(container->count());
-
-		WApplication *app = WApplication::instance();
-		Wt::Dbo::Transaction t(app->session());
-		for(int i = 0; i < container->count(); ++i)
-		{
-			auto model = container->viewModel(i);
-			model->saveChanges(vector[i], _view->entityPtr());
-		}
-		t.commit();
-		setValue(field, vector);
-	}
-
-	Wt::WDialog *ExpenseCyclesManagerModel::createAddCycleDialog()
-	{
-		Wt::WDialog *dialog = new Wt::WDialog(Wt::WString::tr("GS.AddNewRecurringExpense"), this);
-		dialog->setClosable(true);
-		dialog->setWidth(Wt::WLength(700));
-
-		ExpenseCycleView *cycleView = new ExpenseCycleView(Wt::Dbo::ptr<ExpenseCycle>(), dialog->contents());
-		cycleView->bindInt("index", _view->resolve<ExpenseCyclesContainer*>(field)->count() + 1);
-		auto hr = new Wt::WBreak(dialog->contents());
-		hr->setHtmlTagName("hr");
-		Wt::WPushButton *submitBtn = new Wt::WPushButton(Wt::WString::tr("GS.Continue"), dialog->contents());
-		submitBtn->addStyleClass("btn-primary");
-		submitBtn->clicked().connect(std::bind([=]() {
-			cycleView->updateModel(cycleView->model());
-			bool valid = cycleView->model()->validate();
-			cycleView->updateView(cycleView->model());
-
-			if(valid)
-				dialog->accept();
-		}));
-
-		dialog->finished().connect(std::bind([=](Wt::WDialog::DialogCode code) {
-			if(code == Wt::WDialog::Accepted)
-			{
-				dialog->contents()->removeWidget(cycleView);
-				_view->resolve<ExpenseCyclesContainer*>(field)->addWidget(cycleView);
-			}
-			delete dialog;
-		}, std::placeholders::_1));
-
-		dialog->show();
-		return dialog;
-	}
-
-	//INCOME CYCLES MANAGER MODEL
-	const Wt::WFormModel::Field IncomeCyclesManagerModel::field = "incomeCycles";
-
-	IncomeCyclesManagerModel::IncomeCyclesManagerModel(EntityView *view)
-		: Wt::WFormModel(view), _view(view)
-	{
-		addField(field);
-
-		if(_view->entityPtr())
-			setValue(field, PtrVector(_view->entityPtr()->incomeCycleCollection.begin(), _view->entityPtr()->incomeCycleCollection.end()));
-		else
-			setValue(field, PtrVector());
-	}
-
-	bool IncomeCyclesManagerModel::validate()
-	{
-		auto container = _view->resolve<IncomeCyclesContainer*>(field);
-		if(!container)
-			return false;
-
-		bool result = container->validateAll();
-		setValidation(field, Wt::WValidator::Result(result ? Wt::WValidator::Valid : Wt::WValidator::Invalid));
-		return result;
-	}
-
-	Wt::WWidget *IncomeCyclesManagerModel::createFormWidget(Field f)
-	{
-		if(f == field)
-		{
-			auto w = new IncomeCyclesContainer(this);
-			auto btn = new Wt::WPushButton();
-			btn->setText(Wt::WString::tr("GS.AddRecurringIncome"));
-			btn->clicked().connect(boost::bind(&IncomeCyclesManagerModel::createAddCycleDialog, this));
-			_view->bindWidget("add-income-cycle", btn);
-			return w;
-		}
-		return nullptr;
-	}
-
-	void IncomeCyclesManagerModel::saveChanges()
-	{
-		if(!valid())
-			return;
-
-		auto container = _view->resolve<IncomeCyclesContainer*>(field);
-		auto vector = boost::any_cast<PtrVector>(value(field));
-		if(vector.size() < container->count())
-			vector.resize(container->count());
-
-		WApplication *app = WApplication::instance();
-		Wt::Dbo::Transaction t(app->session());
-		for(int i = 0; i < container->count(); ++i)
-		{
-			auto model = container->viewModel(i);
-			model->saveChanges(vector[i], _view->entityPtr());
-		}
-		t.commit();
-		setValue(field, vector);
-	}
-
-	Wt::WDialog *IncomeCyclesManagerModel::createAddCycleDialog()
-	{
-		Wt::WDialog *dialog = new Wt::WDialog(Wt::WString::tr("GS.AddNewRecurringIncome"), this);
-		dialog->setClosable(true);
-		dialog->setWidth(Wt::WLength(700));
-
-		IncomeCycleView *cycleView = new IncomeCycleView(Wt::Dbo::ptr<IncomeCycle>(), dialog->contents());
-		cycleView->bindInt("index", _view->resolve<IncomeCyclesContainer*>(field)->count() + 1);
-		auto hr = new Wt::WBreak(dialog->contents());
-		hr->setHtmlTagName("hr");
-		Wt::WPushButton *submitBtn = new Wt::WPushButton(Wt::WString::tr("GS.Continue"), dialog->contents());
-		submitBtn->addStyleClass("btn-primary");
-		submitBtn->clicked().connect(std::bind([=]() {
-			cycleView->updateModel(cycleView->model());
-			bool valid = cycleView->model()->validate();
-			cycleView->updateView(cycleView->model());
-
-			if(valid)
-				dialog->accept();
-		}));
-
-		dialog->finished().connect(std::bind([=](Wt::WDialog::DialogCode code) {
-			if(code == Wt::WDialog::Accepted)
-			{
-				dialog->contents()->removeWidget(cycleView);
-				_view->resolve<IncomeCyclesContainer*>(field)->addWidget(cycleView);
-			}
-			delete dialog;
-		}, std::placeholders::_1));
-
-		dialog->show();
-		return dialog;
-	}
-
 	//BUSINESS MODEL
 	BusinessFormModel::BusinessFormModel(EntityView *view, Wt::Dbo::ptr<Business> businessPtr)
 		: Wt::WFormModel(view), _view(view), _businessPtr(businessPtr)
@@ -789,27 +623,27 @@ namespace GS
 		{
 			_type = _defaultType = Entity::PersonType;
 
+// 			typedef Wt::Dbo::ptr_tuple<Person, Employee, Personnel>::type PersonTuple;
+// 			PersonTuple result = app->session().query<PersonTuple>(
+// 				"SELECT p, e, pl FROM " + std::string(Person::tableName()) + " p "
+// 				"LEFT JOIN " + Employee::tableName() + " e ON e.person_entity_id = p.entity_id "
+// 				"LEFT JOIN " + Personnel::tableName() + " pl ON pl.employee_person_entity_id = e.person_entity_id "
+// 				"WHERE p.entity_id = ?").bind(entityPtr.id());
+
 			Wt::Dbo::ptr<Person> personPtr = entityPtr->personWPtr;
+			Wt::Dbo::ptr<Employee> employeePtr;
+			Wt::Dbo::ptr<Personnel> personnelPtr;
 			if(personPtr)
-			{
+				employeePtr = personPtr->employeeWPtr;
+			if(employeePtr)
+				personnelPtr = employeePtr->personnelWPtr;
+
+			if(personPtr)
 				_personModel = new PersonFormModel(this, personPtr);
-				if(entityPtr->specificTypeMask & Entity::EmployeeType)
-				{
-					Wt::Dbo::ptr<Employee> employeePtr = personPtr->employeeWPtr;
-					if(employeePtr)
-					{
-						addEmployeeModel(employeePtr);
-						if(entityPtr->specificTypeMask & Entity::PersonnelType)
-						{
-							Wt::Dbo::ptr<Personnel> personnelPtr = employeePtr->personnelWPtr;
-							if(personnelPtr)
-							{
-								addPersonnelModel(personnelPtr);
-							}
-						}
-					}
-				}
-			}
+			if(employeePtr)
+				addEmployeeModel(employeePtr);
+			if(personnelPtr)
+				addPersonnelModel(personnelPtr);
 		}
 		if(entityPtr->type == Entity::BusinessType)
 		{
@@ -819,19 +653,13 @@ namespace GS
 				_businessModel = new BusinessFormModel(this, businessPtr);
 		}
 
-		if(entityPtr->specificTypeMask & Entity::ClientType)
-		{
-// 			Wt::Dbo::ptr<Client> clientPtr = entityPtr->clientPtr;
-// 			if(clientPtr)
-// 				_clientModel = new ClientFormModel(this, clientPtr);
-		}
-
-		t.commit();
 		init();
 	}
 
 	void EntityView::init()
 	{
+		Wt::Dbo::Transaction t(APP->session());
+
 		if(!_entityModel)
 			_entityModel = new EntityFormModel(this);
 
@@ -855,33 +683,46 @@ namespace GS
 		}
 		setCondition("type-selection", !conditionValue("type-chosen"));
 
-		if(conditionValue("type-selection"))
-		{
-			_selectPerson = new Wt::WPushButton(tr("GS.Person"));
-			_selectPerson->clicked().connect(boost::bind(&EntityView::selectEntityType, this, Entity::PersonType));
-			bindWidget("selectPerson", _selectPerson);
+		_selectPerson = new Wt::WPushButton(tr("Person"));
+		_selectPerson->clicked().connect(boost::bind(&EntityView::selectEntityType, this, Entity::PersonType));
+		bindWidget("selectPerson", _selectPerson);
 
-			_selectBusiness = new Wt::WPushButton(tr("GS.Business"));
-			_selectBusiness->clicked().connect(boost::bind(&EntityView::selectEntityType, this, Entity::BusinessType));
-			bindWidget("selectBusiness", _selectBusiness);
-		}
+		_selectBusiness = new Wt::WPushButton(tr("Business"));
+		_selectBusiness->clicked().connect(boost::bind(&EntityView::selectEntityType, this, Entity::BusinessType));
+		bindWidget("selectBusiness", _selectBusiness);
 
-		_contactNumbersModel = new ContactNumbersManagerModel(this);
-		_locationsModel = new LocationsManagerModel(this);
-		_expenseCyclesModel = new ExpenseCyclesManagerModel(this);
-		_incomeCyclesModel = new IncomeCyclesManagerModel(this);
-
-		_addEmployee = new Wt::WPushButton(tr("GS.AddEmployeeLabel"));
+		_addEmployee = new Wt::WPushButton(tr("AddEmployeeLabel"));
 		_addEmployee->clicked().connect(boost::bind(&EntityView::setSpecificType, this, Entity::EmployeeType));
 		if(_employeeModel) _addEmployee->hide();
 		bindWidget("add-employee", _addEmployee);
 
-		_addPersonnel = new Wt::WPushButton(tr("GS.AddPersonnelLabel"));
+		_addPersonnel = new Wt::WPushButton(tr("AddPersonnelLabel"));
 		_addPersonnel->clicked().connect(boost::bind(&EntityView::setSpecificType, this, Entity::PersonnelType));
 		if(_personnelModel) _addPersonnel->hide();
 		bindWidget("add-personnel", _addPersonnel);
 
-		Wt::WPushButton *submit = new Wt::WPushButton(tr("GS.Submit"));
+		_contactNumbersModel = new ContactNumbersManagerModel(this);
+		_locationsModel = new LocationsManagerModel(this);
+		
+		if(entityPtr())
+		{
+			_expenseCycles = new EntityExpenseCycleList(entityPtr());
+			bindWidget("expenseCycles", _expenseCycles);
+			setCondition("show-expenseCycles", _expenseCycles->queryModel()->rowCount() != 0);
+
+			_incomeCycles = new EntityIncomeCycleList(entityPtr());
+			bindWidget("incomeCycles", _incomeCycles);
+			setCondition("show-incomeCycles", _incomeCycles->queryModel()->rowCount() != 0);
+		}
+		else
+		{
+			bindEmpty("expenseCycles");
+			setCondition("show-expenseCycles", false);
+			bindEmpty("incomeCycles");
+			setCondition("show-incomeCycles", false);
+		}
+
+		Wt::WPushButton *submit = new Wt::WPushButton(tr("Submit"));
 		submit->clicked().connect(this, &EntityView::submit);
 		bindWidget("submit", submit);
 
@@ -944,6 +785,9 @@ namespace GS
 {
 		if(_employeeModel || _type != Entity::PersonType)
 			return;
+
+		if(!_personModel)
+			_personModel = new PersonFormModel(this);
 
 		_employeeModel = new EmployeeFormModel(this, employeePtr);
 		setCondition("is-employee", true);
@@ -1016,17 +860,7 @@ namespace GS
 			if(auto result = _businessModel->createFormWidget(field))
 				return result;
 		}
-		if(_expenseCyclesModel)
-		{
-			if(auto result = _expenseCyclesModel->createFormWidget(field))
-				return result;
-		}
-		if(_incomeCyclesModel)
-		{
-			if(auto result = _incomeCyclesModel->createFormWidget(field))
-				return result;
-		}
-		return nullptr;
+		return MyTemplateFormView::createFormWidget(field);
 	}
 
 	bool EntityView::updateViewValue(Wt::WFormModel *model, Wt::WFormModel::Field field, Wt::WWidget *edit)
@@ -1036,7 +870,7 @@ namespace GS
 
 		if(auto contactNumbers = dynamic_cast<ContactNumbersContainer*>(edit))
 		{
-			boost::any v = model->value(field);
+			const boost::any &v = model->value(field);
 
 			if(v.empty())
 				contactNumbers->reset();
@@ -1079,78 +913,61 @@ namespace GS
 
 		try
 		{
-			switch(_type)
+			if(!_entityModel->validate()) valid = false;
+
+			if(_type == Entity::PersonType)
 			{
-			case Entity::PersonType: {
-				if(!_entityModel->validate()) valid = false;
 				if(!_personModel->validate()) valid = false;
 				if(_employeeModel && !_employeeModel->validate()) valid = false;
 				if(_personnelModel && !_personnelModel->validate()) valid = false;
-				if(_contactNumbersModel && !_contactNumbersModel->validate()) valid = false;
-				if(_locationsModel && !_locationsModel->validate()) valid = false;
-				if(_expenseCyclesModel && !_expenseCyclesModel->validate()) valid = false;
-				if(_incomeCyclesModel && !_incomeCyclesModel->validate()) valid = false;
+			}
+			else if(_type == Entity::BusinessType)
+			{
+				if(!_businessModel->validate()) valid = false;
+			}
 
-				if(!valid)
-					break;
+			if(_contactNumbersModel && !_contactNumbersModel->validate()) valid = false;
+			if(_locationsModel && !_locationsModel->validate()) valid = false;
 
+			if(!valid)
+				return;
+
+			if(_type == Entity::PersonType)
+			{
 				_entityModel->saveChanges();
 				_personModel->saveChanges();
 				if(_employeeModel) _employeeModel->saveChanges();
 				if(_personnelModel) _personnelModel->saveChanges();
 				if(_contactNumbersModel) _contactNumbersModel->saveChanges();
 				if(_locationsModel) _locationsModel->saveChanges();
-				if(_expenseCyclesModel) _expenseCyclesModel->saveChanges();
-				if(_incomeCyclesModel) _incomeCyclesModel->saveChanges();
-				break;
 			}
-			case Entity::BusinessType: {
-				if(!_entityModel->validate()) valid = false;
-				if(!_businessModel->validate()) valid = false;
-				if(_contactNumbersModel && !_contactNumbersModel->validate()) valid = false;
-				if(_locationsModel && !_locationsModel->validate()) valid = false;
-				if(_expenseCyclesModel && !_expenseCyclesModel->validate()) valid = false;
-				if(_incomeCyclesModel && !_incomeCyclesModel->validate()) valid = false;
-
-				if(!valid)
-					break;
-
+			else if(_type == Entity::BusinessType)
+			{
 				_entityModel->saveChanges();
 				_businessModel->saveChanges();
 				if(_contactNumbersModel) _contactNumbersModel->saveChanges();
 				if(_locationsModel) _locationsModel->saveChanges();
-				if(_expenseCyclesModel) _expenseCyclesModel->saveChanges();
-				if(_incomeCyclesModel) _incomeCyclesModel->saveChanges();
-				break;
-			} }
+			}
+
 			t.commit();
+
+			setCondition("type-selection", false);
+			updateView();
+
+			_submitted.emit();
 		}
 		catch(const Wt::Dbo::StaleObjectException &)
 		{
 			app->session().rereadAll();
-			app->showStaleObjectError(Wt::WString::tr("GS.Entity"));
-			resetValidation();
+			app->showStaleObjectError(tr("Entity"));
 			valid = false;
 		}
 		catch(const Wt::Dbo::Exception &e)
 		{
 			Wt::log("error") << "EntityView::submit(): Dbo error(" << e.code() << "): " << e.what();
 			app->showDbBackendError(e.code());
-			resetValidation();
 			valid = false;
 		}
-
-		if(valid && _type == Entity::PersonType)
-		{
-			resolve<ImageUpload*>(PersonFormModel::profileUploadField)->moveToPermanentLocation();
-			resolve<ImageUpload*>(PersonFormModel::cnicUploadField)->moveToPermanentLocation();
-			resolve<ImageUpload*>(PersonFormModel::cnicUpload2Field)->moveToPermanentLocation();
-		}
-
-		setCondition("type-selection", false);
-		updateView();
-
-		_submitted.emit();
 	}
 
 	HeightEdit::HeightEdit(Wt::WContainerWidget *parent)
@@ -1225,6 +1042,7 @@ namespace GS
 
 	void HeightEdit::setValueInCm(float val)
 	{
+		WApplication *app = APP;
 		if(_unit == ft)
 		{
 			Wt::WLineEdit *ftEdit = resolve<Wt::WLineEdit*>("ft-edit");
@@ -1239,8 +1057,8 @@ namespace GS
 			{
 				long long ftVal = (long long)std::floor(val / 30.48f);
 				float inVal = std::round((val / 30.48f - ftVal) * 12);
-				ftEdit->setValueText(boost::lexical_cast<std::string>(ftVal));
-				inEdit->setValueText(boost::lexical_cast<std::string>(inVal));
+				ftEdit->setValueText(app->locale().toString(ftVal));
+				inEdit->setValueText(app->locale().toString(inVal));
 			}
 		}
 		else
@@ -1249,7 +1067,7 @@ namespace GS
 			if(val == -1)
 				cmEdit->setValueText("");
 			else
-				cmEdit->setValueText(boost::lexical_cast<std::string>(val));
+				cmEdit->setValueText(app->locale().toString(val));
 		}
 	}
 
@@ -1262,131 +1080,6 @@ namespace GS
 			else
 				newEntityView->bindString("heightLabelFor", resolve<Wt::WLineEdit*>("cm-edit")->id());
 		}
-	}
-
-	FindEntityEdit::FindEntityEdit(Entity::Type entityType, Wt::WContainerWidget *parent)
-		: Wt::WLineEdit(parent), _entityType(entityType)
-	{
-		if(_entityType == Entity::InvalidType)
-			throw std::exception("EntityFindLineEdit: NewEntityView::Any NYI");
-
-		setMaxLength(70);
-		setPlaceholderText(Wt::WString::tr("GS.EntityFindLineEditPlaceholder"));
-		blurred().connect(boost::bind(&Wt::WLineEdit::validate, this));
-
-		_newEntity = new Wt::WPushButton();
-		_newEntity->clicked().connect(this, &FindEntityEdit::showDialog);
-		switch(_entityType)
-		{
-		default:
-		case Entity::InvalidType: _newEntity->setText(Wt::WString::tr("GS.AddNewEntity")); break;
-		case Entity::PersonType: _newEntity->setText(Wt::WString::tr("GS.AddNewPerson")); break;
-		case Entity::BusinessType: _newEntity->setText(Wt::WString::tr("GS.AddNewBusiness")); break;
-		}
-
-		WApplication *app = WApplication::instance();
-		if(_entityType == Entity::PersonType)
-			app->initFindPersonModel();
-		else
-			app->initFindBusinessModel();
-
-		Wt::WSuggestionPopup::Options nameOptions = {
-			"<b><u>",	//highlightBeginTag
-			"</b></u>",	//highlightEndTag
-			'\0',		//listSeparator(no)
-			" ",		//whitespace
-			" -"			//wordSeparators
-		};
-		_suggestionPopup = new Wt::WSuggestionPopup(nameOptions, this);
-		if(_entityType == Entity::PersonType)
-			_suggestionPopup->setModel(app->findPersonModel());
-		else
-			_suggestionPopup->setModel(app->findBusinessModel());
-		_suggestionPopup->forEdit(this, Wt::WSuggestionPopup::DropDownIcon | Wt::WSuggestionPopup::Editing);
-		_suggestionPopup->activated().connect(this, &FindEntityEdit::handleActivated);
-	}
-
-	void FindEntityEdit::showDialog()
-	{
-		delete _dialog;
-		_dialog = new Wt::WDialog(this);
-		_dialog->finished().connect(this, &FindEntityEdit::dialogClosed);
-		_dialog->setMaximumSize(Wt::WLength(700), Wt::WLength());
-
-		EntityView *newEntityView = new EntityView(_entityType, _dialog->contents());
-		_dialog->show();
-	}
-
-	void FindEntityEdit::dialogClosed(Wt::WDialog::DialogCode code)
-	{
-		delete _dialog;
-		_dialog = nullptr;
-	}
-
-	void FindEntityEdit::setPersonPtr(Wt::Dbo::ptr<Person> ptr)
-	{
-		if(_entityType != Entity::PersonType)
-			return;
-
-		_personPtr = ptr;
-	}
-
-	void FindEntityEdit::setBusinessPtr(Wt::Dbo::ptr<Business> ptr)
-	{
-		if(_entityType != Entity::BusinessType)
-			return;
-
-		_businessPtr = ptr;
-	}
-
-	//inline Wt::WValidator * EntityFindLineEdit::validator() { return _lineEdit->validator(); }
-
-	void FindEntityEdit::handleActivated(int index, Wt::WFormWidget *lineEdit)
-	{
-		WApplication *app = WApplication::instance();
-		auto itemIndex = _suggestionPopup->model()->index(index, 1);
-
-		try
-		{
-			if(itemIndex.isValid())
-			{
-				Wt::Dbo::Transaction t(app->session());
-				if(_entityType == Entity::PersonType)
-					_personPtr = app->session().find<Person>().where("entity_id = ?").bind(boost::any_cast<long long>(itemIndex.data()));
-				if(_entityType == Entity::BusinessType)
-					_businessPtr = app->session().find<Business>().where("entity_id = ?").bind(boost::any_cast<long long>(itemIndex.data()));
-				t.commit();
-			}
-			else
-			{
-				if(_entityType == Entity::PersonType)
-					_personPtr.reset();
-				else
-					_businessPtr.reset();
-			}
-		}
-		catch(Wt::Dbo::Exception &e)
-		{
-			Wt::log("error") << "FindEntityEdit::handleActivated(): Dbo error(" << e.code() << "): " << e.what();
-			app->showDbBackendError(e.code());
-		}
-	}
-
-	Wt::WValidator::Result FindEntityValidator::validate(const Wt::WString &input) const
-	{
-		Result baseResult = Wt::WValidator::validate(_findEdit->valueText());
-		if(baseResult.state() != Valid)
-			return baseResult;
-
-		if(_findEdit->valueText().empty())
-			return baseResult;
-
-		if(_findEdit->_entityType == Entity::PersonType && !_findEdit->_personPtr)
-			return Result(Invalid, Wt::WString::tr("GS.InvalidPersonSelection"));
-		if(_findEdit->_entityType == Entity::BusinessType && !_findEdit->_businessPtr)
-			return Result(Invalid, Wt::WString::tr("GS.InvalidBusinessSelection"));
-
-		return baseResult;
 	}
 
 	ContactNumbersContainer::ContactNumbersContainer(ContactNumbersManagerModel *model, Wt::WContainerWidget *parent)
@@ -1428,5 +1121,290 @@ namespace GS
 	{
 		addWidget(new Wt::WLineEdit());
 	}
+
+// 	void initEntryCycleSummary(Wt::WTemplate *summaryTemplate, const EntryCycle &cycle, long long id)
+// 	{
+// 		WApplication *app = APP;
+// 
+// 		summaryTemplate->addFunction("tr", &Wt::WTemplate::Functions::tr);
+// 		summaryTemplate->addFunction("block", &Wt::WTemplate::Functions::block);
+// 		//summaryTemplate->setEncodeTemplateText(false);
+// 		summaryTemplate->bindString("id", boost::lexical_cast<std::string>(id));
+// 		summaryTemplate->bindString("startDate", cycle.startDate.toString(app->locale().dateFormat()));
+// 		summaryTemplate->bindString("endDate", cycle.endDate.toString(app->locale().dateFormat()));
+// 
+// 		Wt::WString amountStr = Wt::WString::tr("Unknown");
+// 		switch(cycle.interval)
+// 		{
+// 		case DailyInterval: amountStr = Wt::WString::trn("RsEveryNDays", cycle.nIntervals); break;
+// 		case WeeklyInterval: amountStr = Wt::WString::trn("RsEveryNWeeks", cycle.nIntervals); break;
+// 		case MonthlyInterval: amountStr = Wt::WString::trn("RsEveryNMonths", cycle.nIntervals); break;
+// 		case YearlyInterval: amountStr = Wt::WString::trn("RsEveryNYears", cycle.nIntervals); break;
+// 		}
+// 		amountStr.arg(app->locale().toFixedString(cycle.amount, 2));
+// 		amountStr.arg(cycle.nIntervals);
+// 		summaryTemplate->bindString("amount", amountStr);
+// 
+// 		summaryTemplate->setCondition("end-date", cycle.endDate.isValid());
+// 		if(cycle.endDate.isValid() && cycle.endDate <= Wt::WDate(boost::gregorian::day_clock::local_day()))
+// 		{
+// 			summaryTemplate->bindString("text-class", "text-muted");
+// 			summaryTemplate->setCondition("has-ended", true);
+// 		}
+// 		else
+// 		{
+// 			summaryTemplate->bindEmpty("text-class");
+// 			summaryTemplate->setCondition("has-ended", false);
+// 		}
+// 	}
+// 
+// 	ExpenseCycleSummaryContainer::ExpenseCycleSummaryContainer(Wt::Dbo::ptr<Entity> entityPtr, Wt::WContainerWidget *parent /*= nullptr*/) : Wt::WContainerWidget(parent)
+// 	{
+// 		if(!entityPtr)
+// 			return;
+// 
+// 		WApplication *app = APP;
+// 		Wt::Dbo::Transaction t(app->session());
+// 
+// 		ExpenseCycleCollection collection = app->session().find<ExpenseCycle>().where("entity_id = ?").orderBy("startDate DESC").bind(entityPtr.id());
+// 		_ptrVector = PtrVector(collection.begin(), collection.end());
+// 		for(int i = 0; i < _ptrVector.size(); ++i)
+// 		{
+// 			auto ptr = _ptrVector[i];
+// 			Wt::WTemplate *summaryTemplate = new Wt::WTemplate(tr("GS.Admin.ExpenseCycleSummary"), this);
+// 			summaryTemplate->bindInt("index", i + 1);
+// 			initEntryCycleSummary(summaryTemplate, *ptr, ptr.id());
+// 
+// 			if(ptr->positionPtr)
+// 			{
+// 				summaryTemplate->setCondition("has-extra", true);
+// 				summaryTemplate->bindString("extra", ptr->positionPtr->title);
+// 			}
+// 			else
+// 			{
+// 				summaryTemplate->setCondition("has-extra", false);
+// 				summaryTemplate->bindEmpty("extra");
+// 			}
+// 		}
+// 	}
+// 
+// 	IncomeCycleSummaryContainer::IncomeCycleSummaryContainer(Wt::Dbo::ptr<Entity> entityPtr, Wt::WContainerWidget *parent /*= nullptr*/) : Wt::WContainerWidget(parent)
+// 	{
+// 		if(!entityPtr)
+// 			return;
+// 
+// 		WApplication *app = APP;
+// 		Wt::Dbo::Transaction t(app->session());
+// 
+// 		IncomeCycleCollection collection = app->session().find<IncomeCycle>().where("entity_id = ?").orderBy("startDate DESC").bind(entityPtr.id());
+// 		_ptrVector = PtrVector(collection.begin(), collection.end());
+// 		for(int i = 0; i < _ptrVector.size(); ++i)
+// 		{
+// 			auto ptr = _ptrVector[i];
+// 			Wt::WTemplate *summaryTemplate = new Wt::WTemplate(tr("GS.Admin.IncomeCycleSummary"), this);
+// 			summaryTemplate->bindInt("index", i + 1);
+// 			initEntryCycleSummary(summaryTemplate, *ptr, ptr.id());
+// 
+// 			if(ptr->servicePtr)
+// 			{
+// 				summaryTemplate->setCondition("has-extra", true);
+// 				summaryTemplate->bindString("extra", ptr->servicePtr->title);
+// 			}
+// 			else
+// 			{
+// 				summaryTemplate->setCondition("has-extra", false);
+// 				summaryTemplate->bindEmpty("extra");
+// 			}
+// 		}
+// 	}
+
+// 	//EXPENSE CYCLES MANAGER MODEL
+// 	const Wt::WFormModel::Field ExpenseCyclesManagerModel::field = "expenseCycles";
+// 
+// 	ExpenseCyclesManagerModel::ExpenseCyclesManagerModel(EntityView *view)
+// 		: Wt::WFormModel(view), _view(view)
+// 	{
+// 		addField(field);
+// 
+// 		if(_view->entityPtr())
+// 			setValue(field, PtrVector(_view->entityPtr()->expenseCycleCollection.begin(), _view->entityPtr()->expenseCycleCollection.end()));
+// 		else
+// 			setValue(field, PtrVector());
+// 	}
+// 
+// 	bool ExpenseCyclesManagerModel::validate()
+// 	{
+// 		auto container = _view->resolve<ExpenseCyclesContainer*>(field);
+// 		if(!container)
+// 			return false;
+// 
+// 		bool result = container->validateAll();
+// 		setValidation(field, Wt::WValidator::Result(result ? Wt::WValidator::Valid : Wt::WValidator::Invalid));
+// 		return result;
+// 	}
+// 
+// 	Wt::WWidget *ExpenseCyclesManagerModel::createFormWidget(Field f)
+// 	{
+// 		if(f == field)
+// 		{
+// 			auto w = new ExpenseCyclesContainer(this);
+// 			auto btn = new Wt::WPushButton();
+// 			btn->setText(Wt::WString::tr("AddRecurringExpense"));
+// 			btn->clicked().connect(boost::bind(&ExpenseCyclesManagerModel::createAddCycleDialog, this));
+// 			_view->bindWidget("add-expense-cycle", btn);
+// 			return w;
+// 		}
+// 		return nullptr;
+// 	}
+// 
+// 	void ExpenseCyclesManagerModel::saveChanges()
+// 	{
+// 		if(!valid())
+// 			return;
+// 
+// 		auto container = _view->resolve<ExpenseCyclesContainer*>(field);
+// 		auto vector = boost::any_cast<PtrVector>(value(field));
+// 		if(vector.size() < container->count())
+// 			vector.resize(container->count());
+// 
+// 		WApplication *app = WApplication::instance();
+// 		Wt::Dbo::Transaction t(app->session());
+// 		for(int i = 0; i < container->count(); ++i)
+// 		{
+// 			auto model = container->viewModel(i);
+// 			model->saveChanges(vector[i], _view->entityPtr());
+// 		}
+// 		t.commit();
+// 		setValue(field, vector);
+// 	}
+// 
+// 	Wt::WDialog *ExpenseCyclesManagerModel::createAddCycleDialog()
+// 	{
+// 		Wt::WDialog *dialog = new Wt::WDialog(Wt::WString::tr("AddNewRecurringExpense"), this);
+// 		dialog->setClosable(true);
+// 		dialog->setWidth(Wt::WLength(700));
+// 
+// 		ExpenseCycleView *cycleView = new ExpenseCycleView(Wt::Dbo::ptr<ExpenseCycle>(), dialog->contents());
+// 		cycleView->bindInt("index", _view->resolve<ExpenseCyclesContainer*>(field)->count() + 1);
+// 		auto hr = new Wt::WBreak(dialog->contents());
+// 		hr->setHtmlTagName("hr");
+// 		Wt::WPushButton *submitBtn = new Wt::WPushButton(Wt::WString::tr("Continue"), dialog->contents());
+// 		submitBtn->addStyleClass("btn-primary");
+// 		submitBtn->clicked().connect(std::bind([=]() {
+// 			cycleView->updateModel(cycleView->model());
+// 			bool valid = cycleView->model()->validate();
+// 			cycleView->updateView(cycleView->model());
+// 
+// 			if(valid)
+// 				dialog->accept();
+// 		}));
+// 
+// 		dialog->finished().connect(std::bind([=](Wt::WDialog::DialogCode code) {
+// 			if(code == Wt::WDialog::Accepted)
+// 			{
+// 				dialog->contents()->removeWidget(cycleView);
+// 				_view->resolve<ExpenseCyclesContainer*>(field)->addWidget(cycleView);
+// 			}
+// 			delete dialog;
+// 		}, std::placeholders::_1));
+// 
+// 		dialog->show();
+// 		return dialog;
+// 	}
+// 
+// 	//INCOME CYCLES MANAGER MODEL
+// 	const Wt::WFormModel::Field IncomeCyclesManagerModel::field = "incomeCycles";
+// 
+// 	IncomeCyclesManagerModel::IncomeCyclesManagerModel(EntityView *view)
+// 		: Wt::WFormModel(view), _view(view)
+// 	{
+// 		addField(field);
+// 
+// 		if(_view->entityPtr())
+// 			setValue(field, PtrVector(_view->entityPtr()->incomeCycleCollection.begin(), _view->entityPtr()->incomeCycleCollection.end()));
+// 		else
+// 			setValue(field, PtrVector());
+// 	}
+// 
+// 	bool IncomeCyclesManagerModel::validate()
+// 	{
+// 		auto container = _view->resolve<IncomeCyclesContainer*>(field);
+// 		if(!container)
+// 			return false;
+// 
+// 		bool result = container->validateAll();
+// 		setValidation(field, Wt::WValidator::Result(result ? Wt::WValidator::Valid : Wt::WValidator::Invalid));
+// 		return result;
+// 	}
+// 
+// 	Wt::WWidget *IncomeCyclesManagerModel::createFormWidget(Field f)
+// 	{
+// 		if(f == field)
+// 		{
+// 			auto w = new IncomeCyclesContainer(this);
+// 			auto btn = new Wt::WPushButton();
+// 			btn->setText(Wt::WString::tr("AddRecurringIncome"));
+// 			btn->clicked().connect(boost::bind(&IncomeCyclesManagerModel::createAddCycleDialog, this));
+// 			_view->bindWidget("add-income-cycle", btn);
+// 			return w;
+// 		}
+// 		return nullptr;
+// 	}
+// 
+// 	void IncomeCyclesManagerModel::saveChanges()
+// 	{
+// 		if(!valid())
+// 			return;
+// 
+// 		auto container = _view->resolve<IncomeCyclesContainer*>(field);
+// 		auto vector = boost::any_cast<PtrVector>(value(field));
+// 		if(vector.size() < container->count())
+// 			vector.resize(container->count());
+// 
+// 		WApplication *app = WApplication::instance();
+// 		Wt::Dbo::Transaction t(app->session());
+// 		for(int i = 0; i < container->count(); ++i)
+// 		{
+// 			auto model = container->viewModel(i);
+// 			model->saveChanges(vector[i], _view->entityPtr());
+// 		}
+// 		t.commit();
+// 		setValue(field, vector);
+// 	}
+// 
+// 	Wt::WDialog *IncomeCyclesManagerModel::createAddCycleDialog()
+// 	{
+// 		Wt::WDialog *dialog = new Wt::WDialog(Wt::WString::tr("AddNewRecurringIncome"), this);
+// 		dialog->setClosable(true);
+// 		dialog->setWidth(Wt::WLength(700));
+// 
+// 		IncomeCycleView *cycleView = new IncomeCycleView(Wt::Dbo::ptr<IncomeCycle>(), dialog->contents());
+// 		cycleView->bindInt("index", _view->resolve<IncomeCyclesContainer*>(field)->count() + 1);
+// 		auto hr = new Wt::WBreak(dialog->contents());
+// 		hr->setHtmlTagName("hr");
+// 		Wt::WPushButton *submitBtn = new Wt::WPushButton(Wt::WString::tr("Continue"), dialog->contents());
+// 		submitBtn->addStyleClass("btn-primary");
+// 		submitBtn->clicked().connect(std::bind([=]() {
+// 			cycleView->updateModel(cycleView->model());
+// 			bool valid = cycleView->model()->validate();
+// 			cycleView->updateView(cycleView->model());
+// 
+// 			if(valid)
+// 				dialog->accept();
+// 		}));
+// 
+// 		dialog->finished().connect(std::bind([=](Wt::WDialog::DialogCode code) {
+// 			if(code == Wt::WDialog::Accepted)
+// 			{
+// 				dialog->contents()->removeWidget(cycleView);
+// 				_view->resolve<IncomeCyclesContainer*>(field)->addWidget(cycleView);
+// 			}
+// 			delete dialog;
+// 		}, std::placeholders::_1));
+// 
+// 		dialog->show();
+// 		return dialog;
+// 	}
+
 
 }

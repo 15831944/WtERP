@@ -8,25 +8,45 @@
 
 namespace GS
 {
+	class MyTemplateFormView;
 
 	class AdminPageWidget : public Wt::WTemplate
 	{
 	public:
 		AdminPageWidget(const std::string basePathComponent, Wt::WContainerWidget *parent = nullptr);
 
-		Wt::WNavigationBar *sideBar() const { return _sideBar; }
-		Wt::WStackedWidget *stackWidget() const { return _stackWidget; }
-		Wt::WMenu *menu() const { return _menu; }
 		Wt::WMenuItem *createMenuItem(const Wt::WString &label, const std::string &pathComponent, Wt::WWidget *contents);
 		Wt::WMenuItem *createMenuItem(int index, const Wt::WString &label, const std::string &pathComponent, Wt::WWidget *contents);
 		bool checkPathComponentExist(const std::string &pathComponent) const;
-		std::string basePathComponent() const { return _basePathComponent; }
+		void connectFormSubmitted(Wt::WMenuItem *item);
+
+		const std::string &basePathComponent() const { return _basePathComponent; }
+		Wt::WNavigationBar *sideBar() const { return _sideBar; }
+		Wt::WStackedWidget *stackWidget() const { return _stackWidget; }
+		Wt::WMenu *menu() const { return _menu; }
 
 	protected:
+		void handleItemSelected(Wt::WMenuItem *item);
+		void handleFormSubmitted(Wt::WMenuItem *item);
+
 		Wt::WNavigationBar *_sideBar = nullptr;
 		Wt::WStackedWidget *_stackWidget = nullptr;
 		Wt::WMenu *_menu = nullptr;
+		Wt::WText *_titleText = nullptr;
 		std::string _basePathComponent;
+
+		typedef std::map<Wt::WMenuItem*, Wt::Signals::connection> SignalMap;
+		SignalMap _submitSignalMap;
+	};
+
+	class AdminPageContentWidget : public Wt::WTemplate
+	{
+	public:
+		AdminPageContentWidget(Wt::WContainerWidget *parent = nullptr);
+
+	protected:
+		Wt::WText *_title = nullptr;
+		Wt::WWidget *_content = nullptr;
 	};
 
 	class EntitiesAdminPage : public AdminPageWidget
@@ -35,11 +55,9 @@ namespace GS
 		EntitiesAdminPage(Wt::WContainerWidget *parent = nullptr);
 
 	protected:
-		void newEntityViewSubmitted();
+		//void newEntityViewSubmitted();
 
-		EntityView *_newEntityView = nullptr;
 		Wt::WMenuItem *_newEntityMenuItem = nullptr;
-		Wt::Signals::connection _submittedConnection;
 	};
 
 	class AccountsAdminPage : public AdminPageWidget

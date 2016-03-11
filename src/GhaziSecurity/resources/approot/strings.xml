@@ -1,201 +1,346 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <messages nplurals="2" plural="n==1 ? 0 : 1">
 
-<message id="GS.DateFormat">dd/MM/yyyy</message>
-<message id="GS.TimeFormat">h:mm AP</message>
-<message id="GS.DateTimeFormat">dd MMMM yyyy, h:mm AP</message>
-<message id="GS.DecimalPoint">.</message>
-<message id="GS.GroupSeparator">,</message>
+<!-- Date and number formatting -->
+<message id="DateFormat">dd/MM/yyyy</message>
+<message id="TimeFormat">h:mm AP</message>
+<message id="DateTimeFormat">dd/MM/yyyy, h:mm AP</message>
+<message id="DecimalPoint">.</message>
+<message id="GroupSeparator">,</message>
 
-<message id="GS.Ok">Ok</message>
-<message id="GS.Yes">Yes</message>
-<message id="GS.No">No</message>
-<message id="GS.Close">Close</message>
-<message id="GS.Add">Add</message>
-<message id="GS.Purpose">Purpose</message>
-
-<message id="GS.Days">Days</message>
-<message id="GS.Weeks">Weeks</message>
-<message id="GS.Months">Months</message>
-<message id="GS.Years">Years</message>
-
-<message id="GS.AnErrorOccurred">An error occurred</message>
-<message id="GS.StaleObjectError">The {1} was modified by someone else while you were making changes. Please ensure that no conflict may occur and then submit the form again to save your changes. Note: You may examine the changed information by opening this page on another tab.</message>
-<message id="GS.DbConnectionError">The system could not connect to the database backend. If this problem persists, please contact an administrator.</message>
-<message id="GS.DbInternalError">An internal database error occurred, please contact an administrator.</message>
-<message id="GS.GMThumbnailError">An incompatible file was uploaded.</message>
-
+<!-- Application title and related -->
 <message id="GS.Title">Ghazi Security</message>
 <message id="GS.Logo.Alt">Ghazi Security</message>
 
-<message id="GS.Home">Home</message>
-<message id="GS.About">About</message>
-<message id="GS.Contact">Contact</message>
+<!-- Generic -->
+<message id="ID">ID</message>
+<message id="Ok">Ok</message>
+<message id="Yes">Yes</message>
+<message id="No">No</message>
+<message id="Close">Close</message>
+<message id="Add">Add</message>
+<message id="List">List</message>
+<message id="New">New</message>
 
-<message id="GS.Dashboard">Dashboard</message>
-<message id="GS.Overview">Overview</message>
-<message id="GS.Reports">Reports</message>
+<!-- Personal Information -->
+<message id="Name">Name</message>
+<message id="FullName">Full name</message>
+<message id="BusinessName">Business name</message>
+<message id="DateOfBirth">Date of birth</message>
+<message id="Address">Address</message>
+<message id="Height">Height</message>
+<message id="Salary">Salary</message>
+<message id="Education">Education</message>
+<message id="Experience">Experience</message>
+<message id="BloodType">Blood type</message>
+<message id="NextOfKin">Next of kin</message>
+<message id="Father">Father</message>
+<message id="Mother">Mother</message>
+<message id="Remarks">Remarks</message>
 
-<message id="GS.AddNewEntity">Add new entity</message>
-<message id="GS.Entity">Entity</message>
-<message id="GS.Entities">Entities</message>
-<message id="GS.AllEntities">All entities</message>
-<message id="GS.Person">Person</message>
-<message id="GS.Persons">Persons</message>
-<message id="GS.Employees">Employees</message>
-<message id="GS.Employee">Employee</message>
-<message id="GS.Personnel">Personnel</message>
-<message id="GS.Business">Business</message>
-<message id="GS.Businesses">Businesses</message>
-<message id="GS.Clients">Clients</message>
-<message id="GS.Client">Client</message>
+<!-- General -->
+<message id="Purpose">Purpose</message>
+<message id="UnspecificPurpose">Unspecific purpose</message>
+<message id="Type">Type</message>
+<message id="Role">Role</message>
+<message id="Roles">Roles</message>
+<message id="Description">Description</message>
+<message id="Preview">Preview</message>
 
-<message id="GS.List">List</message>
-<message id="GS.New">New</message>
-<message id="GS.Preview">Preview</message>
+<message id="SelectFromList">Select from list</message>
+<message id="SelectXFromList">Select {1} from list</message>
+<message id="Submit">Submit</message>
+<message id="Continue">Continue</message>
 
-<message id="GS.Id">ID</message>
-<message id="GS.Name">Name</message>
-<message id="GS.Type">Type</message>
-<message id="GS.Role">Role</message>
-<message id="GS.Roles">Roles</message>
-<message id="GS.FullName">Full name</message>
+<!-- Date time related -->
+<message id="Timestamp">Time stamp</message>
+<message id="StartingDate">Starting date</message>
+<message id="StartDate">Start date</message>
+<message id="CreatedOn">Created on</message>
+<message id="EndDate">End date</message>
+<message id="XNotStarted">{1} (Not started)</message>
+<message id="XEnded">{1} (Ended)</message>
 
-<message id="GS.DateOfBirth">Date of birth</message>
-<message id="GS.CNICLabel">National identity card number</message>
-<message id="GS.MotherTongue">Mother tongue</message>
-<message id="GS.IdentificationMark">Identification mark</message>
-<message id="GS.Education">Education</message>
-<message id="GS.Height">Height</message>
-<message id="GS.BloodType">Blood type</message>
-<message id="GS.MarriedLabel">Marital status</message>
-<message id="GS.NextOfKin">Next of kin</message>
-<message id="GS.Father">Father</message>
-<message id="GS.Mother">Mother</message>
-<message id="GS.Remarks">Remarks</message>
+<!-- Financials -->
+<message id="Account">Account</message>
+<message id="Accounts">Accounts</message>
+<message id="account">account</message>
+<message id="Asset">Asset</message>
+<message id="Liability">Liability</message>
+<message id="Receipt">Receipt</message>
+<message id="Payment">Payment</message>
+<message id="Amount">Amount</message>
+<message id="Balance">Balance</message>
+<message id="Debit">Debit</message>
+<message id="Credit">Credit</message>
+<message id="Profit">Profit</message>
+<message id="Loss">Loss</message>
+<message id="Receivable">Receivable</message>
+<message id="Payable">Payable</message>
+<message id="Expense">Expense</message>
+<message id="expense">expense</message>
+<message id="Income">Income</message>
+<message id="income">income</message>
+<message id="Transaction">Transaction</message>
+<message id="Transactions">Transactions</message>
 
-<message id="GS.BusinessName">Business name</message>
+<!-- FilteredList -->
+<message id="Filter">Filter</message>
+<message id="AddFilter">Add filter</message>
+<message id="SelectFilter">Select filter</message>
+<message id="ApplyFilters">Apply filters</message>
 
-<message id="GS.Unknown">Unknown</message>
-<message id="GS.Married">Married</message>
-<message id="GS.Unmarried">Unmarried</message>
+<!-- CycleInterval -->
+<message id="Days">Days</message>
+<message id="Weeks">Weeks</message>
+<message id="Months">Months</message>
+<message id="Years">Years</message>
 
-<message id="GS.AddNewEntity">Add new entity</message>
-<message id="GS.AddNewPerson">Add new person</message>
-<message id="GS.AddNewBusiness">Add new business</message>
-<message id="GS.AddEmployeeLabel">Add employee information to this person</message>
-<message id="GS.AddPersonnelLabel">Add personnel information to this person</message>
-<message id="GS.EntityFindLineEditPlaceholder">Find by name...</message>
-<message id="GS.InvalidPersonSelection">You must select a person or leave this field empty</message>
-<message id="GS.InvalidBusinessSelection">You must select a business or leave this field empty</message>
-<message id="GS.Submit">Submit</message>
-<message id="GS.Continue">Continue</message>
+<!-- Marital Status -->
+<message id="MaritalStatus">Marital status</message>
+<message id="Unknown">Unknown</message>
+<message id="Married">Married</message>
+<message id="Unmarried">Unmarried</message>
 
-<message id="GS.SelectEntityType">Select an entity type</message>
-<message id="GS.PersonalInfo">Personal Information</message>
-<message id="GS.EmployeeInfo">Employee Information</message>
-<message id="GS.PersonnelInfo">Personnel Information</message>
-<message id="GS.BusinessInfo">Business Information</message>
-<message id="GS.ClientInfo">Client Information</message>
-<message id="GS.ContactInfo">Contact Information</message>
-<message id="GS.ContactNumber">Contact Number</message>
-<message id="GS.Address">Address</message>
-<message id="GS.AddressN">Address {1}</message>
+<!-- Errors -->
+<message id="AnErrorOccurred">An error occurred</message>
+<message id="StaleObjectError">The {1} was modified in another session while you were making changes. Please ensure that no conflict may occur and then submit the form again to save your changes. Note: You may examine the changed information by opening this page on another tab.</message>
+<message id="DbConnectionError">The system could not connect to the database backend. If this problem persists, please contact an administrator.</message>
+<message id="DbInternalError">An internal database error occurred, please contact an administrator.</message>
+<message id="GMThumbnailError">An incompatible file was uploaded.</message>
+<message id="ImageRelocationError">Could not save image(s) to permanent location, please contact an administrator.</message>
+<message id="DatabaseValidationFailed">Validation failed due to an internal error, try again</message>
 
-<message id="GS.CompanyNumber">Company Number</message>
-<message id="GS.GradeLabel">Grade</message>
-<message id="GS.RecruitmentDate">Recruitment Date</message>
-<message id="GS.Experience">Experience</message>
-<message id="GS.AdditionalQualifications">Additional Qualifications</message>
+<!-- Pages -->
+<message id="Home">Home</message>
+<message id="About">About</message>
+<message id="Contact">Contact</message>
 
-<message id="GS.PoliceStation">Police Station</message>
-<message id="GS.PoliceVerified">Police Verified</message>
-<message id="GS.ArmyNumber">Army Number</message>
-<message id="GS.Rank">Rank</message>
-<message id="GS.TrainingCourses">Training Courses</message>
+<!-- Admin Dashboard Pages -->
+<message id="Dashboard">Dashboard</message>
+<message id="Overview">Overview</message>
+<message id="Reports">Reports</message>
 
-<message id="GS.SelectCountry">Select country</message>
-<message id="GS.Country">Country</message>
-<message id="GS.CountryCode">Country code</message>
-<message id="GS.CountryName">Country name</message>
-<message id="GS.AddCountry">Add country</message>
-<message id="GS.SelectCity">Select city</message>
-<message id="GS.CityName">City name</message>
-<message id="GS.AddCity">Add city</message>
-<message id="GS.CountryCodeExists">This country code already exists</message>
-<message id="GS.InvalidCountryCode">Country code is invalid</message>
-<message id="GS.MustSelectCountry">You must select a country</message>
+<!-- Entities -->
+<message id="AddNewEntity">Add new entity</message>
+<message id="AllEntities">All entities</message>
+<message id="Entities">Entities</message>
+<message id="Entity">Entity</message>
+<message id="entity">entity</message>
+<message id="Person">Person</message>
+<message id="person">person</message>
+<message id="Persons">Persons</message>
+<message id="Business">Business</message>
+<message id="business">business</message>
+<message id="Businesses">Businesses</message>
+<message id="Employees">Employees</message>
+<message id="Employee">Employee</message>
+<message id="Personnel">Personnel</message>
+<message id="Clients">Clients</message>
+<message id="Client">Client</message>
 
-<message id="GS.ClickToUploadProfile">Upload profile picture</message>
-<message id="GS.ClickToChangeProfile">Change profile picture</message>
-<message id="GS.ClickToUploadCNIC">Upload CNIC image</message>
-<message id="GS.ClickToChangeCNIC">Change CNIC image</message>
-<message id="GS.FileTooLarge">File too large, maximum size allowed is {1} mb</message>
-<message id="GS.NoExtension">Files without an extension are not allowed</message>
+<!-- EntityView -->
+<message id="CNICLabel">National identity card number</message>
+<message id="AddNewEntity">Add new entity</message>
+<message id="AddNewPerson">Add new person</message>
+<message id="AddNewBusiness">Add new business</message>
+<message id="AddEmployeeLabel">Add employee information to this person</message>
+<message id="AddPersonnelLabel">Add personnel information to this person</message>
 
-<message id="GS.SelectFilter">Select filter</message>
-<message id="GS.ApplyFilters">Apply filters</message>
+<message id="InvalidPersonSelection">You must select a person or leave this field empty</message>
+<message id="InvalidPersonSelectionMandatory">You must select a person</message>
+<message id="InvalidBusinessSelection">You must select a business or leave this field empty</message>
+<message id="InvalidBusinessSelectionMandatory">You must select a business</message>
 
-<message id="GS.RecurringExpenses">Recurring expenses</message>AddNewRecurringExpense
-<message id="GS.RecurringExpense">Recurring expense</message>
-<message id="GS.RecurringIncomes">Recurring incomes</message>
-<message id="GS.RecurringIncome">Recurring income</message>
-<message id="GS.AddNewRecurringExpense">Add new recurring expense</message>
-<message id="GS.AddNewRecurringIncome">Add new recurring income</message>
-<message id="GS.AddRecurringExpense">Add recurring expense</message>
-<message id="GS.AddRecurringIncome">Add recurring income</message>
+<message id="SelectEntityType">Select an entity type</message>
+<message id="PersonalInfo">Personal Information</message>
+<message id="EmployeeInfo">Employee Information</message>
+<message id="PersonnelInfo">Personnel Information</message>
+<message id="BusinessInfo">Business Information</message>
+<message id="ClientInfo">Client Information</message>
+<message id="ContactInfo">Contact Information</message>
 
-<message id="GS.Position">Position</message>
-<message id="GS.PositionTitle">Position title</message>
-<message id="GS.SelectPosition">Select position</message>
-<message id="GS.AddNewPosition">Add new position</message>
+<message id="MotherTongue">Mother tongue</message>
+<message id="IdentificationMark">Identification mark</message>
 
-<message id="GS.Service">Service</message>
-<message id="GS.ServiceTitle">Service title</message>
-<message id="GS.Services">Services</message>
-<message id="GS.SelectService">Select service</message>
-<message id="GS.AddNewService">Add new service</message>
+<message id="CompanyNumber">Company Number</message>
+<message id="GradeLabel">Grade</message>
+<message id="RecruitmentDate">Recruitment Date</message>
+<message id="AdditionalQualifications">Additional Qualifications</message>
 
-<message id="GS.UnspecificPurpose">Unspecific purpose</message>
-<message id="GS.Salary">Salary</message>
+<message id="PoliceStation">Police Station</message>
+<message id="PoliceVerified">Police Verified</message>
+<message id="ArmyNumber">Army Number</message>
+<message id="Rank">Rank</message>
+<message id="TrainingCourses">Training Courses</message>
 
-<message id="GS.FinancialRecords">Financial Records</message>
-<message id="GS.Accounts">Accounts</message>
-<message id="GS.EntityBalanceAccount">Entity Balance</message>
-<message id="GS.EntityPnlAccount">Entity Income and Expense</message>
-<message id="GS.Balance">Balance</message>
-<message id="GS.Debit">Debit</message>
-<message id="GS.Credit">Credit</message>
-<message id="GS.Profit">Profit</message>
-<message id="GS.Loss">Loss</message>
-<message id="GS.Receivable">Receivable</message>
-<message id="GS.Payable">Payable</message>
+<!-- FindEntityEdit -->
+<message id="FindEntityEditPlaceholder">Find by name or id...</message>
+<message id="FindEntityEditValueTemplate">{1} (ID: {2})</message>
 
-<message id="GS.StartingDate">Starting date</message>
-<message id="GS.OnStartingDate">On the starting date</message>
-<message id="GS.EndDate">End date</message>
-<message id="GS.EmptyEndDate">Optional</message>
-<message id="GS.Amount">Amount</message>
-<message id="GS.ToBeReceivedEvery">To be received every</message>
-<message id="GS.ToBePaidEvery">To be paid every</message>
-<message id="GS.CreateFirstEntry">Create first entry</message>
+<!-- FindAccountEdit -->
+<message id="FindAccountEditPlaceholder">Find by name, id, type or entity name...</message>
+<message id="FindAccountEditValueTemplate">{1} (ID: {2}), Type: {3}</message>
+<message id="FindAccountEditValueWithEntityTemplate">{1} (ID: {2}), Type: {3}, Entity: {4}</message>
 
-<message id="GS.AfterTheInterval">After the interval</message>
-<message id="GS.AfterNDays">
-	<plural case="0">After {1} day</plural>
-	<plural case="1">After {1} days</plural>
+<!-- LocationView, CountryView, CityView -->
+<message id="ContactNumber">Contact Number</message>
+<message id="AddressN">Address {1}</message>
+
+<message id="SelectCountry">Select country</message>
+<message id="SelectCity">Select city</message>
+<message id="Country">Country</message>
+<message id="CountryCode">Country code</message>
+<message id="CountryName">Country name</message>
+<message id="CityName">City name</message>
+<message id="AddCountry">Add country</message>
+<message id="AddCity">Add city</message>
+
+<message id="CountryCodeExists">This country code already exists</message>
+<message id="InvalidCountryCode">Country code is invalid</message>
+<message id="MustSelectCountry">You must select a country</message>
+
+<!-- ImageUpload -->
+<message id="ClickToUploadProfile">Upload profile picture</message>
+<message id="ClickToChangeProfile">Change profile picture</message>
+<message id="ClickToUploadCNIC">Upload CNIC image</message>
+<message id="ClickToChangeCNIC">Change CNIC image</message>
+<message id="FileTooLarge">File too large, maximum size allowed is {1} mb</message>
+<message id="NoExtension">Files without an extension are not allowed</message>
+
+<!-- PositionView -->
+<message id="EmployeePosition">Employee position</message>
+<message id="Position">Position</message>
+<message id="PositionTitle">Position title</message>
+<message id="SelectPosition">Select position</message>
+<message id="AddNewPosition">Add new position</message>
+<message id="MustSelectPosition">You must select a position or select a different type</message>
+
+<!-- ServiceView -->
+<message id="ClientService">Client service</message>
+<message id="Service">Service</message>
+<message id="ServiceTitle">Service title</message>
+<message id="Services">Services</message>
+<message id="SelectService">Select service</message>
+<message id="AddNewService">Add new service</message>
+<message id="MustSelectService">You must select a service or select a different type</message>
+
+<!-- AccountsDatabase -->
+<message id="InitialEntry">Initial {1} entry</message>
+<message id="RecurringEntry">Recurring {1} entry</message>
+<message id="IncompleteEntry">Incomplete duration {1} entry</message>
+<message id="FinalEntry">Final {1} entry</message>
+<message id="ForService"> for service: {1}</message>
+<message id="ForPosition"> for position: {1}</message>
+<message id="CashAccountName">Cash Account</message>
+
+<!-- AccountView, AccountList -->
+<message id="FinancialRecords">Financial Records</message>
+<message id="DebitAccount">Debit account</message>
+<message id="CreditAccount">Credit account</message>
+<message id="AccountName">Account name</message>
+<message id="AccountType">Account type</message>
+<message id="NewAccount">New Account</message>
+<message id="AddNewAccount">Add new account</message>
+<message id="CreateAccount">Create account</message>
+
+<message id="EntityBalanceAccount">Entity Balance</message>
+<message id="EntityIdBalanceAccount">Entity #{1} Balance Account</message>
+<message id="EntityPnlAccount">Entity Income and Expense</message>
+<message id="EntityIdPnlAccount">Entity #{1} Income and Expense Account</message>
+<message id="OppositeEntryAccount">Opposite Entry Account</message>
+
+<message id="AccountNameInUse">This account name is already in use</message>
+<message id="InvalidAccountSelection">You must select an account or leave this field empty</message>
+<message id="InvalidAccountSelectionMandatory">You must select an account</message>
+
+<!-- AccountEntryView, AccountEntryList -->
+<message id="AccountEntryViewName">Account entry #{1}</message>
+
+<message id="NewAccountEntry">New Account Entry</message>
+<message id="CreateAccountEntry">Create account entry</message>
+
+<!-- TransactionView -->
+<message id="TransactionViewName">Transaction #{1}: {2}</message>
+
+<message id="ReceivingOrPaying">Receiving Or Paying?</message>
+<message id="NewTransaction">New Transaction</message>
+<message id="CreateTransaction">Create transaction</message>
+
+<!-- EntryCycles -->
+<message id="ExpenseCycleViewName">Recurring expense #{1}: {2}</message>
+<message id="ExpenseCycleViewNameWithoutEntity">Recurring expense {1}</message>
+<message id="IncomeCycleViewName">Recurring income #{1}: {2}</message>
+<message id="IncomeCycleViewNameWithoutEntity">Recurring Income {1}</message>
+
+<message id="RecurringExpenses">Recurring expenses</message>
+<message id="RecurringExpense">Recurring expense</message>
+<message id="RecurringIncomes">Recurring incomes</message>
+<message id="RecurringIncome">Recurring income</message>
+<message id="AddNewRecurringExpense">Add new recurring expense</message>
+<message id="NewRecurringExpense">New Recurring Expense</message>
+<message id="AddNewRecurringIncome">Add new recurring income</message>
+<message id="NewRecurringIncome">New Recurring Income</message>
+<message id="AddRecurringExpense">Add recurring expense</message>
+<message id="AddRecurringIncome">Add recurring income</message>
+<message id="CreateRecurringIncome">Create recurring income</message>
+<message id="CreateRecurringExpense">Create recurring expense</message>
+
+<message id="RecurringAmount">Recurring amount</message>
+<message id="AmountRs">Amount (Rs.)</message>
+<message id="BalanceRs">Balance (Rs.)</message>
+<message id="DebitRs">Debit (Rs.)</message>
+<message id="CreditRs">Credit (Rs.)</message>
+<message id="XDebit">{1} Debit</message>
+<message id="XCredit">{1} Credit</message>
+<message id="XProfit">{1} Profit</message>
+<message id="XLoss">{1} Loss</message>
+<message id="XReceivable">{1} Receivable</message>
+<message id="XPayable">{1} Payable</message>
+<message id="XExpense">{1} Expense</message>
+<message id="XIncome">{1} Income</message>
+
+<message id="OnStartingDate">On starting date</message>
+<message id="AfterTheInterval">After the interval</message>
+<message id="EmptyEndDate">Optional</message>
+<message id="ToBeReceivedEvery">To be received every</message>
+<message id="ToBePaidEvery">To be paid every</message>
+<message id="CreateFirstEntry">Create first entry</message>
+
+<message id="AfterNDays">
+	<plural case="0">{1} day after starting date</plural>
+	<plural case="1">{1} days after starting date</plural>
 </message>
-<message id="GS.AfterNWeeks">
-	<plural case="0">After {1} week</plural>
-	<plural case="1">After {1} weeks</plural>
+<message id="RsEveryNDays">
+	<plural case="0">Rs. {1} every {2} day</plural>
+	<plural case="1">Rs. {1} every {2} days</plural>
 </message>
-<message id="GS.AfterNMonths">
-	<plural case="0">After {1} month</plural>
-	<plural case="1">After {1} months</plural>
+
+<message id="AfterNWeeks">
+	<plural case="0">{1} week after starting date</plural>
+	<plural case="1">{1} weeks after starting date</plural>
 </message>
-<message id="GS.AfterNYears">
-	<plural case="0">After {1} year</plural>
-	<plural case="1">After {1} years</plural>
+<message id="RsEveryNWeeks">
+	<plural case="0">Rs. {1} every {2} week</plural>
+	<plural case="1">Rs. {1} every {2} weeks</plural>
+</message>
+
+<message id="AfterNMonths">
+	<plural case="0">{1} month after starting date</plural>
+	<plural case="1">{1} months after starting date</plural>
+</message>
+<message id="RsEveryNMonths">
+	<plural case="0">Rs. {1} every {2} month</plural>
+	<plural case="1">Rs. {1} every {2} months</plural>
+</message>
+
+<message id="AfterNYears">
+	<plural case="0">{1} year after starting date</plural>
+	<plural case="1">{1} years after starting date</plural>
+</message>
+<message id="RsEveryNYears">
+	<plural case="0">Rs. {1} every {2} year</plural>
+	<plural case="1">Rs. {1} every {2} years</plural>
 </message>
 
 </messages>

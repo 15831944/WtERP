@@ -38,8 +38,8 @@ namespace Wt {
   namespace Utils {
 
 // appends the character to the string if it does not end with it
-extern std::string append(const std::string& s, char c);
-extern std::string prepend(const std::string& s, char c);
+extern WT_API std::string append(const std::string& s, char c);
+extern WT_API std::string prepend(const std::string& s, char c);
 
 // in-place replace functions
 extern std::string& replace(std::string& s, char c, const std::string& r);

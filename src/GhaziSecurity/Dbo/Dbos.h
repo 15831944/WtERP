@@ -1,6 +1,7 @@
 #ifndef GS_DBOS_H
 #define GS_DBOS_H
 
+#include "Utilities/Common.h"
 #include <Wt/Dbo/Dbo>
 #include <Wt/Auth/Dbo/AuthInfo>
 #include <Wt/WDate>
@@ -327,6 +328,10 @@ namespace GS
 		Entity(Type type)
 			: type(type)
 		{ }
+
+		static std::string newInternalPath() { return "/" ADMIN_PATHC "/" ENTITIES_PATHC "/" NEW_ENTITY_PATHC; }
+		static std::string viewInternalPath(long long id) { return viewInternalPath(boost::lexical_cast<std::string>(id)); }
+		static std::string viewInternalPath(const std::string idStr) { return "/" ADMIN_PATHC "/" ENTITIES_PATHC "/" ENTITY_PREFIX + idStr; }
 
 		std::string name;
 		Type type = InvalidType;
@@ -1109,16 +1114,22 @@ namespace GS
 	public:
 		enum Type
 		{
-			Unspecified = 0,
-			EntityBalanceAccount = 1,
-			EntityPnlAccount = 2
+			Asset = 0,
+			Liability = 1,
+			EntityBalanceAccount = 100,
+			EntityPnlAccount = 101
 		};
 
 		Account() = default;
+		Account &operator=(const Account &other) = default;
 		Account(Type t) : type(t) { }
 
+		static std::string newInternalPath() { return "/" ADMIN_PATHC "/" ACCOUNTS_PATHC "/" NEW_ACCOUNT_PATHC; }
+		static std::string viewInternalPath(long long id) { return viewInternalPath(boost::lexical_cast<std::string>(id)); }
+		static std::string viewInternalPath(const std::string idStr) { return "/" ADMIN_PATHC "/" ACCOUNTS_PATHC "/" ACCOUNT_PREFIX + idStr; }
+
 		std::string name;
-		Type type = Unspecified;
+		Type type = Asset;
 		double balance() const { return _balance; }
 
 		AccountEntryCollection debitEntryCollection;
@@ -1174,11 +1185,16 @@ namespace GS
 		};
 
 		AccountEntry() = default;
+		static std::string newInternalPath() { return "/" ADMIN_PATHC "/" ACCOUNTS_PATHC "/" NEW_ACCOUNTENTRY_PATHC; }
+		static std::string viewInternalPath(long long id) { return viewInternalPath(boost::lexical_cast<std::string>(id)); }
+		static std::string viewInternalPath(const std::string idStr) { return "/" ADMIN_PATHC "/" ACCOUNTS_PATHC "/" ACCOUNTENTRY_PREFIX + idStr; }
+
 		Type type = UnspecifiedType;
 		double amount() const { return _amount; }
 		Wt::Dbo::ptr<Account> debitAccountPtr() const { return _debitAccountPtr; }
 		Wt::Dbo::ptr<Account> creditAccountPtr() const { return _creditAccountPtr; }
 		Wt::WDateTime timestamp = Wt::WDateTime(boost::posix_time::microsec_clock::local_time());
+		Wt::WString description;
 
 		Wt::Dbo::ptr<RentHouse> depositRentHousePtr;
 		Wt::Dbo::ptr<ExpenseCycle> expenseCyclePtr;
@@ -1196,6 +1212,7 @@ namespace GS
 			Wt::Dbo::field(a, type, "type");
 			Wt::Dbo::field(a, _amount, "amount");
 			Wt::Dbo::field(a, timestamp, "timestamp");
+			Wt::Dbo::field(a, description, "description", 255);
 
 			Wt::Dbo::belongsTo(a, depositRentHousePtr, "deposit_renthouse", Wt::Dbo::OnDeleteCascade | Wt::Dbo::OnUpdateCascade);
 			Wt::Dbo::belongsTo(a, expenseCyclePtr, "expensecycle", Wt::Dbo::OnDeleteCascade | Wt::Dbo::OnUpdateCascade);
@@ -1305,8 +1322,12 @@ namespace GS
 			UnspecifiedPurpose = 0,
 			Services = 1
 		};
-// 		Purpose purpose = UnspecifiedPurpose;
 
+		static std::string newInternalPath() { return "/" ADMIN_PATHC "/" ACCOUNTS_PATHC "/" INCOMECYCLES_PATHC "/" NEW_INCOMECYCLE_PATHC; }
+		static std::string viewInternalPath(long long id) { return viewInternalPath(boost::lexical_cast<std::string>(id)); }
+		static std::string viewInternalPath(const std::string idStr) { return "/" ADMIN_PATHC "/" ACCOUNTS_PATHC "/" INCOMECYCLES_PATHC "/" INCOMECYCLE_PREFIX + idStr; }
+
+// 		Purpose purpose = UnspecifiedPurpose;
 		Wt::Dbo::ptr<ClientService> servicePtr;
 
 		template<class Action>
@@ -1330,8 +1351,12 @@ namespace GS
 			UnspecifiedPurpose = 0,
 			Salary = 1
 		};
-// 		Purpose purpose = UnspecifiedPurpose;
+
+		static std::string newInternalPath() { return "/" ADMIN_PATHC "/" ACCOUNTS_PATHC "/" EXPENSECYCLES_PATHC "/" NEW_EXPENSECYCLE_PATHC; }
+		static std::string viewInternalPath(long long id) { return viewInternalPath(boost::lexical_cast<std::string>(id)); }
+		static std::string viewInternalPath(const std::string idStr) { return "/" ADMIN_PATHC "/" ACCOUNTS_PATHC "/" EXPENSECYCLES_PATHC "/" EXPENSECYCLE_PREFIX + idStr; }
 	
+// 		Purpose purpose = UnspecifiedPurpose;
 		Wt::Dbo::ptr<EmployeePosition> positionPtr;
 		Wt::Dbo::weak_ptr<RentHouse> rentHouseWPtr;
 
@@ -1390,13 +1415,13 @@ namespace Wt
 	template<>
 	struct boost_any_traits<Entity::Type> : public boost_any_traits<int>
 	{
-		static Wt::WString asString(const Entity::Type &value, const Wt::WString &format)
+		static Wt::WString asString(const Entity::Type &value, const Wt::WString &)
 		{
 			switch(value)
 			{
-			case Entity::PersonType: return Wt::WString::tr("GS.Person");
-			case Entity::BusinessType: return Wt::WString::tr("GS.Business");
-			default: return Wt::WString::tr("GS.Unknown");
+			case Entity::PersonType: return Wt::WString::tr("Person");
+			case Entity::BusinessType: return Wt::WString::tr("Business");
+			default: return Wt::WString::tr("Unknown");
 			}
 		}
 	};
@@ -1404,13 +1429,15 @@ namespace Wt
 	template<>
 	struct boost_any_traits<Account::Type> : public boost_any_traits<int>
 	{
-		static Wt::WString asString(const Account::Type &value, const Wt::WString &format)
+		static Wt::WString asString(const Account::Type &value, const Wt::WString &)
 		{
 			switch(value)
 			{
-			case Account::EntityBalanceAccount: return Wt::WString::tr("GS.EntityBalanceAccount");
-			case Account::EntityPnlAccount: return Wt::WString::tr("GS.EntityPnlAccount");
-			default: return Wt::WString::tr("GS.Unknown");
+			case Account::EntityBalanceAccount: return Wt::WString::tr("EntityBalanceAccount");
+			case Account::EntityPnlAccount: return Wt::WString::tr("EntityPnlAccount");
+			case Account::Asset: return Wt::WString::tr("Asset");
+			case Account::Liability: return Wt::WString::tr("Liability");
+			default: return Wt::WString::tr("Unknown");
 			}
 		}
 	};
@@ -1418,18 +1445,96 @@ namespace Wt
 	template<>
 	struct boost_any_traits<Wt::WFlags<Entity::SpecificType>> : public boost_any_traits<int>
 	{
-		static Wt::WString asString(const Wt::WFlags<Entity::SpecificType> &value, const Wt::WString &format)
+		static Wt::WString asString(const Wt::WFlags<Entity::SpecificType> &value, const Wt::WString &)
 		{
 			std::string result;
 			if(value & Entity::EmployeeType)
-				result += Wt::WString::tr("GS.Employee").toUTF8() + ", ";
+				result += Wt::WString::tr("Employee").toUTF8() + ", ";
 			if(value & Entity::PersonnelType)
-				result += Wt::WString::tr("GS.Personnel").toUTF8() + ", ";
+				result += Wt::WString::tr("Personnel").toUTF8() + ", ";
 			if(value & Entity::ClientType)
-				result += Wt::WString::tr("GS.Client").toUTF8() + ", ";
+				result += Wt::WString::tr("Client").toUTF8() + ", ";
 
 			result = result.substr(0, result.size() - 2);
 			return Wt::WString::fromUTF8(result);
+		}
+	};
+
+	template<>
+	struct boost_any_traits<BloodType> : public boost_any_traits<int>
+	{
+		static Wt::WString asString(const BloodType &value, const Wt::WString &)
+		{
+			switch(value)
+			{
+			case OPositive: return "O+";
+			case ONegative: return "O-";
+			case APositive: return "A+";
+			case ANegative: return "A-";
+			case BPositive: return "B+";
+			case BNegative: return "B-";
+			case ABPositive: return "AB+";
+			case ABNegative: return "AB-";
+			default: return Wt::WString::tr("Unknown");
+			}
+		}
+	};
+
+	template<>
+	struct boost_any_traits<MaritalStatus> : public boost_any_traits<int>
+	{
+		static Wt::WString asString(const MaritalStatus &value, const Wt::WString &)
+		{
+			switch(value)
+			{
+			case Married: return Wt::WString::tr("Married");
+			case Unmarried: return Wt::WString::tr("Unmarried");
+			default: return Wt::WString::tr("Unknown");
+			}
+		}
+	};
+
+	template<>
+	struct boost_any_traits<CycleInterval> : public boost_any_traits<int>
+	{
+		static Wt::WString asString(const CycleInterval &value, const Wt::WString &)
+		{
+			switch(value)
+			{
+			case DailyInterval: return Wt::WString::tr("Daily");
+			case WeeklyInterval: return Wt::WString::tr("Weekly");
+			case MonthlyInterval: return Wt::WString::tr("Monthly");
+			case YearlyInterval: return Wt::WString::tr("Yearly");
+			default: return "";
+			}
+		}
+	};
+
+	template<>
+	struct boost_any_traits<IncomeCycle::Purpose> : public boost_any_traits<int>
+	{
+		static Wt::WString asString(const IncomeCycle::Purpose &value, const Wt::WString &)
+		{
+			switch(value)
+			{
+			case IncomeCycle::UnspecifiedPurpose: return Wt::WString::tr("UnspecificPurpose");
+			case IncomeCycle::Services: return Wt::WString::tr("Services");
+			default: return Wt::WString::tr("Unknown");
+			}
+		}
+	};
+
+	template<>
+	struct boost_any_traits<ExpenseCycle::Purpose> : public boost_any_traits<int>
+	{
+		static Wt::WString asString(const ExpenseCycle::Purpose &value, const Wt::WString &)
+		{
+			switch(value)
+			{
+			case ExpenseCycle::UnspecifiedPurpose: return Wt::WString::tr("UnspecificPurpose");
+			case ExpenseCycle::Salary: return Wt::WString::tr("Salary");
+			default: return Wt::WString::tr("Unknown");
+			}
 		}
 	};
 

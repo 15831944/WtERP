@@ -125,45 +125,65 @@ namespace GS
 		return vec;
 	}
 
-	AbstractFilteredList::AbstractFilteredList(Wt::WContainerWidget *parent /*= nullptr*/)
-		: Wt::WTemplate(tr("GS.FilteredListView"), parent)
+	FiltersTemplate::FiltersTemplate(AbstractFilteredList *filteredList, Wt::WContainerWidget *parent /*= nullptr*/)
+		: Wt::WTemplate(tr("GS.FiltersTemplate"), parent), _filteredList(filteredList)
 	{
-		_tableView = new Wt::WTableView();
-		_tableView->setSelectable(true);
-		_tableView->setHeaderHeight(40);
-		_tableView->setRowHeight(30);
-		_tableView->setMaximumSize(Wt::WLength::Auto, 600);
+		addFunction("tr", &Wt::WTemplate::Functions::tr);
 
 		_filtersComboBox = new Wt::WComboBox();
-		_filtersComboBox->addItem(tr("GS.SelectFilter"));
+		_filtersComboBox->addItem(tr("SelectFilter"));
 
-		auto addFilter = new Wt::WPushButton(tr("GS.Add"));
-		addFilter->clicked().connect(this, &AbstractFilteredList::handleAddFilter);
+		auto addFilter = new Wt::WPushButton(tr("Add"));
+		addFilter->clicked().connect(this, &FiltersTemplate::handleAddFilter);
 
-		auto applyFilters = new Wt::WPushButton(tr("GS.ApplyFilters"));
-		applyFilters->clicked().connect(this, &AbstractFilteredList::handleApplyFilters);
+		auto applyFilters = new Wt::WPushButton(tr("ApplyFilters"));
+		applyFilters->clicked().connect(this, &FiltersTemplate::handleApplyFilters);
 
 		_filterWidgetsContainer = new Wt::WContainerWidget();
 
-		bindWidget("table-view", _tableView);
 		bindWidget("filters-combo", _filtersComboBox);
 		bindWidget("add-filter", addFilter);
 		bindWidget("apply-filter", applyFilters);
 		bindWidget("filters-container", _filterWidgetsContainer);
 	}
 
+	AbstractFilteredList::AbstractFilteredList(Wt::WContainerWidget *parent /*= nullptr*/)
+		: Wt::WTemplate(tr("GS.FilteredListView"), parent)
+	{
+		addFunction("tr", Wt::WTemplate::Functions::tr);
+
+		_tableView = new Wt::WTableView();
+		_tableView->setSelectable(true);
+		_tableView->setHeaderHeight(40);
+		_tableView->setRowHeight(30);
+		_tableView->setMaximumSize(Wt::WLength::Auto, 600);
+		_tableView->setAlternatingRowColors(true);
+		bindWidget("table-view", _tableView);
+	}
+
+	void AbstractFilteredList::enableFilters()
+	{
+		if(conditionValue("filters-enabled"))
+			return;
+
+		setCondition("filters-enabled", true);
+		bindWidget("filters", _filtersTemplate = new FiltersTemplate(this));
+		initFilters();
+	}
+
 	void AbstractFilteredList::init()
 	{
-		if(_model)
+		if(_model || _proxyModel)
 			return;
 
 		initModel();
-		_tableView->setModel(_proxyModel);
+		_tableView->setModel(_proxyModel ? _proxyModel : _model);
+		resetColumnWidths();
 
 		int diff = _proxyModel->columnCount() - _model->columnCount();
 		if(diff > 0)
 		{
-			_tableView->setColumnWidth(_proxyModel->columnCount() - 1, 40);
+			//_tableView->setColumnWidth(_proxyModel->columnCount() - 1, 40);
 			_tableView->setColumnAlignment(_proxyModel->columnCount() - 1, Wt::AlignCenter);
 		}
 
@@ -174,7 +194,33 @@ namespace GS
 		}
 	}
 
-	void AbstractFilteredList::addFilterModel(AbstractFilterWidgetModel *model)
+	void AbstractFilteredList::resetColumnWidths()
+	{
+		auto model = _tableView->model();
+		for(int i = 0; i < model->columnCount(); ++i)
+		{
+			boost::any width = model->headerData(i, Wt::Horizontal, Wt::WidthRole);
+			if(!width.empty())
+				_tableView->setColumnWidth(i, Wt::WLength(boost::any_cast<int>(width)));
+		}
+	}
+
+	void AbstractFilteredList::addColumn(int viewIndex, int column, const Wt::WString &header, int width)
+	{
+		_model->setHeaderData(column, Wt::Horizontal, header);
+		_model->setHeaderData(column, Wt::Horizontal, viewIndex, Wt::ViewIndexRole);
+		_model->setHeaderData(column, Wt::Horizontal, width, Wt::WidthRole);
+
+		_viewIndexToColumnMap[viewIndex] = column;
+	}
+
+	int AbstractFilteredList::viewIndexToColumn(int viewIndex) const
+	{
+		auto fitr = _viewIndexToColumnMap.find(viewIndex);
+		return fitr == _viewIndexToColumnMap.end() ? -1 : fitr->second;
+	}
+
+	void FiltersTemplate::addFilterModel(AbstractFilterWidgetModel *model)
 	{
 		if(!model)
 			return;
@@ -184,12 +230,12 @@ namespace GS
 		_modelVector.push_back(model);
 	}
 
-	void AbstractFilteredList::handleAddFilter()
+	void FiltersTemplate::handleAddFilter()
 	{
 		addFilter(_filtersComboBox->currentIndex());
 	}
 
-	void AbstractFilteredList::addFilter(int filtersComboIndex)
+	void FiltersTemplate::addFilter(int filtersComboIndex)
 	{
 		if(filtersComboIndex < 1 || filtersComboIndex > _modelVector.size())
 			return;
@@ -215,7 +261,7 @@ namespace GS
 		_filterWidgetsContainer->addWidget(filterTemplate);
 	}
 
-	void AbstractFilteredList::handleApplyFilters()
+	void FiltersTemplate::handleApplyFilters()
 	{
 		std::string sqlCondition;
 		for(auto model : _modelVector)
@@ -232,10 +278,10 @@ namespace GS
 			sqlCondition += thisCondition + " AND ";
 		}
 		sqlCondition = sqlCondition.substr(0, sqlCondition.size() - 5);
-		applyFilter(sqlCondition);
+		_filteredList->applyFilter(sqlCondition);
 	}
 
-	void AbstractFilteredList::initIdEdit(Wt::WLineEdit *edit)
+	void FiltersTemplate::initIdEdit(Wt::WLineEdit *edit)
 	{
 		edit->setValidator(new Wt::WIntValidator());
 		edit->setMaxLength(20);
@@ -255,11 +301,6 @@ namespace GS
 		_operatorCombo->insertItem(LessThanEqual, "<=");
 		_operatorCombo->insertItem(GreaterThan, ">");
 		_operatorCombo->insertItem(GreaterThanEqual, ">=");
-	}
-
-	RangeEdit::~RangeEdit()
-	{
-		delete _operatorCombo;
 	}
 
 	void RangeFilterModel::updateModel()

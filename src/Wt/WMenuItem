@@ -307,13 +307,14 @@ public:
    * when it the item is activated for the first time (LazyLoading) or
    * transmitted prior to first rendering.
    */
-  void setContents(WWidget *contents, LoadPolicy policy = LazyLoading);
+  void setContents(WWidget *contents, LoadPolicy policy = LazyLoading, bool deleteContents = true);
 
   /*! \brief Returns the contents widget for this item.
    *
    * \sa setContents()
    */
   WWidget *contents() const;
+  WWidget *contentsSafe() const;
 
   WWidget *takeContents();
 

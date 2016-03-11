@@ -6,6 +6,36 @@
 namespace GS
 {
 
+	Wt::Dbo::ptr<Account> AccountsDatabase::findOrCreateCashAccount()
+	{
+		WServer *server = SERVER;
+
+		Wt::Dbo::Transaction t(dboSession);
+		Wt::Dbo::ptr<Account> accountPtr;
+
+		//Config found
+		if(server->configs()->getLongIntPtr("CashAccountId"))
+		{
+			long long accountId = server->configs()->getLongInt("CashAccountId", -1);
+			if(accountId != -1)
+				accountPtr = dboSession.load<Account>(accountId, true);
+		}
+
+		//Create account if not found
+		if(!accountPtr)
+		{
+			accountPtr = dboSession.add(new Account(Account::Asset));
+			accountPtr.modify()->name = Wt::WString::tr("CashAccountName").toUTF8();
+			accountPtr.flush();
+
+			if(!server->configs()->addLongInt("CashAccountId", accountPtr.id(), &dboSession))
+				throw std::runtime_error("Error creating CashAccountId config, ConfigurationsDatabase::addLongInt() returned null");
+		}
+
+		t.commit();
+		return accountPtr;
+	}
+
 	void AccountsDatabase::createEntityAccountsIfNotFound(Wt::Dbo::ptr<Entity> entityPtr)
 	{
 		if(!entityPtr)
@@ -14,9 +44,19 @@ namespace GS
 		Wt::Dbo::Transaction t(dboSession);
 
 		if(!entityPtr->balAccountPtr)
-			entityPtr.modify()->balAccountPtr = dboSession.add(new Account(Account::EntityBalanceAccount));
+		{
+			auto accountPtr = dboSession.add(new Account(Account::EntityBalanceAccount));
+			accountPtr.modify()->name = Wt::WString::tr("EntityIdBalanceAccount").arg(entityPtr.id()).toUTF8();
+
+			entityPtr.modify()->balAccountPtr = accountPtr;
+		}
 		if(!entityPtr->pnlAccountPtr)
-			entityPtr.modify()->pnlAccountPtr = dboSession.add(new Account(Account::EntityPnlAccount));
+		{
+			auto accountPtr = dboSession.add(new Account(Account::EntityPnlAccount));
+			accountPtr.modify()->name = Wt::WString::tr("EntityIdPnlAccount").arg(entityPtr.id()).toUTF8();
+
+			entityPtr.modify()->pnlAccountPtr = accountPtr;
+		}
 
 		t.commit();
 	}
@@ -37,8 +77,35 @@ namespace GS
 
 	void AccountsDatabase::updateAccountBalances(Wt::Dbo::ptr<AccountEntry> accountEntryPtr)
 	{
-		accountEntryPtr->_debitAccountPtr.modify()->_balance += accountEntryPtr->amount();
-		accountEntryPtr->_creditAccountPtr.modify()->_balance -= accountEntryPtr->amount();
+		try
+		{
+			accountEntryPtr->_debitAccountPtr.modify()->_balance += accountEntryPtr->amount();
+			accountEntryPtr->_creditAccountPtr.modify()->_balance -= accountEntryPtr->amount();
+			accountEntryPtr->_debitAccountPtr.flush();
+			accountEntryPtr->_creditAccountPtr.flush();
+		}
+		catch(const Wt::Dbo::StaleObjectException &)
+		{
+			Account debitAccount = *accountEntryPtr->_debitAccountPtr;
+			Account creditAccount = *accountEntryPtr->_debitAccountPtr;
+
+			try
+			{
+				accountEntryPtr.modify()->_debitAccountPtr.reread();
+				accountEntryPtr.modify()->_creditAccountPtr.reread();
+				accountEntryPtr->_debitAccountPtr.modify()->_balance += accountEntryPtr->amount();
+				accountEntryPtr->_creditAccountPtr.modify()->_balance -= accountEntryPtr->amount();
+				accountEntryPtr->_debitAccountPtr.flush();
+				accountEntryPtr->_creditAccountPtr.flush();
+			}
+			catch(const Wt::Dbo::StaleObjectException &e)
+			{
+				Wt::log("warn") << "AccountsDatabase::updateAccountBalances(): StaleObjectException caught twice";
+				accountEntryPtr->_debitAccountPtr.modify()->operator=(debitAccount);
+				accountEntryPtr->_creditAccountPtr.modify()->operator=(creditAccount);
+				throw e;
+			}
+		}
 	}
 
 	void AccountsDatabase::createPendingCycleEntry(Wt::Dbo::ptr<IncomeCycle> cyclePtr, Wt::Dbo::ptr<AccountEntry> lastEntryPtr, boost::posix_time::ptime currentPTime, boost::posix_time::time_duration *nextEntryDuration)
@@ -63,6 +130,10 @@ namespace GS
 			newEntry.modify()->_debitAccountPtr = cyclePtr->entityPtr->balAccountPtr;
 			newEntry.modify()->_creditAccountPtr = cyclePtr->entityPtr->pnlAccountPtr;
 			newEntry.modify()->type = AccountEntry::UnspecifiedType;
+			newEntry.modify()->description.arg(Wt::WString::tr("income"));
+			if(cyclePtr->servicePtr)
+				newEntry.modify()->description += Wt::WString::tr("ForService").arg(cyclePtr->servicePtr->title).toUTF8();
+
 			updateAccountBalances(newEntry);
 
 			lastEntryPtr = newEntry;
@@ -93,6 +164,10 @@ namespace GS
 			newEntry.modify()->_debitAccountPtr = cyclePtr->entityPtr->pnlAccountPtr;
 			newEntry.modify()->_creditAccountPtr = cyclePtr->entityPtr->balAccountPtr;
 			newEntry.modify()->type = AccountEntry::UnspecifiedType;
+			newEntry.modify()->description.arg(Wt::WString::tr("expense"));
+			if(cyclePtr->positionPtr)
+				newEntry.modify()->description += Wt::WString::tr("ForPosition").arg(cyclePtr->positionPtr->title).toUTF8();
+
 			updateAccountBalances(newEntry);
 
 			lastEntryPtr = newEntry;
@@ -145,6 +220,7 @@ namespace GS
 
 		bool createEntry = false;
 		bool incompleteDurationEntry = false;
+		bool finalCompleteEntry = false;
 
 		boost::posix_time::ptime previousCyclePeriodPTime; //either startDate or lastEntry timestamp
 		boost::posix_time::ptime nextCyclePeriodPTime;
@@ -174,6 +250,9 @@ namespace GS
 			cycleDuration = nextCyclePeriodPTime - previousCyclePeriodPTime;
 			if(elapsedDuration >= cycleDuration) //complete cycle
 			{
+				if(cycle.endDate.isValid() && nextCyclePeriodPTime.date() >= cycle.endDate.toGregorianDate())
+					finalCompleteEntry = true;
+
 				createEntry = true;
 
 				//Next entry duration
@@ -184,7 +263,7 @@ namespace GS
 			{ //incomplete duration
 				//Create incomplete duration entry ONLY IF the cycle has ended
 				//no entry has been made after the cycle.endDt: IS ASSERTED previously
-				if(cycle.endDate.isValid() && currentDt.date() >= cycle.endDate)
+				if(cycle.endDate.isValid() && nextCyclePeriodPTime.date() >= cycle.endDate.toGregorianDate())
 				{
 					createEntry = true;
 					incompleteDurationEntry = true;
@@ -216,12 +295,35 @@ namespace GS
 			boost::gregorian::days incompleteDays = cycle.endDate.toGregorianDate() - previousCyclePeriodPTime.date();
 			double ratio = static_cast<double>(incompleteDays.days()) / cycleDays.days();
 			newEntry._amount = cycle.amount * ratio;
-			newEntry.timestamp = Wt::WDateTime(cycle.endDate, Wt::WTime(0, 0));
+
+			//Timestamp
+			if(!lastEntryPtr && cycle.endDate.toGregorianDate() == currentPTime.date())
+				newEntry.timestamp = Wt::WDateTime(currentPTime);
+			else if(lastEntryPtr)
+				newEntry.timestamp = Wt::WDateTime(cycle.endDate, lastEntryPtr->timestamp.time());
+			else
+				newEntry.timestamp = Wt::WDateTime(cycle.endDate, Wt::WTime(0, 0));
+
+			//Description
+			newEntry.description = Wt::WString::tr("IncompleteEntry");
 		}
 		else
 		{
 			newEntry._amount = cycle.amount;
-			newEntry.timestamp = Wt::WDateTime(nextCyclePeriodPTime);
+
+			//Timestamp
+			if(!lastEntryPtr && nextCyclePeriodPTime.date() == currentPTime.date())
+				newEntry.timestamp = Wt::WDateTime(currentPTime);
+			else
+				newEntry.timestamp = Wt::WDateTime(nextCyclePeriodPTime);
+
+			//Description
+			if(finalCompleteEntry)
+				newEntry.description = Wt::WString::tr("FinalEntry");
+			else if(!lastEntryPtr)
+				newEntry.description = Wt::WString::tr("InitialEntry");
+			else
+				newEntry.description = Wt::WString::tr("RecurringEntry");
 		}
 
 		return dboSession.add(new AccountEntry(std::move(newEntry)));

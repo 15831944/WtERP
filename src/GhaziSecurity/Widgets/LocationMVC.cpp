@@ -33,9 +33,11 @@ namespace GS
 		Wt::WLineEdit *name = new Wt::WLineEdit();
 		name->setMaxLength(70);
 		setFormWidget(nameField, name);
-		model()->setValidator(nameField, new Wt::WValidator(true));
+		auto nameValidator = new Wt::WLengthValidator(0, 70);
+		nameValidator->setMandatory(true);
+		model()->setValidator(nameField, nameValidator);
 
-		Wt::WPushButton *submit = new Wt::WPushButton(tr("GS.Submit"));
+		Wt::WPushButton *submit = new Wt::WPushButton(tr("Submit"));
 		submit->clicked().connect(this, &CountryView::submit);
 		bindWidget("submit", submit);
 
@@ -45,25 +47,30 @@ namespace GS
 	void CountryView::submit()
 	{
 		WApplication *app = WApplication::instance();
+		Wt::Dbo::Transaction t(app->session());
+
 		updateModel(model());
+		if(!model()->validate())
+		{
+			updateView(model());
+			return;
+		}
 
 		try
 		{
-			if(model()->validate())
-			{
-				Wt::Dbo::Transaction t(app->session());
-				if(!_countryPtr)
-					_countryPtr = app->session().add(new Country());
+			if(!_countryPtr)
+				_countryPtr = app->session().add(new Country());
 
-				_countryPtr.modify()->code = model()->valueText(codeField).toUTF8();
-				_countryPtr.modify()->name = model()->valueText(nameField).toUTF8();
+			_countryPtr.modify()->code = model()->valueText(codeField).toUTF8();
+			_countryPtr.modify()->name = model()->valueText(nameField).toUTF8();
+
+			if(app->countryQueryModel())
 				app->countryQueryModel()->reload();
-				t.commit();
-				updateView(model());
-				submitted().emit();
-			}
-			else
-				updateView(model());
+
+			t.commit();
+
+			updateView(model());
+			submitted().emit();
 		}
 		catch(Wt::Dbo::Exception &e)
 		{
@@ -82,12 +89,21 @@ namespace GS
 			return baseResult;
 
 		WApplication *app = WApplication::instance();
-		Wt::Dbo::Transaction t(app->session());
-		int rows = app->session().query<int>("SELECT COUNT(1) FROM " + std::string(Country::tableName())).where("code = ?").bind(input);
-		t.commit();
+		try
+		{
+			Wt::Dbo::Transaction t(app->session());
+			int rows = app->session().query<int>("SELECT COUNT(1) FROM " + std::string(Country::tableName())).where("code = ?").bind(input);
+			t.commit();
 
-		if(rows != 0)
-			return Result(Invalid, Wt::WString::tr("GS.CountryCodeExists"));
+			if(rows != 0)
+				return Result(Invalid, Wt::WString::tr("CountryCodeExists"));
+		}
+		catch(Wt::Dbo::Exception &e)
+		{
+			Wt::log("error") << "CountryCodeValidator::validate(): Dbo error(" << e.code() << "): " << e.what();
+			app->showDbBackendError(e.code());
+			return Result(Invalid, Wt::WString::tr("DatabaseValidationFailed"));
+		}
 
 		return baseResult;
 	}
@@ -103,17 +119,21 @@ namespace GS
 		model()->addField(nameField);
 
 		WApplication *app = WApplication::instance();
-		Wt::WComboBox *country = new ProxyModelComboBox<CountryProxyModel>(app->countryProxyModel());
+		auto country = new ProxyModelComboBox<CountryProxyModel>(app->countryProxyModel());
 		setFormWidget(countryField, country);
-		model()->setValidator(countryField, new CityCountryValidator(country));
+		auto countryValidator = new ProxyModelComboBoxValidator<CountryProxyModel>(country);
+		countryValidator->setErrorString(tr("MustSelectCountry"));
+		model()->setValidator(countryField, countryValidator);
 		country->blurred().connect(boost::bind(&Wt::WComboBox::validate, country));
 
 		Wt::WLineEdit *name = new Wt::WLineEdit();
 		name->setMaxLength(70);
 		setFormWidget(nameField, name);
-		model()->setValidator(nameField, new Wt::WValidator(true));
+		auto nameValidator = new Wt::WLengthValidator(0, 70);
+		nameValidator->setMandatory(true);
+		model()->setValidator(nameField, nameValidator);
 
-		Wt::WPushButton *submit = new Wt::WPushButton(tr("GS.Submit"));
+		Wt::WPushButton *submit = new Wt::WPushButton(tr("Submit"));
 		submit->clicked().connect(this, &CityView::submit);
 		bindWidget("submit", submit);
 
@@ -122,47 +142,37 @@ namespace GS
 
 	void CityView::submit()
 	{
+		WApplication *app = WApplication::instance();
+		Wt::Dbo::Transaction t(app->session());
+
 		updateModel(model());
-
-		if(model()->validate())
+		if(!model()->validate())
 		{
-			WApplication *app = WApplication::instance();
-			try
-			{
-				Wt::Dbo::Transaction t(app->session());
-				if(!_cityPtr)
-					_cityPtr = app->session().add(new City());
+			updateView(model());
+			return;
+		}
 
-				_cityPtr.modify()->countryPtr = boost::any_cast<Wt::Dbo::ptr<Country>>(model()->value(countryField));
-				_cityPtr.modify()->name = model()->valueText(nameField).toUTF8();
+		try
+		{
+			if(!_cityPtr)
+				_cityPtr = app->session().add(new City());
 
+			_cityPtr.modify()->countryPtr = boost::any_cast<Wt::Dbo::ptr<Country>>(model()->value(countryField));
+			_cityPtr.modify()->name = model()->valueText(nameField).toUTF8();
+
+			if(app->cityQueryModel())
 				app->cityQueryModel()->reload();
 
-				t.commit();
-				updateView(model());
-				submitted().emit();
-			}
-			catch(Wt::Dbo::Exception &e)
-			{
-				Wt::log("error") << "CityView::submit(): Dbo error(" << e.code() << "): " << e.what();
-				app->showDbBackendError(e.code());
-			}
-		}
-		else
+			t.commit();
+
 			updateView(model());
-	}
-
-	Wt::WValidator::Result CityCountryValidator::validate(const Wt::WString &input) const
-	{
-		if(_countryCB->currentIndex() == -1)
-			return Result(Invalid, Wt::WString::tr("GS.MustSelectCountry"));
-
-		auto proxyModel = dynamic_cast<CountryProxyModel*>(_countryCB->model());
-		auto result = proxyModel->resultRow(_countryCB->currentIndex());
-		if(!result)
-			return Result(Invalid, Wt::WString::tr("GS.MustSelectCountry"));
-
-		return Result(Valid);
+			submitted().emit();
+		}
+		catch(Wt::Dbo::Exception &e)
+		{
+			Wt::log("error") << "CityView::submit(): Dbo error(" << e.code() << "): " << e.what();
+			app->showDbBackendError(e.code());
+		}
 	}
 
 	CityFilterModel::CityFilterModel(Wt::WObject *parent)
@@ -200,15 +210,15 @@ namespace GS
 	{
 		if(insertRow(0))
 		{
-			setData(index(0, 0), Wt::WString::tr("GS.SelectCountry"));
-			setData(index(0, 0), false, Wt::UserRole + 1);
+			setData(index(0, 0), Wt::WString::tr("SelectCountry"));
+			setData(index(0, 0), false, Wt::AdditionalRowRole);
 		}
 
 		int lastRow = rowCount();
 		if(insertRow(lastRow))
 		{
-			setData(index(lastRow, 0), Wt::WString::tr("GS.AddCountry"));
-			setData(index(lastRow, 0), true, Wt::UserRole + 1);
+			setData(index(lastRow, 0), Wt::WString::tr("AddCountry"));
+			setData(index(lastRow, 0), true, Wt::AdditionalRowRole);
 		}
 	}
 
@@ -227,15 +237,15 @@ namespace GS
 	{
 		if(insertRow(0))
 		{
-			setData(index(0, 0), Wt::WString::tr("GS.SelectCity"));
-			setData(index(0, 0), false, Wt::UserRole + 1);
+			setData(index(0, 0), Wt::WString::tr("SelectCity"));
+			setData(index(0, 0), false, Wt::AdditionalRowRole);
 		}
 
 		int lastRow = rowCount();
 		if(insertRow(lastRow))
 		{
-			setData(index(lastRow, 0), Wt::WString::tr("GS.AddCity"));
-			setData(index(lastRow, 0), true, Wt::UserRole + 1);
+			setData(index(lastRow, 0), Wt::WString::tr("AddCity"));
+			setData(index(lastRow, 0), true, Wt::AdditionalRowRole);
 		}
 	}
 
@@ -322,7 +332,7 @@ namespace GS
 
 	void LocationView::handleCountryChanged()
 	{
-		boost::any v = _countryCombo->model()->index(_countryCombo->currentIndex(), 0).data(Wt::UserRole + 1);
+		boost::any v = _countryCombo->model()->index(_countryCombo->currentIndex(), 0).data(Wt::AdditionalRowRole);
 		if(!v.empty() && boost::any_cast<bool>(v) == true)
 		{
 			createAddCountryDialog();
@@ -336,7 +346,7 @@ namespace GS
 
 	void LocationView::handleCityChanged()
 	{
-		boost::any v = _cityCombo->model()->index(_cityCombo->currentIndex(), 0).data(Wt::UserRole + 1);
+		boost::any v = _cityCombo->model()->index(_cityCombo->currentIndex(), 0).data(Wt::AdditionalRowRole);
 		if(v.empty())
 			return;
 
@@ -347,8 +357,10 @@ namespace GS
 	Wt::WDialog *LocationView::createAddCountryDialog()
 	{
 		updateModel(model());
-		Wt::WDialog *dialog = new Wt::WDialog(tr("GS.AddCountry"), this);
+		Wt::WDialog *dialog = new Wt::WDialog(tr("AddCountry"), this);
 		dialog->setClosable(true);
+		dialog->setTransient(true);
+		dialog->rejectWhenEscapePressed(true);
 		dialog->setWidth(Wt::WLength(500));
 		CountryView *countryView = new CountryView(dialog->contents());
 
@@ -376,8 +388,10 @@ namespace GS
 	Wt::WDialog *LocationView::createAddCityDialog()
 	{
 		updateModel(model());
-		Wt::WDialog *dialog = new Wt::WDialog(tr("GS.AddCity"), this);
+		Wt::WDialog *dialog = new Wt::WDialog(tr("AddCity"), this);
 		dialog->setClosable(true);
+		dialog->setTransient(true);
+		dialog->rejectWhenEscapePressed(true);
 		dialog->setWidth(Wt::WLength(500));
 		CityView *cityView = new CityView(dialog->contents());
 

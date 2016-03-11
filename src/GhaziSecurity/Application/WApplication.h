@@ -16,10 +16,11 @@ namespace GS
 	class PositionProxyModel;
 	class ServiceProxyModel;
 	class AccountsAdminPage;
+	class FindEntityModel;
+	class FindEntityFilterModel;
+	class FindAccountModel;
 	//class LocationFilterModel;
 
-	typedef Wt::Dbo::QueryModel<Wt::Dbo::ptr<Entity>> FindPersonModel;
-	typedef Wt::Dbo::QueryModel<Wt::Dbo::ptr<Entity>> FindBusinessModel;
 	typedef Wt::Dbo::QueryModel<Wt::Dbo::ptr<Location>> LocationQueryModel;
 	typedef Wt::Dbo::QueryModel<Wt::Dbo::ptr<Country>> CountryQueryModel;
 	typedef Wt::Dbo::QueryModel<Wt::Dbo::ptr<City>> CityQueryModel;
@@ -70,14 +71,17 @@ namespace GS
 		//Error handling
 		Wt::WDialog *errorDialog() const { return _errorDialog; }
 		void showErrorDialog(const Wt::WString &message);
-		void showStaleObjectError(const Wt::WString &recordName) { showErrorDialog(Wt::WString::tr("GS.StaleObjectError").arg(recordName)); }
+		void showStaleObjectError(const Wt::WString &recordName) { showErrorDialog(Wt::WString::tr("StaleObjectError").arg(recordName)); }
 		void showDbBackendError(const std::string &code);
 
 		//QueryModels
-		FindPersonModel *findPersonModel() const { return _findPersonModel; }
-		void initFindPersonModel();
-		FindBusinessModel *findBusinessModel() const { return _findBusinessModel; }
-		void initFindBusinessModel();
+		FindEntityModel *findEntityModel() const { return _findEntityModel; }
+		FindEntityFilterModel *findPersonModel() const { return _findPersonFilterModel; }
+		FindEntityFilterModel *findBusinessModel() const { return _findBusinessFilterModel; }
+		void initFindEntityModel();
+
+		FindAccountModel *findAccountModel() const { return _findAccountModel; }
+		void initFindAccountModel();
 
 		CountryQueryModel *countryQueryModel() const { return _countryQueryModel; }
 		CountryProxyModel *countryProxyModel() const { return _countryProxyModel; }
@@ -116,8 +120,10 @@ namespace GS
 		EntitiesAdminPage *_entitiesAdminPage = nullptr;
 		AccountsAdminPage *_accountsAdminPage = nullptr;
 
-		FindPersonModel *_findPersonModel = nullptr;
-		FindBusinessModel *_findBusinessModel = nullptr;
+		FindEntityModel *_findEntityModel = nullptr;
+		FindEntityFilterModel *_findPersonFilterModel = nullptr;
+		FindEntityFilterModel *_findBusinessFilterModel = nullptr;
+		FindAccountModel *_findAccountModel = nullptr;
 		CountryQueryModel *_countryQueryModel = nullptr;
 		CountryProxyModel *_countryProxyModel = nullptr;
 		CityQueryModel *_cityQueryModel = nullptr;

@@ -106,9 +106,10 @@ WMenuItem::~WMenuItem()
   delete subMenu_;
 }
 
-void WMenuItem::setContents(WWidget *contents, LoadPolicy policy)
+void WMenuItem::setContents(WWidget *contents, LoadPolicy policy /*= LazyLoading*/, bool deleteContents /*= true*/)
 {
-  delete contents_;
+	if(deleteContents)
+		delete contents_;
 
   contents_ = contents;
 
@@ -506,6 +507,11 @@ WWidget *WMenuItem::contents() const
     return contentsContainer_;
   else
     return contents_;
+}
+
+WWidget * WMenuItem::contentsSafe() const
+{
+	return contents_;
 }
 
 WWidget *WMenuItem::takeContents()

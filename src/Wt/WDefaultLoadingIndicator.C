@@ -19,10 +19,7 @@ WDefaultLoadingIndicator::WDefaultLoadingIndicator()
   WApplication *app = WApplication::instance();
 
   app->styleSheet().addRule("div.Wt-loading",
-			    "background-color: red; color: white;"
-			    "font-family: Arial,Helvetica,sans-serif;"
-			    "font-size: small;"
-			    "position: absolute; right: 0px; top: 0px;");
+			    "position: absolute;right:0;");
   app->styleSheet().addRule("body div > div.Wt-loading",
 			    "position: fixed;");
 

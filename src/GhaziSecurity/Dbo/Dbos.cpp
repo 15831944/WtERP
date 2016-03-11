@@ -11,6 +11,6 @@ std::string GS::UploadedFile::pathToFile() const
 
 std::string GS::UploadedFile::pathToDirectory() const
 {
-	auto result = boost::filesystem::path(APP->docRoot()) / "uploads" / boost::lexical_cast<std::string>(entityPtr.id());
+	auto result = boost::filesystem::path(APP->appRoot()) / "uploads" / boost::lexical_cast<std::string>(entityPtr.id());
 	return result.string();
 }

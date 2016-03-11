@@ -3,13 +3,13 @@
 
 #include "Dbo/Dbos.h"
 #include "Utilities/QueryProxyModel.h"
-#include "Utilities/MyTemplateFormView.h"
+#include "Utilities/MyFormView.h"
 #include "Utilities/TemplateViewsContainer.h"
 
 #include <Wt/Dbo/QueryModel>
 #include <Wt/WSortFilterProxyModel>
 #include <Wt/WTemplateFormView>
-#include <Wt/WValidator>
+#include <Wt/WLengthValidator>
 
 namespace GS
 {
@@ -57,24 +57,26 @@ namespace GS
 		static const Wt::WFormModel::Field nameField;
 
 		CountryView(Wt::WContainerWidget *parent = nullptr);
-		Wt::Signal<void> &submitted() { return _submitted; }
 		Wt::Dbo::ptr<Country> countryPtr() const { return _countryPtr; }
 		Wt::WFormModel *model() const { return _model; }
+		Wt::Signal<void> &submitted() { return _submitted; }
 
 	protected:
 		void submit();
 
 		Wt::WFormModel *_model = nullptr;
-		Wt::Signal<void> _submitted;
 		Wt::Dbo::ptr<Country> _countryPtr;
+		Wt::Signal<void> _submitted;
 	};
 
-	class CountryCodeValidator : public Wt::WValidator
+	class CountryCodeValidator : public Wt::WLengthValidator
 	{
 	public:
 		CountryCodeValidator(bool mandatory = false, Wt::WObject *parent = nullptr)
-			: Wt::WValidator(mandatory, parent)
-		{ }
+			: Wt::WLengthValidator(0, 3, parent)
+		{
+			setMandatory(mandatory);
+		}
 		virtual Result validate(const Wt::WString &input) const override;
 	};
 
@@ -85,27 +87,13 @@ namespace GS
 		static const Wt::WFormModel::Field nameField;
 
 		CityView(Wt::WContainerWidget *parent = nullptr);
-		Wt::Signal<void> &submitted() { return _submitted; }
 		Wt::Dbo::ptr<City> cityPtr() const { return _cityPtr; }
 		Wt::WFormModel *model() const { return _model; }
 
 	protected:
 		void submit();
 		Wt::WFormModel *_model = nullptr;
-		Wt::Signal<void> _submitted;
 		Wt::Dbo::ptr<City> _cityPtr;
-	};
-
-	class CityCountryValidator : public Wt::WValidator
-	{
-	public:
-		CityCountryValidator(Wt::WComboBox *countryCB)
-			: Wt::WValidator((Wt::WObject*)countryCB), _countryCB(countryCB)
-		{ }
-		virtual Result validate(const Wt::WString &input) const override;
-
-	protected:
-		Wt::WComboBox *_countryCB;
 	};
 
 	class LocationFormModel : public Wt::WFormModel

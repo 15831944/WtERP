@@ -19,7 +19,7 @@ namespace GS
 		{
 			Wt::Dbo::Transaction t(dboSession);
 			_recalculateBalanceCall = new Wt::Dbo::Call(dboSession.execute("UPDATE " + std::string(Account::tableName()) + " acc SET balance = "
-				"(SELECT SUM(dE.amount) FROM " + AccountEntry::tableName() + " dE WHERE dE.debit_account_id = acc.id) - (SELECT SUM(cE.amount) FROM " + AccountEntry::tableName() + " cE WHERE cE.credit_account_id = acc.id)"
+				"COALESCE((SELECT SUM(dE.amount) FROM " + AccountEntry::tableName() + " dE WHERE dE.debit_account_id = acc.id), 0) - COALESCE((SELECT SUM(cE.amount) FROM " + AccountEntry::tableName() + " cE WHERE cE.credit_account_id = acc.id), 0)"
 				", \"version\" = \"version\" + 1"));
 			t.rollback();
 		}
@@ -62,6 +62,7 @@ namespace GS
 
 		_isConstructing = true;
 		//createSelfEntityAndAccount(true);
+		createDefaultAccounts(true);
 		recalculateAccountBalances(true);
 		checkAbnormalRecords(true);
 		createPendingCycleEntries(true);
@@ -69,7 +70,28 @@ namespace GS
 	}
 
 	TaskScheduler::~TaskScheduler()
-	{ }
+	{
+		delete _recalculateBalanceCall;
+	}
+
+	void TaskScheduler::createDefaultAccounts(bool scheduleNext)
+	{
+		try
+		{
+			_accountsDatabase.findOrCreateCashAccount();
+		}
+		catch(const std::exception &e)
+		{
+			Wt::log("error") << "TaskScheduler::createDefaultAccounts(): Error: " << e.what();
+			if(_isConstructing)
+				throw e;
+		}
+
+		//Repeat every 24 hours
+		if(scheduleNext)
+			_server->ioService().schedule(static_cast<int>(boost::posix_time::hours(24).total_milliseconds()),
+				boost::bind(&TaskScheduler::createDefaultAccounts, this, true));
+	}
 
 	void TaskScheduler::recalculateAccountBalances(bool scheduleNext)
 	{
@@ -94,10 +116,10 @@ namespace GS
 
 	void TaskScheduler::createPendingCycleEntries(bool scheduleNext)
 	{
-		_createPendingCycleEntries(scheduleNext, false); //false means not to return if StaleObjectException is caught for the first time
+		_createPendingCycleEntries(scheduleNext);
 	}
 
-	void TaskScheduler::_createPendingCycleEntries(bool scheduleNext, bool returnOnStaleException)
+	void TaskScheduler::_createPendingCycleEntries(bool scheduleNext)
 	{
 		Wt::Dbo::Transaction t(dboSession);
 		boost::posix_time::time_duration nextEntryDuration = boost::posix_time::hours(6);
@@ -136,18 +158,6 @@ namespace GS
 			}
 
 			t.commit();
-		}
-		catch(const Wt::Dbo::StaleObjectException &)
-		{
-			if(returnOnStaleException)
-			{
-				Wt::log("warn") << "TaskScheduler::createPendingCycleEntries(): StaleObjectException caught and returnOnStaleException was true";
-				return;
-			}
-
-			dboSession.rereadAll();
-			_createPendingCycleEntries(scheduleNext, true); //true means Do not loop again if StaleObjectException is caught again
-			return;
 		}
 		catch(const std::exception &e)
 		{

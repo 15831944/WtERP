@@ -25,13 +25,20 @@ ${content}
 		<div class="col-sm-2 no-padding">
 			${sidebar class="navbar-admin-side"}
 		</div>
-		
 		<div class="col-sm-10">
-			<div class="container-fluid">
-				${content class="row nav-tabs-admin"}
-			</div>
+			${content}
 		</div>
 	</div>
+</div>
+</message>
+
+<message id="GS.Admin.Main.Content">
+<div class="row">
+	<h2 style="padding:0 20px;">${title}</h2>
+	<hr />
+</div>
+<div class="container-fluid">
+	<div class="row">${content}</div>
 </div>
 </message>
 
@@ -47,16 +54,6 @@ ${content}
 	<div class="input-group-btn">${unit-select}</div>
 </div>
 </message>
-
-<!--<message id="GS.EntityFindLineEdit">
-<div class="form-group">
-	${label}
-	<div class="input-group">
-		${line-edit}
-		<div class="input-group-btn">${new-entity}</div>
-	</div>
-</div>
-</message>-->
 
 <message id="GS.ListFilterView">
 <div class="input-group">
@@ -76,15 +73,15 @@ ${content}
 </div>
 </message>
 
-<message id="GS.FilteredListView">
+<message id="GS.FiltersTemplate">
 <div class="panel panel-default panel-filters">
-	<div class="panel-heading"><h3 class="panel-title">Filter</h3></div>
+	<div class="panel-heading"><h3 class="panel-title">${tr:Filter}</h3></div>
 	<div class="panel-body">
 		<div class="row">
 			<div class="col-sm-8">${filters-container}</div>
 			<div class="col-sm-4">
 				<div class="input-group">
-					<span class="input-group-addon">Add filter</span>
+					<span class="input-group-addon">${tr:AddFilter}</span>
 					${filters-combo}
 					<span class="input-group-btn">${add-filter}</span>
 				</div>
@@ -93,13 +90,17 @@ ${content}
 		<div class="pull-right">${apply-filter}</div>
 	</div>
 </div>
+</message>
+
+<message id="GS.FilteredListView">
+${<filters-enabled>}${filters}${</filters-enabled>}
 ${table-view}
 </message>
 
 <message id="GS.Admin.Entities.New">
 ${<type-selection>}
 	<div class="text-center">
-		<h2>${tr:GS.SelectEntityType}</h2>
+		<h2>${tr:SelectEntityType}</h2>
 		<div class="btn-group" role="group">
 			${selectPerson}
 			${selectBusiness}
@@ -112,7 +113,7 @@ ${<type-chosen>}
 	
 	${<is-person>}
 	<div class="panel panel-default">
-		<div class="panel-heading">${tr:GS.PersonalInfo}</div>
+		<div class="panel-heading">${tr:PersonalInfo}</div>
 		<div class="panel-body form-horizontal">
 			<div class="row row-entity-upload">
 				<div class="col-md-3">${profileUpload class="profile-pic"}</div>
@@ -122,148 +123,146 @@ ${<type-chosen>}
 				</div>
 			</div>
 			<div class="form-group">
-				<label class="control-label col-sm-2" for="${id:name}">${tr:GS.FullName}</label>
+				<label class="control-label col-sm-2" for="${id:name}">${tr:FullName}</label>
 				<div class="col-sm-10">${name}<div class="help-block">${name-info}</div></div>
 			</div>
 			<div class="form-group">
-				<label class="control-label col-sm-2" for="${id:dob}">${tr:GS.DateOfBirth}</label>
+				<label class="control-label col-sm-2" for="${id:dob}">${tr:DateOfBirth}</label>
 				<div class="col-sm-10">${dob}<div class="help-block">${dob-info}</div></div>
 			</div>
 			<div class="form-group">
-				<label class="control-label col-sm-2" for="${id:cnic}">${tr:GS.CNICLabel}</label>
+				<label class="control-label col-sm-2" for="${id:cnic}">${tr:CNICLabel}</label>
 				<div class="col-sm-10">${cnic}<div class="help-block">${cnic-info}</div></div>
 			</div>
 			<div class="form-group">
-				<label class="control-label col-sm-2" for="${id:identificationMark}">${tr:GS.IdentificationMark}</label>
+				<label class="control-label col-sm-2" for="${id:identificationMark}">${tr:IdentificationMark}</label>
 				<div class="col-sm-10">${identificationMark}<div class="help-block">${identificationMark-info}</div></div>
 			</div>
 			<div class="form-group">
-				<label class="control-label col-sm-2" for="${heightLabelFor}">${tr:GS.Height}</label>
+				<label class="control-label col-sm-2" for="${heightLabelFor}">${tr:Height}</label>
 				<div class="col-sm-10">${height}<div class="help-block">${height-info}</div></div>
 			</div>
 			<div class="form-group">
-				<label class="control-label col-sm-2" for="${id:bloodType}">${tr:GS.BloodType}</label>
+				<label class="control-label col-sm-2" for="${id:bloodType}">${tr:BloodType}</label>
 				<div class="col-sm-10">${bloodType}<div class="help-block">${bloodType-info}</div></div>
 			</div>
 			<div class="form-group">
-				<label class="control-label col-sm-2" for="${id:motherTongue}">${tr:GS.MotherTongue}</label>
+				<label class="control-label col-sm-2" for="${id:motherTongue}">${tr:MotherTongue}</label>
 				<div class="col-sm-10">${motherTongue}<div class="help-block">${motherTongue-info}</div></div>
 			</div>
 			<div class="form-group">
-				<label class="control-label col-sm-2" for="${id:married}">${tr:GS.MarriedLabel}</label>
+				<label class="control-label col-sm-2" for="${id:married}">${tr:MaritalStatus}</label>
 				<div class="col-sm-10">${married}<div class="help-block">${married-info}</div></div>
 			</div>
 			<div class="form-group">
-				<label class="control-label col-sm-2" for="${id:nextOfKin}">${tr:GS.NextOfKin}</label>
+				<label class="control-label col-sm-2" for="${id:nextOfKin}">${tr:NextOfKin}</label>
 				<div class="col-sm-10"><div class="input-group">
 					${nextOfKin}
-					<div class="input-group-btn">${new-kin}</div>
+					<div class="input-group-btn">${show-list-kin}${new-kin}</div>
 				</div></div>
 				<div class="help-block col-sm-10 col-sm-offset-2">${nextOfKin-info}</div>
 			</div>
 			<div class="form-group">
-				<label class="control-label col-sm-2" for="${id:father}">${tr:GS.Father}</label>
+				<label class="control-label col-sm-2" for="${id:father}">${tr:Father}</label>
 				<div class="col-sm-10"><div class="input-group">
 					${father}
-					<div class="input-group-btn">${new-father}</div>
+					<div class="input-group-btn">${show-list-father}${new-father}</div>
 				</div></div>
 				<div class="help-block col-sm-10 col-sm-offset-2">${father-info}</div>
 			</div>
 			<div class="form-group">
-				<label class="control-label col-sm-2" for="${id:mother}">${tr:GS.Mother}</label>
+				<label class="control-label col-sm-2" for="${id:mother}">${tr:Mother}</label>
 				<div class="col-sm-10"><div class="input-group">
 					${mother}
-					<div class="input-group-btn">${new-mother}</div>
+					<div class="input-group-btn">${show-list-mother}${new-mother}</div>
 				</div></div>
 				<div class="help-block col-sm-10 col-sm-offset-2">${mother-info}</div>
 			</div>
 			<div class="form-group">
-				<label class="control-label col-sm-2" for="${id:remarks}">${tr:GS.Remarks}</label>
+				<label class="control-label col-sm-2" for="${id:remarks}">${tr:Remarks}</label>
 				<div class="col-sm-10">${remarks}<div class="help-block">${remarks-info}</div></div>
 			</div>
 		</div>
 	</div>
 	${block:GS.Admin.Entities.ContactBlock}
 	<div class="panel panel-default">
-		<div class="panel-heading">${tr:GS.EmployeeInfo}</div>
+		<div class="panel-heading">${tr:EmployeeInfo}</div>
 		<div class="panel-body form-horizontal">
 			<div class="text-center">${add-employee}</div>
 			${<is-employee>}
 				<div class="form-group">
-					<label class="control-label col-sm-2" for="${id:companyNumber}">${tr:GS.CompanyNumber}</label>
+					<label class="control-label col-sm-2" for="${id:companyNumber}">${tr:CompanyNumber}</label>
 					<div class="col-sm-10">${companyNumber}<div class="help-block">${companyNumber-info}</div></div>
 				</div>
 				<div class="form-group">
-					<label class="control-label col-sm-2" for="${id:grade}">${tr:GS.GradeLabel}</label>
+					<label class="control-label col-sm-2" for="${id:grade}">${tr:GradeLabel}</label>
 					<div class="col-sm-10">${grade}<div class="help-block">${grade-info}</div></div>
 				</div>
 				<div class="form-group">
-					<label class="control-label col-sm-2" for="${id:recruitmentDate}">${tr:GS.RecruitmentDate}</label>
+					<label class="control-label col-sm-2" for="${id:recruitmentDate}">${tr:RecruitmentDate}</label>
 					<div class="col-sm-10">${recruitmentDate}<div class="help-block">${recruitmentDate-info}</div></div>
 				</div>
 				<div class="form-group">
-					<label class="control-label col-sm-2" for="${id:education}">${tr:GS.Education}</label>
+					<label class="control-label col-sm-2" for="${id:education}">${tr:Education}</label>
 					<div class="col-sm-10">${education}<div class="help-block">${education-info}</div></div>
 				</div>
 				<div class="form-group">
-					<label class="control-label col-sm-2" for="${id:experience}">${tr:GS.Experience}</label>
+					<label class="control-label col-sm-2" for="${id:experience}">${tr:Experience}</label>
 					<div class="col-sm-10">${experience}<div class="help-block">${experience-info}</div></div>
 				</div>
 				<div class="form-group">
-					<label class="control-label col-sm-2" for="${id:addQualifications}">${tr:GS.AdditionalQualifications}</label>
+					<label class="control-label col-sm-2" for="${id:addQualifications}">${tr:AdditionalQualifications}</label>
 					<div class="col-sm-10">${addQualifications}<div class="help-block">${addQualifications-info}</div></div>
 				</div>
 			${</is-employee>}
 		</div>
 	</div>
 	<div class="panel panel-default">
-		<div class="panel-heading">${tr:GS.PersonnelInfo}</div>
+		<div class="panel-heading">${tr:PersonnelInfo}</div>
 		<div class="panel-body form-horizontal">
 			<div class="text-center">${add-personnel}</div>
 			${<is-personnel>}
 				<div class="form-group">
-					<label class="control-label col-sm-2" for="${id:policeStation}">${tr:GS.PoliceStation}</label>
+					<label class="control-label col-sm-2" for="${id:policeStation}">${tr:PoliceStation}</label>
 					<div class="col-sm-10">${policeStation}<div class="help-block">${policeStation-info}</div></div>
 				</div>
 				<div class="form-group">
-					<label class="control-label checkbox-label col-sm-2" for="${id:policeVerified}">${tr:GS.PoliceVerified}</label>
+					<label class="control-label checkbox-label col-sm-2" for="${id:policeVerified}">${tr:PoliceVerified}</label>
 					<div class="col-sm-10">${policeVerified}</div>
 				</div>
 				<div class="form-group">
-					<label class="control-label col-sm-2" for="${id:armyNumber}">${tr:GS.ArmyNumber}</label>
+					<label class="control-label col-sm-2" for="${id:armyNumber}">${tr:ArmyNumber}</label>
 					<div class="col-sm-10">${armyNumber}<div class="help-block">${armyNumber-info}</div></div>
 				</div>
 				<div class="form-group">
-					<label class="control-label col-sm-2" for="${id:rank}">${tr:GS.Rank}</label>
+					<label class="control-label col-sm-2" for="${id:rank}">${tr:Rank}</label>
 					<div class="col-sm-10">${rank}<div class="help-block">${rank-info}</div></div>
 				</div>
 				<div class="form-group">
-					<label class="control-label col-sm-2" for="${id:trainingCourses}">${tr:GS.TrainingCourses}</label>
+					<label class="control-label col-sm-2" for="${id:trainingCourses}">${tr:TrainingCourses}</label>
 					<div class="col-sm-10">${trainingCourses}<div class="help-block">${trainingCourses-info}</div></div>
 				</div>
 			${</is-personnel>}
 		</div>
 	</div>
-	${block:GS.Admin.Entities.ClientBlock}
-	${block:GS.Admin.Entities.RecurringIncomesBlock}
-	${block:GS.Admin.Entities.RecurringExpensesBlock}
 	${</is-person>}
 
 	${<is-business>}
 	<div class="panel panel-default">
-		<div class="panel-heading">${tr:GS.BusinessInfo}</div>
+		<div class="panel-heading">${tr:BusinessInfo}</div>
 		<div class="panel-body form-horizontal">
 			<div class="form-group">
-				<label class="control-label col-sm-2" for="${id:name}">${tr:GS.BusinessName}</label>
+				<label class="control-label col-sm-2" for="${id:name}">${tr:BusinessName}</label>
 				<div class="col-sm-10">${name}<div class="help-block">${name-info}</div></div>
 			</div>
 		</div>
 	</div>
 	${block:GS.Admin.Entities.ContactBlock}
+	${</is-business>}
+	
 	${block:GS.Admin.Entities.ClientBlock}
 	${block:GS.Admin.Entities.RecurringIncomesBlock}
 	${block:GS.Admin.Entities.RecurringExpensesBlock}
-	${</is-business>}
 	
 	${submit class="btn-primary"}
 ${</type-chosen>}
@@ -271,96 +270,93 @@ ${</type-chosen>}
 
 <message id="GS.Admin.Entities.ClientBlock">
 <div class="panel panel-default">
-	<div class="panel-heading">${tr:GS.ClientInfo}</div>
+	<div class="panel-heading">${tr:ClientInfo}</div>
 	<div class="panel-body">
-		
+		NYI
 	</div>
 </div>
 </message>
 
 <message id="GS.Admin.Entities.RecurringExpensesBlock">
+${<show-expenseCycles>}
 <div class="panel panel-default">
-	<div class="panel-heading">${tr:GS.RecurringExpenses}</div>
+	<div class="panel-heading">${tr:RecurringExpenses}</div>
 	<div class="panel-body">
-		${expenseCycles class="hide-empty-hr"}
-		<hr />
-		<div class="text-center">${add-expense-cycle}</div>
+		${expenseCycles}
 	</div>
 </div>
+${</show-expenseCycles>}
 </message>
 
 <message id="GS.Admin.Entities.RecurringIncomesBlock">
+${<show-incomeCycles>}
 <div class="panel panel-default">
-	<div class="panel-heading">${tr:GS.RecurringIncomes}</div>
+	<div class="panel-heading">${tr:RecurringIncomes}</div>
 	<div class="panel-body">
-		${incomeCycles class="hide-empty-hr"}
-		<hr />
-		<div class="text-center">${add-income-cycle}</div>
+		${incomeCycles}
 	</div>
 </div>
+${</show-incomeCycles>}
 </message>
 
 <message id="GS.Admin.EntryCycleBlock">
 <div class="form-group">
-	<label class="control-label col-sm-2" for="${id:startDate}">${tr:GS.StartingDate}</label>
-	<div class="col-sm-10">
-		${startDate}
-		<div class="help-block">${startDate-info}</div>
+	<label class="control-label" for="${id:entity}">${tr:Entity}</label>
+	<div class="input-group">
+		${entity}
+		<div class="input-group-btn">${list-entity}${new-entity}</div>
 	</div>
+	<div class="help-block">${entity-info}</div>
 </div>
 <div class="form-group">
-	<label class="control-label col-sm-2" for="${id:endDate}">${tr:GS.EndDate}</label>
-	<div class="col-sm-10">
-		${endDate}
-		<div class="help-block">${endDate-info}</div>
-	</div>
+	<label class="control-label" for="${id:startDate}">${tr:StartingDate}</label>
+	${startDate}
+	<div class="help-block">${startDate-info}</div>
 </div>
 <div class="form-group">
-	<label class="control-label col-sm-2" for="${id:amount}">${tr:GS.Amount}</label>
-	<div class="col-sm-10">
-		<div class="input-group">
-			<div class="input-group-addon">Rs</div>
-			${amount}
-			<div class="input-group-addon">/=</div>
-		</div>
-		<div class="help-block">${amount-info}</div>
+	<label class="control-label" for="${id:endDate}">${tr:EndDate}</label>
+	${endDate}
+	<div class="help-block">${endDate-info}</div>
+</div>
+<div class="form-group">
+	<label class="control-label" for="${id:amount}">${tr:Amount}</label>
+	<div class="input-group">
+		<div class="input-group-addon">Rs</div>
+		${amount}
+		<div class="input-group-addon">/=</div>
 	</div>
+	<div class="help-block">${amount-info}</div>
 </div>
 </message>
 
 <message id="GS.Admin.EntryCycleBlock2">
 <div class="form-group">
-	<label class="control-label col-sm-2" for="${id:firstEntryAfterCycle}">${tr:GS.CreateFirstEntry}</label>
-	<div class="col-sm-10">
-		${firstEntryAfterCycle}
-		<div class="help-block">${firstEntryAfterCycle-info}</div>
-	</div>
+	<label class="control-label" for="${id:firstEntryAfterCycle}">${tr:CreateFirstEntry}</label>
+	${firstEntryAfterCycle}
+	<div class="help-block">${firstEntryAfterCycle-info}</div>
 </div>
+${submit class="btn-primary"}
 </message>
 
 <message id="GS.Admin.IncomeCycleView">
-<div class="line-header"><span>${tr:GS.RecurringIncome} ${index}</span></div>
-<div class="form-horizontal">
-	<div class="form-group">
-		<label class="control-label col-sm-2" for="${id:purpose}">${tr:GS.Purpose}</label>
-		<div class="col-sm-10">
+<div class="panel panel-default">
+	<div class="panel-heading">${tr:NewRecurringIncome}</div>
+	<div class="panel-body">
+		<div class="form-group">
+			<label class="control-label" for="${id:purpose}">${tr:Purpose}</label>
 			${purpose}
 			<div class="help-block">${purpose-info}</div>
 		</div>
-	</div>
-	${<if:service>}
-	<div class="form-group">
-		<label class="control-label col-sm-2" for="${id:service}">${tr:GS.Service}</label>
-		<div class="col-sm-10">
+		${<if:service>}
+		<div class="form-group">
+			<label class="control-label" for="${id:service}">${tr:Service}</label>
 			${service}
 			<div class="help-block">${service-info}</div>
 		</div>
-	</div>
-	${</if:service>}
-	${block:GS.Admin.EntryCycleBlock}
-	<div class="form-group">
-		<label class="control-label col-sm-2" for="${id:nIntervals}">${tr:GS.ToBeReceivedEvery}</label>
-		<div class="col-sm-10">
+		${</if:service>}
+		${block:GS.Admin.EntryCycleBlock}
+		<div class="form-group">
+			<label class="control-label" for="${id:nIntervals}">${tr:ToBeReceivedEvery}</label>
 			<div class="input-group">
 				${nIntervals}
 				<span class="input-group-addon"></span>
@@ -368,34 +364,30 @@ ${</type-chosen>}
 			</div>
 			<div class="help-block">${nIntervals-info}</div>
 		</div>
+		${block:GS.Admin.EntryCycleBlock2}
 	</div>
-	${block:GS.Admin.EntryCycleBlock2}
 </div>
 </message>
 
 <message id="GS.Admin.ExpenseCycleView">
-<div class="line-header"><span>${tr:GS.RecurringExpense} ${index}</span></div>
-<div class="form-horizontal">
-	<div class="form-group">
-		<label class="control-label col-sm-2" for="${id:purpose}">${tr:GS.Purpose}</label>
-		<div class="col-sm-10">
+<div class="panel panel-default">
+	<div class="panel-heading">${tr:NewRecurringExpense}</div>
+	<div class="panel-body">
+		<div class="form-group">
+			<label class="control-label" for="${id:purpose}">${tr:Purpose}</label>
 			${purpose}
 			<div class="help-block">${purpose-info}</div>
 		</div>
-	</div>
-	${<if:position>}
-	<div class="form-group">
-		<label class="control-label col-sm-2" for="${id:position}">${tr:GS.Position}</label>
-		<div class="col-sm-10">
+		${<if:position>}
+		<div class="form-group">
+			<label class="control-label" for="${id:position}">${tr:Position}</label>
 			${position}
 			<div class="help-block">${position-info}</div>
 		</div>
-	</div>
-	${</if:position>}
-	${block:GS.Admin.EntryCycleBlock}
-	<div class="form-group">
-		<label class="control-label col-sm-2" for="${id:nIntervals}">${tr:GS.ToBePaidEvery}</label>
-		<div class="col-sm-10">
+		${</if:position>}
+		${block:GS.Admin.EntryCycleBlock}
+		<div class="form-group">
+			<label class="control-label" for="${id:nIntervals}">${tr:ToBePaidEvery}</label>
 			<div class="input-group">
 				${nIntervals}
 				<span class="input-group-addon"></span>
@@ -403,17 +395,17 @@ ${</type-chosen>}
 			</div>
 			<div class="help-block">${nIntervals-info}</div>
 		</div>
+		${block:GS.Admin.EntryCycleBlock2}
 	</div>
-	${block:GS.Admin.EntryCycleBlock2}
 </div>
 </message>
 
 <message id="GS.Admin.Entities.ContactBlock">
 <div class="panel panel-default">
-	<div class="panel-heading">${tr:GS.ContactInfo}</div>
+	<div class="panel-heading">${tr:ContactInfo}</div>
 	<div class="panel-body form-horizontal">
 		<div class="form-group">
-			<label class="control-label col-sm-2">${tr:GS.ContactNumber}</label>
+			<label class="control-label col-sm-2">${tr:ContactNumber}</label>
 			<div class="col-sm-10">${contactNumbers class="multiple-edit"}<div class="help-block">${contactNumbers-info}</div></div>
 		</div>
 		<div class="form-group"><div class="col-sm-12">${add-contact-number class="pull-right"}</div></div>
@@ -426,7 +418,7 @@ ${</type-chosen>}
 
 <message id="GS.Admin.LocationView">
 <div class="form-group">
-	<label class="control-label col-sm-2" for="${id:country}">${tr:GS.Address} ${index}</label>
+	<label class="control-label col-sm-2" for="${id:country}">${tr:Address} ${index}</label>
 	<div class="col-sm-10">
 		<div class="country-city row">
 			<div class="col-xs-6">${country}</div>
@@ -443,11 +435,11 @@ ${</type-chosen>}
 <message id="GS.Admin.CountryView">
 <div class="form-horizontal">
 	<div class="form-group">
-		<label class="control-label col-sm-3" for="${id:code}">${tr:GS.CountryCode}</label>
+		<label class="control-label col-sm-3" for="${id:code}">${tr:CountryCode}</label>
 		<div class="col-sm-9">${code}<div class="help-block">${code-info}</div></div>
 	</div>
 	<div class="form-group">
-		<label class="control-label col-sm-3" for="${id:name}">${tr:GS.CountryName}</label>
+		<label class="control-label col-sm-3" for="${id:name}">${tr:CountryName}</label>
 		<div class="col-sm-9">${name}<div class="help-block">${name-info}</div></div>
 	</div>
 	<div class="form-group">
@@ -459,11 +451,11 @@ ${</type-chosen>}
 <message id="GS.Admin.CityView">
 <div class="form-horizontal">
 	<div class="form-group">
-		<label class="control-label col-sm-3" for="${id:country}">${tr:GS.Country}</label>
+		<label class="control-label col-sm-3" for="${id:country}">${tr:Country}</label>
 		<div class="col-sm-9">${country}<div class="help-block">${country-info}</div></div>
 	</div>
 	<div class="form-group">
-		<label class="control-label col-sm-3" for="${id:name}">${tr:GS.CityName}</label>
+		<label class="control-label col-sm-3" for="${id:name}">${tr:CityName}</label>
 		<div class="col-sm-9">${name}<div class="help-block">${name-info}</div></div>
 	</div>
 	<div class="form-group">
@@ -475,7 +467,7 @@ ${</type-chosen>}
 <message id="GS.Admin.PositionView">
 <div class="form-horizontal">
 	<div class="form-group">
-		<label class="control-label col-sm-3" for="${id:title}">${tr:GS.PositionTitle}</label>
+		<label class="control-label col-sm-3" for="${id:title}">${tr:PositionTitle}</label>
 		<div class="col-sm-9">${title}<div class="help-block">${title-info}</div></div>
 	</div>
 	<div class="form-group">
@@ -487,13 +479,103 @@ ${</type-chosen>}
 <message id="GS.Admin.ServiceView">
 <div class="form-horizontal">
 	<div class="form-group">
-		<label class="control-label col-sm-3" for="${id:title}">${tr:GS.ServiceTitle}</label>
+		<label class="control-label col-sm-3" for="${id:title}">${tr:ServiceTitle}</label>
 		<div class="col-sm-9">${title}<div class="help-block">${title-info}</div></div>
 	</div>
 	<div class="form-group">
 		<div class="col-sm-9 col-sm-offset-3">${submit class="btn-primary"}</div>
 	</div>
 </div>
+</message>
+
+<message id="GS.Admin.AccountView">
+<div class="panel panel-default">
+	<div class="panel-heading">${tr:NewAccount}</div>
+	<div class="panel-body">
+		<div class="form-group">
+			<label class="control-label" for="${id:type}">${tr:AccountType}</label>
+			${type}
+			<div class="help-block">${type-info}</div>
+		</div>
+		<div class="form-group">
+			<label class="control-label" for="${id:name}">${tr:AccountName}</label>
+			${name}
+			<div class="help-block">${name-info}</div>
+		</div>
+	</div>
+</div>
+${submit class="btn-primary"}
+</message>
+
+<message id="GS.Admin.AccountEntryBlock">
+<div class="form-group">
+	<label class="control-label" for="${id:description}">${tr:Description}</label>
+	${description}
+	<div class="help-block">${description-info}</div>
+</div>
+<div class="form-group">
+	<label class="control-label" for="${id:debitAccount}">${tr:DebitAccount}</label>
+	<div class="input-group">
+		${debitAccount}
+		<div class="input-group-btn">${list-debit}${new-debit}</div>
+	</div>
+	<div class="help-block">${debitAccount-info}</div>
+</div>
+<div class="form-group">
+	<label class="control-label" for="${id:creditAccount}">${tr:CreditAccount}</label>
+	<div class="input-group">
+		${creditAccount}
+		<div class="input-group-btn">${list-credit}${new-credit}</div>
+	</div>
+	<div class="help-block">${creditAccount-info}</div>
+</div>
+${<if:entity>}
+<div class="form-group">
+	<label class="control-label" for="${id:entity}">${tr:Entity}</label>
+	<div class="input-group">
+		${entity}
+		<div class="input-group-btn">${list-entity}${new-entity}</div>
+	</div>
+	<div class="help-block">${entity-info}</div>
+</div>
+${</if:entity>}
+<div class="form-group">
+	<label class="control-label" for="${id:amount}">${tr:Amount}</label>
+	<div class="input-group">
+		<div class="input-group-addon">Rs</div>
+		${amount}
+		<div class="input-group-addon">/=</div>
+	</div>
+	<div class="help-block">${amount-info}</div>
+</div>
+</message>
+
+<message id="GS.Admin.AccountEntryView">
+<div class="panel panel-default">
+	<div class="panel-heading">${tr:NewAccountEntry}</div>
+	<div class="panel-body">${block:GS.Admin.AccountEntryBlock}</div>
+</div>
+${submit class="btn-primary"}
+</message>
+
+<message id="GS.Admin.TransactionView">
+${<select-direction>}
+<div class="text-center">
+	<h2>${tr:ReceivingOrPaying}</h2>
+	<div class="btn-group" role="group">
+		${selectReceipt}
+		${selectPayment}
+	</div>
+</div>
+${</select-direction>}
+${<direction-selected>}
+${<select-direction>}<hr />${</select-direction>}
+<div class="panel panel-default">
+	<div class="panel-heading">${tr:NewTransaction}</div>
+	<div class="panel-body">${block:GS.Admin.AccountEntryBlock}</div>
+</div>
+${submit class="btn-primary"}
+${</direction-selected>}
 </message>
 
 <message id="GS.ImageUpload">
@@ -504,4 +586,43 @@ ${</type-chosen>}
 	${image}
 </label>
 </message>
+
 </messages>
+
+<!--
+<message id="GS.EntityFindLineEdit">
+<div class="form-group">
+	${label}
+	<div class="input-group">
+		${line-edit}
+		<div class="input-group-btn">${new-entity}</div>
+	</div>
+</div>
+</message>
+-->
+
+<!--
+<message id="GS.Admin.ExpenseCycleSummary">
+<div class="row ${text-class}">
+	<div class="col-sm-2">${tr:RecurringExpense} ${index}</div>
+	<div class="col-sm-9">
+		${tr:StartDate}: ${startDate}, ${tr:Amount}: ${amount}
+		${<has-extra>}${tr:Position}: ${extra}${</has-extra>}
+		${<end-date>}${tr:EndDate}: ${endDate}${<has-ended>} (Ended)${</has-ended>}${</end-date>}
+	</div>
+	<a href="#/accounts/expenses/expense-${id}"><div class="col-sm-1">${block:GS.LinkIcon}</div></a>
+</div>
+</message>
+
+<message id="GS.Admin.IncomeCycleSummary">
+<div class="row ${text-class}">
+	<div class="col-sm-2">${tr:RecurringIncome} ${index}</div>
+	<div class="col-sm-9">
+		${tr:StartDate}: ${startDate}, ${tr:Amount}: ${amount}
+		${<has-extra>}${tr:Service}: ${extra}${</has-extra>}
+		${<end-date>}${tr:EndDate}: ${endDate}${<has-ended>} (Ended)${</has-ended>}${</end-date>}
+	</div>
+	<a href="#/accounts/expenses/income-${id}"><div class="col-sm-1">${block:GS.LinkIcon}</div></a>
+</div>
+</message>
+-->

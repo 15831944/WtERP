@@ -3,6 +3,7 @@
 #include "Dbo/ConfigurationsDatabase.h"
 #include "Utilities/TaskScheduler.h"
 
+#include <Wt/WMessageResourceBundle>
 #include <Wt/Dbo/FixedSqlConnectionPool>
 #include <Wt/Dbo/backend/MySQL>
 #include <Wt/Dbo/backend/Sqlite3>
@@ -17,15 +18,20 @@
 namespace GS
 {
 
-WServer::WServer(const std::string& wtApplicationPath, const std::string& wtConfigurationFile)
-	: Wt::WServer(wtApplicationPath, wtConfigurationFile), _passwordService(_authService)
+WServer::WServer(int argc, char *argv[], const std::string &wtConfigurationFile)
+	: Wt::WServer(argv[0], wtConfigurationFile), _passwordService(_authService)
 {
 	_ptBeforeLoad = boost::posix_time::microsec_clock::local_time();
+	setServerConfiguration(argc, argv, WTHTTP_CONFIGURATION);
 	initialize();
 }
 
 void WServer::initialize()
 {
+	auto resolver = new Wt::WMessageResourceBundle();
+	resolver->use(appRoot() + "strings", false); //CHECK_BEFORE_RELEASE
+	setLocalizedStrings(resolver);
+
 	/* *************************************************************************
 	* ***********************  Connect to SQL Server  *************************
 	* *************************************************************************/
@@ -178,6 +184,7 @@ WServer::~WServer()
 	delete _taskScheduler;
 	delete _configs;
 	delete _sqlPool; //Also deletes SQLConnections
+	delete localizedStrings();
 }
 
 bool WServer::start()

@@ -31,24 +31,24 @@ namespace GS
 
 			return proxyModel->mapFromSource(qryModel->index(sourceRow, 0)).row();
 		}
-		Result resultRow(int proxyRow) const
+		const Result *resultRow(int proxyRow) const
 		{
 			if(proxyRow == -1)
-				return Result();
+				return nullptr;
 
 			auto proxyModel = this;
 			auto qryModel = queryModel();
 			if(!qryModel)
 			{
 				Wt::log("error") << "QueryProxyModel::resultRow() called without a source QueryModel";
-				return Result();
+				return nullptr;
 			}
 
 			auto sourceIndex = proxyModel->mapToSource(proxyModel->index(proxyRow, 0));
 			if(!sourceIndex.isValid())
-				return Result();
+				return nullptr;
 
-			return qryModel->resultRow(sourceIndex.row());
+			return &qryModel->resultRow(sourceIndex.row());
 		}
 
 		Wt::Dbo::QueryModel<Result> *queryModel() const

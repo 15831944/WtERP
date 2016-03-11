@@ -56,7 +56,7 @@ namespace GS
 		boost::filesystem::path filePath(fileInfo.clientFileName());
 		if(!filePath.has_extension())
 		{
-			resolve<Wt::WText*>("action")->setText(tr("GS.NoExtension"));
+			resolve<Wt::WText*>("action")->setText(tr("NoExtension"));
 			return;
 		}
 
@@ -83,14 +83,14 @@ namespace GS
 		}
 		catch(const Magick::Exception &e)
 		{
-			Wt::log("warning") << "ImageUpload::handleUploaded(): Error in Magick block:" << e.what();
-			WApplication::instance()->showErrorDialog(tr("GS.GMThumbnailError"));
+			Wt::log("warn") << "ImageUpload::handleUploaded(): Error in Magick block:" << e.what();
+			WApplication::instance()->showErrorDialog(tr("GMThumbnailError"));
 		}
 	}
 
 	void ImageUpload::handleFileTooLarge()
 	{
-		resolve<Wt::WText*>("action")->setText(tr("GS.FileTooLarge").arg(std::round(static_cast<double>(SERVER->configuration().maxRequestSize()) * 100 / 1024 / 1024) / 100));
+		resolve<Wt::WText*>("action")->setText(tr("FileTooLarge").arg(std::round(static_cast<double>(SERVER->configuration().maxRequestSize()) * 100 / 1024 / 1024) / 100));
 	}
 
 	void ImageUpload::handleChanged()
@@ -123,24 +123,26 @@ namespace GS
 	{
 		if(_imageInfo.fileName.empty())
 			return;
+		
+		if(!_dialog)
+		{
+			_dialog = new Wt::WDialog(this);
+			_dialog->setClosable(true);
+			_dialog->resize(Wt::WLength(95, Wt::WLength::Percentage), Wt::WLength(95, Wt::WLength::Percentage));
+			_dialog->rejectWhenEscapePressed(true);
+			_dialog->setTransient(true);
+			_dialog->contents()->setOverflow(Wt::WContainerWidget::OverflowAuto);
 
-		Wt::WDialog *dialog = new Wt::WDialog(tr("GS.Preview"), this);
-		dialog->setClosable(true);
-		dialog->setMaximumSize(Wt::WLength(95, Wt::WLength::Percentage), Wt::WLength(95, Wt::WLength::Percentage));
+			if(!_imageResource)
+				_imageResource = new Wt::WFileResource(this);
+			_imageResource->setFileName(_imageInfo.fileName);
+			_imageResource->setMimeType(_imageInfo.mimeType);
 
-		if(!_imageResource)
-			_imageResource = new Wt::WFileResource(this);
-		_imageResource->setFileName(_imageInfo.fileName);
-		_imageResource->setMimeType(_imageInfo.mimeType);
+			Wt::WImage *img = new Wt::WImage(_dialog->contents());
+			img->setImageLink(_imageResource);
+		}
 
-		Wt::WImage *img = new Wt::WImage(dialog->contents());
-		img->setImageLink(_imageResource);
-
-		dialog->finished().connect(std::bind([dialog]() {
-			delete dialog;
-		}));
-
-		dialog->show();
+		_dialog->show();
 	}
 
 	void ImageUpload::setImageInfo(const UploadedImage &newImageInfo)
@@ -176,66 +178,75 @@ namespace GS
 		lazyBindImage();
 	}
 
-	Wt::Dbo::ptr<UploadedFile> ImageUpload::saveToDb(Wt::Dbo::ptr<Entity> entityPtr, const std::string &description /*= ""*/)
+	bool ImageUpload::saveAndRelocate(Wt::Dbo::ptr<Entity> entityPtr, const std::string &description /*= ""*/)
 	{
-		if(!_imageInfo.temporary || !entityPtr)
-			return _imageInfo.filePtr;
+		if(!_imageInfo.temporary || !entityPtr || _fileUpload->uploadedFiles().empty())
+			return false;
 
+		//Save
 		WApplication *app = WApplication::instance();
 		Wt::Dbo::Transaction t(app->session());
-		Wt::Dbo::ptr<UploadedFile> filePtr;
-		if(_imageInfo.filePtr)
-			filePtr = _imageInfo.filePtr;
-		else
-			_imageInfo.filePtr = filePtr = app->session().add(new UploadedFile);
 
-		filePtr.modify()->description = description;
-		filePtr.modify()->extension = _imageInfo.extension;
-		filePtr.modify()->mimeType = _imageInfo.mimeType;
-		filePtr.modify()->entityPtr = entityPtr;
+		if(!_imageInfo.filePtr)
+			_imageInfo.filePtr = app->session().add(new UploadedFile);
+
+		_imageInfo.filePtr.modify()->description = description;
+		_imageInfo.filePtr.modify()->extension = _imageInfo.extension;
+		_imageInfo.filePtr.modify()->mimeType = _imageInfo.mimeType;
+		_imageInfo.filePtr.modify()->entityPtr = entityPtr;
+		_imageInfo.filePtr.flush();
 		t.commit();
 
-		return filePtr;
-	}
-
-	void ImageUpload::moveToPermanentLocation()
-	{
-		if(!_imageInfo.temporary || !_imageInfo.filePtr)
-			return;
-
+		//Relocate
 		boost::filesystem::path newPath = boost::filesystem::path(_imageInfo.filePtr->pathToDirectory());
 		boost::filesystem::path thumbnailFilePath = newPath / (boost::lexical_cast<std::string>(_imageInfo.filePtr.id()) + "_thumb.jpg");
 		boost::filesystem::path newFilePath = newPath / (boost::lexical_cast<std::string>(_imageInfo.filePtr.id()) + _imageInfo.extension);
 
-		boost::filesystem::create_directories(newPath);
-		boost::filesystem::copy_file(_imageInfo.fileName, newFilePath, boost::filesystem::copy_option::overwrite_if_exists);
+		try
+		{
+			boost::filesystem::create_directories(newPath);
+			boost::filesystem::copy_file(_imageInfo.fileName, newFilePath, boost::filesystem::copy_option::overwrite_if_exists);
+			boost::filesystem::remove(_imageInfo.fileName);
+			_fileUpload->uploadedFiles().back().stealSpoolFile();
 
-		auto thumbnailResource = dynamic_cast<Wt::WMemoryResource*>(_thumbnailResource);
-		std::ofstream thumbnailStream(thumbnailFilePath.string(), std::ofstream::binary | std::ofstream::trunc);
-		auto thumbnailData = thumbnailResource->data();
-		thumbnailStream.write((const char*)&thumbnailData[0], thumbnailData.size() * sizeof(unsigned char));
-		thumbnailStream.close();
+			auto thumbnailResource = dynamic_cast<Wt::WMemoryResource*>(_thumbnailResource);
+			std::ofstream thumbnailStream(thumbnailFilePath.string(), std::ofstream::binary | std::ofstream::trunc);
+			auto thumbnailData = thumbnailResource->data();
+			thumbnailStream.write((const char*)&thumbnailData[0], thumbnailData.size() * sizeof(unsigned char));
+			thumbnailStream.close();
 
-		_imageInfo.temporary = false;
-		_imageInfo.fileName = newFilePath.string();
+			_imageInfo.temporary = false;
+			_imageInfo.fileName = newFilePath.string();
 
-		if(_imageResource)
-			_imageResource->setFileName(newFilePath.string());
+			if(_imageResource)
+				_imageResource->setFileName(newFilePath.string());
 
-		delete _thumbnailResource;
-		Wt::WFileResource *thumbFileResource;
-		_thumbnailResource = thumbFileResource = new Wt::WFileResource(this);
-		thumbFileResource->setFileName(thumbnailFilePath.string());
-		thumbFileResource->setMimeType("image/jpeg");
-		_image->setImageLink(Wt::WLink(_thumbnailResource));
+			delete _thumbnailResource;
+			Wt::WFileResource *thumbFileResource;
+			_thumbnailResource = thumbFileResource = new Wt::WFileResource(this);
+			thumbFileResource->setFileName(thumbnailFilePath.string());
+			thumbFileResource->setMimeType("image/jpeg");
+			_image->setImageLink(Wt::WLink(_thumbnailResource));
+		}
+		catch(const std::exception &e)
+		{
+			Wt::log("error") << "Error relocating file " << _imageInfo.fileName << ": " << e.what();
+			_imageInfo.filePtr.remove();
+			_imageInfo = UploadedImage();
+			_image->setImageLink(_placeholderLink);
+			APP->showErrorDialog(tr("ImageRelocationError"));
+			return false;
+		}
+
+		return true;
 	}
 
 	void ImageUpload::createThumbnail(const std::string &path, Magick::Blob *blob)
 	{
 		Magick::Image img;
 		img.quiet(true);
-		img.backgroundColor(Magick::Color("white"));
 		img.read(path);
+		img.backgroundColor(Magick::Color("white"));
 		auto imgSize = img.size();
 		img.thumbnail(Magick::Geometry(static_cast<unsigned int>(std::round((double)imgSize.width() / imgSize.height() * _thumbnailHeight)), _thumbnailHeight));
 		img.quality(90);

@@ -141,7 +141,10 @@ enum ItemDataRole {
   BarPenColorRole = 18,   //!< Bar pen color (for Chart::WCartesianChart)
   BarBrushColorRole = 19, //!< Bar brush color (for Chart::WCartesianChart)
 
-  UserRole = 32           //!< First role reserved for user purposes
+  UserRole = 32,           //!< First role reserved for user purposes
+  WidthRole = 40,
+  AdditionalRowRole = 41,
+  ViewIndexRole = 42
 };
 
 /*! \brief Flags that indicate data item options

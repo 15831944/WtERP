@@ -36,8 +36,7 @@ namespace GS
 		Wt::WImage *image() const { return _image; }
 		const UploadedImage &imageInfo() const { return _imageInfo; }
 		void setImageInfo(const UploadedImage &imageInfo);
-		Wt::Dbo::ptr<UploadedFile> saveToDb(Wt::Dbo::ptr<Entity> entityPtr, const std::string &description = ""); //throws Dbo::Exception
-		void moveToPermanentLocation();
+		bool saveAndRelocate(Wt::Dbo::ptr<Entity> entityPtr, const std::string &description = ""); //throws Dbo::Exception
 
 	protected:
 		void lazyBindImage();
@@ -49,6 +48,7 @@ namespace GS
 		Wt::WImage *_image = nullptr;
 		Wt::WFileResource *_imageResource = nullptr;
 		Wt::WResource *_thumbnailResource = nullptr;
+		Wt::WDialog *_dialog = nullptr;
 		unsigned int _thumbnailHeight = 128;
 		UploadedImage _imageInfo;
 		Wt::WLink _placeholderLink;

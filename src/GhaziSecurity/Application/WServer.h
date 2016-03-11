@@ -25,7 +25,7 @@ namespace GS
 	class WServer : public Wt::WServer
 	{
 	public:
-		WServer(const std::string& wtApplicationPath = std::string(), const std::string& wtConfigurationFile = std::string());
+		WServer(int argc, char *argv[], const std::string &wtConfigurationFile = "");
 		virtual ~WServer() override;
 
 		static WServer *instance() { return dynamic_cast<WServer*>(Wt::WServer::instance()); }

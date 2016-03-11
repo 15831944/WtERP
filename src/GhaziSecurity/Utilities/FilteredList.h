@@ -10,6 +10,8 @@
 
 namespace GS
 {
+	class AbstractFilteredList;
+
 	//FITLER MODEL
 	class AbstractFilterWidgetModel : public Wt::WObject
 	{
@@ -86,8 +88,8 @@ namespace GS
 	class NameFilterModel : public WLineEditFilterModel
 	{
 	public:
-		NameFilterModel(const std::string &columnName, const FuncType &f = FuncType(), Wt::WObject *parent = nullptr)
-			: WLineEditFilterModel(Wt::WString::tr("GS.Name"), columnName, f, parent)
+		NameFilterModel(const Wt::WString &filterTitle, const std::string &columnName, const FuncType &f = FuncType(), Wt::WObject *parent = nullptr)
+			: WLineEditFilterModel(filterTitle, columnName, f, parent)
 		{ }
 		virtual std::string sqlCondition() override;
 		virtual std::vector<std::string> boundValues() override;
@@ -107,7 +109,6 @@ namespace GS
 		};
 
 		RangeEdit(Wt::WContainerWidget *parent = nullptr);
-		virtual ~RangeEdit() override;
 		Wt::WComboBox *operatorCombo() const { return _operatorCombo; }
 
 	protected:
@@ -135,34 +136,65 @@ namespace GS
 		FuncType _function;
 	};
 
-	//LIST MODEL
-	class AbstractFilteredList : public Wt::WTemplate
+	class FiltersTemplate : public Wt::WTemplate
 	{
 	public:
 		typedef std::vector<AbstractFilterWidgetModel*> FilterModelVector;
 
-		AbstractFilteredList(Wt::WContainerWidget *parent = nullptr);
-		virtual void reload() = 0;
+		FiltersTemplate(AbstractFilteredList *filteredList, Wt::WContainerWidget *parent = nullptr);
+		Wt::WContainerWidget *filterWidgetsContainer() const { return _filterWidgetsContainer; }
+
+		void addFilterModel(AbstractFilterWidgetModel *model);
+		void addFilter(int filtersComboIndex);
 
 		static void initIdEdit(Wt::WLineEdit *edit);
 		static void initEntityTypeEdit(Wt::WComboBox *edit);
 		static void initRoleEdit(Wt::WComboBox *edit);
+		
+	protected:
+		void handleAddFilter();
+		void handleApplyFilters();
+
+		Wt::WContainerWidget *_filterWidgetsContainer = nullptr;
+		Wt::WComboBox *_filtersComboBox = nullptr;
+		AbstractFilteredList *_filteredList = nullptr;
+		FilterModelVector _modelVector;
+
+	private:
+		friend class AbstractFilteredList;
+		template<typename T> friend class QueryModelFilteredList;
+	};
+
+	//LIST MODEL
+	class AbstractFilteredList : public Wt::WTemplate
+	{
+	public:
+		AbstractFilteredList(Wt::WContainerWidget *parent = nullptr);
+
+		void enableFilters();
+		void resetColumnWidths();
+		int viewIndexToColumn(int viewIndex) const;
+		virtual void reload() = 0;
+		virtual void applyFilter(const std::string &sqlCondition) = 0;
+		
+		Wt::WTableView *tableView() const { return _tableView; }
+		FiltersTemplate *filtersTemplate() const { return _filtersTemplate; }
+		Wt::WAbstractItemModel *model() const { return _model; }
+		Wt::WAbstractItemModel *proxyModel() const { return _proxyModel; }
 
 	protected:
 		void init();
+		virtual void initFilters() { }
 		virtual void initModel() = 0;
-		void addFilterModel(AbstractFilterWidgetModel *model);
-		void handleAddFilter();
-		void handleApplyFilters();
-		virtual void applyFilter(const std::string sqlCondition) = 0;
-		void addFilter(int filtersComboIndex);
+		void addColumn(int viewIndex, int column, const Wt::WString &header, int width);
 
-		Wt::WContainerWidget *_filterWidgetsContainer = nullptr;
+		typedef std::map<int, int> ViewIndexToColumnMap;
+		ViewIndexToColumnMap _viewIndexToColumnMap;
+
 		Wt::WTableView *_tableView = nullptr;
+		FiltersTemplate *_filtersTemplate = nullptr;
 		Wt::WAbstractItemModel *_model = nullptr;
 		Wt::WAbstractItemModel *_proxyModel = nullptr;
-		Wt::WComboBox *_filtersComboBox = nullptr;
-		FilterModelVector _modelVector;
 	};
 
 	template<typename T>
@@ -177,7 +209,7 @@ namespace GS
 		virtual void reload() override;
 
 	protected:
-		virtual void applyFilter(const std::string sqlCondition) override;
+		virtual void applyFilter(const std::string &sqlCondition) override;
 
 		Wt::Dbo::Query<ResultType> _baseQuery;
 	};
@@ -198,8 +230,11 @@ namespace GS
 	}
 
 	template<typename T>
-	void QueryModelFilteredList<T>::applyFilter(const std::string sqlCondition)
+	void QueryModelFilteredList<T>::applyFilter(const std::string &sqlCondition)
 	{
+		if(!filtersTemplate())
+			return;
+
 		WApplication *app = APP;
 		auto model = queryModel();
 		Wt::Dbo::Query<ResultType> query(_baseQuery);
@@ -207,7 +242,7 @@ namespace GS
 		if(!sqlCondition.empty())
 		{
 			query.where(sqlCondition);
-			for(auto model : _modelVector)
+			for(auto model : filtersTemplate()->_modelVector)
 			{
 				if(!model->enabled())
 					continue;
