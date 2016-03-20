@@ -16,9 +16,6 @@ namespace GS
 	class PositionProxyModel;
 	class ServiceProxyModel;
 	class AccountsAdminPage;
-	class FindEntityModel;
-	class FindEntityFilterModel;
-	class FindAccountModel;
 	//class LocationFilterModel;
 
 	typedef Wt::Dbo::QueryModel<Wt::Dbo::ptr<Location>> LocationQueryModel;
@@ -59,11 +56,11 @@ namespace GS
 		AccountsDatabase &accountsDatabase() { return _accountsDatabase; }
 
 		//Widgets
-		Wt::WTemplate *mainTemplate() const { return _mainTemplate; }
-		Wt::WNavigationBar *mainNavBar() const { return _navBar; }
-		Wt::WMenu *mainMenu() const { return _mainMenu; }
+		Wt::WTemplate *mainTemplate() const { return _mainVisitorTemplate; }
+		Wt::WNavigationBar *mainNavBar() const { return _visitorNavBar; }
+		Wt::WMenu *mainMenu() const { return _visitorMenu; }
 		Wt::WMenu *adminMenu() const { return _adminMenu; }
-		Wt::WStackedWidget *mainStack() const { return _mainStack; }
+		Wt::WStackedWidget *mainStack() const { return _visitorStack; }
 		Wt::WStackedWidget *adminStack() const { return _adminStack; }
 		EntitiesAdminPage *entitiesAdminPage() const { return _entitiesAdminPage; }
 		AccountsAdminPage *accountsAdminPage() const { return _accountsAdminPage; }
@@ -74,15 +71,17 @@ namespace GS
 		void showStaleObjectError(const Wt::WString &recordName) { showErrorDialog(Wt::WString::tr("StaleObjectError").arg(recordName)); }
 		void showDbBackendError(const std::string &code);
 
+		//SuggestionPopups
+		Wt::WSuggestionPopup *findEntitySuggestion() const { return _findEntitySuggestion; }
+		void initFindEntitySuggestion();
+		Wt::WSuggestionPopup *findPersonSuggestion() const { return _findPersonSuggestion; }
+		void initFindPersonSuggestion();
+		Wt::WSuggestionPopup *findBusinessSuggestion() const { return _findBusinessSuggestion; }
+		void initFindBusinessSuggestion();
+		Wt::WSuggestionPopup *findAccountSuggestion() const { return _findAccountSuggestion; }
+		void initFindAccountSuggestion();
+
 		//QueryModels
-		FindEntityModel *findEntityModel() const { return _findEntityModel; }
-		FindEntityFilterModel *findPersonModel() const { return _findPersonFilterModel; }
-		FindEntityFilterModel *findBusinessModel() const { return _findBusinessFilterModel; }
-		void initFindEntityModel();
-
-		FindAccountModel *findAccountModel() const { return _findAccountModel; }
-		void initFindAccountModel();
-
 		CountryQueryModel *countryQueryModel() const { return _countryQueryModel; }
 		CountryProxyModel *countryProxyModel() const { return _countryProxyModel; }
 		void initCountryQueryModel();
@@ -107,23 +106,33 @@ namespace GS
 		void handleInternalPathChanged(std::string path);
 
 		void lazyLoadAdminWidgets();
+		void lazyLoadLoginWidget();
 
 		//Widgets
-		Wt::WTemplate *_mainTemplate = nullptr;
-		Wt::WNavigationBar *_navBar = nullptr;
-		Wt::WMenu *_mainMenu = nullptr;
-		Wt::WMenu *_adminMenu = nullptr;
 		Wt::WStackedWidget *_mainStack = nullptr;
+
+		Wt::WTemplate *_mainVisitorTemplate = nullptr;
+		Wt::WStackedWidget *_visitorStack = nullptr;
+		Wt::WNavigationBar *_visitorNavBar = nullptr;
+		Wt::WMenu *_visitorMenu = nullptr;
+
+		Wt::WTemplate *_mainAdminTemplate = nullptr;
 		Wt::WStackedWidget *_adminStack = nullptr;
-		Wt::WDialog *_errorDialog = nullptr;
-		Wt::WText *_errorDialogText = nullptr;
+		Wt::WNavigationBar *_adminNavBar = nullptr;
+		Wt::WMenu *_adminMenu = nullptr;
+
 		EntitiesAdminPage *_entitiesAdminPage = nullptr;
 		AccountsAdminPage *_accountsAdminPage = nullptr;
 
-		FindEntityModel *_findEntityModel = nullptr;
-		FindEntityFilterModel *_findPersonFilterModel = nullptr;
-		FindEntityFilterModel *_findBusinessFilterModel = nullptr;
-		FindAccountModel *_findAccountModel = nullptr;
+		Wt::WDialog *_errorDialog = nullptr;
+		Wt::WText *_errorDialogText = nullptr;
+
+		Wt::WSuggestionPopup *_findEntitySuggestion = nullptr;
+		Wt::WSuggestionPopup *_findPersonSuggestion = nullptr;
+		Wt::WSuggestionPopup *_findBusinessSuggestion = nullptr;
+		Wt::WSuggestionPopup *_findAccountSuggestion = nullptr;
+
+		//Models
 		CountryQueryModel *_countryQueryModel = nullptr;
 		CountryProxyModel *_countryProxyModel = nullptr;
 		CityQueryModel *_cityQueryModel = nullptr;

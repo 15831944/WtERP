@@ -2,6 +2,7 @@
 #include "Application/WServer.h"
 #include "Dbo/Configuration.h"
 
+#include "Utilities/FindRecordEdit.h"
 #include "Widgets/AdminPages.h"
 #include "Widgets/EntityView.h"
 #include "Widgets/EntityList.h"
@@ -18,6 +19,8 @@
 #include <Wt/WBootstrapTheme>
 #include <Wt/WPushButton>
 #include <Wt/WLoadingIndicator>
+#include <Wt/WSuggestionPopup>
+#include <web/WebUtils.h>
 
 #include <Wt/Dbo/QueryModel>
 
@@ -64,9 +67,9 @@ WApplication::WApplication(const Wt::WEnvironment& env)
 	setTitle(Wt::WString::tr("GS.Title"));
 	styleSheet().addRule("div.Wt-loading",
 		"position:absolute;top:0px;right:0;background:#457044;padding:10px 15px;color:#fff;border-radius:0 0 0 3px;"
-		"-webkit-box-shadow: -1px 1px 5px 0px #000;"
-		"-moz-box-shadow: -1px 1px 5px 0px #000;"
-		"box-shadow: -1px 1px 5px 0px #000;");
+		"-webkit-box-shadow: -1px 1px 2px 0px #000;"
+		"-moz-box-shadow: -1px 1px 2px 0px #000;"
+		"box-shadow: -1px 1px 2px 0px #000;");
 
 	messageResourceBundle().use(appRoot() + "templates", false); //CHECK_BEFORE_RELEASE
 	messageResourceBundle().use(appRoot() + "strings", false); //CHECK_BEFORE_RELEASE
@@ -102,32 +105,35 @@ WApplication::WApplication(const Wt::WEnvironment& env)
 	errorOkBtn->clicked().connect(_errorDialog, &Wt::WDialog::accept);
 
 	//Main Widgets
-	_mainTemplate = new Wt::WTemplate(Wt::WString::tr("GS.Main"), root());
-	_mainStack = new Wt::WStackedWidget();
-	_navBar = new Wt::WNavigationBar();
-	_navBar->setTemplateText(Wt::WString::tr("GS.NavigationBar"));
-	_navBar->bindString("container-class", "container");
-	_navBar->setResponsive(true);
-	_navBar->addMenu(_mainMenu = new Wt::WMenu(_mainStack));
-	_mainMenu->setInternalPathEnabled("/");
+	_mainStack = new Wt::WStackedWidget(root());
+
+	//Visitor widgets
+	_mainVisitorTemplate = new Wt::WTemplate(Wt::WString::tr("GS.Main"), _mainStack);
+	_visitorStack = new Wt::WStackedWidget(_mainStack);
+	_mainVisitorTemplate->bindWidget("content", _visitorStack);
+
+	_visitorNavBar = new Wt::WNavigationBar();
+	_visitorNavBar->setTemplateText(Wt::WString::tr("GS.NavigationBar"));
+	_visitorNavBar->bindString("container-class", "container");
+	_visitorNavBar->setResponsive(true);
+	_visitorNavBar->addMenu(_visitorMenu = new Wt::WMenu(_visitorStack));
+	_visitorMenu->setInternalPathEnabled("/");
+	_mainVisitorTemplate->bindWidget("navigation", _visitorNavBar);
 
 	//Logo
 	Wt::WImage *logoImage = new Wt::WImage(Wt::WLink("images/logo.png"), Wt::WString::tr("GS.Logo.Alt"));
-	_navBar->setTitle(logoImage, Wt::WLink(Wt::WLink::InternalPath, "/"));
-
-	_mainTemplate->bindWidget("navigation", _navBar);
-	_mainTemplate->bindWidget("content", _mainStack);
+	_visitorNavBar->setTitle(logoImage, Wt::WLink(Wt::WLink::InternalPath, "/"));
 
 	//Page widgets
 	auto homeMenuItem = new Wt::WMenuItem(Wt::WString::tr("Home"), new Wt::WText(Wt::WString::tr("Home")));
 	homeMenuItem->setPathComponent("");
-	_mainMenu->addItem(homeMenuItem);
+	_visitorMenu->addItem(homeMenuItem);
 	auto aboutMenuItem = new Wt::WMenuItem(Wt::WString::tr("About"), new Wt::WText(Wt::WString::tr("About")));
 	aboutMenuItem->setPathComponent("about");
-	_mainMenu->addItem(aboutMenuItem);
+	_visitorMenu->addItem(aboutMenuItem);
 	auto contactMenuItem = new Wt::WMenuItem(Wt::WString::tr("Contact"), new Wt::WText(Wt::WString::tr("Contact")));
 	contactMenuItem->setPathComponent("contact");
-	_mainMenu->addItem(contactMenuItem);
+	_visitorMenu->addItem(contactMenuItem);
 
 	handleInternalPathChanged(internalPath());
 	//WServer *server = WServer::instance();
@@ -145,95 +151,157 @@ void WApplication::handleAuthChanged()
 
 void WApplication::handleInternalPathChanged(std::string path)
 {
+	Wt::Utils::append(path, '/');
 	std::string firstComponent = internalPathNextPart("/");
-	if(firstComponent == ADMIN_PATHC)
+	if(firstComponent != ADMIN_PATHC)
 	{
-		lazyLoadAdminWidgets();
-		_navBar->bindString("container-class", "container-fluid");
-		_navBar->addStyleClass("navbar-admin");
-		_mainMenu->hide();
-		_adminMenu->show();
-		_mainStack->setCurrentWidget(_adminStack);
-
-		//entity view
-		std::string entityPathPrefix = Entity::viewInternalPath("");
-		if(internalPath().find(entityPathPrefix.c_str(), 0, entityPathPrefix.size()) != std::string::npos)
-		{
-			std::string entityIdStr = internalPath().substr(entityPathPrefix.size());
-			if(!_entitiesAdminPage->checkPathComponentExist(ENTITY_PREFIX + entityIdStr))
-			{
-				try
-				{
-					long long entityId = boost::lexical_cast<long long>(entityIdStr);
-
-					Wt::Dbo::Transaction t(session());
-					Wt::Dbo::ptr<Entity> entityPtr = session().load<Entity>(entityId, true);
-					if(entityPtr)
-					{
-						auto menuItem = _entitiesAdminPage->createMenuItem(
-							Wt::WString::fromUTF8(entityPtr->name),
-							ENTITY_PREFIX + boost::lexical_cast<std::string>(entityId),
-							new EntityView(entityPtr));
-					}
-					t.commit();
-				}
-				catch(boost::bad_lexical_cast &) {}
-				catch(Wt::Dbo::Exception &e)
-				{
-					Wt::log("error") << "WApplication::handleInternalPathChanged(): Dbo error(" << e.code() << "): " << e.what();
-					showDbBackendError(e.code());
-				}
-			}
-		}
-		
-		//account entry list
-		std::string accountPathPrefix = Account::viewInternalPath("");
-		if(internalPath().find(accountPathPrefix.c_str(), 0, accountPathPrefix.size()) != std::string::npos)
-		{
-			std::string accountIdStr = internalPath().substr(accountPathPrefix.size());
-			if(!_accountsAdminPage->checkPathComponentExist(ACCOUNT_PREFIX + accountIdStr))
-			{
-				try
-				{
-					long long accountId = boost::lexical_cast<long long>(accountIdStr);
-
-					Wt::Dbo::Transaction t(session());
-					Wt::Dbo::ptr<Account> accountPtr = session().load<Account>(accountId, true);
-					if(accountPtr)
-					{
-						auto menuItem = _accountsAdminPage->createMenuItem(
-							Wt::WString::fromUTF8(accountPtr->name),
-							ACCOUNT_PREFIX + boost::lexical_cast<std::string>(accountId),
-							new AccountEntryList(accountPtr));
-					}
-					t.commit();
-				}
-				catch(boost::bad_lexical_cast &) {}
-				catch(Wt::Dbo::Exception &e)
-				{
-					Wt::log("error") << "WApplication::handleInternalPathChanged(): Dbo error(" << e.code() << "): " << e.what();
-					showDbBackendError(e.code());
-				}
-			}
-		}
+		_mainStack->setCurrentWidget(_mainVisitorTemplate);
 	}
 	else
 	{
-		_navBar->bindString("container-class", "container");
-		_navBar->removeStyleClass("navbar-admin");
-		_mainMenu->show();
-		if(_adminMenu) _adminMenu->hide();
+		if(!session().login().loggedIn())
+		{
+			lazyLoadLoginWidget();
+		}
+		else
+		{
+			lazyLoadAdminWidgets();
+			_mainStack->setCurrentWidget(_mainAdminTemplate);
+
+			try
+			{
+				std::string pathPrefix;
+
+				//entity view
+				pathPrefix = Entity::viewInternalPath("");
+				if(path.find(pathPrefix.c_str(), 0, pathPrefix.size()) != std::string::npos)
+				{
+					std::string idStr = path.substr(pathPrefix.size(), path.find('/', pathPrefix.size()) - 1);
+					if(!_entitiesAdminPage->checkPathComponentExist(ENTITY_PREFIX + idStr))
+					{
+						long long id = boost::lexical_cast<long long>(idStr);
+
+						Wt::Dbo::Transaction t(session());
+						Wt::Dbo::ptr<Entity> ptr = session().load<Entity>(id, true);
+						if(ptr)
+						{
+							EntityView *view = new EntityView(ptr);
+							auto menuItem = _entitiesAdminPage->createMenuItemWrapped(view->viewName(), view->viewInternalPath(), view);
+						}
+					}
+				}
+
+				//account view
+				pathPrefix = Account::viewInternalPath("");
+				if(path.find(pathPrefix.c_str(), 0, pathPrefix.size()) != std::string::npos)
+				{
+					std::string idStr = path.substr(pathPrefix.size(), path.find('/', pathPrefix.size()) - 1);
+					if(!_accountsAdminPage->checkPathComponentExist(ACCOUNT_PREFIX + idStr))
+					{
+						long long id = boost::lexical_cast<long long>(idStr);
+
+						Wt::Dbo::Transaction t(session());
+						Wt::Dbo::ptr<Account> ptr = session().load<Account>(id, true);
+						if(ptr)
+						{
+							AccountView *view = new AccountView(ptr);
+							auto menuItem = _accountsAdminPage->createMenuItemWrapped(view->viewName(), view->viewInternalPath(), view);
+						}
+					}
+				}
+
+				//account entry view
+				pathPrefix = AccountEntry::viewInternalPath("");
+				if(path.find(pathPrefix.c_str(), 0, pathPrefix.size()) != std::string::npos)
+				{
+					std::string idStr = path.substr(pathPrefix.size(), path.find('/', pathPrefix.size()) - 1);
+					if(!_accountsAdminPage->checkPathComponentExist(ACCOUNTENTRY_PREFIX + idStr))
+					{
+						long long id = boost::lexical_cast<long long>(idStr);
+
+						Wt::Dbo::Transaction t(session());
+						Wt::Dbo::ptr<AccountEntry> ptr = session().load<AccountEntry>(id, true);
+						if(ptr)
+						{
+							AccountEntryView *view = new AccountEntryView(ptr);
+							auto menuItem = _accountsAdminPage->createMenuItemWrapped(view->viewName(), view->viewInternalPath(), view);
+						}
+					}
+				}
+
+				//income cycle view
+				pathPrefix = IncomeCycle::viewInternalPath("");
+				if(path.find(pathPrefix.c_str(), 0, pathPrefix.size()) != std::string::npos)
+				{
+					std::string idStr = path.substr(pathPrefix.size(), path.find('/', pathPrefix.size()) - 1);
+					if(!_accountsAdminPage->checkPathComponentExist(INCOMECYCLES_PATHC "/" INCOMECYCLE_PREFIX + idStr))
+					{
+						long long id = boost::lexical_cast<long long>(idStr);
+
+						Wt::Dbo::Transaction t(session());
+						Wt::Dbo::ptr<IncomeCycle> ptr = session().load<IncomeCycle>(id, true);
+						if(ptr)
+						{
+							IncomeCycleView *view = new IncomeCycleView(ptr);
+							auto menuItem = _accountsAdminPage->createMenuItemWrapped(view->viewName(), view->viewInternalPath(), view);
+						}
+					}
+				}
+
+				//expense cycle view
+				pathPrefix = ExpenseCycle::viewInternalPath("");
+				if(path.find(pathPrefix.c_str(), 0, pathPrefix.size()) != std::string::npos)
+				{
+					std::string idStr = path.substr(pathPrefix.size(), path.find('/', pathPrefix.size()) - 1);
+					if(!_accountsAdminPage->checkPathComponentExist(EXPENSECYCLES_PATHC "/" EXPENSECYCLE_PREFIX + idStr))
+					{
+						long long id = boost::lexical_cast<long long>(idStr);
+
+						Wt::Dbo::Transaction t(session());
+						Wt::Dbo::ptr<ExpenseCycle> ptr = session().load<ExpenseCycle>(id, true);
+						if(ptr)
+						{
+							ExpenseCycleView *view = new ExpenseCycleView(ptr);
+							auto menuItem = _accountsAdminPage->createMenuItemWrapped(view->viewName(), view->viewInternalPath(), view);
+						}
+					}
+				}
+			}
+			catch(boost::bad_lexical_cast &) {}
+			catch(Wt::Dbo::Exception &e)
+			{
+				Wt::log("error") << "WApplication::handleInternalPathChanged(): Dbo error(" << e.code() << "): " << e.what();
+				showDbBackendError(e.code());
+			}
+		}
 	}
+}
+
+void WApplication::lazyLoadLoginWidget()
+{
+
 }
 
 void WApplication::lazyLoadAdminWidgets()
 {
-	if(_adminMenu)
+	if(_mainAdminTemplate)
 		return;
 
+	_mainAdminTemplate = new Wt::WTemplate(Wt::WString::tr("GS.Main"), _mainStack);
 	_adminStack = new Wt::WStackedWidget(_mainStack);
-	_navBar->addMenu(_adminMenu = new Wt::WMenu(_adminStack));
+	_mainAdminTemplate->bindWidget("content", _adminStack);
+
+	_adminNavBar = new Wt::WNavigationBar();
+	_adminNavBar->setTemplateText(Wt::WString::tr("GS.NavigationBar"));
+	_adminNavBar->addStyleClass("navbar-admin");
+	_adminNavBar->bindString("container-class", "container-fluid");
+	_adminNavBar->setResponsive(true);
+	_adminNavBar->addMenu(_adminMenu = new Wt::WMenu(_adminStack));
 	_adminMenu->setInternalPathEnabled("/" ADMIN_PATHC "/");
+	_mainAdminTemplate->bindWidget("navigation", _adminNavBar);
+
+	Wt::WImage *logoImage = new Wt::WImage(Wt::WLink("images/logo.png"), Wt::WString::tr("GS.Logo.Alt"));
+	_adminNavBar->setTitle(logoImage, Wt::WLink(Wt::WLink::InternalPath, "/"));
 
 	//Admin page widgets
 	//Dashboard
@@ -258,21 +326,28 @@ void WApplication::lazyLoadAdminWidgets()
 	_adminMenu->addItem(accountsMenuItem);
 }
 
-void WApplication::initFindEntityModel()
+void WApplication::initFindEntitySuggestion()
 {
-	if(_findEntityModel)
-		return;
+	if(!_findEntitySuggestion)
+		_findEntitySuggestion = new FindEntitySuggestionPopup(Entity::InvalidType, this);
+}
 
-	_findEntityModel = new FindEntityModel(this);
-	_findEntityModel->setQuery(session().query<_FEMTuple>("SELECT name, id, type FROM " + std::string(Entity::tableName())));
-	_findEntityModel->addColumn("name");
-	_findEntityModel->addColumn("id");
-	_findEntityModel->addColumn("type");
+void WApplication::initFindPersonSuggestion()
+{
+	if(!_findPersonSuggestion)
+		_findPersonSuggestion = new FindEntitySuggestionPopup(Entity::PersonType, this);
+}
 
-	_findPersonFilterModel = new FindEntityFilterModel(Entity::PersonType, this);
-	_findPersonFilterModel->setSourceModel(_findEntityModel);
-	_findBusinessFilterModel = new FindEntityFilterModel(Entity::BusinessType, this);
-	_findBusinessFilterModel->setSourceModel(_findEntityModel);
+void WApplication::initFindBusinessSuggestion()
+{
+	if(!_findBusinessSuggestion)
+		_findBusinessSuggestion = new FindEntitySuggestionPopup(Entity::BusinessType, this);
+}
+
+void WApplication::initFindAccountSuggestion()
+{
+	if(!_findAccountSuggestion)
+		_findAccountSuggestion = new FindAccountSuggestionPopup(this);
 }
 
 // void WApplication::initFindPersonModel()
@@ -312,12 +387,6 @@ void WApplication::initFindEntityModel()
 // 	_locationFilterModel = new LocationFilterModel(_locationQueryModel);
 // 	_locationFilterModel->setSourceModel(_locationQueryModel);
 // }
-
-void WApplication::initFindAccountModel()
-{
-	if(!_findAccountModel)
-		_findAccountModel = new FindAccountModel(this);
-}
 
 void WApplication::initCountryQueryModel()
 {
@@ -376,7 +445,7 @@ void WApplication::showErrorDialog(const Wt::WString &message)
 	_errorDialog->show();
 }
 
-void WApplication::showDbBackendError(const std::string &code)
+void WApplication::showDbBackendError(const std::string &)
 {
 	showErrorDialog(Wt::WString::tr("DbInternalError"));
 }

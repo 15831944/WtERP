@@ -49,12 +49,12 @@ void WServer::initialize()
 	catch(Wt::Dbo::Exception &e)
 	{
 		log("fatal") << "Database error connecting to database: " << e.what();
-		throw e;
+		throw;
 	}
 	catch(std::exception &e)
 	{
 		log("fatal") << "Error connecting to database: " << e.what();
-		throw e;
+		throw;
 	}
 
 	//Prepare server's Dbo::Session
@@ -92,12 +92,12 @@ void WServer::initialize()
 	catch(Wt::Dbo::Exception &e)
 	{
 		log("fatal") << "Database error creating tables: " << e.what();
-		throw e;
+		throw;
 	}
 	catch(std::exception &e)
 	{
 		log("fatal") << "Error creating tables: " << e.what();
-		throw e;
+		throw;
 	}
 
 	{
@@ -155,12 +155,12 @@ void WServer::initialize()
 	catch(Wt::Dbo::Exception &e)
 	{
 		log("fatal") << "Database error loading configurations: " << e.what();
-		throw e;
+		throw;
 	}
 	catch(std::exception &e)
 	{
 		log("fatal") << "Error loading configurations: " << e.what();
-		throw e;
+		throw;
 	}
 
 	//Start task scheduler

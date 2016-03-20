@@ -54,6 +54,8 @@ public:
      */
     virtual WTimeValidator *validator() const;
 
+	virtual void resetValidator();
+
     /*! \brief Sets the format of the Time
      */
     void setFormat(const WT_USTRING& format);

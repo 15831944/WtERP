@@ -16,9 +16,6 @@ namespace GS
 	class AbstractFilterWidgetModel : public Wt::WObject
 	{
 	public:
-		AbstractFilterWidgetModel(const Wt::WString &filterTitle, const std::string &columnName, Wt::WObject *parent = nullptr)
-			: Wt::WObject(parent), _columnName(columnName), _filterTitle(filterTitle)
-		{ }
 		virtual void updateModel();
 		virtual std::string value() = 0;
 		virtual std::string sqlCondition() = 0;
@@ -29,6 +26,9 @@ namespace GS
 		bool enabled() const { return _enabled; }
 
 	protected:
+		AbstractFilterWidgetModel(const Wt::WString &filterTitle, const std::string &columnName, Wt::WObject *parent = nullptr)
+			: Wt::WObject(parent), _columnName(columnName), _filterTitle(filterTitle)
+		{ }
 		Wt::WString _filterTitle;
 		std::string _columnName;
 		Wt::WCheckBox *_cb = nullptr;
@@ -169,8 +169,6 @@ namespace GS
 	class AbstractFilteredList : public Wt::WTemplate
 	{
 	public:
-		AbstractFilteredList(Wt::WContainerWidget *parent = nullptr);
-
 		void enableFilters();
 		void resetColumnWidths();
 		int viewIndexToColumn(int viewIndex) const;
@@ -183,6 +181,8 @@ namespace GS
 		Wt::WAbstractItemModel *proxyModel() const { return _proxyModel; }
 
 	protected:
+		AbstractFilteredList(Wt::WContainerWidget *parent = nullptr);
+
 		void init();
 		virtual void initFilters() { }
 		virtual void initModel() = 0;

@@ -98,12 +98,12 @@ namespace GS
 				accountEntryPtr->_debitAccountPtr.flush();
 				accountEntryPtr->_creditAccountPtr.flush();
 			}
-			catch(const Wt::Dbo::StaleObjectException &e)
+			catch(const Wt::Dbo::StaleObjectException &)
 			{
 				Wt::log("warn") << "AccountsDatabase::updateAccountBalances(): StaleObjectException caught twice";
 				accountEntryPtr->_debitAccountPtr.modify()->operator=(debitAccount);
 				accountEntryPtr->_creditAccountPtr.modify()->operator=(creditAccount);
-				throw e;
+				throw;
 			}
 		}
 	}
@@ -230,24 +230,23 @@ namespace GS
 		if(checkElapsedDuration)
 		{
 			if(lastEntryPtr)
-			{
 				previousCyclePeriodPTime = lastEntryPtr->timestamp.toPosixTime();
-				elapsedDuration = currentPTime - previousCyclePeriodPTime;
-			}
 			else if(cycle.firstEntryAfterCycle)
-			{
-				previousCyclePeriodPTime = boost::posix_time::ptime(cycle.startDate.toGregorianDate());
-				elapsedDuration = currentPTime - previousCyclePeriodPTime;
-			}
+				previousCyclePeriodPTime = addCycleInterval(boost::posix_time::ptime(cycle.startDate.toGregorianDate()), cycle.interval, cycle.nIntervals);
 			else
 			{
 				Wt::log("error") << "AccountsDatabase::_createPendingCycleEntry() logic error: lastEntryPtr AND cycle.firstEntryAfterCycle were both false!";
 				return Wt::Dbo::ptr<AccountEntry>();
 			}
 
-			nextCyclePeriodPTime = addInterval(previousCyclePeriodPTime, cycle.interval, cycle.nIntervals);
+			//Its possible because of cycle.firstEntryAfterCycle
+			if(previousCyclePeriodPTime > currentPTime)
+				return Wt::Dbo::ptr<AccountEntry>();
 
+			elapsedDuration = currentPTime - previousCyclePeriodPTime;
+			nextCyclePeriodPTime = addCycleInterval(previousCyclePeriodPTime, cycle.interval, cycle.nIntervals);
 			cycleDuration = nextCyclePeriodPTime - previousCyclePeriodPTime;
+
 			if(elapsedDuration >= cycleDuration) //complete cycle
 			{
 				if(cycle.endDate.isValid() && nextCyclePeriodPTime.date() >= cycle.endDate.toGregorianDate())
@@ -327,20 +326,6 @@ namespace GS
 		}
 
 		return dboSession.add(new AccountEntry(std::move(newEntry)));
-	}
-
-	boost::posix_time::ptime AccountsDatabase::addInterval(boost::posix_time::ptime pTime, CycleInterval interval, int nIntervals) const
-	{
-		if(interval == DailyInterval)
-			pTime += boost::gregorian::days(nIntervals);
-		else if(interval == WeeklyInterval)
-			pTime += boost::gregorian::weeks(nIntervals);
-		else if(interval == MonthlyInterval)
-			pTime += boost::gregorian::months(nIntervals);
-		else if(interval == YearlyInterval)
-			pTime += boost::gregorian::years(nIntervals);
-
-		return pTime;
 	}
 
 // 	Wt::Dbo::ptr<Account> AccountsDatabase::findOrCreateIncomeExpenseAccount(Wt::Dbo::ptr<IncomeCycle> cyclePtr)

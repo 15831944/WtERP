@@ -6,6 +6,7 @@
 #include "Widgets/ImageUpload.h"
 #include "Widgets/LocationMVC.h"
 #include "Widgets/EntryCycleMVC.h"
+#include "Utilities/FindRecordEdit.h"
 
 #include <Wt/WLabel>
 #include <Wt/WBreak>
@@ -66,9 +67,6 @@ namespace GS
 
 		_entityPtr.modify()->specificTypeMask = 0;
 		_entityPtr.modify()->name = valueText(nameField).toUTF8();
-
-		app->findEntityModel()->reload();
-
 		t.commit();
 	}
 
@@ -188,24 +186,18 @@ namespace GS
 		if(field == nextOfKinField)
 		{
 			auto w = new FindEntityEdit(Entity::PersonType);
-			_view->bindWidget("new-kin", w->newEntityBtn());
-			_view->bindWidget("show-list-kin", w->showListBtn());
 			setValidator(field, new FindEntityValidator(w, false));
 			return w;
 		}
 		if(field == fatherField)
 		{
 			auto w = new FindEntityEdit(Entity::PersonType);
-			_view->bindWidget("new-father", w->newEntityBtn());
-			_view->bindWidget("show-list-father", w->showListBtn());
 			setValidator(field, new FindEntityValidator(w, false));
 			return w;
 		}
 		if(field == motherField)
 		{
 			auto w = new FindEntityEdit(Entity::PersonType);
-			_view->bindWidget("new-mother", w->newEntityBtn());
-			_view->bindWidget("show-list-mother", w->showListBtn());
 			setValidator(field, new FindEntityValidator(w, false));
 			return w;
 		}
@@ -465,7 +457,7 @@ namespace GS
 
 			NumberVector numberVector;
 			numberVector.resize(_ptrVector.size() + 1);
-			for(int i = 0; i < _ptrVector.size(); ++i)
+			for(size_t i = 0; i < _ptrVector.size(); ++i)
 				numberVector[i] = Wt::WString::fromUTF8(_ptrVector[i]->nationalNumber);
 
 			setValue(field, numberVector);
@@ -909,10 +901,10 @@ namespace GS
 		WApplication *app = WApplication::instance();
 		Wt::Dbo::Transaction t(app->session());
 
-		bool valid = true;
-
 		try
 		{
+			bool valid = true;
+
 			if(!_entityModel->validate()) valid = false;
 
 			if(_type == Entity::PersonType)
@@ -932,22 +924,21 @@ namespace GS
 			if(!valid)
 				return;
 
+			if(!_entityModel->isAllReadOnly()) _entityModel->saveChanges();
+
 			if(_type == Entity::PersonType)
 			{
-				_entityModel->saveChanges();
-				_personModel->saveChanges();
-				if(_employeeModel) _employeeModel->saveChanges();
-				if(_personnelModel) _personnelModel->saveChanges();
-				if(_contactNumbersModel) _contactNumbersModel->saveChanges();
-				if(_locationsModel) _locationsModel->saveChanges();
+				if(!_personModel->isAllReadOnly()) _personModel->saveChanges();
+				if(_employeeModel && !_employeeModel->isAllReadOnly()) _employeeModel->saveChanges();
+				if(_personnelModel && !_personnelModel->isAllReadOnly()) _personnelModel->saveChanges();
 			}
 			else if(_type == Entity::BusinessType)
 			{
-				_entityModel->saveChanges();
-				_businessModel->saveChanges();
-				if(_contactNumbersModel) _contactNumbersModel->saveChanges();
-				if(_locationsModel) _locationsModel->saveChanges();
+				if(!_businessModel->isAllReadOnly()) _businessModel->saveChanges();
 			}
+
+			if(_contactNumbersModel && !_contactNumbersModel->isAllReadOnly()) _contactNumbersModel->saveChanges();
+			if(_locationsModel && !_locationsModel->isAllReadOnly()) _locationsModel->saveChanges();
 
 			t.commit();
 
@@ -960,13 +951,13 @@ namespace GS
 		{
 			app->session().rereadAll();
 			app->showStaleObjectError(tr("Entity"));
-			valid = false;
+			//valid = false;
 		}
 		catch(const Wt::Dbo::Exception &e)
 		{
 			Wt::log("error") << "EntityView::submit(): Dbo error(" << e.code() << "): " << e.what();
 			app->showDbBackendError(e.code());
-			valid = false;
+			//valid = false;
 		}
 	}
 

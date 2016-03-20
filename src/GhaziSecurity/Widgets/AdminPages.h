@@ -9,14 +9,17 @@
 namespace GS
 {
 	class MyTemplateFormView;
+	class AdminPageContentWidget;
 
 	class AdminPageWidget : public Wt::WTemplate
 	{
 	public:
 		AdminPageWidget(const std::string basePathComponent, Wt::WContainerWidget *parent = nullptr);
 
-		Wt::WMenuItem *createMenuItem(const Wt::WString &label, const std::string &pathComponent, Wt::WWidget *contents);
-		Wt::WMenuItem *createMenuItem(int index, const Wt::WString &label, const std::string &pathComponent, Wt::WWidget *contents);
+		Wt::WMenuItem *createMenuItemWrapped(const Wt::WString &label, const std::string &internalPath, Wt::WWidget *contents);
+		Wt::WMenuItem *createMenuItemWrapped(int index, const Wt::WString &label, const std::string &internalPath, Wt::WWidget *contents);
+		Wt::WMenuItem *createMenuItem(const Wt::WString &label, const std::string &internalPath, Wt::WWidget *contents);
+		Wt::WMenuItem *createMenuItem(int index, const Wt::WString &label, const std::string &internalPath, Wt::WWidget *contents);
 		bool checkPathComponentExist(const std::string &pathComponent) const;
 		void connectFormSubmitted(Wt::WMenuItem *item);
 
@@ -24,15 +27,15 @@ namespace GS
 		Wt::WNavigationBar *sideBar() const { return _sideBar; }
 		Wt::WStackedWidget *stackWidget() const { return _stackWidget; }
 		Wt::WMenu *menu() const { return _menu; }
+		static Wt::WWidget *itemContent(Wt::WMenuItem *item);
 
 	protected:
-		void handleItemSelected(Wt::WMenuItem *item);
+		//void handleItemSelected(Wt::WMenuItem *item);
 		void handleFormSubmitted(Wt::WMenuItem *item);
 
 		Wt::WNavigationBar *_sideBar = nullptr;
 		Wt::WStackedWidget *_stackWidget = nullptr;
 		Wt::WMenu *_menu = nullptr;
-		Wt::WText *_titleText = nullptr;
 		std::string _basePathComponent;
 
 		typedef std::map<Wt::WMenuItem*, Wt::Signals::connection> SignalMap;
@@ -42,7 +45,9 @@ namespace GS
 	class AdminPageContentWidget : public Wt::WTemplate
 	{
 	public:
-		AdminPageContentWidget(Wt::WContainerWidget *parent = nullptr);
+		AdminPageContentWidget(const Wt::WString &title, Wt::WWidget *content, Wt::WContainerWidget *parent = nullptr);
+		Wt::WText *title() const { return _title; }
+		Wt::WWidget *content() const { return _content; }
 
 	protected:
 		Wt::WText *_title = nullptr;
@@ -55,8 +60,6 @@ namespace GS
 		EntitiesAdminPage(Wt::WContainerWidget *parent = nullptr);
 
 	protected:
-		//void newEntityViewSubmitted();
-
 		Wt::WMenuItem *_newEntityMenuItem = nullptr;
 	};
 

@@ -25,7 +25,7 @@ namespace GS
 				dateEdit->setDate(boost::any_cast<Wt::WDate>(v));
 			return true;
 		}
-		if(auto proxyModelComboBox = dynamic_cast<AbstractProxyModelComboBox*>(edit))
+		if(auto proxyModelComboBox = dynamic_cast<AbstractProxyModelCB*>(edit))
 		{
 			proxyModelComboBox->setViewValue(model->value(field));
 			return true;
@@ -41,18 +41,18 @@ namespace GS
 		{
 			const boost::any &v = model->value(field);
 			if(v.empty())
-				findEntity->setEntityPtr(Wt::Dbo::ptr<Entity>());
+				findEntity->setValuePtr(Wt::Dbo::ptr<Entity>());
 			else
-				findEntity->setEntityPtr(boost::any_cast<Wt::Dbo::ptr<Entity>>(v));
+				findEntity->setValuePtr(boost::any_cast<Wt::Dbo::ptr<Entity>>(v));
 			return true;
 		}
 		if(auto findAccount = dynamic_cast<FindAccountEdit*>(edit))
 		{
 			const boost::any &v = model->value(field);
 			if(v.empty())
-				findAccount->setAccountPtr(Wt::Dbo::ptr<Account>());
+				findAccount->setValuePtr(Wt::Dbo::ptr<Account>());
 			else
-				findAccount->setAccountPtr(boost::any_cast<Wt::Dbo::ptr<Account>>(v));
+				findAccount->setValuePtr(boost::any_cast<Wt::Dbo::ptr<Account>>(v));
 			return true;
 		}
 		if(auto viewsContainer = dynamic_cast<AbstractTemplateViewsContainer*>(edit))
@@ -96,7 +96,7 @@ namespace GS
 			model->setValue(field, dateEdit->date());
 			return true;
 		}
-		if(auto proxyModelComboBox = dynamic_cast<AbstractProxyModelComboBox*>(edit))
+		if(auto proxyModelComboBox = dynamic_cast<AbstractProxyModelCB*>(edit))
 		{
 			model->setValue(field, proxyModelComboBox->modelValue());
 			return true;
@@ -108,12 +108,12 @@ namespace GS
 		}
 		if(auto findEntity = dynamic_cast<FindEntityEdit*>(edit))
 		{
-			model->setValue(field, findEntity->entityPtr());
+			model->setValue(field, findEntity->valuePtr());
 			return true;
 		}
 		if(auto findAccount = dynamic_cast<FindAccountEdit*>(edit))
 		{
-			model->setValue(field, findAccount->accountPtr());
+			model->setValue(field, findAccount->valuePtr());
 			return true;
 		}
 		if(auto viewsContainer = dynamic_cast<AbstractTemplateViewsContainer*>(edit))
@@ -132,6 +132,14 @@ namespace GS
 			return true;
 		}
 		return false;
+	}
+
+	void MyTemplateFormView::updateView(Wt::WFormModel *model)
+	{
+		if(Wt::WWidget *submitW = resolveWidget("submit"))
+			submitW->setHidden(model->isAllReadOnly());
+
+		Wt::WTemplateFormView::updateView(model);
 	}
 
 }

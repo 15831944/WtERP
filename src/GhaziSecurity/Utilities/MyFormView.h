@@ -7,24 +7,26 @@
 
 namespace GS
 {
-	class AbstractProxyModelComboBox : public Wt::WComboBox
+	class AbstractProxyModelCB : public Wt::WComboBox
 	{
-	public:
-		AbstractProxyModelComboBox(Wt::WAbstractItemModel *model, Wt::WContainerWidget *parent = nullptr)
+	protected:
+		AbstractProxyModelCB(Wt::WAbstractItemModel *model, Wt::WContainerWidget *parent = nullptr)
 			: Wt::WComboBox(parent)
 		{
 			setModel(model);
 			setCurrentIndex(0);
 		}
+
+	public:
 		virtual void setViewValue(const boost::any &v) = 0;
 		virtual boost::any modelValue() = 0;
 	};
 
 	template<class ProxyModel>
-	class ProxyModelComboBox : public AbstractProxyModelComboBox
+	class ProxyModelComboBox : public AbstractProxyModelCB
 	{
 	public:
-		ProxyModelComboBox(ProxyModel *model, Wt::WContainerWidget *parent = nullptr) : AbstractProxyModelComboBox(model, parent) { }
+		ProxyModelComboBox(ProxyModel *model, Wt::WContainerWidget *parent = nullptr) : AbstractProxyModelCB(model, parent) { }
 		virtual void setViewValue(const boost::any &v) override
 		{
 			if(v.empty())
@@ -51,9 +53,10 @@ namespace GS
 	class MyTemplateFormView : public Wt::WTemplateFormView
 	{
 	public:
-		MyTemplateFormView(Wt::WContainerWidget *parent = nullptr) : Wt::WTemplateFormView(parent) { }
-		MyTemplateFormView(const Wt::WString &text, Wt::WContainerWidget *parent = nullptr) : Wt::WTemplateFormView(text, parent) { }
+		MyTemplateFormView(Wt::WContainerWidget *parent = nullptr) : Wt::WTemplateFormView(parent) { addFunction("fwId", &Wt::WTemplate::Functions::fwId); }
+		MyTemplateFormView(const Wt::WString &text, Wt::WContainerWidget *parent = nullptr) : Wt::WTemplateFormView(text, parent) { addFunction("fwId", &Wt::WTemplate::Functions::fwId); }
 
+		virtual void updateView(Wt::WFormModel *model) override;
 		virtual bool updateViewValue(Wt::WFormModel *model, Wt::WFormModel::Field field, Wt::WWidget *edit) override;
 		virtual bool updateModelValue(Wt::WFormModel *model, Wt::WFormModel::Field field, Wt::WWidget *edit) override;
 
@@ -77,11 +80,11 @@ namespace GS
 	};
 
 	template<class ProxyModel>
-	class ProxyModelComboBoxValidator : public BaseProxyModelComboBoxValidator
+	class ProxyModelCBValidator : public BaseProxyModelComboBoxValidator
 	{
 	public:
 		//typedef typename ProxyModel ProxyModel;
-		ProxyModelComboBoxValidator(ProxyModelComboBox<ProxyModel> *cb)
+		ProxyModelCBValidator(ProxyModelComboBox<ProxyModel> *cb)
 			: BaseProxyModelComboBoxValidator((Wt::WObject*)cb), _cb(cb)
 		{ }
 		virtual Result validate(const Wt::WString &input) const override

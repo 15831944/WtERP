@@ -25,7 +25,7 @@ ${content}
 		<div class="col-sm-2 no-padding">
 			${sidebar class="navbar-admin-side"}
 		</div>
-		<div class="col-sm-10">
+		<div class="col-sm-10 col-print-12">
 			${content}
 		</div>
 	</div>
@@ -155,28 +155,16 @@ ${<type-chosen>}
 				<div class="col-sm-10">${married}<div class="help-block">${married-info}</div></div>
 			</div>
 			<div class="form-group">
-				<label class="control-label col-sm-2" for="${id:nextOfKin}">${tr:NextOfKin}</label>
-				<div class="col-sm-10"><div class="input-group">
-					${nextOfKin}
-					<div class="input-group-btn">${show-list-kin}${new-kin}</div>
-				</div></div>
-				<div class="help-block col-sm-10 col-sm-offset-2">${nextOfKin-info}</div>
+				<label class="control-label col-sm-2" for="${fwId:nextOfKin}">${tr:NextOfKin}</label>
+				<div class="col-sm-10">${nextOfKin}<div class="help-block">${nextOfKin-info}</div></div>
 			</div>
 			<div class="form-group">
-				<label class="control-label col-sm-2" for="${id:father}">${tr:Father}</label>
-				<div class="col-sm-10"><div class="input-group">
-					${father}
-					<div class="input-group-btn">${show-list-father}${new-father}</div>
-				</div></div>
-				<div class="help-block col-sm-10 col-sm-offset-2">${father-info}</div>
+				<label class="control-label col-sm-2" for="${fwId:father}">${tr:Father}</label>
+				<div class="col-sm-10">${father}<div class="help-block">${father-info}</div></div>
 			</div>
 			<div class="form-group">
-				<label class="control-label col-sm-2" for="${id:mother}">${tr:Mother}</label>
-				<div class="col-sm-10"><div class="input-group">
-					${mother}
-					<div class="input-group-btn">${show-list-mother}${new-mother}</div>
-				</div></div>
-				<div class="help-block col-sm-10 col-sm-offset-2">${mother-info}</div>
+				<label class="control-label col-sm-2" for="${fwId:mother}">${tr:Mother}</label>
+				<div class="col-sm-10">${mother}<div class="help-block">${mother-info}</div></div>
 			</div>
 			<div class="form-group">
 				<label class="control-label col-sm-2" for="${id:remarks}">${tr:Remarks}</label>
@@ -264,7 +252,7 @@ ${<type-chosen>}
 	${block:GS.Admin.Entities.RecurringIncomesBlock}
 	${block:GS.Admin.Entities.RecurringExpensesBlock}
 	
-	${submit class="btn-primary"}
+	${submit class="btn-primary hidden-print"}
 ${</type-chosen>}
 </message>
 
@@ -301,11 +289,8 @@ ${</show-incomeCycles>}
 
 <message id="GS.Admin.EntryCycleBlock">
 <div class="form-group">
-	<label class="control-label" for="${id:entity}">${tr:Entity}</label>
-	<div class="input-group">
-		${entity}
-		<div class="input-group-btn">${list-entity}${new-entity}</div>
-	</div>
+	<label class="control-label" for="${fwId:entity}">${tr:Entity}</label>
+	${entity}
 	<div class="help-block">${entity-info}</div>
 </div>
 <div class="form-group">
@@ -335,12 +320,12 @@ ${</show-incomeCycles>}
 	${firstEntryAfterCycle}
 	<div class="help-block">${firstEntryAfterCycle-info}</div>
 </div>
-${submit class="btn-primary"}
+${submit class="btn-primary hidden-print"}
 </message>
 
 <message id="GS.Admin.IncomeCycleView">
 <div class="panel panel-default">
-	<div class="panel-heading">${tr:NewRecurringIncome}</div>
+	<div class="panel-heading">${tr:RecurringIncomeInfo}</div>
 	<div class="panel-body">
 		<div class="form-group">
 			<label class="control-label" for="${id:purpose}">${tr:Purpose}</label>
@@ -371,7 +356,7 @@ ${submit class="btn-primary"}
 
 <message id="GS.Admin.ExpenseCycleView">
 <div class="panel panel-default">
-	<div class="panel-heading">${tr:NewRecurringExpense}</div>
+	<div class="panel-heading">${tr:RecurringExpenseInfo}</div>
 	<div class="panel-body">
 		<div class="form-group">
 			<label class="control-label" for="${id:purpose}">${tr:Purpose}</label>
@@ -443,7 +428,7 @@ ${submit class="btn-primary"}
 		<div class="col-sm-9">${name}<div class="help-block">${name-info}</div></div>
 	</div>
 	<div class="form-group">
-		<div class="col-sm-9 col-sm-offset-3">${submit class="btn-primary"}</div>
+		<div class="col-sm-9 col-sm-offset-3">${submit class="btn-primary hidden-print"}</div>
 	</div>
 </div>
 </message>
@@ -459,7 +444,7 @@ ${submit class="btn-primary"}
 		<div class="col-sm-9">${name}<div class="help-block">${name-info}</div></div>
 	</div>
 	<div class="form-group">
-		<div class="col-sm-9 col-sm-offset-3">${submit class="btn-primary"}</div>
+		<div class="col-sm-9 col-sm-offset-3">${submit class="btn-primary hidden-print"}</div>
 	</div>
 </div>
 </message>
@@ -471,7 +456,7 @@ ${submit class="btn-primary"}
 		<div class="col-sm-9">${title}<div class="help-block">${title-info}</div></div>
 	</div>
 	<div class="form-group">
-		<div class="col-sm-9 col-sm-offset-3">${submit class="btn-primary"}</div>
+		<div class="col-sm-9 col-sm-offset-3">${submit class="btn-primary hidden-print"}</div>
 	</div>
 </div>
 </message>
@@ -483,28 +468,31 @@ ${submit class="btn-primary"}
 		<div class="col-sm-9">${title}<div class="help-block">${title-info}</div></div>
 	</div>
 	<div class="form-group">
-		<div class="col-sm-9 col-sm-offset-3">${submit class="btn-primary"}</div>
+		<div class="col-sm-9 col-sm-offset-3">${submit class="btn-primary hidden-print"}</div>
 	</div>
 </div>
 </message>
 
 <message id="GS.Admin.AccountView">
 <div class="panel panel-default">
-	<div class="panel-heading">${tr:NewAccount}</div>
+	<div class="panel-heading">${tr:AccountInfo}</div>
 	<div class="panel-body">
-		<div class="form-group">
-			<label class="control-label" for="${id:type}">${tr:AccountType}</label>
-			${type}
-			<div class="help-block">${type-info}</div>
-		</div>
 		<div class="form-group">
 			<label class="control-label" for="${id:name}">${tr:AccountName}</label>
 			${name}
 			<div class="help-block">${name-info}</div>
 		</div>
+		${<if:type>}
+		<div class="form-group">
+			<label class="control-label" for="${id:type}">${tr:AccountType}</label>
+			${type}
+			<div class="help-block">${type-info}</div>
+		</div>
+		${</if:type>}
+		${submit class="btn-primary hidden-print"}
 	</div>
 </div>
-${submit class="btn-primary"}
+${entry-list}
 </message>
 
 <message id="GS.Admin.AccountEntryBlock">
@@ -514,28 +502,19 @@ ${submit class="btn-primary"}
 	<div class="help-block">${description-info}</div>
 </div>
 <div class="form-group">
-	<label class="control-label" for="${id:debitAccount}">${tr:DebitAccount}</label>
-	<div class="input-group">
-		${debitAccount}
-		<div class="input-group-btn">${list-debit}${new-debit}</div>
-	</div>
+	<label class="control-label" for="${fwId:debitAccount}">${tr:DebitAccount}</label>
+	${debitAccount}
 	<div class="help-block">${debitAccount-info}</div>
 </div>
 <div class="form-group">
-	<label class="control-label" for="${id:creditAccount}">${tr:CreditAccount}</label>
-	<div class="input-group">
-		${creditAccount}
-		<div class="input-group-btn">${list-credit}${new-credit}</div>
-	</div>
+	<label class="control-label" for="${fwId:creditAccount}">${tr:CreditAccount}</label>
+	${creditAccount}
 	<div class="help-block">${creditAccount-info}</div>
 </div>
 ${<if:entity>}
 <div class="form-group">
-	<label class="control-label" for="${id:entity}">${tr:Entity}</label>
-	<div class="input-group">
-		${entity}
-		<div class="input-group-btn">${list-entity}${new-entity}</div>
-	</div>
+	<label class="control-label" for="${fwId:entity}">${tr:Entity}</label>
+	${entity}
 	<div class="help-block">${entity-info}</div>
 </div>
 ${</if:entity>}
@@ -548,14 +527,14 @@ ${</if:entity>}
 	</div>
 	<div class="help-block">${amount-info}</div>
 </div>
+${submit class="btn-primary hidden-print"}
 </message>
 
 <message id="GS.Admin.AccountEntryView">
 <div class="panel panel-default">
-	<div class="panel-heading">${tr:NewAccountEntry}</div>
+	<div class="panel-heading">${tr:AccountEntryInfo}</div>
 	<div class="panel-body">${block:GS.Admin.AccountEntryBlock}</div>
 </div>
-${submit class="btn-primary"}
 </message>
 
 <message id="GS.Admin.TransactionView">
@@ -571,10 +550,9 @@ ${</select-direction>}
 ${<direction-selected>}
 ${<select-direction>}<hr />${</select-direction>}
 <div class="panel panel-default">
-	<div class="panel-heading">${tr:NewTransaction}</div>
+	<div class="panel-heading">${tr:TransactionInfo}</div>
 	<div class="panel-body">${block:GS.Admin.AccountEntryBlock}</div>
 </div>
-${submit class="btn-primary"}
 ${</direction-selected>}
 </message>
 
@@ -582,24 +560,22 @@ ${</direction-selected>}
 <label for="${label-for}" class="thumbnail">
 	${input class="hidden-upload"}
 	${<has-image>}<div class="view-button">${button}</div>${</has-image>}
-	<div class="action-label">${action}</div>
+	${<is-enabled>}<div class="action-label">${action}</div>${</is-enabled>}
 	${image}
 </label>
 </message>
 
-</messages>
-
-<!--
-<message id="GS.EntityFindLineEdit">
-<div class="form-group">
-	${label}
-	<div class="input-group">
-		${line-edit}
-		<div class="input-group-btn">${new-entity}</div>
-	</div>
+<message id="GS.FindRecordEdit">
+${<readonly>}${edit}${</readonly>}
+${<not-readonly>}
+<div class="input-group">
+	${edit}
+	<div class="input-group-btn">${list}${new}</div>
 </div>
+${</not-readonly>}
 </message>
--->
+
+</messages>
 
 <!--
 <message id="GS.Admin.ExpenseCycleSummary">

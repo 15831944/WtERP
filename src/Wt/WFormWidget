@@ -87,6 +87,8 @@ public:
    */
   void setValidator(WValidator *validator);
 
+  virtual void resetValidator();
+
   /*! \brief Returns the validator.
    */
   virtual WValidator *validator() const { return validator_; }

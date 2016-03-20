@@ -18,16 +18,14 @@ namespace GS
 	{
 		_sideBar = new Wt::WNavigationBar();
 		_stackWidget = new Wt::WStackedWidget();
-		_titleText = new Wt::WText();
 		_menu = new Wt::WMenu(_stackWidget);
-		_menu->itemSelected().connect(this, &AdminPageWidget::handleItemSelected);
+		//_menu->itemSelected().connect(this, &AdminPageWidget::handleItemSelected);
 		_menu->addStyleClass("nav-admin-side");
 		_sideBar->setResponsive(true);
 		_sideBar->addMenu(_menu, Wt::AlignLeft, true);
 
 		bindWidget("sidebar", _sideBar);
 		bindWidget("content", _stackWidget);
-		bindWidget("title", _titleText);
 
 		if(_basePathComponent.empty())
 			_menu->setInternalPathEnabled("/" ADMIN_PATHC "/");
@@ -35,22 +33,46 @@ namespace GS
 			_menu->setInternalPathEnabled("/" ADMIN_PATHC "/" + _basePathComponent + "/");
 	}
 
-	void AdminPageWidget::handleItemSelected(Wt::WMenuItem *item)
+// 	void AdminPageWidget::handleItemSelected(Wt::WMenuItem *item)
+// 	{
+// 		_titleText->setText(item->text());
+// 	}
+
+	Wt::WMenuItem *AdminPageWidget::createMenuItemWrapped(int index, const Wt::WString &label, const std::string &internalPath, Wt::WWidget *contents)
 	{
-		_titleText->setText(item->text());
+		return createMenuItem(index, label, internalPath, new AdminPageContentWidget(label, contents));
 	}
 
-	Wt::WMenuItem * AdminPageWidget::createMenuItem(int index, const Wt::WString &label, const std::string &pathComponent, Wt::WWidget *contents)
+	Wt::WMenuItem *AdminPageWidget::createMenuItemWrapped(const Wt::WString &label, const std::string &internalPath, Wt::WWidget *contents)
 	{
+		return createMenuItemWrapped(menu()->count(), label, internalPath, contents);
+	}
+
+	Wt::WMenuItem *AdminPageWidget::createMenuItem(const Wt::WString &label, const std::string &internalPath, Wt::WWidget *contents)
+	{
+		return createMenuItem(menu()->count(), label, internalPath, contents);
+	}
+
+	Wt::WMenuItem *AdminPageWidget::createMenuItem(int index, const Wt::WString &label, const std::string &internalPath, Wt::WWidget *contents)
+	{
+		std::string pathComponent = Wt::Utils::prepend(Wt::Utils::append(internalPath, '/'), '/');
+		std::string basePath = Wt::Utils::append("/" ADMIN_PATHC "/" + basePathComponent(), '/');
+
+		if(pathComponent.find(basePath.c_str(), 0, basePath.size()) != std::string::npos)
+			pathComponent = pathComponent.substr(basePath.size());
+		if(!pathComponent.empty() && pathComponent.back() == '/')
+			pathComponent.pop_back();
+		if(!pathComponent.empty() && pathComponent.front() == '/')
+			pathComponent = pathComponent.substr(1);
+
 		auto menuItem = new Wt::WMenuItem(label, contents);
 		menuItem->setPathComponent(pathComponent);
 		menu()->insertItem(index, menuItem);
-		return menuItem;
-	}
 
-	Wt::WMenuItem *AdminPageWidget::createMenuItem(const Wt::WString &label, const std::string &pathComponent, Wt::WWidget *contents)
-	{
-		return createMenuItem(menu()->count(), label, pathComponent, contents);
+		if(AccountView *accountView = dynamic_cast<AccountView*>(contents))
+			menuItem->triggered().connect(accountView, &AccountView::reloadList);
+
+		return menuItem;
 	}
 
 	bool AdminPageWidget::checkPathComponentExist(const std::string &pathComponent) const
@@ -68,7 +90,7 @@ namespace GS
 		if(!submittedItem)
 			return;
 
-		MyTemplateFormView *submittedView = dynamic_cast<MyTemplateFormView*>(submittedItem->contentsSafe());
+		MyTemplateFormView *submittedView = dynamic_cast<MyTemplateFormView*>(itemContent(submittedItem));
 		if(!submittedView)
 		{
 			_submitSignalMap[submittedItem].disconnect();
@@ -76,17 +98,11 @@ namespace GS
 			return;
 		}
 
-		std::string newPathComponent = Wt::Utils::prepend(Wt::Utils::append(submittedView->viewInternalPath(), '/'), '/');
-		std::string basePath = Wt::Utils::append("/" ADMIN_PATHC "/" + basePathComponent(), '/');
-
-		if(newPathComponent.find(basePath.c_str(), 0, basePath.size()) != std::string::npos)
-			newPathComponent = newPathComponent.substr(basePath.size());
-		if(!newPathComponent.empty() && newPathComponent.back() == '/')
-			newPathComponent.pop_back();
+		Wt::WMenuItem *newItem = createMenuItem(submittedView->viewName(), submittedView->viewInternalPath(), submittedItem->takeContents());
 
 		MyTemplateFormView *newFormView = submittedView->createFormView();
-		submittedItem->setContents(newFormView, Wt::WMenuItem::LazyLoading, false);
-		Wt::WMenuItem *newItem = createMenuItem(submittedView->viewName(), newPathComponent, submittedView);
+		AdminPageContentWidget* newPageContainer = new AdminPageContentWidget(submittedItem->text(), newFormView);
+		submittedItem->setContents(newPageContainer, Wt::WMenuItem::LazyLoading);
 
 		_submitSignalMap[submittedItem].disconnect();
 		connectFormSubmitted(submittedItem);
@@ -96,14 +112,23 @@ namespace GS
 
 	void AdminPageWidget::connectFormSubmitted(Wt::WMenuItem *item)
 	{
-		if(auto view = dynamic_cast<MyTemplateFormView*>(item->contentsSafe()))
+		if(auto view = dynamic_cast<MyTemplateFormView*>(itemContent(item)))
 			_submitSignalMap[item] = view->submitted().connect(boost::bind(&AdminPageWidget::handleFormSubmitted, this, item));
 	}
 
-	AdminPageContentWidget::AdminPageContentWidget(Wt::WContainerWidget *parent /*= nullptr*/)
-		: Wt::WTemplate("GS.Admin.Main.Content")
+	Wt::WWidget * AdminPageWidget::itemContent(Wt::WMenuItem *item)
 	{
+		return dynamic_cast<AdminPageContentWidget*>(item->contentsSafe())->content();
+	}
 
+	AdminPageContentWidget::AdminPageContentWidget(const Wt::WString &title, Wt::WWidget *content, Wt::WContainerWidget *parent /*= nullptr*/)
+		: Wt::WTemplate(tr("GS.Admin.Main.Content"), parent)
+	{
+		_title = new Wt::WText(title);
+		_content = content;
+
+		bindWidget("title", _title);
+		bindWidget("content", _content);
 	}
 
 	EntitiesAdminPage::EntitiesAdminPage(Wt::WContainerWidget *parent /*= nullptr*/)
@@ -113,16 +138,15 @@ namespace GS
 		allEntitiesMenuItem->setPathComponent("");
 		AllEntityList *allEntityList = new AllEntityList();
 		allEntityList->enableFilters();
-		allEntitiesMenuItem->setContents(allEntityList);
+		allEntitiesMenuItem->setContents(new AdminPageContentWidget(allEntitiesMenuItem->text(), allEntityList));
 		allEntitiesMenuItem->triggered().connect(allEntityList, &AllEntityList::reload);
 		menu()->addItem(allEntitiesMenuItem);
-		handleItemSelected(allEntitiesMenuItem);
 
 		auto personsMenuItem = new Wt::WMenuItem(tr("Persons"));
 		personsMenuItem->setPathComponent(PERSONS_PATHC);
 		PersonList *personList = new PersonList();
 		personList->enableFilters();
-		personsMenuItem->setContents(personList);
+		personsMenuItem->setContents(new AdminPageContentWidget(personsMenuItem->text(), personList));
 		personsMenuItem->triggered().connect(personList, &PersonList::reload);
 		menu()->addItem(personsMenuItem);
 
@@ -130,7 +154,7 @@ namespace GS
 		employeesMenuItem->setPathComponent(EMPLOYEES_PATHC);
 		EmployeeList *employeeList = new EmployeeList();
 		employeeList->enableFilters();
-		employeesMenuItem->setContents(employeeList);
+		employeesMenuItem->setContents(new AdminPageContentWidget(employeesMenuItem->text(), employeeList));
 		employeesMenuItem->triggered().connect(employeeList, &EmployeeList::reload);
 		menu()->addItem(employeesMenuItem);
 
@@ -138,7 +162,7 @@ namespace GS
 		personnelMenuItem->setPathComponent(PERSONNEL_PATHC);
 		PersonnelList *personnelList = new PersonnelList();
 		personnelList->enableFilters();
-		personnelMenuItem->setContents(personnelList);
+		personnelMenuItem->setContents(new AdminPageContentWidget(personnelMenuItem->text(), personnelList));
 		personnelMenuItem->triggered().connect(personnelList, &PersonnelList::reload);
 		menu()->addItem(personnelMenuItem);
 
@@ -146,7 +170,7 @@ namespace GS
 		businessesMenuItem->setPathComponent(BUSINESSES_PATHC);
 		BusinessList *businessList = new BusinessList();
 		businessList->enableFilters();
-		businessesMenuItem->setContents(businessList);
+		businessesMenuItem->setContents(new AdminPageContentWidget(businessesMenuItem->text(), businessList));
 		businessesMenuItem->triggered().connect(businessList, &BusinessList::reload);
 		menu()->addItem(businessesMenuItem);
 
@@ -154,7 +178,7 @@ namespace GS
 		clientsMenuItem->setPathComponent(CLIENTS_PATHC);
 		ClientList *clientList = new ClientList();
 		clientList->enableFilters();
-		clientsMenuItem->setContents(clientList);
+		clientsMenuItem->setContents(new AdminPageContentWidget(clientsMenuItem->text(), clientList));
 		clientsMenuItem->triggered().connect(clientList, &ClientList::reload);
 		menu()->addItem(clientsMenuItem);
 
@@ -162,7 +186,8 @@ namespace GS
 
 		_newEntityMenuItem = new Wt::WMenuItem(tr("AddNewEntity"));
 		_newEntityMenuItem->setPathComponent(NEW_ENTITY_PATHC);
-		_newEntityMenuItem->setContents(new EntityView());
+		EntityView *entityView = new EntityView();
+		_newEntityMenuItem->setContents(new AdminPageContentWidget(_newEntityMenuItem->text(), entityView));
 		menu()->addItem(_newEntityMenuItem);
 		connectFormSubmitted(_newEntityMenuItem);
 
@@ -178,25 +203,23 @@ namespace GS
 		accountsMenuItem->setPathComponent("");
 		AccountList *accountList = new AccountList();
 		accountList->enableFilters();
-		accountsMenuItem->setContents(accountList);
+		accountsMenuItem->setContents(new AdminPageContentWidget(accountsMenuItem->text(), accountList));
 		accountsMenuItem->triggered().connect(accountList, &AccountList::reload);
 		menu()->addItem(accountsMenuItem);
-		handleItemSelected(accountsMenuItem);
 
 		Wt::Dbo::ptr<Account> cashAccountPtr = app->accountsDatabase().findOrCreateCashAccount();
 		auto transactionsMenuItem = new Wt::WMenuItem(tr("Transactions"));
 		transactionsMenuItem->setPathComponent(ACCOUNT_PREFIX + boost::lexical_cast<std::string>(cashAccountPtr.id()));
-		AccountEntryList *transactionList = new AccountEntryList(cashAccountPtr);
-		transactionList->enableFilters();
-		transactionsMenuItem->setContents(transactionList);
-		transactionsMenuItem->triggered().connect(transactionList, &AccountEntryList::reload);
+		AccountView *cashAccountView = new AccountView(cashAccountPtr);
+		transactionsMenuItem->setContents(new AdminPageContentWidget(transactionsMenuItem->text(), cashAccountView));
+		transactionsMenuItem->triggered().connect(cashAccountView, &AccountView::reloadList);
 		menu()->addItem(transactionsMenuItem);
 
 		auto recurringIncomesMenuItem = new Wt::WMenuItem(tr("RecurringIncomes"));
 		recurringIncomesMenuItem->setPathComponent(INCOMECYCLES_PATHC);
 		IncomeCycleList *incomeCycleList = new IncomeCycleList();
 		incomeCycleList->enableFilters();
-		recurringIncomesMenuItem->setContents(incomeCycleList);
+		recurringIncomesMenuItem->setContents(new AdminPageContentWidget(recurringIncomesMenuItem->text(), incomeCycleList));
 		recurringIncomesMenuItem->triggered().connect(incomeCycleList, &IncomeCycleList::reload);
 		menu()->addItem(recurringIncomesMenuItem);
 
@@ -204,7 +227,7 @@ namespace GS
 		recurringExpensesMenuItem->setPathComponent(EXPENSECYCLES_PATHC);
 		ExpenseCycleList *expenseCycleList = new ExpenseCycleList();
 		expenseCycleList->enableFilters();
-		recurringExpensesMenuItem->setContents(expenseCycleList);
+		recurringExpensesMenuItem->setContents(new AdminPageContentWidget(recurringExpensesMenuItem->text(), expenseCycleList));
 		recurringExpensesMenuItem->triggered().connect(expenseCycleList, &ExpenseCycleList::reload);
 		menu()->addItem(recurringExpensesMenuItem);
 
@@ -212,31 +235,36 @@ namespace GS
 
 		auto createAccountMenuItem = new Wt::WMenuItem(tr("CreateAccount"));
 		createAccountMenuItem->setPathComponent(NEW_ACCOUNT_PATHC);
-		createAccountMenuItem->setContents(new AccountView());
+		AccountView *accountView = new AccountView();
+		createAccountMenuItem->setContents(new AdminPageContentWidget(createAccountMenuItem->text(), accountView));
 		menu()->addItem(createAccountMenuItem);
 		connectFormSubmitted(createAccountMenuItem);
 
 		auto createAccountEntryMenuItem = new Wt::WMenuItem(tr("CreateAccountEntry"));
 		createAccountEntryMenuItem->setPathComponent(NEW_ACCOUNTENTRY_PATHC);
-		createAccountEntryMenuItem->setContents(new AccountEntryView());
+		AccountEntryView* accountEntryView = new AccountEntryView();
+		createAccountEntryMenuItem->setContents(new AdminPageContentWidget(createAccountEntryMenuItem->text(), accountEntryView));
 		menu()->addItem(createAccountEntryMenuItem);
 		connectFormSubmitted(createAccountEntryMenuItem);
 
 		auto createTransactionMenuItem = new Wt::WMenuItem(tr("CreateTransaction"));
 		createTransactionMenuItem->setPathComponent(NEW_TRANSACTION_PATHC);
-		createTransactionMenuItem->setContents(new TransactionView());
+		TransactionView* transactionView = new TransactionView();
+		createTransactionMenuItem->setContents(new AdminPageContentWidget(createTransactionMenuItem->text(), transactionView));
 		menu()->addItem(createTransactionMenuItem);
 		connectFormSubmitted(createTransactionMenuItem);
 
 		auto createRecurringIncomeMenuItem = new Wt::WMenuItem(tr("CreateRecurringIncome"));
 		createRecurringIncomeMenuItem->setPathComponent(INCOMECYCLES_PATHC "/" NEW_INCOMECYCLE_PATHC);
-		createRecurringIncomeMenuItem->setContents(new IncomeCycleView());
+		IncomeCycleView* incomeCycleView = new IncomeCycleView();
+		createRecurringIncomeMenuItem->setContents(new AdminPageContentWidget(createRecurringIncomeMenuItem->text(), incomeCycleView));
 		menu()->addItem(createRecurringIncomeMenuItem);
 		connectFormSubmitted(createRecurringIncomeMenuItem);
 
 		auto createRecurringExpenseMenuItem = new Wt::WMenuItem(tr("CreateRecurringExpense"));
 		createRecurringExpenseMenuItem->setPathComponent(EXPENSECYCLES_PATHC "/" NEW_EXPENSECYCLE_PATHC);
-		createRecurringExpenseMenuItem->setContents(new ExpenseCycleView());
+		ExpenseCycleView* expenseCycleView = new ExpenseCycleView();
+		createRecurringExpenseMenuItem->setContents(new AdminPageContentWidget(createRecurringExpenseMenuItem->text(), expenseCycleView));
 		menu()->addItem(createRecurringExpenseMenuItem);
 		connectFormSubmitted(createRecurringExpenseMenuItem);
 

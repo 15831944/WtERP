@@ -13,7 +13,7 @@ namespace GS
 {
 
 	TaskScheduler::TaskScheduler(WServer *server, Wt::Dbo::Session &session)
-		: _server(server), dboSession(session), _entitiesDatabase(dboSession), _accountsDatabase(dboSession)
+		: dboSession(session), _server(server), _entitiesDatabase(dboSession), _accountsDatabase(dboSession)
 	{
 		//Recalculate balance update query
 		{
@@ -84,7 +84,7 @@ namespace GS
 		{
 			Wt::log("error") << "TaskScheduler::createDefaultAccounts(): Error: " << e.what();
 			if(_isConstructing)
-				throw e;
+				throw;
 		}
 
 		//Repeat every 24 hours
@@ -105,7 +105,7 @@ namespace GS
 		{
 			Wt::log("error") << "TaskScheduler::recalculateAccountBalances(): Error: " << e.what();
 			if(_isConstructing)
-				throw e;
+				throw;
 		}
 
 		//Repeat
@@ -163,7 +163,7 @@ namespace GS
 		{
 			Wt::log("error") << "TaskScheduler::createPendingCycleEntries(): Error: " << e.what();
 			if(_isConstructing)
-				throw e;
+				throw;
 		}
 
 		//Repeat
@@ -184,19 +184,19 @@ namespace GS
 			}
 			{
 				AccountEntryCollection collection = _entryCheckAbnormal;
-				int abnormalRecords = collection.size();
+				size_t abnormalRecords = collection.size();
 				if(abnormalRecords > 0)
 					Wt::log("warn") << abnormalRecords << " abnormal AccountEntry records were found";
 			}
 			{
 				IncomeCycleCollection collection = _incomeCycleCheckAbnormal;
-				int abnormalRecords = collection.size();
+				size_t abnormalRecords = collection.size();
 				if(abnormalRecords > 0)
 					Wt::log("warn") << abnormalRecords << " abnormal IncomeCycle records were found";
 			}
 			{
 				ExpenseCycleCollection collection = _expenseCycleCheckAbnormal;
-				int abnormalRecords = collection.size();
+				size_t abnormalRecords = collection.size();
 				if(abnormalRecords > 0)
 					Wt::log("warn") << abnormalRecords << " abnormal ExpenseCycle records were found";
 			}
@@ -206,7 +206,7 @@ namespace GS
 		{
 			Wt::log("error") << "TaskScheduler::checkAbnormalRecords(): Error: " << e.what();
 			if(_isConstructing)
-				throw e;
+				throw;
 		}
 
 		//Repeat every 24 hours

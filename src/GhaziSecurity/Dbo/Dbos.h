@@ -1283,6 +1283,7 @@ namespace GS
 		MonthlyInterval = 2,
 		YearlyInterval = 3
 	};
+	boost::posix_time::ptime addCycleInterval(boost::posix_time::ptime pTime, CycleInterval interval, int nIntervals);
 
 	class EntryCycle
 	{

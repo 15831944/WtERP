@@ -181,7 +181,7 @@
 <!-- FindAccountEdit -->
 <message id="FindAccountEditPlaceholder">Find by name, id, type or entity name...</message>
 <message id="FindAccountEditValueTemplate">{1} (ID: {2}), Type: {3}</message>
-<message id="FindAccountEditValueWithEntityTemplate">{1} (ID: {2}), Type: {3}, Entity: {4}</message>
+<message id="FindAccountEditValueWithEntityTemplate">{1} (ID: {2}), Entity: {3}</message>
 
 <!-- LocationView, CountryView, CityView -->
 <message id="ContactNumber">Contact Number</message>
@@ -243,6 +243,7 @@
 <message id="NewAccount">New Account</message>
 <message id="AddNewAccount">Add new account</message>
 <message id="CreateAccount">Create account</message>
+<message id="AccountInfo">Account Information</message>
 
 <message id="EntityBalanceAccount">Entity Balance</message>
 <message id="EntityIdBalanceAccount">Entity #{1} Balance Account</message>
@@ -255,22 +256,24 @@
 <message id="InvalidAccountSelectionMandatory">You must select an account</message>
 
 <!-- AccountEntryView, AccountEntryList -->
-<message id="AccountEntryViewName">Account entry #{1}</message>
+<message id="AccountEntryViewName">Account Entry #{1}</message>
 
 <message id="NewAccountEntry">New Account Entry</message>
 <message id="CreateAccountEntry">Create account entry</message>
+<message id="AccountEntryInfo">Account Entry Information</message>
 
 <!-- TransactionView -->
-<message id="TransactionViewName">Transaction #{1}: {2}</message>
+<message id="TransactionViewName">Transaction Entry #{1}: {2}</message>
 
 <message id="ReceivingOrPaying">Receiving Or Paying?</message>
 <message id="NewTransaction">New Transaction</message>
 <message id="CreateTransaction">Create transaction</message>
+<message id="TransactionInfo">Transaction Information</message>
 
 <!-- EntryCycles -->
-<message id="ExpenseCycleViewName">Recurring expense #{1}: {2}</message>
-<message id="ExpenseCycleViewNameWithoutEntity">Recurring expense {1}</message>
-<message id="IncomeCycleViewName">Recurring income #{1}: {2}</message>
+<message id="ExpenseCycleViewName">Recurring Expense #{1}: {2}</message>
+<message id="ExpenseCycleViewNameWithoutEntity">Recurring Expense {1}</message>
+<message id="IncomeCycleViewName">Recurring Income #{1}: {2}</message>
 <message id="IncomeCycleViewNameWithoutEntity">Recurring Income {1}</message>
 
 <message id="RecurringExpenses">Recurring expenses</message>
@@ -285,6 +288,8 @@
 <message id="AddRecurringIncome">Add recurring income</message>
 <message id="CreateRecurringIncome">Create recurring income</message>
 <message id="CreateRecurringExpense">Create recurring expense</message>
+<message id="RecurringExpenseInfo">Recurring Expense Information</message>
+<message id="RecurringIncomeInfo">Recurring Income Information</message>
 
 <message id="RecurringAmount">Recurring amount</message>
 <message id="AmountRs">Amount (Rs.)</message>

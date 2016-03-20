@@ -8,8 +8,10 @@ namespace GS
 {
 	class AbstractTemplateViewsContainer : public Wt::WContainerWidget
 	{
-	public:
+	protected:
 		AbstractTemplateViewsContainer(Wt::WContainerWidget *parent = nullptr) : Wt::WContainerWidget(parent) { }
+
+	public:
 		virtual void reset() = 0;
 		virtual void updateViews() = 0;
 		virtual void updateModels() = 0;

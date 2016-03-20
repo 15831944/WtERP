@@ -181,7 +181,7 @@ namespace GS
 		_model = model = new QueryModelType(this);
 
 		_baseQuery = APP->session().query<ResultType>(
-			"SELECT e.timestamp, e.description, e.amount, e.debit_account_id, e.credit_account_id, oAcc.id oAcc_id, oAcc.name oAcc_name FROM " + 
+			"SELECT e.timestamp, e.description, e.amount, e.debit_account_id, e.credit_account_id, oAcc.id oAcc_id, oAcc.name oAcc_name, e.id FROM " + 
 			std::string(AccountEntry::tableName()) + " e "
 			"INNER JOIN " + Account::tableName() + " oAcc ON (oAcc.id <> ? AND (oAcc.id = e.debit_account_id OR oAcc.id = e.credit_account_id))").bind(_accountPtr.id())
 			.where("e.debit_account_id = ? OR e.credit_account_id = ?").bind(_accountPtr.id()).bind(_accountPtr.id());
@@ -202,10 +202,45 @@ namespace GS
 		: Wt::WBatchEditProxyModel(parent)
 	{
 		setSourceModel(model);
+		addAdditionalColumns();
+	}
+
+	void AccountEntryListProxyModel::addAdditionalColumns()
+	{
+		int lastColumn = columnCount();
+
+		if(insertColumn(lastColumn))
+			_linkColumn = lastColumn;
+		else
+			_linkColumn = -1;
+	}
+
+	boost::any AccountEntryListProxyModel::headerData(int section, Wt::Orientation orientation /*= Wt::Horizontal*/, int role /*= Wt::DisplayRole*/) const
+	{
+		if(section == _linkColumn)
+		{
+			if(role == Wt::WidthRole)
+				return 40;
+			return Wt::WAbstractItemModel::headerData(section, orientation, role);
+		}
+
+		return Wt::WBatchEditProxyModel::headerData(section, orientation, role);
 	}
 
 	boost::any AccountEntryListProxyModel::data(const Wt::WModelIndex &idx, int role /*= Wt::DisplayRole*/) const
 	{
+		if(_linkColumn != -1 && idx.column() == _linkColumn)
+		{
+			if(role == Wt::DisplayRole)
+				return Wt::WString::tr("GS.LinkIcon");
+			else if(role == Wt::LinkRole)
+			{
+				const AccountEntryList::ResultType &res = dynamic_cast<Wt::Dbo::QueryModel<AccountEntryList::ResultType>*>(sourceModel())->resultRow(idx.row());
+				long long id = boost::get<AccountEntryList::ResId>(res);
+				return Wt::WLink(Wt::WLink::InternalPath, AccountEntry::viewInternalPath(id));
+			}
+		}
+
 		boost::any viewIndexData = headerData(idx.column(), Wt::Horizontal, Wt::ViewIndexRole);
 		if(viewIndexData.empty())
 			return Wt::WBatchEditProxyModel::data(idx, role);
@@ -255,6 +290,13 @@ namespace GS
 		return Wt::WBatchEditProxyModel::data(idx, role);
 	}
 
+	Wt::WFlags<Wt::ItemFlag> AccountEntryListProxyModel::flags(const Wt::WModelIndex &index) const
+	{
+		if(index.column() == _linkColumn)
+			return Wt::ItemIsXHTMLText;
+		return Wt::WBatchEditProxyModel::flags(index);
+	}
+
 	Wt::WValidator::Result AccountNameValidator::validate(const Wt::WString &input) const
 	{
 		Result baseResult = Wt::WValidator::validate(input);
@@ -262,6 +304,9 @@ namespace GS
 			return baseResult;
 
 		if(input.empty())
+			return baseResult;
+
+		if(!_allowedName.empty() && input == _allowedName)
 			return baseResult;
 
 		WApplication *app = WApplication::instance();
@@ -284,210 +329,65 @@ namespace GS
 		return baseResult;
 	}
 
-	FindAccountModel::FindAccountModel(Wt::WObject *parent /*= nullptr*/)
-		: Wt::Dbo::QueryModel<_FAMTuple>(parent)
-	{
-		setQuery(APP->session().query<_FAMTuple>(
-			"SELECT acc.name, acc.id, acc.type, e.name e_name FROM " + std::string(Account::tableName()) + " acc "
-			"LEFT JOIN " + Entity::tableName() + " e ON (e.bal_account_id = acc.id OR e.pnl_account_id = acc.id)"));
-		addColumn("acc.name");
-		addColumn("acc.id");
-		addColumn("acc.type");
-		addColumn("e.name e_name");
-	}
-
-	boost::any FindAccountModel::data(const Wt::WModelIndex &idx, int role /*= Wt::DisplayRole*/) const
-	{
-		if(idx.column() == 0 && role == Wt::DisplayRole)
-		{
-			const auto &res = resultRow(idx.row());
-			if(!boost::get<EntityName>(res).empty())
-				return Wt::WString::tr("FindAccountEditValueWithEntityTemplate")
-				.arg(boost::get<Name>(res)).arg(boost::get<Id>(res)).arg(Wt::boost_any_traits<Account::Type>::asString(boost::get<Type>(res), "")).arg(boost::get<EntityName>(res));
-			else
-				return Wt::WString::tr("FindAccountEditValueTemplate")
-				.arg(boost::get<Name>(res)).arg(boost::get<Id>(res)).arg(Wt::boost_any_traits<Account::Type>::asString(boost::get<Type>(res), ""));
-		}
-		return Wt::Dbo::QueryModel<_FAMTuple>::data(idx, role);
-	}
-
-	FindAccountEdit::FindAccountEdit(Wt::WContainerWidget *parent /*= nullptr*/)
-		: Wt::WLineEdit(parent)
-	{
-		setPlaceholderText(Wt::WString::tr("FindAccountEditPlaceholder"));
-		accountChanged().connect(boost::bind(&FindAccountEdit::validate, this));
-
-		_newAccount = new Wt::WPushButton(tr("AddNewAccount"));
-		//Wt::WObject::addChild(_newEntity);
-		_newAccount->clicked().connect(this, &FindAccountEdit::showNewAccountDialog);
-
-		_showList = new Wt::WPushButton(tr("SelectFromList"));
-		//Wt::WObject::addChild(_showList);
-		_showList->clicked().connect(this, &FindAccountEdit::showAccountListDialog);
-
-		WApplication *app = WApplication::instance();
-		app->initFindAccountModel();
-
-		Wt::WSuggestionPopup::Options nameOptions = {
-			"<b><u>",	//highlightBeginTag
-			"</b></u>",	//highlightEndTag
-			'\0',		//listSeparator(no)
-			" ",		//whitespace
-			" -"		//wordSeparators
-		};
-		_suggestionPopup = new Wt::WSuggestionPopup(nameOptions, this);
-		_suggestionPopup->setModel(app->findAccountModel());
-		_suggestionPopup->setMaximumSize(Wt::WLength(), 400);
-		_suggestionPopup->forEdit(this, Wt::WSuggestionPopup::DropDownIcon | Wt::WSuggestionPopup::Editing);
-		_suggestionPopup->activated().connect(this, &FindAccountEdit::handleActivated);
-		_suggestionPopup->setDropDownIconUnfiltered(true);
-	}
-
-	void FindAccountEdit::showNewAccountDialog()
-	{
-		_newDialog = new Wt::WDialog(tr("AddNewAccount"), this);
-		_newDialog->setClosable(true);
-		_newDialog->resize(900, Wt::WLength(95, Wt::WLength::Percentage));
-		_newDialog->contents()->setOverflow(Wt::WContainerWidget::OverflowAuto);
-		_newDialog->setDeleteWhenHidden(true);
-
-		AccountView *newAccountView = new AccountView(_newDialog->contents());
-		newAccountView->submitted().connect(boost::bind(&FindAccountEdit::handleAccountViewSubmitted, this, newAccountView));
-
-		_newDialog->show();
-	}
-
-	void FindAccountEdit::showAccountListDialog()
-	{
-		if(!_listDialog)
-		{
-			_listDialog = new Wt::WDialog(tr("SelectXFromList").arg(tr("account")), this);
-			_listDialog->setClosable(true);
-			_listDialog->resize(900, Wt::WLength(95, Wt::WLength::Percentage));
-			_listDialog->setTransient(true);
-			_listDialog->rejectWhenEscapePressed(true);
-			_listDialog->contents()->setOverflow(Wt::WContainerWidget::OverflowAuto);
-
-			AbstractFilteredList *listWidget = new AccountList(_listDialog->contents());
-			listWidget->tableView()->setSelectionMode(Wt::SingleSelection);
-			listWidget->tableView()->setSelectionBehavior(Wt::SelectRows);
-			listWidget->tableView()->selectionChanged().connect(boost::bind(&FindAccountEdit::handleListSelectionChanged, this, listWidget));
-		}
-		_listDialog->show();
-	}
-
-	void FindAccountEdit::setAccountPtr(Wt::Dbo::ptr<Account> ptr)
-	{
-		if(ptr)
-			setText(tr("FindAccountEditValueTemplate")
-				.arg(ptr->name).arg(ptr.id()).arg(Wt::boost_any_traits<Account::Type>::asString(ptr->type, "")));
-		else
-			setText("");
-
-		if(_accountPtr != ptr)
-		{
-			_accountPtr = ptr;
-			_accountChanged.emit();
-		}
-	}
-
-	void FindAccountEdit::handleAccountViewSubmitted(AccountView *view)
-	{
-		setAccountPtr(view->accountPtr());
-		_newDialog->accept();
-	}
-
-	void FindAccountEdit::handleListSelectionChanged(AbstractFilteredList *listWidget)
-	{
-		auto indexSet = listWidget->tableView()->selectedIndexes();
-		if(indexSet.empty())
-			return;
-
-		const auto &index = *indexSet.begin();
-		if(!index.isValid())
-			return;
-
-		long long accountId = boost::any_cast<long long>(index.data());
-		Wt::Dbo::Transaction t(APP->session());
-		Wt::Dbo::ptr<Account> accountPtr = APP->session().load<Account>(accountId);
-		setAccountPtr(accountPtr);
-		_listDialog->accept();
-		t.commit();
-	}
-
-	void FindAccountEdit::handleActivated(int index, Wt::WFormWidget *lineEdit)
-	{
-		WApplication *app = WApplication::instance();
-		Wt::Dbo::Transaction t(app->session());
-		auto itemIndex = _suggestionPopup->model()->index(index, FindAccountModel::Id);
-
-		try
-		{
-			if(itemIndex.isValid())
-			{
-				setAccountPtr(app->session().load<Account>(boost::any_cast<long long>(itemIndex.data())));
-				t.commit();
-			}
-			else
-				setAccountPtr(Wt::Dbo::ptr<Account>());
-		}
-		catch(Wt::Dbo::Exception &e)
-		{
-			Wt::log("error") << "FindAccountEdit::handleActivated(): Dbo error(" << e.code() << "): " << e.what();
-			app->showDbBackendError(e.code());
-		}
-	}
-
-	Wt::WValidator::Result FindAccountValidator::validate(const Wt::WString &input) const
-	{
-		Result baseResult = Wt::WValidator::validate(_findEdit->valueText());
-		if(baseResult.state() != Valid)
-			return baseResult;
-
-		if(_findEdit->valueText().empty())
-			return baseResult;
-
-
-		int currentIndex = _findEdit->_suggestionPopup->currentItem();
-		if(!_findEdit->accountPtr() ||
-			_findEdit->valueText() != Wt::WString::tr("FindAccountEditValueTemplate")
-				.arg(_findEdit->accountPtr()->name).arg(_findEdit->accountPtr().id()).arg(Wt::boost_any_traits<Account::Type>::asString(_findEdit->accountPtr()->type, "")))
-		{
-			if(isMandatory())
-				return Result(Invalid, Wt::WString::tr("InvalidAccountSelectionMandatory"));
-			else
-				return Result(Invalid, Wt::WString::tr("InvalidAccountSelection"));
-		}
-
-		return baseResult;
-	}
-
 	const Wt::WFormModel::Field AccountView::typeField = "type";
 	const Wt::WFormModel::Field AccountView::nameField = "name";
 
-	AccountView::AccountView(Wt::WContainerWidget *parent /*= nullptr*/)
-		: MyTemplateFormView(tr("GS.Admin.AccountView"), parent)
+	AccountView::AccountView(Wt::Dbo::ptr<Account> accountPtr, Wt::WContainerWidget *parent /*= nullptr*/)
+		: MyTemplateFormView(tr("GS.Admin.AccountView"), parent), _accountPtr(accountPtr)
 	{
 		_model = new Wt::WFormModel(this);
-		model()->addField(typeField);
-		model()->addField(nameField);
+		_model->addField(typeField);
+		_model->addField(nameField);
 
-		Wt::WComboBox *typeCombo = new Wt::WComboBox();
-		typeCombo->insertItem(Account::Asset, Wt::boost_any_traits<Account::Type>::asString(Account::Asset, ""));
-		typeCombo->insertItem(Account::Liability, Wt::boost_any_traits<Account::Type>::asString(Account::Liability, ""));
-		setFormWidget(typeField, typeCombo);
+		Wt::Dbo::Transaction t(APP->session());
+		if(_accountPtr)
+		{
+			_model->setValue(typeField, (int)_accountPtr->type);
+			_model->setValue(nameField, Wt::WString::fromUTF8(_accountPtr->name));
+
+			if(_accountPtr->type == Account::Asset || _accountPtr->type == Account::Liability)
+			{
+				long long cashAccountId = SERVER->configs()->getLongInt("CashAccountId", -1);
+				if(cashAccountId != -1 && _accountPtr.id() == cashAccountId)
+					_model->setAllReadOnly(true);
+			}
+			else
+			{
+				_model->setAllReadOnly(true);
+				_model->setVisible(typeField, false);
+			}
+		}
 
 		Wt::WLineEdit *name = new Wt::WLineEdit();
 		name->setMaxLength(70);
-		model()->setValidator(nameField, new AccountNameValidator(true));
-		name->blurred().connect(boost::bind(&Wt::WLineEdit::validate, name));
+		name->changed().connect(boost::bind(&Wt::WLineEdit::validate, name));
+		AccountNameValidator *nameValidator = new AccountNameValidator(true);
+		if(_accountPtr)
+			nameValidator->setAllowedName(_accountPtr->name);
+		_model->setValidator(nameField, nameValidator);
 		setFormWidget(nameField, name);
 
 		Wt::WPushButton *submit = new Wt::WPushButton(tr("Submit"));
 		submit->clicked().connect(this, &AccountView::submit);
 		bindWidget("submit", submit);
 
-		updateView(model());
+		initEntryList();
+
+		updateView(_model);
+	}
+
+	Wt::WWidget *AccountView::createFormWidget(Wt::WFormModel::Field field)
+	{
+		Wt::WComboBox *typeCombo = new Wt::WComboBox();
+		typeCombo->insertItem(Account::Asset, Wt::boost_any_traits<Account::Type>::asString(Account::Asset, ""));
+		typeCombo->insertItem(Account::Liability, Wt::boost_any_traits<Account::Type>::asString(Account::Liability, ""));
+		return typeCombo;
+	}
+
+	void AccountView::reloadList()
+	{
+		if(_entryList)
+			_entryList->reload();
 	}
 
 	Wt::WString AccountView::viewName() const
@@ -502,13 +402,16 @@ namespace GS
 
 	void AccountView::submit()
 	{
+		if(_model->isAllReadOnly())
+			return;
+
 		WApplication *app = WApplication::instance();
 		Wt::Dbo::Transaction t(app->session());
 
-		updateModel(model());
-		if(!model()->validate())
+		updateModel(_model);
+		if(!_model->validate())
 		{
-			updateView(model());
+			updateView(_model);
 			return;
 		}
 
@@ -517,15 +420,18 @@ namespace GS
 			if(!_accountPtr)
 				_accountPtr = app->session().add(new Account());
 
-			_accountPtr.modify()->type = Account::Type(boost::any_cast<int>(model()->value(typeField)));
-			_accountPtr.modify()->name = model()->valueText(nameField).toUTF8();
-
-			if(app->findAccountModel())
-				app->findAccountModel()->reload();
-
+			_accountPtr.modify()->name = _model->valueText(nameField).toUTF8();
+			if(_model->isVisible(typeField))
+				_accountPtr.modify()->type = Account::Type(boost::any_cast<int>(_model->value(typeField)));
 			t.commit();
 
-			updateView(model());
+			auto nameValidator = dynamic_cast<AccountNameValidator*>(_model->validator(nameField));
+			nameValidator->setAllowedName(_accountPtr->name);
+
+			_model->setAllReadOnly(true);
+			initEntryList();
+
+			updateView(_model);
 			submitted().emit();
 		}
 		catch(Wt::Dbo::Exception &e)
@@ -535,47 +441,68 @@ namespace GS
 		}
 	}
 
+	void AccountView::initEntryList()
+	{
+		if(_entryList || !_accountPtr)
+		{
+			bindEmpty("entry-list");
+			return;
+		}
+
+		_entryList = new AccountEntryList(_accountPtr);
+		_entryList->enableFilters();
+		bindWidget("entry-list", _entryList);
+	}
+
 	const Wt::WFormModel::Field AccountEntryView::descriptionField = "description";
 	const Wt::WFormModel::Field AccountEntryView::debitAccountField = "debitAccount";
 	const Wt::WFormModel::Field AccountEntryView::creditAccountField = "creditAccount";
 	const Wt::WFormModel::Field AccountEntryView::amountField = "amount";
 	const Wt::WFormModel::Field AccountEntryView::entityField = "entity";
 
-	AccountEntryView::AccountEntryView(Wt::WContainerWidget *parent /*= nullptr*/, bool isTransactionView /*= false*/)
-		: MyTemplateFormView(tr("GS.Admin.AccountEntryView"), parent)
+	AccountEntryView::AccountEntryView(Wt::Dbo::ptr<AccountEntry> accountEntryPtr, Wt::WContainerWidget *parent /*= nullptr*/, bool isTransactionView /*= false*/)
+		: MyTemplateFormView(tr("GS.Admin.AccountEntryView"), parent), _accountEntryPtr(accountEntryPtr)
 	{
 		_model = new Wt::WFormModel(this);
-		model()->addField(descriptionField);
-		model()->addField(debitAccountField);
-		model()->addField(creditAccountField);
-		model()->addField(amountField);
-		model()->addField(entityField);
+		_model->addField(descriptionField);
+		_model->addField(debitAccountField);
+		_model->addField(creditAccountField);
+		_model->addField(amountField);
+		_model->addField(entityField);
+		
+		_model->setReadOnly(entityField, true);
+		_model->setVisible(entityField, false);
 
-		model()->setReadOnly(entityField, true);
-		model()->setVisible(entityField, false);
+		Wt::Dbo::Transaction t(APP->session());
+		if(_accountEntryPtr)
+		{
+			_model->setValue(descriptionField, _accountEntryPtr->description);
+			_model->setValue(debitAccountField, _accountEntryPtr->debitAccountPtr());
+			_model->setValue(creditAccountField, _accountEntryPtr->creditAccountPtr());
+			_model->setValue(amountField, _accountEntryPtr->amount());
+			_model->setAllReadOnly(true);
+		}
 
 		Wt::WTextArea *description = new Wt::WTextArea();
 		description->setRows(2);
-		model()->setValidator(descriptionField, new Wt::WLengthValidator(0, 255));
+		_model->setValidator(descriptionField, new Wt::WLengthValidator(0, 255));
 		setFormWidget(descriptionField, description);
 
 		FindAccountEdit *debitFindEdit = new FindAccountEdit();
 		setFormWidget(debitAccountField, debitFindEdit);
-		bindWidget("new-debit", debitFindEdit->newAccountBtn());
-		bindWidget("list-debit", debitFindEdit->showListBtn());
-		model()->setValidator(debitAccountField, new FindAccountValidator(debitFindEdit, true));
+		if(!isTransactionView)
+			_model->setValidator(debitAccountField, new FindAccountValidator(debitFindEdit, true));
 
 		FindAccountEdit *creditFindEdit = new FindAccountEdit();
 		setFormWidget(creditAccountField, creditFindEdit);
-		bindWidget("new-credit", creditFindEdit->newAccountBtn());
-		bindWidget("list-credit", creditFindEdit->showListBtn());
-		model()->setValidator(creditAccountField, new FindAccountValidator(creditFindEdit, true));
+		if(!isTransactionView)
+			_model->setValidator(creditAccountField, new FindAccountValidator(creditFindEdit, true));
 
 		Wt::WLineEdit *amount = new Wt::WLineEdit();
 		auto amountValidator = new Wt::WDoubleValidator();
 		amountValidator->setBottom(0);
 		amountValidator->setMandatory(true);
-		model()->setValidator(amountField, amountValidator);
+		_model->setValidator(amountField, amountValidator);
 		setFormWidget(amountField, amount);
 
 		Wt::WPushButton *submit = new Wt::WPushButton(tr("Submit"));
@@ -584,10 +511,13 @@ namespace GS
 
 		if(!isTransactionView)
 		{
-			debitFindEdit->accountChanged().connect(this, &AccountEntryView::handleAccountChanged);
-			creditFindEdit->accountChanged().connect(this, &AccountEntryView::handleAccountChanged);
-			handleAccountChanged();
-			updateView(model());
+			if(_accountEntryPtr)
+				handleAccountChanged(false);
+
+			updateView(_model);
+
+			debitFindEdit->valueChanged().connect(boost::bind(&AccountEntryView::handleAccountChanged, this, true));
+			creditFindEdit->valueChanged().connect(boost::bind(&AccountEntryView::handleAccountChanged, this, true));
 		}
 	}
 
@@ -596,8 +526,6 @@ namespace GS
 		if(field == entityField)
 		{
 			FindEntityEdit *entityFindEdit = new FindEntityEdit();
-			bindWidget("new-entity", entityFindEdit->newEntityBtn());
-			bindWidget("list-entity", entityFindEdit->showListBtn());
 			return entityFindEdit;
 		}
 		return MyTemplateFormView::createFormWidget(field);
@@ -608,27 +536,32 @@ namespace GS
 		if(field == entityField)
 		{
 			FindEntityEdit *entityFindEdit = dynamic_cast<FindEntityEdit*>(AccountEntryView::createFormWidget(field));
-			entityFindEdit->entityChanged().connect(this, &TransactionView::setAccountsFromEntity);
-			model()->setValidator(entityField, new FindEntityValidator(entityFindEdit, true));
+			entityFindEdit->valueChanged().connect(this, &TransactionView::setAccountsFromEntity);
+			_model->setValidator(entityField, new FindEntityValidator(entityFindEdit, true));
 			return entityFindEdit;
 		}
 		return MyTemplateFormView::createFormWidget(field);
 	}
 
-	void AccountEntryView::handleAccountChanged()
-	{
+	void AccountEntryView::handleAccountChanged(bool update /*= true*/)
+{
 		long long cashAccountId = SERVER->configs()->getLongInt("CashAccountId", -1);
 		if(cashAccountId == -1)
 			return;
 
-		updateModelField(model(), debitAccountField);
-		updateModelField(model(), creditAccountField);
-		const boost::any &debitData = model()->value(debitAccountField);
-		const boost::any &creditData = model()->value(creditAccountField);
+		if(update)
+		{
+			updateModelField(_model, debitAccountField);
+			updateModelField(_model, creditAccountField);
+		}
+
+		const boost::any &debitData = _model->value(debitAccountField);
+		const boost::any &creditData = _model->value(creditAccountField);
 		if(debitData.empty() || creditData.empty())
 		{
-			model()->setValue(entityField, Wt::Dbo::ptr<Entity>());
-			updateViewField(model(), entityField);
+			_model->setValue(entityField, Wt::Dbo::ptr<Entity>());
+			if(update)
+				updateViewField(_model, entityField);
 			return;
 		}
 
@@ -636,8 +569,9 @@ namespace GS
 		Wt::Dbo::ptr<Account> creditPtr = boost::any_cast<Wt::Dbo::ptr<Account>>(creditData);
 		if(!debitPtr || !creditPtr)
 		{
-			model()->setValue(entityField, Wt::Dbo::ptr<Entity>());
-			updateViewField(model(), entityField);
+			_model->setValue(entityField, Wt::Dbo::ptr<Entity>());
+			if(update)
+				updateViewField(_model, entityField);
 			return;
 		}
 
@@ -648,9 +582,10 @@ namespace GS
 		else if(creditPtr.id() == cashAccountId)
 			entityPtr = debitPtr->balOfEntityWPtr;
 
-		model()->setValue(entityField, entityPtr);
-		model()->setVisible(entityField, true);
-		updateViewField(model(), entityField);
+		_model->setValue(entityField, entityPtr);
+		_model->setVisible(entityField, true);
+		if(update)
+			updateViewField(_model, entityField);
 	}
 
 	Wt::WString AccountEntryView::viewName() const
@@ -658,7 +593,7 @@ namespace GS
 		if(!_accountEntryPtr)
 			return MyTemplateFormView::viewName();
 
-		const boost::any &entityData = model()->value(entityField);
+		const boost::any &entityData = _model->value(entityField);
 		if(!entityData.empty())
 		{
 			if(Wt::Dbo::ptr<Entity> entityPtr = boost::any_cast<Wt::Dbo::ptr<Entity>>(entityData))
@@ -672,33 +607,39 @@ namespace GS
 	}
 
 	void AccountEntryView::submit()
-{
+	{
+		if(_model->isAllReadOnly())
+			return;
+
 		WApplication *app = WApplication::instance();
 		Wt::Dbo::Transaction t(app->session());
 
-		updateModel(model());
-		if(!model()->validate())
+		updateModel(_model);
+		if(!_model->validate())
 		{
-			updateView(model());
+			updateView(_model);
 			return;
 		}
 
 		try
 		{
-			double amount = boost::lexical_cast<double>(model()->valueText(amountField).toUTF8());
-			Wt::Dbo::ptr<Account> debitAccountPtr = boost::any_cast<Wt::Dbo::ptr<Account>>(model()->value(debitAccountField));
-			Wt::Dbo::ptr<Account> creditAccountPtr = boost::any_cast<Wt::Dbo::ptr<Account>>(model()->value(creditAccountField));
+			double amount = boost::lexical_cast<double>(_model->valueText(amountField).toUTF8());
+			Wt::Dbo::ptr<Account> debitAccountPtr = boost::any_cast<Wt::Dbo::ptr<Account>>(_model->value(debitAccountField));
+			Wt::Dbo::ptr<Account> creditAccountPtr = boost::any_cast<Wt::Dbo::ptr<Account>>(_model->value(creditAccountField));
 
 			if(!_accountEntryPtr)
 				_accountEntryPtr = app->accountsDatabase().createAccountEntry(amount, debitAccountPtr, creditAccountPtr);
 
 			_accountEntryPtr.modify()->type = AccountEntry::Type::UnspecifiedType;
-			_accountEntryPtr.modify()->description = model()->valueText(descriptionField).toUTF8();
-
-			t.commit();
-
-			updateView(model());
-			submitted().emit();
+			_accountEntryPtr.modify()->description = _model->valueText(descriptionField).toUTF8();
+			_accountEntryPtr.flush(); //for TransactionView::submit()'s Dbo::Transaction
+			
+			if(t.commit())
+			{
+				_model->setAllReadOnly(true);
+				updateView(_model);
+				submitted().emit();
+			}
 		}
 		catch(Wt::Dbo::Exception &e)
 		{
@@ -709,7 +650,7 @@ namespace GS
 	}
 
 	TransactionView::TransactionView(Wt::WContainerWidget *parent /*= nullptr*/)
-		: AccountEntryView(parent, true)
+		: AccountEntryView(Wt::Dbo::ptr<AccountEntry>(), parent, true)
 	{
 		setTemplateText(tr("GS.Admin.TransactionView"));
 
@@ -724,14 +665,14 @@ namespace GS
 		_selectPayment->clicked().connect(boost::bind(&TransactionView::selectDirection, this, false));
 		bindWidget("selectPayment", _selectPayment);
 
-		model()->setReadOnly(entityField, false);
-		model()->setVisible(entityField, true);
-		model()->setReadOnly(debitAccountField, true);
-		model()->setReadOnly(creditAccountField, true);
+		_model->setReadOnly(entityField, false);
+		_model->setVisible(entityField, true);
+		_model->setReadOnly(debitAccountField, true);
+		_model->setReadOnly(creditAccountField, true);
 
 		//setAccountsFromEntity(); REQUIRES TRANSACTION!!!!!!
 
-		updateView(model());
+		updateView(_model);
 	}
 
 	void TransactionView::selectDirection(bool isReceipt)
@@ -753,7 +694,7 @@ namespace GS
 
 	void TransactionView::submit()
 {
-		if(!_isReceipt.is_initialized())
+		if(!_isReceipt.is_initialized() || _model->isAllReadOnly() || !conditionValue("direction-selected"))
 			return;
 
 		WApplication *app = WApplication::instance();
@@ -761,8 +702,19 @@ namespace GS
 
 		try
 		{
+			Wt::Dbo::ptr<Entity> entityPtr = boost::any_cast<Wt::Dbo::ptr<Entity>>(_model->value(entityField));
+			app->accountsDatabase().createEntityAccountsIfNotFound(entityPtr);
 			setAccountsFromEntity();
 			AccountEntryView::submit();
+
+			if(t.commit())
+			{
+				setCondition("select-direction", false);
+				_model->setAllReadOnly(true);
+
+				updateView(_model);
+				submitted().emit();
+			}
 		}
 		catch(Wt::Dbo::Exception &e)
 		{
@@ -780,8 +732,8 @@ namespace GS
 		if(cashAccountId == -1)
 			return;
 
-		updateModelField(model(), entityField);
-		const boost::any &entityData = model()->value(entityField);
+		updateModelField(_model, entityField);
+		const boost::any &entityData = _model->value(entityField);
 
 		if(!entityData.empty())
 		{
@@ -791,25 +743,25 @@ namespace GS
 				Wt::Dbo::Transaction t(app->session());
 				if(*_isReceipt)
 				{
-					model()->setValue(debitAccountField, app->accountsDatabase().findOrCreateCashAccount());
-					model()->setValue(creditAccountField, entityPtr->balAccountPtr);
+					_model->setValue(debitAccountField, app->accountsDatabase().findOrCreateCashAccount());
+					_model->setValue(creditAccountField, entityPtr->balAccountPtr);
 				}
 				else
 				{
-					model()->setValue(debitAccountField, entityPtr->balAccountPtr);
-					model()->setValue(creditAccountField, app->accountsDatabase().findOrCreateCashAccount());
+					_model->setValue(debitAccountField, entityPtr->balAccountPtr);
+					_model->setValue(creditAccountField, app->accountsDatabase().findOrCreateCashAccount());
 				}
 
-				updateViewField(model(), debitAccountField);
-				updateViewField(model(), creditAccountField);
+				updateViewField(_model, debitAccountField);
+				updateViewField(_model, creditAccountField);
 				return;
 			}
 		}
 
-		model()->setValue(debitAccountField, Wt::Dbo::ptr<Account>());
-		model()->setValue(creditAccountField, Wt::Dbo::ptr<Account>());
-		updateViewField(model(), debitAccountField);
-		updateViewField(model(), creditAccountField);
+		_model->setValue(debitAccountField, Wt::Dbo::ptr<Account>());
+		_model->setValue(creditAccountField, Wt::Dbo::ptr<Account>());
+		updateViewField(_model, debitAccountField);
+		updateViewField(_model, creditAccountField);
 	}
 
 }

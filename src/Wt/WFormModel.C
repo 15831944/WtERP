@@ -29,7 +29,7 @@ WFormModel::FieldData::FieldData()
 }
 
 WFormModel::WFormModel(WObject *parent)
-  : WObject(parent)
+  : WObject(parent), allReadOnly_(false)
 { }
 
 void WFormModel::addField(Field field, const WString& info)
@@ -63,8 +63,16 @@ void WFormModel::setReadOnly(Field field, bool readOnly)
     LOG_ERROR("setReadOnly(): " << field << " not in model");
 }
 
+void WFormModel::setAllReadOnly(bool readOnly)
+{
+	allReadOnly_ = readOnly;
+}
+
 bool WFormModel::isReadOnly(Field field) const
 {
+  if(allReadOnly_)
+	  return true;
+  
   FieldMap::const_iterator i = fields_.find(field);
 
   if (i != fields_.end())

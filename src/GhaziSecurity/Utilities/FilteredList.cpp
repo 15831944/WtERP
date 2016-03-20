@@ -110,9 +110,7 @@ namespace GS
 		for(const auto &namePart : tokens)
 			result += _columnName + " LIKE ? OR ";
 
-		result = result.substr(0, result.size() - 4);
-
-		return result;
+		return result.substr(0, result.size() - 4);
 	}
 
 	std::vector<std::string> NameFilterModel::boundValues()

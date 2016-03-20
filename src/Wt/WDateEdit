@@ -64,6 +64,8 @@ public:
    */
   virtual WDateValidator *validator() const;
 
+  virtual void resetValidator();
+
   /*! \brief Sets the format used for representing the date.
    *
    * This sets the format in the validator.

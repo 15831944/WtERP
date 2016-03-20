@@ -121,7 +121,7 @@ namespace GS
 		WApplication *app = WApplication::instance();
 		auto country = new ProxyModelComboBox<CountryProxyModel>(app->countryProxyModel());
 		setFormWidget(countryField, country);
-		auto countryValidator = new ProxyModelComboBoxValidator<CountryProxyModel>(country);
+		auto countryValidator = new ProxyModelCBValidator<CountryProxyModel>(country);
 		countryValidator->setErrorString(tr("MustSelectCountry"));
 		model()->setValidator(countryField, countryValidator);
 		country->blurred().connect(boost::bind(&Wt::WComboBox::validate, country));
@@ -176,6 +176,7 @@ namespace GS
 	}
 
 	CityFilterModel::CityFilterModel(Wt::WObject *parent)
+		: Wt::WSortFilterProxyModel(parent)
 	{
 		setDynamicSortFilter(true);
 	}
@@ -422,7 +423,7 @@ namespace GS
 	LocationsContainer::LocationsContainer(LocationsManagerModel *model, Wt::WContainerWidget *parent)
 		: TemplateViewsContainer<LocationView, LocationFormModel>(parent), _model(model)
 	{
-		for(int i = 0; i < _model->ptrVector().size() + 1; ++i)
+		for(size_t i = 0; i < _model->ptrVector().size() + 1; ++i)
 			addFieldWidget(i < _model->ptrVector().size() ? _model->ptrVector()[i] : Wt::Dbo::ptr<Location>());
 	}
 

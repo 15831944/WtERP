@@ -27,7 +27,6 @@ namespace GS
 
 	protected:
 		//void initEntityAccountValues(Wt::Dbo::ptr<Account> accountPtr, Wt::Dbo::ptr<Entity> entityPtr);
-		boost::posix_time::ptime addInterval(boost::posix_time::ptime pTime, CycleInterval interval, int nIntervals) const;
 
 		Wt::Dbo::Session &dboSession;
 		EntitiesDatabase _entitiesDatabase;

@@ -19,18 +19,25 @@ namespace GS
 {
 
 	UploadedImage::UploadedImage(Wt::Dbo::ptr<UploadedFile> ptr)
-		: filePtr(ptr), temporary(false), fileName(ptr->pathToFile()), mimeType(ptr->mimeType), extension(ptr->extension)
+		: temporary(false), filePtr(ptr), fileName(ptr->pathToFile()), mimeType(ptr->mimeType), extension(ptr->extension)
 	{ }
 
 	ImageUpload::ImageUpload(Wt::WString actionUpload, Wt::WString actionChange, Wt::WContainerWidget *parent /*= nullptr*/)
 		: Wt::WTemplate(tr("GS.ImageUpload"), parent), _actionUpload(actionUpload), _actionChange(actionChange)
 	{
 		addFunction("id", &Functions::id);
+
 		setStyleClass("image-upload");
 		bindWidget("input", _fileUpload = new Wt::WFileUpload());
 		bindEmpty("image");
 		bindWidget("action", new Wt::WText(_actionUpload));
-		bindString("label-for", "in" + _fileUpload->id());
+
+		bool enabled = isEnabled();
+		setCondition("is-enabled", enabled);
+		if(enabled)
+			bindString("label-for", "in" + _fileUpload->id());
+		else
+			bindEmpty("label-for");
 
 		_image = new Wt::WImage(Wt::WLink());
 
@@ -47,7 +54,8 @@ namespace GS
 
 	void ImageUpload::handleUploaded()
 	{
-		bindString("label-for", "in" + _fileUpload->id());
+		if(isEnabled())
+			bindString("label-for", "in" + _fileUpload->id());
 
 		if(_fileUpload->uploadedFiles().empty())
 			return;
@@ -90,6 +98,9 @@ namespace GS
 
 	void ImageUpload::handleFileTooLarge()
 	{
+		if(isEnabled())
+			bindString("label-for", "in" + _fileUpload->id());
+
 		resolve<Wt::WText*>("action")->setText(tr("FileTooLarge").arg(std::round(static_cast<double>(SERVER->configuration().maxRequestSize()) * 100 / 1024 / 1024) / 100));
 	}
 
@@ -100,8 +111,8 @@ namespace GS
 
 		resolve<Wt::WText*>("action")->setText("Uploading...");
 
-		bindEmpty("label-for");
 		_fileUpload->upload();
+		bindEmpty("label-for");
 	}
 
 	void ImageUpload::setPlaceholderImageLink(const Wt::WLink &link)
@@ -251,6 +262,15 @@ namespace GS
 		img.thumbnail(Magick::Geometry(static_cast<unsigned int>(std::round((double)imgSize.width() / imgSize.height() * _thumbnailHeight)), _thumbnailHeight));
 		img.quality(90);
 		img.write(blob, "JPEG");
+	}
+
+	void ImageUpload::propagateSetEnabled(bool enabled)
+	{
+		setCondition("is-enabled", enabled);
+		if(enabled)
+			bindString("label-for", "in" + _fileUpload->id());
+		else
+			bindEmpty("label-for");
 	}
 
 }

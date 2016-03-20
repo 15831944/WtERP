@@ -60,6 +60,11 @@ WDateValidator *WDateEdit::validator() const
   return dynamic_cast<WDateValidator *>(WLineEdit::validator());
 }
 
+void WDateEdit::resetValidator()
+{
+	setValidator(new WDateValidator("dd/MM/yyyy", this));
+}
+
 void WDateEdit::setFormat(const WT_USTRING& format)
 {
   WDateValidator *dv = validator();

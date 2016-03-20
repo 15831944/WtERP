@@ -60,6 +60,11 @@ WTimeValidator *WTimeEdit::validator() const
   return dynamic_cast<WTimeValidator *>(WLineEdit::validator());
 }
 
+void WTimeEdit::resetValidator()
+{
+	setValidator(new WTimeValidator(this));
+}
+
 void WTimeEdit::setFormat(const WT_USTRING& format)
 {
   WTimeValidator *tv = validator();

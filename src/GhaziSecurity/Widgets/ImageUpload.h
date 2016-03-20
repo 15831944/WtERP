@@ -41,6 +41,7 @@ namespace GS
 	protected:
 		void lazyBindImage();
 		void createThumbnail(const std::string &path, Magick::Blob *blob);
+		virtual void propagateSetEnabled(bool enabled) override;
 
 		Wt::WString _actionUpload;
 		Wt::WString _actionChange;
