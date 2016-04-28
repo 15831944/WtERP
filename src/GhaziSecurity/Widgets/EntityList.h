@@ -4,7 +4,7 @@
 #include "Dbo/Dbos.h"
 #include "Application/WApplication.h"
 #include "Utilities/FilteredList.h"
-#include "Utilities/FindRecordEdit.h"
+#include "Widgets/FindRecordEdit.h"
 
 #include <Wt/WTemplate>
 #include <Wt/WLineEdit>
@@ -42,7 +42,7 @@ namespace GS
 	{
 	public:
 		enum ResultColumns { Id, Name, EntityType, SpecificTypeMask };
-		AllEntityList(Wt::WContainerWidget *parent = nullptr);
+		AllEntityList();
 
 	protected:
 		virtual void initFilters() override;
@@ -53,7 +53,7 @@ namespace GS
 	{
 	public:
 		enum ResultColumns { Id, Name, SpecificTypeMask };
-		PersonList(Wt::WContainerWidget *parent = nullptr);
+		PersonList();
 
 	protected:
 		virtual void initFilters() override;
@@ -64,7 +64,7 @@ namespace GS
 	{
 	public:
 		enum ResultColumns { Id, Name, SpecificTypeMask };
-		EmployeeList(Wt::WContainerWidget *parent = nullptr);
+		EmployeeList();
 
 	protected:
 		virtual void initFilters() override;
@@ -75,7 +75,7 @@ namespace GS
 	{
 	public:
 		enum ResultColumns { Id, Name, SpecificTypeMask };
-		PersonnelList(Wt::WContainerWidget *parent = nullptr);
+		PersonnelList();
 
 	protected:
 		virtual void initFilters() override;
@@ -86,7 +86,7 @@ namespace GS
 	{
 	public:
 		enum ResultColumns { Id, Name, SpecificTypeMask };
-		BusinessList(Wt::WContainerWidget *parent = nullptr);
+		BusinessList();
 
 	protected:
 		virtual void initFilters() override;
@@ -97,7 +97,7 @@ namespace GS
 	{
 	public:
 		enum ResultColumns { Id, Name, EntityType, SpecificTypeMask };
-		ClientList(Wt::WContainerWidget *parent = nullptr);
+		ClientList();
 
 	protected:
 		virtual void initFilters() override;

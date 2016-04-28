@@ -158,7 +158,7 @@ void WTemplateFormView::updateViewField(WFormModel *model,
 		Wt::WValidator *modelValidator = model->validator(field);
 		if(modelValidator)
 		{
-			if(model->isAllReadOnly())
+			if(model->isAllReadOnly() || !isEnabled())
 			{
 				if(fedit->validator() == modelValidator)
 					fedit->resetValidator();

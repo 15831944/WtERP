@@ -592,6 +592,18 @@
 	       entry point by passing a location to WServer::addEntryPoint().
 	      -->
 	    <!-- <property name="favicon">images/favicon.ico</property> -->
+		
+	    <property name="DbBackend">MySQL</property> <!-- MySQL or SQLite -->
+		
+	    <property name="SQLiteDb">:memory:</property>
+		
+	    <property name="MySQLHost">127.0.0.1</property>
+	    <property name="MySQLPort">3306</property>
+	    <property name="MySQLDb">ghazisecurity</property>
+	    <property name="MySQLUser">root</property>
+	    <property name="MySQLPassword"></property>
+		
+	    <property name="ReinstallDb">false</property>
 	</properties>
 
     </application-settings>

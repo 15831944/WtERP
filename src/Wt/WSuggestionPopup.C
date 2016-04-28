@@ -357,10 +357,23 @@ void WSuggestionPopup::setFilterLength(int length)
   filterLength_ = length;
 }
 
-void WSuggestionPopup::doFilter(std::string input)
+void WSuggestionPopup::doFilter(std::string input, std::string editId)
 {
+  WFormWidget *edit = 0;
+
+  for (unsigned i = 0; i < edits_.size(); ++i)
+    if (edits_[i]->id() == editId) {
+      edit = edits_[i];
+      break;
+    }
+
+  if (edit == 0) {
+    LOG_ERROR("filter from bogus editor");
+	return;
+  }
+
   filtering_ = true;
-  filterModel_.emit(WT_USTRING::fromUTF8(input));
+  filterModel_.emit(WT_USTRING::fromUTF8(input), edit);
   filtering_ = false;
 
   /*

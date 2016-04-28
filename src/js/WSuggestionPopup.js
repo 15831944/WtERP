@@ -266,7 +266,7 @@ WT_DECLARE_WT_MEMBER
 	 if (nf != filter) {
 	   if (nf != filtering) {
 	     filtering = nf;
-	     APP.emit(el, "filter", nf);
+	     APP.emit(el, "filter", nf, edit.id);
 	   }
 	 }
        }

@@ -196,10 +196,10 @@ namespace GS
 
 		//Save
 		WApplication *app = WApplication::instance();
-		Wt::Dbo::Transaction t(app->session());
+		TRANSACTION(app);
 
 		if(!_imageInfo.filePtr)
-			_imageInfo.filePtr = app->session().add(new UploadedFile);
+			_imageInfo.filePtr = app->dboSession().add(new UploadedFile);
 
 		_imageInfo.filePtr.modify()->description = description;
 		_imageInfo.filePtr.modify()->extension = _imageInfo.extension;

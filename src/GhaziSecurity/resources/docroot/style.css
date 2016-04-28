@@ -5,7 +5,7 @@ margin-bottom:20px;
 }
 
 @media(min-width: 768px){
-	.navbar-g .navbar-collapse .navbar-nav{
+	.navbar-g .navbar-collapse .navbar-left{
 	margin-top:29px;
 	}
 	.navbar-g .nav>li>a {
@@ -63,7 +63,7 @@ padding:7px 40px;
 	.navbar-admin{
 	max-height:95px;
 	}
-	.navbar-admin .navbar-collapse .navbar-nav, .navbar-admin .navbar-collapse .input-group{
+	.navbar-admin .navbar-collapse .navbar-left{
 	margin-top:20px;
 	}
 	.navbar-admin .nav>li>a {
@@ -269,6 +269,14 @@ margin-left:15px;
 
 .hide-empty-hr:empty + hr{
 display:none;
+}
+
+.gs-auth{
+margin-top:80px;
+width:550px;
+}
+.gs-auth h1{
+margin-bottom:40px;
 }
 
 @media print {

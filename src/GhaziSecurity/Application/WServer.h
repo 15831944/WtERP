@@ -19,6 +19,7 @@ namespace GS
 {
 	class WApplication;
 	class TaskScheduler;
+	class PermissionsDatabase;
 
 	typedef std::vector<const Wt::Auth::OAuthService*> OAuthServiceMap;
 
@@ -33,6 +34,7 @@ namespace GS
 
 		Wt::Dbo::SqlConnectionPool *sqlPool() const { return _sqlPool; }
 		WW::ConfigurationsDatabase *configs() const { return _configs; }
+		PermissionsDatabase *permissionsDatabase() const { return _permissionsDatabase; }
 
 		const Wt::Auth::AuthService &getAuthService() const { return _authService; }
 		const Wt::Auth::PasswordService &getPasswordService() const { return _passwordService; }
@@ -45,6 +47,7 @@ namespace GS
 		Wt::Dbo::Session _dboSession;
 		Wt::Dbo::SqlConnectionPool *_sqlPool = nullptr;
 		WW::ConfigurationsDatabase *_configs = nullptr;
+		PermissionsDatabase *_permissionsDatabase = nullptr;
 		TaskScheduler *_taskScheduler = nullptr;
 
 		Wt::Auth::AuthService _authService;

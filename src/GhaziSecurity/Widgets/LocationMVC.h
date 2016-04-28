@@ -2,9 +2,9 @@
 #define GS_COUNTRYCITYVIEWS_WIDGET_H
 
 #include "Dbo/Dbos.h"
-#include "Utilities/QueryProxyModel.h"
-#include "Utilities/MyFormView.h"
-#include "Utilities/TemplateViewsContainer.h"
+#include "Utilities/QueryProxyMVC.h"
+#include "Utilities/RecordFormView.h"
+#include "Utilities/FilteredList.h"
 
 #include <Wt/Dbo/QueryModel>
 #include <Wt/WSortFilterProxyModel>
@@ -15,6 +15,9 @@ namespace GS
 {
 	class LocationView;
 	class LocationsManagerModel;
+	class FindEntityEdit;
+	class CountryView;
+	class CityView;
 
 	class CountryProxyModel : public QueryProxyModel<Wt::Dbo::ptr<Country>>
 	{
@@ -50,99 +53,133 @@ namespace GS
 		CityFilterModel *_filterModel = nullptr;
 	};
 
-	class CountryView : public Wt::WTemplateFormView
+	class CountryFormModel : public RecordFormModel<Country>
 	{
 	public:
 		static const Wt::WFormModel::Field codeField;
 		static const Wt::WFormModel::Field nameField;
 
-		CountryView(Wt::WContainerWidget *parent = nullptr);
-		Wt::Dbo::ptr<Country> countryPtr() const { return _countryPtr; }
-		Wt::WFormModel *model() const { return _model; }
-		Wt::Signal<void> &submitted() { return _submitted; }
+		CountryFormModel(CountryView *view, Wt::Dbo::ptr<Country> countryPtr = Wt::Dbo::ptr<Country>());
+		virtual Wt::WWidget *createFormWidget(Field field) override;
+		virtual bool saveChanges() override;
 
 	protected:
-		void submit();
+		CountryView *_view = nullptr;
+	};
 
-		Wt::WFormModel *_model = nullptr;
-		Wt::Dbo::ptr<Country> _countryPtr;
-		Wt::Signal<void> _submitted;
+	class CountryView : public RecordFormView
+	{
+	public:
+		CountryView(Wt::Dbo::ptr<Country> countryPtr);
+		CountryView();
+		virtual void init() override;
+
+		Wt::Dbo::ptr<Country> countryPtr() const { return _model->recordPtr(); }
+		CountryFormModel *model() const { return _model; }
+
+	protected:
+		CountryFormModel *_model = nullptr;
+		Wt::Dbo::ptr<Country> _tempPtr;
 	};
 
 	class CountryCodeValidator : public Wt::WLengthValidator
 	{
 	public:
-		CountryCodeValidator(bool mandatory = false, Wt::WObject *parent = nullptr)
-			: Wt::WLengthValidator(0, 3, parent)
+		CountryCodeValidator(bool mandatory = false, const Wt::WString &allowedName = "", Wt::WObject *parent = nullptr)
+			: Wt::WLengthValidator(0, 3, parent), _allowedCode(allowedName)
 		{
 			setMandatory(mandatory);
 		}
 		virtual Result validate(const Wt::WString &input) const override;
+		void setAllowedCode(const Wt::WString &name) { _allowedCode = name; }
+
+	protected:
+		Wt::WString _allowedCode;
 	};
 
-	class CityView : public MyTemplateFormView
+	class CityFormModel : public RecordFormModel<City>
 	{
 	public:
 		static const Wt::WFormModel::Field countryField;
 		static const Wt::WFormModel::Field nameField;
 
-		CityView(Wt::WContainerWidget *parent = nullptr);
-		Wt::Dbo::ptr<City> cityPtr() const { return _cityPtr; }
-		Wt::WFormModel *model() const { return _model; }
+		CityFormModel(CityView *view, Wt::Dbo::ptr<City> cityPtr = Wt::Dbo::ptr<City>());
+		virtual Wt::WWidget *createFormWidget(Field field) override;
+		virtual bool saveChanges() override;
 
 	protected:
-		void submit();
-		Wt::WFormModel *_model = nullptr;
-		Wt::Dbo::ptr<City> _cityPtr;
+		CityView *_view = nullptr;
 	};
 
-	class LocationFormModel : public Wt::WFormModel
+	class CityView : public RecordFormView
 	{
 	public:
+		CityView();
+		CityView(Wt::Dbo::ptr<City> cityPtr);
+		virtual void init() override;
+
+		Wt::Dbo::ptr<City> cityPtr() const { return _model->recordPtr(); }
+		CityFormModel *model() const { return _model; }
+
+	protected:
+		CityFormModel *_model = nullptr;
+		Wt::Dbo::ptr<City> _tempPtr;
+	};
+
+	class LocationFormModel : public RecordFormModel<Location>
+	{
+	public:
+		static const Field entityField;
 		static const Field countryField;
 		static const Field cityField;
 		static const Field addressField;
 
 		LocationFormModel(LocationView *view, Wt::Dbo::ptr<Location> locationPtr = Wt::Dbo::ptr<Location>());
-		Wt::Dbo::ptr<Location> locationPtr() const { return _locationPtr; }
-		void saveChanges(Wt::Dbo::ptr<Location> &locationPtr, Wt::Dbo::ptr<Entity> entityPtr);
+		virtual Wt::WWidget *createFormWidget(Field field) override;
+		virtual bool saveChanges() override;
 
 	protected:
 		LocationView *_view = nullptr;
-		Wt::Dbo::ptr<Location> _locationPtr;
 	};
 
-	class LocationView : public MyTemplateFormView
+	class LocationView : public RecordFormView
 	{
 	public:
-		LocationView(Wt::Dbo::ptr<Location> locationPtr, Wt::WContainerWidget *parent = nullptr);
+		LocationView(Wt::Dbo::ptr<Location> locationPtr = Wt::Dbo::ptr<Location>());
+		virtual void init() override;
 
 		void handleCountryChanged();
 		void handleCityChanged();
-		Wt::WLineEdit *addressEdit() const { return _addressEdit; }
-		ProxyModelComboBox<CountryProxyModel> *countryCombo() const { return _countryCombo; }
-		ProxyModelComboBox<CityProxyModel> *cityCombo() const { return _cityCombo; }
-		LocationFormModel *model() const { return _model; }
 		Wt::WDialog *createAddCountryDialog();
 		Wt::WDialog *createAddCityDialog();
 
+		QueryProxyModelCB<CountryProxyModel> *countryCombo() const { return _countryCombo; }
+		QueryProxyModelCB<CityProxyModel> *cityCombo() const { return _cityCombo; }
+		LocationFormModel *model() const { return _model; }
+		Wt::Dbo::ptr<Location> locationPtr() const { return _model->recordPtr(); }
+		using RecordFormView::updateView;
+
 	protected:
-		Wt::WLineEdit *_addressEdit = nullptr;
-		ProxyModelComboBox<CountryProxyModel> *_countryCombo = nullptr;
-		ProxyModelComboBox<CityProxyModel> *_cityCombo = nullptr;
+		virtual void updateView(Wt::WFormModel *model) override;
+
+		QueryProxyModelCB<CountryProxyModel> *_countryCombo = nullptr;
+		QueryProxyModelCB<CityProxyModel> *_cityCombo = nullptr;
 		CityProxyModel *_cityProxyModel = nullptr;
 		LocationFormModel *_model = nullptr;
+		Wt::Dbo::ptr<Location> _tempPtr;
 	};
 
-	//LocationsContainer
-	class LocationsContainer : public TemplateViewsContainer<LocationView, LocationFormModel>
+	//LocationList
+	class LocationList : public QueryModelFilteredList<boost::tuple<long long, std::string, std::string, std::string, std::string>>
 	{
 	public:
-		LocationsContainer(LocationsManagerModel *model, Wt::WContainerWidget *parent = nullptr);
-		void addFieldWidget(Wt::Dbo::ptr<Location> locationPtr = Wt::Dbo::ptr<Location>());
+		enum ResultColumns { ResId, ResAddress, ResCountryName, ResCityName, ResEntityName };
+		enum ViewColumns { ViewId, ViewAddress, ViewCountryName, ViewCityName, ViewEntityName };
+		LocationList();
 
 	protected:
-		LocationsManagerModel *_model = nullptr;
+		virtual void initFilters() override;
+		virtual void initModel() override;
 	};
 
 }

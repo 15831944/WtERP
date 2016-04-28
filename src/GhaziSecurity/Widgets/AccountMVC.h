@@ -3,8 +3,8 @@
 
 #include "Dbo/Dbos.h"
 #include "Utilities/FilteredList.h"
-#include "Utilities/MyFormView.h"
-#include "Utilities/FindRecordEdit.h"
+#include "Utilities/RecordFormView.h"
+#include "Widgets/FindRecordEdit.h"
 
 #include <Wt/Dbo/QueryModel>
 #include <Wt/WTemplateFormView>
@@ -15,6 +15,7 @@
 namespace GS
 {
 	class AccountView;
+	class AccountEntryView;
 
 	//ACCOUNT List
 	class AccountListProxyModel : public Wt::WBatchEditProxyModel
@@ -30,12 +31,12 @@ namespace GS
 		int _linkColumn = -1;
 	};
 
-	class AccountList : public QueryModelFilteredList<boost::tuple<long long, std::string, Account::Type, boost::optional<long long>, double, std::string>>
+	class AccountList : public QueryModelFilteredList<boost::tuple<long long, std::string, Account::Type, boost::optional<long long>, long long, std::string>>
 	{
 	public:
 		enum ResultColumns { ResId, ResName, ResType, ResEntityId, ResBalance, ResEntityName };
 		enum ViewColumns { ViewId, ViewName, ViewType, ViewEntity, ViewBalance };
-		AccountList(Wt::WContainerWidget *parent = nullptr);
+		AccountList();
 
 	protected:
 		virtual void initFilters() override;
@@ -56,12 +57,14 @@ namespace GS
 		int _linkColumn = -1;
 	};
 
-	class AccountEntryList : public QueryModelFilteredList<boost::tuple<Wt::WDateTime, std::string, double, long long, long long, long long, std::string, long long>>
+	class AccountEntryList : public QueryModelFilteredList<boost::tuple<Wt::WDateTime, std::string, long long, long long, long long, long long, std::string, long long>>
 	{
 	public:
 		enum ResultColumns { ResTimestamp, ResDescription, ResAmount, ResDebitAccountId, ResCreditAccountId, ResOppositeAccountId, ResOppositeAccountName, ResId };
 		enum ViewColumns { ViewTimestamp, ViewDescription, ViewOppositeAccount, ViewDebitAmount, ViewCreditAmount };
-		AccountEntryList(Wt::Dbo::ptr<Account> accountPtr, Wt::WContainerWidget *parent = nullptr);
+
+		AccountEntryList(Wt::Dbo::ptr<Account> accountPtr);
+		virtual void load() override;
 		Wt::Dbo::ptr<Account> accountPtr() const { return _accountPtr; }
 
 	protected:
@@ -88,33 +91,46 @@ namespace GS
 	};
 
 	//ACCOUNT view
-	class AccountView : public MyTemplateFormView
+	class AccountFormModel : public RecordFormModel<Account>
 	{
 	public:
 		static const Wt::WFormModel::Field typeField;
 		static const Wt::WFormModel::Field nameField;
 
-		AccountView(Wt::Dbo::ptr<Account> accountPtr = Wt::Dbo::ptr<Account>(), Wt::WContainerWidget *parent = nullptr);
-		Wt::Dbo::ptr<Account> accountPtr() const { return _accountPtr; }
-		Wt::WFormModel *model() const { return _model; }
+		AccountFormModel(AccountView *view, Wt::Dbo::ptr<Account> accountPtr = Wt::Dbo::ptr<Account>());
+		virtual Wt::WWidget *createFormWidget(Field field) override;
+		virtual bool saveChanges() override;
+
+	protected:
+		virtual AuthLogin::PermissionResult checkModifyPermission() const override;
+		AccountView *_view = nullptr;
+	};
+
+	class AccountView : public RecordFormView
+	{
+	public:
+		AccountView(Wt::Dbo::ptr<Account> accountPtr = Wt::Dbo::ptr<Account>());
+		virtual void init() override;
+
+		Wt::Dbo::ptr<Account> accountPtr() const { return _model->recordPtr(); }
+		AccountFormModel *model() const { return _model; }
 
 		void reloadList();
 		virtual Wt::WString viewName() const override;
 		virtual std::string viewInternalPath() const override { return accountPtr() ? Account::viewInternalPath(accountPtr().id()) : ""; }
-		virtual MyTemplateFormView *createFormView() override { return new AccountView(); }
-		virtual Wt::WWidget *createFormWidget(Wt::WFormModel::Field field) override;
+		virtual RecordFormView *createFormView() override { return new AccountView(); }
 
 	protected:
-		void submit();
+		virtual void afterSubmitHandler() override;
 		void initEntryList();
 
 		AccountEntryList *_entryList = nullptr;
-		Wt::WFormModel *_model = nullptr;
-		Wt::Dbo::ptr<Account> _accountPtr;
+		AccountFormModel *_model = nullptr;
+		Wt::Dbo::ptr<Account> _tempPtr;
 	};
 
 	//ACCOUNT ENTRY view
-	class AccountEntryView : public MyTemplateFormView
+	class BaseAccountEntryFormModel : public RecordFormModel<AccountEntry>
 	{
 	public:
 		//static const Wt::WFormModel::Field typeField;
@@ -124,38 +140,71 @@ namespace GS
 		static const Wt::WFormModel::Field amountField;
 		static const Wt::WFormModel::Field entityField;
 
-		AccountEntryView(Wt::Dbo::ptr<AccountEntry> accountEntryPtr = Wt::Dbo::ptr<AccountEntry>(), Wt::WContainerWidget *parent = nullptr, bool isTransactionView = false);
+		virtual Wt::WWidget *createFormWidget(Field field) override;
+		virtual bool saveChanges() override;
+
 		void handleAccountChanged(bool update = true);
 
-		Wt::Dbo::ptr<AccountEntry> accountEntryPtr() const { return _accountEntryPtr; }
-		Wt::WFormModel *model() const { return _model; }
+	protected:
+		BaseAccountEntryFormModel(AccountEntryView *view, Wt::Dbo::ptr<AccountEntry> accountEntryPtr = Wt::Dbo::ptr<AccountEntry>());
+		AccountEntryView *_view = nullptr;
+	};
+
+	class AccountEntryFormModel : public BaseAccountEntryFormModel
+	{
+	public:
+		AccountEntryFormModel(AccountEntryView *view, Wt::Dbo::ptr<AccountEntry> accountEntryPtr = Wt::Dbo::ptr<AccountEntry>());
+		virtual Wt::WWidget *createFormWidget(Field field) override;
+	};
+
+	class TransactionFormModel : public BaseAccountEntryFormModel
+	{
+	public:
+		TransactionFormModel(AccountEntryView *view, Wt::Dbo::ptr<AccountEntry> accountEntryPtr = Wt::Dbo::ptr<AccountEntry>());
+		virtual Wt::WWidget *createFormWidget(Field field) override;
+		virtual bool saveChanges() override;
+		
+	protected:
+		void setAccountsFromEntity();
+		boost::optional<bool> _isReceipt;
+
+	private:
+		friend class TransactionView;
+	};
+
+	class AccountEntryView : public RecordFormView
+	{
+	public:
+		AccountEntryView(Wt::Dbo::ptr<AccountEntry> accountEntryPtr = Wt::Dbo::ptr<AccountEntry>(), bool isTransactionView = false);
+		virtual void init() override;
+
+		Wt::Dbo::ptr<AccountEntry> accountEntryPtr() const { return _model->recordPtr(); }
+		BaseAccountEntryFormModel *model() const { return _model; }
 
 		virtual Wt::WString viewName() const override;
 		virtual std::string viewInternalPath() const override { return accountEntryPtr() ? AccountEntry::viewInternalPath(accountEntryPtr().id()) : ""; }
-		virtual MyTemplateFormView *createFormView() override { return new AccountEntryView(); }
+		virtual RecordFormView *createFormView() override { return new AccountEntryView(); }
 
 	protected:
-		virtual Wt::WWidget *createFormWidget(Wt::WFormModel::Field field) override;
-		virtual void submit();
-
-		Wt::WFormModel *_model = nullptr;
-		Wt::Dbo::ptr<AccountEntry> _accountEntryPtr;
+		BaseAccountEntryFormModel *_model = nullptr;
+		Wt::Dbo::ptr<AccountEntry> _tempPtr;
 	};
 
 	//Transaction view
 	class TransactionView : public AccountEntryView
 	{
 	public:
-		TransactionView(Wt::WContainerWidget *parent = nullptr);
+		TransactionView();
+		virtual void init() override;
+
+		TransactionFormModel *model() const { return dynamic_cast<TransactionFormModel*>(_model); }
 		void selectDirection(bool isReceipt);
-		void setAccountsFromEntity();
+		virtual RecordFormView *createFormView() override { return new TransactionView(); }
 
 	protected:
-		virtual Wt::WWidget *createFormWidget(Wt::WFormModel::Field field) override;
-		virtual MyTemplateFormView *createFormView() override { return new TransactionView(); }
+		virtual void afterSubmitHandler() override;
 		virtual void submit() override;
 
-		boost::optional<bool> _isReceipt;
 		Wt::WPushButton *_selectReceipt = nullptr;
 		Wt::WPushButton *_selectPayment = nullptr;
 	};

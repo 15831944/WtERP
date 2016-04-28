@@ -15,11 +15,11 @@ namespace GS
 	TaskScheduler::TaskScheduler(WServer *server, Wt::Dbo::Session &session)
 		: dboSession(session), _server(server), _entitiesDatabase(dboSession), _accountsDatabase(dboSession)
 	{
+		Wt::Dbo::Transaction t(dboSession);
 		//Recalculate balance update query
 		{
-			Wt::Dbo::Transaction t(dboSession);
-			_recalculateBalanceCall = new Wt::Dbo::Call(dboSession.execute("UPDATE " + std::string(Account::tableName()) + " acc SET balance = "
-				"COALESCE((SELECT SUM(dE.amount) FROM " + AccountEntry::tableName() + " dE WHERE dE.debit_account_id = acc.id), 0) - COALESCE((SELECT SUM(cE.amount) FROM " + AccountEntry::tableName() + " cE WHERE cE.credit_account_id = acc.id), 0)"
+			_recalculateBalanceCall = new Wt::Dbo::Call(dboSession.execute("UPDATE " + std::string(Account::tableName()) + " SET balance = "
+				"COALESCE((SELECT SUM(dE.amount) FROM " + AccountEntry::tableName() + " dE WHERE dE.debit_account_id = " + Account::tableName() + ".id), 0) - COALESCE((SELECT SUM(cE.amount) FROM " + AccountEntry::tableName() + " cE WHERE cE.credit_account_id = " + Account::tableName() + ".id), 0)"
 				", \"version\" = \"version\" + 1"));
 			t.rollback();
 		}
@@ -38,7 +38,7 @@ namespace GS
 
 		//Abnormal entry cycle check queries
 		{
-			std::string condition = "creationDt IS null OR startDate IS null OR \"interval\" < 0 OR \"interval\" > ? OR nIntervals < 1 OR (endDate IS NOT null AND endDate <= startDate)";
+			std::string condition = "timestamp IS null OR startDate IS null OR \"interval\" < 0 OR \"interval\" > ? OR nIntervals < 1 OR (endDate IS NOT null AND endDate <= startDate)";
 			_incomeCycleCheckAbnormal = dboSession.find<IncomeCycle>().where(condition).bind(YearlyInterval);
 			_expenseCycleCheckAbnormal = dboSession.find<ExpenseCycle>().where(condition).bind(YearlyInterval);
 		}
@@ -49,7 +49,7 @@ namespace GS
 				"LEFT JOIN " + AccountEntry::tableName() + " lastEntry ON (cycle.id = lastEntry.%2%) "
 				"LEFT JOIN " + AccountEntry::tableName() + " e2 ON (cycle.id = e2.%2% AND (lastEntry.timestamp < e2.timestamp OR lastEntry.timestamp = e2.timestamp AND lastEntry.id < e2.id)) "
 				"WHERE (e2.id IS null) "
-				"AND (cycle.startDate <= ? AND cycle.creationDt <= ?) "
+				"AND (cycle.startDate <= ? AND cycle.timestamp <= ?) "
 				"AND (lastEntry.id IS null OR cycle.endDate IS null OR (lastEntry.timestamp <= ? AND cycle.endDate > lastEntry.timestamp AND cycle.endDate > cycle.startDate))";
 			boost::format fString(query);
 

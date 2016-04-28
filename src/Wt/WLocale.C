@@ -1,5 +1,6 @@
 #include "Wt/WApplication"
 #include "Wt/WLocale"
+#include "Wt/Payment/Money"
 
 #include "WebUtils.h"
 #include <boost/lexical_cast.hpp>
@@ -150,6 +151,12 @@ WT_USTRING WLocale::toString(::uint64_t value) const
 {
   return integerToString(boost::lexical_cast<std::string>(value));
 }
+
+WT_USTRING WLocale::toString(const Wt::Payment::Money &value) const
+{
+	return doubleToString(value.toString());
+}
+
 #endif // DOXYGEN_ONLY
 
 WT_USTRING WLocale::integerToString(const std::string& v) const

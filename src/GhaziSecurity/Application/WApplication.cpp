@@ -1,14 +1,17 @@
 #include "Application/WApplication.h"
 #include "Application/WServer.h"
 #include "Dbo/Configuration.h"
+#include "Dbo/PermissionsDatabase.h"
 
-#include "Utilities/FindRecordEdit.h"
+#include "Widgets/FindRecordEdit.h"
 #include "Widgets/AdminPages.h"
 #include "Widgets/EntityView.h"
 #include "Widgets/EntityList.h"
 #include "Widgets/AccountMVC.h"
 #include "Widgets/LocationMVC.h"
 #include "Widgets/EntryCycleMVC.h"
+#include "Widgets/HRMVC.h"
+#include "Widgets/AuthWidget.h"
 
 #include <Wt/WNavigationBar>
 #include <Wt/WMenu>
@@ -27,46 +30,178 @@
 namespace GS
 {
 
-Session::Session()
-	: _userDatabase(*this)
+AuthLogin::AuthLogin()
 {
-	setConnectionPool(*WServer::instance()->sqlPool());
-
-	MAP_DBO_TREE((*this))
-	MAP_CONFIGURATION_DBO_TREE((*this))
+	resetPermissions();
+	beforeChanged_.connect(this, &AuthLogin::resetPermissions);
 }
 
-Wt::Dbo::ptr<User> Session::user()
+Wt::Dbo::ptr<User> AuthLogin::userPtr()
 {
-	if(_login.loggedIn())
-		return user(_login.user());
+	if(loggedIn())
+		return userPtr(user());
 	else
-		return Wt::Dbo::ptr<GS::User>();
+		return Wt::Dbo::ptr<User>();
 }
 
-Wt::Dbo::ptr<User> Session::user(const Wt::Auth::User &authUser)
+Wt::Dbo::ptr<User> AuthLogin::userPtr(const Wt::Auth::User &authUser)
 {
-	Wt::Dbo::ptr<GS::AuthInfo> authInfo = _userDatabase.find(authUser);
-	Wt::Dbo::ptr<GS::User> user = authInfo->user();
+	WApplication *app = APP;
+	TRANSACTION(app);
+
+	Wt::Dbo::ptr<AuthInfo> authInfo = app->userDatabase().find(authUser);
+	Wt::Dbo::ptr<User> user = authInfo->user();
 
 	if(!user)
 	{
-		user = add(new GS::User());
+		user = app->dboSession().add(new User());
 		authInfo.modify()->setUser(user);
 	}
 	return user;
 }
 
+void AuthLogin::resetPermissions()
+{
+	WApplication *app = APP;
+	_permissions = SERVER->permissionsDatabase()->getUserPermissions(userPtr(), state(), &app->dboSession());
+
+	//Preloaded permissions
+	_recordCreatePermission = checkPermission(Permissions::CreateRecord);
+}
+
+AuthLogin::PermissionResult AuthLogin::checkPermission(long long permissionId)
+{
+	auto fitr = _permissions.find(permissionId);
+	if(fitr == _permissions.end())
+		return Denied;
+
+	if(fitr->second->requireStrongLogin && state() != Wt::Auth::StrongLogin)
+		return RequiresStrongLogin;
+
+	return Permitted;
+}
+
+AuthLogin::PermissionResult AuthLogin::checkRecordViewPermission(const BaseAdminRecord *record)
+{
+	PermissionResult result = checkRecordViewPermission((void*)record);
+	if(result != Permitted)
+		return result;
+
+	TRANSACTION(APP);
+	Wt::Dbo::ptr<User> userSelf = userPtr();
+	if(!userSelf)
+		return AuthLogin::Denied;
+
+	if(!record)
+		return result;
+
+	//Region
+	if(!record->regionPtr)
+	{
+		PermissionResult viewUnassignedRegionRecord = checkPermission(Permissions::ViewUnassignedRegionRecord);
+		if(viewUnassignedRegionRecord == Denied)
+			return Denied;
+		if(viewUnassignedRegionRecord == RequiresStrongLogin)
+			result = RequiresStrongLogin;
+	}
+	else if(userSelf->regionPtr != record->regionPtr)
+	{
+		PermissionResult viewOtherRegionRecord = checkPermission(Permissions::ViewOtherRegionRecord);
+		if(viewOtherRegionRecord == Denied)
+			return Denied;
+		if(viewOtherRegionRecord == RequiresStrongLogin)
+			result = RequiresStrongLogin;
+	}
+
+	//User
+	if(!record->creatorUserPtr)
+	{
+		PermissionResult viewUnassignedUserRecord = checkPermission(Permissions::ViewUnassignedUserRecord);
+		if(viewUnassignedUserRecord == Denied)
+			return Denied;
+		if(viewUnassignedUserRecord == RequiresStrongLogin)
+			result = RequiresStrongLogin;
+	}
+	else if(userSelf != record->creatorUserPtr)
+	{
+		PermissionResult viewOtherUserRecord = checkPermission(Permissions::ViewOtherUserRecord);
+		if(viewOtherUserRecord == Denied)
+			return Denied;
+		if(viewOtherUserRecord == RequiresStrongLogin)
+			result = RequiresStrongLogin;
+	}
+	return result;
+}
+
+AuthLogin::PermissionResult AuthLogin::checkRecordViewPermission(const void *record)
+{
+	return Permitted;
+}
+
+AuthLogin::PermissionResult AuthLogin::checkRecordModifyPermission(const BaseAdminRecord *record)
+{
+	PermissionResult result = checkRecordModifyPermission((void*)record);
+	if(result != Permitted)
+		return result;
+
+	TRANSACTION(APP);
+	Wt::Dbo::ptr<User> userSelf = userPtr();
+	if(!userSelf)
+		return Denied;
+
+	if(!record)
+		return result;
+
+	if(userSelf->regionPtr != record->regionPtr)
+	{
+		PermissionResult permission = checkPermission(Permissions::ViewOtherRegionRecord);
+		if(permission == Denied)
+			return Denied;
+		if(permission == RequiresStrongLogin)
+			result = RequiresStrongLogin;
+
+		permission = checkPermission(Permissions::ModifyOtherRegionRecord);
+		if(permission == Denied)
+			return Denied;
+		if(permission == RequiresStrongLogin)
+			result = RequiresStrongLogin;
+	}
+
+	if(userSelf != record->creatorUserPtr)
+	{
+		PermissionResult permission = checkPermission(Permissions::ViewOtherUserRecord);
+		if(permission == Denied)
+			return Denied;
+		if(permission == RequiresStrongLogin)
+			result = RequiresStrongLogin;
+
+		permission = checkPermission(Permissions::ModifyOtherUserRecord);
+		if(permission == Denied)
+			return Denied;
+		if(permission == RequiresStrongLogin)
+			result = RequiresStrongLogin;
+	}
+	return result;
+}
+
+AuthLogin::PermissionResult AuthLogin::checkRecordModifyPermission(const void *record)
+{
+	return checkPermission(Permissions::ModifyRecord);
+}
+
 WApplication::WApplication(const Wt::WEnvironment& env)
 	: Wt::WApplication(env),
-	_startTime(boost::posix_time::microsec_clock::local_time()), _entitiesDatabase(_session), _accountsDatabase(_session)
+	_startTime(boost::posix_time::microsec_clock::local_time()), _entitiesDatabase(_dboSession), _accountsDatabase(_dboSession), _userDatabase(_dboSession), _login()
 {
-	//Enable server push
-	enableUpdates();
+	WServer *server = SERVER;
+
+	_dboSession.setConnectionPool(*server->sqlPool());
+	mapDboTree(_dboSession);
+	WW::Dbo::mapConfigurationDboTree(_dboSession);
 
 	setTitle(Wt::WString::tr("GS.Title"));
 	styleSheet().addRule("div.Wt-loading",
-		"position:absolute;top:0px;right:0;background:#457044;padding:10px 15px;color:#fff;border-radius:0 0 0 3px;"
+		"position:absolute;top:0px;right:0;z-index:9999999;background:#457044;padding:10px 15px;color:#fff;border-radius:0 0 0 3px;"
 		"-webkit-box-shadow: -1px 1px 2px 0px #000;"
 		"-moz-box-shadow: -1px 1px 2px 0px #000;"
 		"box-shadow: -1px 1px 2px 0px #000;");
@@ -89,10 +224,6 @@ WApplication::WApplication(const Wt::WEnvironment& env)
 	theme->setVersion(Wt::WBootstrapTheme::Version3);
 	setTheme(theme);
 
-	setInternalPathDefaultValid(true);
-	internalPathChanged().connect(this, &WApplication::handleInternalPathChanged);
-	session().login().changed().connect(this, &WApplication::handleAuthChanged);
-
 	//Error Dialog
 	_errorDialog = new Wt::WDialog(Wt::WString::tr("AnErrorOccurred"), this);
 	_errorDialog->setTransient(true);
@@ -106,8 +237,233 @@ WApplication::WApplication(const Wt::WEnvironment& env)
 
 	//Main Widgets
 	_mainStack = new Wt::WStackedWidget(root());
+	lazyLoadLoginWidget();
 
-	//Visitor widgets
+	setInternalPathDefaultValid(true);
+	handleInternalPathChanged(internalPath());
+	internalPathChanged().connect(this, &WApplication::handleInternalPathChanged);
+	authLogin().changed().connect(this, &WApplication::handleAuthChanged);
+
+	//Enable server push
+	enableUpdates();
+}
+
+WApplication::~WApplication()
+{
+
+}
+
+void WApplication::handleAuthChanged()
+{
+	if(!authLogin().canAccessAdminPanel())
+	{
+		delete _mainAdminTemplate;
+		_mainAdminTemplate = nullptr;
+	}
+
+	handleInternalPathChanged(internalPath());
+}
+
+long long WApplication::getUsableIdFromPathPrefix(const std::string &pathPrefix, AdminPageWidget *adminPageWidget, const std::string &pathComponentPrefix)
+{
+	std::string path = internalPath();
+	Wt::Utils::append(path, '/');
+
+	if(path.find(pathPrefix.c_str(), 0, pathPrefix.size()) != std::string::npos)
+	{
+		std::string idStr = path.substr(pathPrefix.size(), path.find('/', pathPrefix.size()) - 1);
+		if(!adminPageWidget->checkPathComponentExist(pathComponentPrefix + idStr))
+		{
+			try
+			{
+				long long id = boost::lexical_cast<long long>(idStr);
+				return id;
+			}
+			catch(boost::bad_lexical_cast &) {}
+		}
+	}
+
+	return -1;
+}
+
+void WApplication::handleInternalPathChanged(std::string path)
+{
+	Wt::Utils::append(path, '/');
+	std::string firstComponent = internalPathNextPart("/");
+	if(firstComponent != ADMIN_PATHC)
+	{
+		lazyLoadVisitorWidgets();
+		_mainStack->setCurrentWidget(_mainVisitorTemplate);
+	}
+	else
+	{
+		AuthLogin::PermissionResult adminPanelPermission = authLogin().checkPermission(Permissions::AccessAdminPanel);
+		if(!authLogin().loggedIn())
+		{
+			_mainStack->setCurrentWidget(_authWidget);
+		}
+		else if(adminPanelPermission == AuthLogin::RequiresStrongLogin)
+		{
+			lazyLoadDeniedPermissionWidget();
+			_mainStack->setCurrentWidget(_deniedPermissionWidget);
+
+			Wt::WDialog *dialog = createPasswordPromptDialog();
+			if(dialog) 
+				dialog->finished().connect(boost::bind(&WApplication::handlePasswordPromptFinished, this, _1, ""));
+		}
+		else if(adminPanelPermission == AuthLogin::Denied)
+		{
+			lazyLoadDeniedPermissionWidget();
+			_mainStack->setCurrentWidget(_deniedPermissionWidget);
+		}
+		else
+		{
+			lazyLoadAdminWidgets();
+			_mainStack->setCurrentWidget(_mainAdminTemplate);
+
+			WApplication *app = APP;
+			try
+			{
+				long long id;
+
+				//entity view
+				id = getUsableIdFromPathPrefix(Entity::viewInternalPath(""), _entitiesAdminPage, ENTITY_PREFIX);
+				if(id != -1)
+				{
+					Wt::Dbo::Transaction t(dboSession());
+					Wt::Dbo::ptr<Entity> ptr = dboSession().load<Entity>(id, true);
+					if(ptr)
+					{
+						if(authLogin().checkRecordViewPermission(ptr.get()) == AuthLogin::Permitted)
+						{
+							EntityView *view = new EntityView(ptr);
+							auto menuItem = _entitiesAdminPage->createMenuItemWrapped(view->viewName(), view->viewInternalPath(), view);
+						}
+						else
+							_entitiesAdminPage->setDeniedPermissionWidget();
+					}
+				}
+
+				//employee assignemnt view
+				id = getUsableIdFromPathPrefix(EmployeeAssignment::viewInternalPath(""), _entitiesAdminPage, EMPLOYEEASSIGNMENTS_PREFIX);
+				if(id != -1)
+				{
+					Wt::Dbo::Transaction t(dboSession());
+					Wt::Dbo::ptr<EmployeeAssignment> ptr = dboSession().load<EmployeeAssignment>(id, true);
+					if(ptr)
+					{
+						if(authLogin().checkRecordViewPermission(ptr.get()) == AuthLogin::Permitted)
+						{
+							EmployeeExpenseView *view = new EmployeeExpenseView(ptr);
+							auto menuItem = _entitiesAdminPage->createMenuItemWrapped(view->viewName(), view->viewInternalPath(), view);
+						}
+						else
+							_entitiesAdminPage->setDeniedPermissionWidget();
+					}
+				}
+
+				//account view
+				id = getUsableIdFromPathPrefix(Account::viewInternalPath(""), _accountsAdminPage, ACCOUNT_PREFIX);
+				if(id != -1)
+				{
+					Wt::Dbo::Transaction t(dboSession());
+					Wt::Dbo::ptr<Account> ptr = dboSession().load<Account>(id, true);
+					if(ptr)
+					{
+						if(authLogin().checkRecordViewPermission(ptr.get()) == AuthLogin::Permitted)
+						{
+							AccountView *view = new AccountView(ptr);
+							auto menuItem = _accountsAdminPage->createMenuItemWrapped(view->viewName(), view->viewInternalPath(), view);
+						}
+						else
+							_accountsAdminPage->setDeniedPermissionWidget();
+					}
+				}
+
+				//account entry view
+				id = getUsableIdFromPathPrefix(AccountEntry::viewInternalPath(""), _accountsAdminPage, ACCOUNTENTRY_PREFIX);
+				if(id != -1)
+				{
+					Wt::Dbo::Transaction t(dboSession());
+					Wt::Dbo::ptr<AccountEntry> ptr = dboSession().load<AccountEntry>(id, true);
+					if(ptr)
+					{
+						if(authLogin().checkRecordViewPermission(ptr.get()) == AuthLogin::Permitted)
+						{
+							AccountEntryView *view = new AccountEntryView(ptr);
+							auto menuItem = _accountsAdminPage->createMenuItemWrapped(view->viewName(), view->viewInternalPath(), view);
+						}
+						else
+							_accountsAdminPage->setDeniedPermissionWidget();
+					}
+				}
+
+				//income cycle view
+				id = getUsableIdFromPathPrefix(IncomeCycle::viewInternalPath(""), _accountsAdminPage, INCOMECYCLES_PATHC "/" INCOMECYCLE_PREFIX);
+				if(id != -1)
+				{
+					Wt::Dbo::Transaction t(dboSession());
+					Wt::Dbo::ptr<IncomeCycle> ptr = dboSession().load<IncomeCycle>(id, true);
+					if(ptr)
+					{
+						if(authLogin().checkRecordViewPermission(ptr.get()) == AuthLogin::Permitted)
+						{
+							IncomeCycleView *view = new IncomeCycleView(ptr);
+							auto menuItem = _accountsAdminPage->createMenuItemWrapped(view->viewName(), view->viewInternalPath(), view);
+						}
+						else
+							_accountsAdminPage->setDeniedPermissionWidget();
+					}
+				}
+
+				//expense cycle view
+				id = getUsableIdFromPathPrefix(ExpenseCycle::viewInternalPath(""), _accountsAdminPage, EXPENSECYCLES_PATHC "/" EXPENSECYCLE_PREFIX);
+				if(id != -1)
+				{
+					Wt::Dbo::Transaction t(dboSession());
+					Wt::Dbo::ptr<ExpenseCycle> ptr = dboSession().load<ExpenseCycle>(id, true);
+					if(ptr)
+					{
+						if(authLogin().checkRecordViewPermission(ptr.get()) == AuthLogin::Permitted)
+						{
+							EmployeeExpenseView *view = new EmployeeExpenseView(ptr);
+							auto menuItem = _accountsAdminPage->createMenuItemWrapped(view->viewName(), view->viewInternalPath(), view);
+						}
+						else
+							_accountsAdminPage->setDeniedPermissionWidget();
+					}
+				}
+			}
+			catch(Wt::Dbo::Exception &e)
+			{
+				Wt::log("error") << "WApplication::handleInternalPathChanged(): Dbo error(" << e.code() << "): " << e.what();
+				showDbBackendError(e.code());
+			}
+		}
+	}
+}
+
+void WApplication::lazyLoadLoginWidget()
+{
+	if(_authWidget)
+		return;
+
+	_authWidget = new AuthWidget(_mainStack);
+}
+
+void WApplication::lazyLoadDeniedPermissionWidget()
+{
+	if(_deniedPermissionWidget)
+		return;
+		
+	_deniedPermissionWidget = new Wt::WTemplate(Wt::WString::tr("GS.DeniedPermission"), _mainStack);
+}
+
+void WApplication::lazyLoadVisitorWidgets()
+{
+	if(_mainVisitorTemplate)
+		return;
+
 	_mainVisitorTemplate = new Wt::WTemplate(Wt::WString::tr("GS.Main"), _mainStack);
 	_visitorStack = new Wt::WStackedWidget(_mainStack);
 	_mainVisitorTemplate->bindWidget("content", _visitorStack);
@@ -134,152 +490,6 @@ WApplication::WApplication(const Wt::WEnvironment& env)
 	auto contactMenuItem = new Wt::WMenuItem(Wt::WString::tr("Contact"), new Wt::WText(Wt::WString::tr("Contact")));
 	contactMenuItem->setPathComponent("contact");
 	_visitorMenu->addItem(contactMenuItem);
-
-	handleInternalPathChanged(internalPath());
-	//WServer *server = WServer::instance();
-}
-
-WApplication::~WApplication()
-{
-
-}
-
-void WApplication::handleAuthChanged()
-{
-
-}
-
-void WApplication::handleInternalPathChanged(std::string path)
-{
-	Wt::Utils::append(path, '/');
-	std::string firstComponent = internalPathNextPart("/");
-	if(firstComponent != ADMIN_PATHC)
-	{
-		_mainStack->setCurrentWidget(_mainVisitorTemplate);
-	}
-	else
-	{
-		if(!session().login().loggedIn())
-		{
-			lazyLoadLoginWidget();
-		}
-		else
-		{
-			lazyLoadAdminWidgets();
-			_mainStack->setCurrentWidget(_mainAdminTemplate);
-
-			try
-			{
-				std::string pathPrefix;
-
-				//entity view
-				pathPrefix = Entity::viewInternalPath("");
-				if(path.find(pathPrefix.c_str(), 0, pathPrefix.size()) != std::string::npos)
-				{
-					std::string idStr = path.substr(pathPrefix.size(), path.find('/', pathPrefix.size()) - 1);
-					if(!_entitiesAdminPage->checkPathComponentExist(ENTITY_PREFIX + idStr))
-					{
-						long long id = boost::lexical_cast<long long>(idStr);
-
-						Wt::Dbo::Transaction t(session());
-						Wt::Dbo::ptr<Entity> ptr = session().load<Entity>(id, true);
-						if(ptr)
-						{
-							EntityView *view = new EntityView(ptr);
-							auto menuItem = _entitiesAdminPage->createMenuItemWrapped(view->viewName(), view->viewInternalPath(), view);
-						}
-					}
-				}
-
-				//account view
-				pathPrefix = Account::viewInternalPath("");
-				if(path.find(pathPrefix.c_str(), 0, pathPrefix.size()) != std::string::npos)
-				{
-					std::string idStr = path.substr(pathPrefix.size(), path.find('/', pathPrefix.size()) - 1);
-					if(!_accountsAdminPage->checkPathComponentExist(ACCOUNT_PREFIX + idStr))
-					{
-						long long id = boost::lexical_cast<long long>(idStr);
-
-						Wt::Dbo::Transaction t(session());
-						Wt::Dbo::ptr<Account> ptr = session().load<Account>(id, true);
-						if(ptr)
-						{
-							AccountView *view = new AccountView(ptr);
-							auto menuItem = _accountsAdminPage->createMenuItemWrapped(view->viewName(), view->viewInternalPath(), view);
-						}
-					}
-				}
-
-				//account entry view
-				pathPrefix = AccountEntry::viewInternalPath("");
-				if(path.find(pathPrefix.c_str(), 0, pathPrefix.size()) != std::string::npos)
-				{
-					std::string idStr = path.substr(pathPrefix.size(), path.find('/', pathPrefix.size()) - 1);
-					if(!_accountsAdminPage->checkPathComponentExist(ACCOUNTENTRY_PREFIX + idStr))
-					{
-						long long id = boost::lexical_cast<long long>(idStr);
-
-						Wt::Dbo::Transaction t(session());
-						Wt::Dbo::ptr<AccountEntry> ptr = session().load<AccountEntry>(id, true);
-						if(ptr)
-						{
-							AccountEntryView *view = new AccountEntryView(ptr);
-							auto menuItem = _accountsAdminPage->createMenuItemWrapped(view->viewName(), view->viewInternalPath(), view);
-						}
-					}
-				}
-
-				//income cycle view
-				pathPrefix = IncomeCycle::viewInternalPath("");
-				if(path.find(pathPrefix.c_str(), 0, pathPrefix.size()) != std::string::npos)
-				{
-					std::string idStr = path.substr(pathPrefix.size(), path.find('/', pathPrefix.size()) - 1);
-					if(!_accountsAdminPage->checkPathComponentExist(INCOMECYCLES_PATHC "/" INCOMECYCLE_PREFIX + idStr))
-					{
-						long long id = boost::lexical_cast<long long>(idStr);
-
-						Wt::Dbo::Transaction t(session());
-						Wt::Dbo::ptr<IncomeCycle> ptr = session().load<IncomeCycle>(id, true);
-						if(ptr)
-						{
-							IncomeCycleView *view = new IncomeCycleView(ptr);
-							auto menuItem = _accountsAdminPage->createMenuItemWrapped(view->viewName(), view->viewInternalPath(), view);
-						}
-					}
-				}
-
-				//expense cycle view
-				pathPrefix = ExpenseCycle::viewInternalPath("");
-				if(path.find(pathPrefix.c_str(), 0, pathPrefix.size()) != std::string::npos)
-				{
-					std::string idStr = path.substr(pathPrefix.size(), path.find('/', pathPrefix.size()) - 1);
-					if(!_accountsAdminPage->checkPathComponentExist(EXPENSECYCLES_PATHC "/" EXPENSECYCLE_PREFIX + idStr))
-					{
-						long long id = boost::lexical_cast<long long>(idStr);
-
-						Wt::Dbo::Transaction t(session());
-						Wt::Dbo::ptr<ExpenseCycle> ptr = session().load<ExpenseCycle>(id, true);
-						if(ptr)
-						{
-							ExpenseCycleView *view = new ExpenseCycleView(ptr);
-							auto menuItem = _accountsAdminPage->createMenuItemWrapped(view->viewName(), view->viewInternalPath(), view);
-						}
-					}
-				}
-			}
-			catch(boost::bad_lexical_cast &) {}
-			catch(Wt::Dbo::Exception &e)
-			{
-				Wt::log("error") << "WApplication::handleInternalPathChanged(): Dbo error(" << e.code() << "): " << e.what();
-				showDbBackendError(e.code());
-			}
-		}
-	}
-}
-
-void WApplication::lazyLoadLoginWidget()
-{
-
 }
 
 void WApplication::lazyLoadAdminWidgets()
@@ -299,6 +509,10 @@ void WApplication::lazyLoadAdminWidgets()
 	_adminNavBar->addMenu(_adminMenu = new Wt::WMenu(_adminStack));
 	_adminMenu->setInternalPathEnabled("/" ADMIN_PATHC "/");
 	_mainAdminTemplate->bindWidget("navigation", _adminNavBar);
+
+	auto logoutBtn = new Wt::WPushButton(Wt::WString::tr("LogoutButton"), Wt::XHTMLText);
+	logoutBtn->clicked().connect(&authLogin(), &Wt::Auth::Login::logout);
+	_adminNavBar->addWidget(logoutBtn, Wt::AlignRight);
 
 	Wt::WImage *logoImage = new Wt::WImage(Wt::WLink("images/logo.png"), Wt::WString::tr("GS.Logo.Alt"));
 	_adminNavBar->setTitle(logoImage, Wt::WLink(Wt::WLink::InternalPath, "/"));
@@ -329,19 +543,7 @@ void WApplication::lazyLoadAdminWidgets()
 void WApplication::initFindEntitySuggestion()
 {
 	if(!_findEntitySuggestion)
-		_findEntitySuggestion = new FindEntitySuggestionPopup(Entity::InvalidType, this);
-}
-
-void WApplication::initFindPersonSuggestion()
-{
-	if(!_findPersonSuggestion)
-		_findPersonSuggestion = new FindEntitySuggestionPopup(Entity::PersonType, this);
-}
-
-void WApplication::initFindBusinessSuggestion()
-{
-	if(!_findBusinessSuggestion)
-		_findBusinessSuggestion = new FindEntitySuggestionPopup(Entity::BusinessType, this);
+		_findEntitySuggestion = new FindEntitySuggestionPopup(this);
 }
 
 void WApplication::initFindAccountSuggestion()
@@ -349,6 +551,24 @@ void WApplication::initFindAccountSuggestion()
 	if(!_findAccountSuggestion)
 		_findAccountSuggestion = new FindAccountSuggestionPopup(this);
 }
+
+void WApplication::initFindLocationSuggestion()
+{
+	if(!_findLocationSuggestion)
+		_findLocationSuggestion = new FindLocationSuggestionPopup(this);
+}
+
+// void WApplication::initFindPersonSuggestion()
+// {
+// 	if(!_findPersonSuggestion)
+// 		_findPersonSuggestion = new FindEntitySuggestionPopup(Entity::PersonType, this);
+// }
+// 
+// void WApplication::initFindBusinessSuggestion()
+// {
+// 	if(!_findBusinessSuggestion)
+// 		_findBusinessSuggestion = new FindEntitySuggestionPopup(Entity::BusinessType, this);
+// }
 
 // void WApplication::initFindPersonModel()
 // {
@@ -394,7 +614,8 @@ void WApplication::initCountryQueryModel()
 		return;
 
 	_countryQueryModel = new CountryQueryModel(this);
-	_countryQueryModel->setQuery(session().find<Country>().orderBy("CASE WHEN code = 'PK' THEN 1 ELSE 2 END ASC"));
+	_countryQueryModel->setBatchSize(1000);
+	_countryQueryModel->setQuery(dboSession().find<Country>().orderBy("CASE WHEN code = 'PK' THEN 1 ELSE 2 END ASC"));
 	_countryQueryModel->addColumn("name");
 	_countryQueryModel->addColumn("code");
 
@@ -407,7 +628,8 @@ void WApplication::initCityQueryModel()
 		return;
 
 	_cityQueryModel = new CityQueryModel(this);
-	_cityQueryModel->setQuery(session().find<City>());
+	_cityQueryModel->setBatchSize(10000);
+	_cityQueryModel->setQuery(dboSession().find<City>());
 	_cityQueryModel->addColumn("name");
 	_cityQueryModel->addColumn("id");
 	_cityQueryModel->addColumn("country_code");
@@ -419,7 +641,8 @@ void WApplication::initPositionQueryModel()
 		return;
 
 	_positionQueryModel = new PositionQueryModel(this);
-	_positionQueryModel->setQuery(session().find<EmployeePosition>());
+	_positionQueryModel->setBatchSize(1000);
+	_positionQueryModel->setQuery(dboSession().find<EmployeePosition>());
 	_positionQueryModel->addColumn("title");
 	_positionQueryModel->addColumn("id");
 
@@ -432,7 +655,8 @@ void WApplication::initServiceQueryModel()
 		return;
 
 	_serviceQueryModel = new ServiceQueryModel(this);
-	_serviceQueryModel->setQuery(session().find<ClientService>());
+	_serviceQueryModel->setBatchSize(1000);
+	_serviceQueryModel->setQuery(dboSession().find<ClientService>());
 	_serviceQueryModel->addColumn("title");
 	_serviceQueryModel->addColumn("id");
 
@@ -448,6 +672,32 @@ void WApplication::showErrorDialog(const Wt::WString &message)
 void WApplication::showDbBackendError(const std::string &)
 {
 	showErrorDialog(Wt::WString::tr("DbInternalError"));
+}
+
+Wt::WDialog * WApplication::createPasswordPromptDialog()
+{
+	if(_passwordPromptDialog)
+		return nullptr;
+
+	lazyLoadLoginWidget();
+	_passwordPromptDialog = _authWidget->createPasswordPromptDialog(authLogin());
+	_passwordPromptDialog->rejectWhenEscapePressed(true);
+	_passwordPromptDialog->show();
+	return _passwordPromptDialog;
+}
+
+void WApplication::handlePasswordPromptFinished(Wt::WDialog::DialogCode code, const std::string &rejectInternalPath)
+{
+	if(code == Wt::WDialog::Rejected)
+	{
+		lazyLoadDeniedPermissionWidget();
+		_mainStack->setCurrentWidget(_deniedPermissionWidget);
+		if(!rejectInternalPath.empty())
+			setInternalPath(rejectInternalPath, true);
+	}	
+
+	delete _passwordPromptDialog;
+	_passwordPromptDialog = nullptr;
 }
 
 }

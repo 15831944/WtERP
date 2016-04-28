@@ -1,8 +1,149 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <messages xmlns:if="Wt.WTemplate.conditions">
 
+<!-- Generic -->
 <message id="GS.LinkIcon"><i class="fa fa-external-link"></i></message>
 
+<!-- Field blocks -->
+<message id="GS.FieldH">
+${<if:{1}>}
+<div class="form-group">
+	<label class="control-label col-sm-2" for="${id:{1}}">${tr:{2}}</label>
+	<div class="col-sm-10">
+		${{1}}
+		<div class="help-block">${{1}-info}</div>
+	</div>
+</div>
+${</if:{1}>}
+</message>
+
+<message id="GS.FieldH.CW">
+${<if:{1}>}
+<div class="form-group">
+	<label class="control-label col-sm-2" for="${fwId:{1}}">${tr:{2}}</label>
+	<div class="col-sm-10">
+		${{1}}
+		<div class="help-block">${{1}-info}</div>
+	</div>
+</div>
+${</if:{1}>}
+</message>
+
+<message id="GS.FieldH.CB">
+${<if:{1}>}
+<div class="form-group">
+	<label class="control-label checkbox-label col-sm-2" for="${id:{1}}">${tr:{2}}</label>
+	<div class="col-sm-10">
+		${{1}}
+		<span class="help-block">${{1}-info}</span>
+	</div>
+</div>
+${</if:{1}>}
+</message>
+
+<message id="GS.FieldH.Narrow">
+${<if:{1}>}
+<div class="form-group">
+	<label class="control-label col-sm-3" for="${id:{1}}">${tr:{2}}</label>
+	<div class="col-sm-9">
+		${{1}}
+		<div class="help-block">${{1}-info}</div>
+	</div>
+</div>
+${</if:{1}>}
+</message>
+
+<message id="GS.FieldH.Narrow.CW">
+${<if:{1}>}
+<div class="form-group">
+	<label class="control-label col-sm-3" for="${fwId:{1}}">${tr:{2}}</label>
+	<div class="col-sm-9">
+		${{1}}
+		<div class="help-block">${{1}-info}</div>
+	</div>
+</div>
+${</if:{1}>}
+</message>
+
+<message id="GS.FieldH.Narrow.CB">
+${<if:{1}>}
+<div class="form-group">
+	<label class="control-label checkbox-label col-sm-3" for="${id:{1}}">${tr:{2}}</label>
+	<div class="col-sm-9">
+		${{1}}
+		<span class="help-block">${{1}-info}</span>
+	</div>
+</div>
+${</if:{1}>}
+</message>
+
+<message id="GS.Field">
+${<if:{1}>}
+<div class="form-group">
+	<label class="control-label" for="${id:{1}}">${tr:{2}}</label>
+	${{1}}
+	<div class="help-block">${{1}-info}</div>
+</div>
+${</if:{1}>}
+</message>
+
+<message id="GS.Field.CW">
+${<if:{1}>}
+<div class="form-group">
+	<label class="control-label" for="${fwId:{1}}">${tr:{2}}</label>
+	${{1}}
+	<div class="help-block">${{1}-info}</div>
+</div>
+${</if:{1}>}
+</message>
+
+<message id="GS.Field.Rs">
+${<if:{1}>}
+<div class="form-group">
+	<label class="control-label" for="${id:{1}}">${tr:{2}}</label>
+	<div class="input-group">
+		<div class="input-group-addon">Rs</div>
+		${{1}}
+		<div class="input-group-addon">/=</div>
+	</div>
+	<div class="help-block">${{1}-info}</div>
+</div>
+${</if:{1}>}
+</message>
+
+<message id="Wt.Auth.fieldCB">
+${block:GS.FieldH.Narrow.CB {1} Wt.Auth.{1}}
+</message>
+
+<message id="Wt.Auth.field">
+${block:GS.FieldH.Narrow {1} Wt.Auth.{1}}
+</message>
+
+<message id="Wt.Auth.field2">
+${<if:{1}>}
+<div class="form-group">
+	<label for="${id:{1}}" class="control-label col-sm-3">${{2}}</label>
+	<div class="col-sm-9">
+		${{1}}
+		<div class="help-block">${{1}-info}</div>
+	</div>
+</div>
+${</if:{1}>}
+</message>
+
+<message id="Wt.Auth.field3">
+${<if:{1}>}
+<div class="form-group">
+	<label for="${id:{1}}" class="control-label col-sm-3">${{2}}</label>
+	<div class="col-sm-9">
+		${{1}}
+		<div class="help-block">${{1}-info ${{3} class="btn-link"}</div>
+	</div>
+</div>
+${</if:{1}>}
+</message>
+
+<!-- Main templates -->
 <message id="GS.Main">
 ${navigation class="navbar-g"}
 ${content}
@@ -42,6 +183,7 @@ ${content}
 </div>
 </message>
 
+<!-- HeightEdit -->
 <message id="GS.HeightEdit">
 <div class="input-group">
 	${<is-cm>}${cm-edit}${</is-cm>}
@@ -55,9 +197,10 @@ ${content}
 </div>
 </message>
 
+<!-- FilteredList -->
 <message id="GS.ListFilterView">
 <div class="input-group">
-	<span class="input-group-addon">${title}</span>
+	<label class="input-group-addon" for="${id:widget}">${title}</label>
 	${widget}
 	<span class="input-group-addon">${checkbox}</span>
 </div>
@@ -97,6 +240,7 @@ ${<filters-enabled>}${filters}${</filters-enabled>}
 ${table-view}
 </message>
 
+<!-- EntityView -->
 <message id="GS.Admin.Entities.New">
 ${<type-selection>}
 	<div class="text-center">
@@ -112,147 +256,80 @@ ${<type-chosen>}
 	${<type-selection>}<hr />${</type-selection>}
 	
 	${<is-person>}
-	<div class="panel panel-default">
-		<div class="panel-heading">${tr:PersonalInfo}</div>
-		<div class="panel-body form-horizontal">
-			<div class="row row-entity-upload">
-				<div class="col-md-3">${profileUpload class="profile-pic"}</div>
-				<div class="row row-entity-upload col-md-9">
-					<div class="col-md-6">${cnicUpload class="cnic-pic"}</div>
-					<div class="col-md-6">${cnicUpload2 class="cnic-pic"}</div>
+		<div class="panel panel-default">
+			<div class="panel-heading">${tr:PersonalInfo}</div>
+			<div class="panel-body form-horizontal">
+				<div class="row row-entity-upload">
+					<div class="col-md-3">${profileUpload class="profile-pic"}</div>
+					<div class="row row-entity-upload col-md-9">
+						<div class="col-md-6">${cnicUpload class="cnic-pic"}</div>
+						<div class="col-md-6">${cnicUpload2 class="cnic-pic"}</div>
+					</div>
 				</div>
-			</div>
-			<div class="form-group">
-				<label class="control-label col-sm-2" for="${id:name}">${tr:FullName}</label>
-				<div class="col-sm-10">${name}<div class="help-block">${name-info}</div></div>
-			</div>
-			<div class="form-group">
-				<label class="control-label col-sm-2" for="${id:dob}">${tr:DateOfBirth}</label>
-				<div class="col-sm-10">${dob}<div class="help-block">${dob-info}</div></div>
-			</div>
-			<div class="form-group">
-				<label class="control-label col-sm-2" for="${id:cnic}">${tr:CNICLabel}</label>
-				<div class="col-sm-10">${cnic}<div class="help-block">${cnic-info}</div></div>
-			</div>
-			<div class="form-group">
-				<label class="control-label col-sm-2" for="${id:identificationMark}">${tr:IdentificationMark}</label>
-				<div class="col-sm-10">${identificationMark}<div class="help-block">${identificationMark-info}</div></div>
-			</div>
-			<div class="form-group">
-				<label class="control-label col-sm-2" for="${heightLabelFor}">${tr:Height}</label>
-				<div class="col-sm-10">${height}<div class="help-block">${height-info}</div></div>
-			</div>
-			<div class="form-group">
-				<label class="control-label col-sm-2" for="${id:bloodType}">${tr:BloodType}</label>
-				<div class="col-sm-10">${bloodType}<div class="help-block">${bloodType-info}</div></div>
-			</div>
-			<div class="form-group">
-				<label class="control-label col-sm-2" for="${id:motherTongue}">${tr:MotherTongue}</label>
-				<div class="col-sm-10">${motherTongue}<div class="help-block">${motherTongue-info}</div></div>
-			</div>
-			<div class="form-group">
-				<label class="control-label col-sm-2" for="${id:married}">${tr:MaritalStatus}</label>
-				<div class="col-sm-10">${married}<div class="help-block">${married-info}</div></div>
-			</div>
-			<div class="form-group">
-				<label class="control-label col-sm-2" for="${fwId:nextOfKin}">${tr:NextOfKin}</label>
-				<div class="col-sm-10">${nextOfKin}<div class="help-block">${nextOfKin-info}</div></div>
-			</div>
-			<div class="form-group">
-				<label class="control-label col-sm-2" for="${fwId:father}">${tr:Father}</label>
-				<div class="col-sm-10">${father}<div class="help-block">${father-info}</div></div>
-			</div>
-			<div class="form-group">
-				<label class="control-label col-sm-2" for="${fwId:mother}">${tr:Mother}</label>
-				<div class="col-sm-10">${mother}<div class="help-block">${mother-info}</div></div>
-			</div>
-			<div class="form-group">
-				<label class="control-label col-sm-2" for="${id:remarks}">${tr:Remarks}</label>
-				<div class="col-sm-10">${remarks}<div class="help-block">${remarks-info}</div></div>
+				
+				${block:GS.FieldH name FullName}
+				${block:GS.FieldH dob DateOfBirth}
+				${block:GS.FieldH cnic CNICLabel}
+				${block:GS.FieldH identificationMark IdentificationMark}
+				${block:GS.FieldH.CW height Height}
+				${block:GS.FieldH bloodType BloodType}
+				${block:GS.FieldH motherTongue MotherTongue}
+				${block:GS.FieldH married MaritalStatus}
+				${block:GS.FieldH.CW nextOfKin NextOfKin}
+				${block:GS.FieldH.CW father Father}
+				${block:GS.FieldH.CW mother Mother}
+				${block:GS.FieldH remarks Remarks}
 			</div>
 		</div>
-	</div>
-	${block:GS.Admin.Entities.ContactBlock}
-	<div class="panel panel-default">
-		<div class="panel-heading">${tr:EmployeeInfo}</div>
-		<div class="panel-body form-horizontal">
-			<div class="text-center">${add-employee}</div>
-			${<is-employee>}
-				<div class="form-group">
-					<label class="control-label col-sm-2" for="${id:companyNumber}">${tr:CompanyNumber}</label>
-					<div class="col-sm-10">${companyNumber}<div class="help-block">${companyNumber-info}</div></div>
+		
+		${block:GS.Admin.Entities.ContactBlock}
+		
+		${<m:employee>}
+			<div class="panel panel-default">
+				<div class="panel-heading">${tr:EmployeeInfo}</div>
+				<div class="panel-body form-horizontal">
+					${block:GS.FieldH companyNumber CompanyNumber}
+					${block:GS.FieldH recruitmentDate RecruitmentDate}
+					${block:GS.FieldH education Education}
+					${block:GS.FieldH experience Experience}
+					${block:GS.FieldH addQualifications GradeLabel}
+					${block:GS.FieldH grade AdditionalQualifications}
 				</div>
-				<div class="form-group">
-					<label class="control-label col-sm-2" for="${id:grade}">${tr:GradeLabel}</label>
-					<div class="col-sm-10">${grade}<div class="help-block">${grade-info}</div></div>
+			</div>
+		${</m:employee>}
+		
+		${<m:personnel>}
+			<div class="panel panel-default">
+				<div class="panel-heading">${tr:PersonnelInfo}</div>
+				<div class="panel-body form-horizontal">
+						${block:GS.FieldH policeStation PoliceStation}
+						${block:GS.FieldH.CB policeVerified PoliceVerified}
+						${block:GS.FieldH armyNumber ArmyNumber}
+						${block:GS.FieldH rank Rank}
+						${block:GS.FieldH trainingCourses TrainingCourses}
 				</div>
-				<div class="form-group">
-					<label class="control-label col-sm-2" for="${id:recruitmentDate}">${tr:RecruitmentDate}</label>
-					<div class="col-sm-10">${recruitmentDate}<div class="help-block">${recruitmentDate-info}</div></div>
-				</div>
-				<div class="form-group">
-					<label class="control-label col-sm-2" for="${id:education}">${tr:Education}</label>
-					<div class="col-sm-10">${education}<div class="help-block">${education-info}</div></div>
-				</div>
-				<div class="form-group">
-					<label class="control-label col-sm-2" for="${id:experience}">${tr:Experience}</label>
-					<div class="col-sm-10">${experience}<div class="help-block">${experience-info}</div></div>
-				</div>
-				<div class="form-group">
-					<label class="control-label col-sm-2" for="${id:addQualifications}">${tr:AdditionalQualifications}</label>
-					<div class="col-sm-10">${addQualifications}<div class="help-block">${addQualifications-info}</div></div>
-				</div>
-			${</is-employee>}
-		</div>
-	</div>
-	<div class="panel panel-default">
-		<div class="panel-heading">${tr:PersonnelInfo}</div>
-		<div class="panel-body form-horizontal">
-			<div class="text-center">${add-personnel}</div>
-			${<is-personnel>}
-				<div class="form-group">
-					<label class="control-label col-sm-2" for="${id:policeStation}">${tr:PoliceStation}</label>
-					<div class="col-sm-10">${policeStation}<div class="help-block">${policeStation-info}</div></div>
-				</div>
-				<div class="form-group">
-					<label class="control-label checkbox-label col-sm-2" for="${id:policeVerified}">${tr:PoliceVerified}</label>
-					<div class="col-sm-10">${policeVerified}</div>
-				</div>
-				<div class="form-group">
-					<label class="control-label col-sm-2" for="${id:armyNumber}">${tr:ArmyNumber}</label>
-					<div class="col-sm-10">${armyNumber}<div class="help-block">${armyNumber-info}</div></div>
-				</div>
-				<div class="form-group">
-					<label class="control-label col-sm-2" for="${id:rank}">${tr:Rank}</label>
-					<div class="col-sm-10">${rank}<div class="help-block">${rank-info}</div></div>
-				</div>
-				<div class="form-group">
-					<label class="control-label col-sm-2" for="${id:trainingCourses}">${tr:TrainingCourses}</label>
-					<div class="col-sm-10">${trainingCourses}<div class="help-block">${trainingCourses-info}</div></div>
-				</div>
-			${</is-personnel>}
-		</div>
-	</div>
+			</div>
+		${</m:personnel>}
 	${</is-person>}
 
 	${<is-business>}
 	<div class="panel panel-default">
 		<div class="panel-heading">${tr:BusinessInfo}</div>
 		<div class="panel-body form-horizontal">
-			<div class="form-group">
-				<label class="control-label col-sm-2" for="${id:name}">${tr:BusinessName}</label>
-				<div class="col-sm-10">${name}<div class="help-block">${name-info}</div></div>
-			</div>
+			${block:GS.FieldH name BusinessName}
 		</div>
 	</div>
 	${block:GS.Admin.Entities.ContactBlock}
 	${</is-business>}
 	
-	${block:GS.Admin.Entities.ClientBlock}
 	${block:GS.Admin.Entities.RecurringIncomesBlock}
 	${block:GS.Admin.Entities.RecurringExpensesBlock}
 	
-	${submit class="btn-primary hidden-print"}
+	${submitBtn class="btn-primary"}
+	${<is-person>}
+		${add-employee}
+		${add-personnel}
+	${</is-person>}
 ${</type-chosen>}
 </message>
 
@@ -287,58 +364,38 @@ ${<show-incomeCycles>}
 ${</show-incomeCycles>}
 </message>
 
-<message id="GS.Admin.EntryCycleBlock">
-<div class="form-group">
-	<label class="control-label" for="${fwId:entity}">${tr:Entity}</label>
-	${entity}
-	<div class="help-block">${entity-info}</div>
-</div>
-<div class="form-group">
-	<label class="control-label" for="${id:startDate}">${tr:StartingDate}</label>
-	${startDate}
-	<div class="help-block">${startDate-info}</div>
-</div>
-<div class="form-group">
-	<label class="control-label" for="${id:endDate}">${tr:EndDate}</label>
-	${endDate}
-	<div class="help-block">${endDate-info}</div>
-</div>
-<div class="form-group">
-	<label class="control-label" for="${id:amount}">${tr:Amount}</label>
-	<div class="input-group">
-		<div class="input-group-addon">Rs</div>
-		${amount}
-		<div class="input-group-addon">/=</div>
+<message id="GS.Admin.Entities.ContactBlock">
+<div class="panel panel-default">
+	<div class="panel-heading">${tr:ContactInfo}</div>
+	<div class="panel-body form-horizontal">
+		${contactNumbers}
+		<div class="form-group"><div class="col-sm-12">${add-contact-number class="pull-right"}</div></div>
+		
+		${locations}
+		<div class="form-group"><div class="col-sm-12">${add-location class="pull-right"}</div></div>
 	</div>
-	<div class="help-block">${amount-info}</div>
 </div>
 </message>
 
+<!-- EntryCycleView -->
+<message id="GS.Admin.EntryCycleBlock">
+${block:GS.Field.CW entity Entity}
+${block:GS.Field startDate StartingDate}
+${block:GS.Field endDate EndDate}
+${block:GS.Field.Rs amount Amount}
+</message>
+
 <message id="GS.Admin.EntryCycleBlock2">
-<div class="form-group">
-	<label class="control-label" for="${id:firstEntryAfterCycle}">${tr:CreateFirstEntry}</label>
-	${firstEntryAfterCycle}
-	<div class="help-block">${firstEntryAfterCycle-info}</div>
-</div>
-${submit class="btn-primary hidden-print"}
+${block:GS.Field firstEntryAfterCycle CreateFirstEntry}
+${submitBtn class="btn-primary"}
 </message>
 
 <message id="GS.Admin.IncomeCycleView">
 <div class="panel panel-default">
 	<div class="panel-heading">${tr:RecurringIncomeInfo}</div>
 	<div class="panel-body">
-		<div class="form-group">
-			<label class="control-label" for="${id:purpose}">${tr:Purpose}</label>
-			${purpose}
-			<div class="help-block">${purpose-info}</div>
-		</div>
-		${<if:service>}
-		<div class="form-group">
-			<label class="control-label" for="${id:service}">${tr:Service}</label>
-			${service}
-			<div class="help-block">${service-info}</div>
-		</div>
-		${</if:service>}
+		${block:GS.Field purpose Purpose}
+		${block:GS.Field service Service}
 		${block:GS.Admin.EntryCycleBlock}
 		<div class="form-group">
 			<label class="control-label" for="${id:nIntervals}">${tr:ToBeReceivedEvery}</label>
@@ -358,18 +415,8 @@ ${submit class="btn-primary hidden-print"}
 <div class="panel panel-default">
 	<div class="panel-heading">${tr:RecurringExpenseInfo}</div>
 	<div class="panel-body">
-		<div class="form-group">
-			<label class="control-label" for="${id:purpose}">${tr:Purpose}</label>
-			${purpose}
-			<div class="help-block">${purpose-info}</div>
-		</div>
-		${<if:position>}
-		<div class="form-group">
-			<label class="control-label" for="${id:position}">${tr:Position}</label>
-			${position}
-			<div class="help-block">${position-info}</div>
-		</div>
-		${</if:position>}
+		${block:GS.Field purpose Purpose}
+		${block:GS.Field position Position}
 		${block:GS.Admin.EntryCycleBlock}
 		<div class="form-group">
 			<label class="control-label" for="${id:nIntervals}">${tr:ToBePaidEvery}</label>
@@ -385,23 +432,49 @@ ${submit class="btn-primary hidden-print"}
 </div>
 </message>
 
-<message id="GS.Admin.Entities.ContactBlock">
+<!-- EmployeeAssignmentView -->
+<message id="GS.Admin.EmployeeAssignmentView">
 <div class="panel panel-default">
-	<div class="panel-heading">${tr:ContactInfo}</div>
-	<div class="panel-body form-horizontal">
-		<div class="form-group">
-			<label class="control-label col-sm-2">${tr:ContactNumber}</label>
-			<div class="col-sm-10">${contactNumbers class="multiple-edit"}<div class="help-block">${contactNumbers-info}</div></div>
-		</div>
-		<div class="form-group"><div class="col-sm-12">${add-contact-number class="pull-right"}</div></div>
-		
-		${locations}
-		<div class="form-group"><div class="col-sm-12">${add-location class="pull-right"}</div></div>
+	<div class="panel-heading">${tr:EmployeeAssignmentInfo}</div>
+	<div class="panel-body">
+		${block:GS.Field description Description}
+		${block:GS.Field.CW entity Employee}
+		${block:GS.Field.CW location Location}
+		${block:GS.Field startDate StartingDate}
+		${block:GS.Field endDate EndDate}
+		${submitBtn class="btn-primary"}
 	</div>
 </div>
 </message>
 
+<!-- EmployeeExpenseView -->
+<message id="GS.Admin.EmployeeExpenseView.Assignment">
+${assignments}
+${add-assignment}
+${cycles}
+${add-cycle}
+</message>
+<message id="GS.Admin.EmployeeExpenseView.ExpenseCycle">
+${cycles}
+${add-cycle}
+${assignments}
+${add-assignment}
+</message>
+
+<!-- LocationView -->
 <message id="GS.Admin.LocationView">
+<div class="form-horizontal">
+${block:GS.Admin.LocationView.Content}
+${submitBtn class="btn-primary"}
+</div>
+</message>
+
+<message id="GS.Admin.ContactNumberView">
+${block:GS.FieldH number ContactNumber}
+</message>
+
+<message id="GS.Admin.LocationView.Content">
+${block:GS.FieldH.CW entity Entity}
 <div class="form-group">
 	<label class="control-label col-sm-2" for="${id:country}">${tr:Address} ${index}</label>
 	<div class="col-sm-10">
@@ -417,124 +490,76 @@ ${submit class="btn-primary hidden-print"}
 </div>
 </message>
 
+<!-- CountryView -->
 <message id="GS.Admin.CountryView">
 <div class="form-horizontal">
+	${block:GS.FieldH.Narrow code CountryCode}
+	${block:GS.FieldH.Narrow name CountryName}
 	<div class="form-group">
-		<label class="control-label col-sm-3" for="${id:code}">${tr:CountryCode}</label>
-		<div class="col-sm-9">${code}<div class="help-block">${code-info}</div></div>
-	</div>
-	<div class="form-group">
-		<label class="control-label col-sm-3" for="${id:name}">${tr:CountryName}</label>
-		<div class="col-sm-9">${name}<div class="help-block">${name-info}</div></div>
-	</div>
-	<div class="form-group">
-		<div class="col-sm-9 col-sm-offset-3">${submit class="btn-primary hidden-print"}</div>
+		<div class="col-sm-9 col-sm-offset-3">${submitBtn class="btn-primary"}</div>
 	</div>
 </div>
 </message>
 
+<!-- CityView -->
 <message id="GS.Admin.CityView">
 <div class="form-horizontal">
+	${block:GS.FieldH.Narrow country Country}
+	${block:GS.FieldH.Narrow name CityName}
 	<div class="form-group">
-		<label class="control-label col-sm-3" for="${id:country}">${tr:Country}</label>
-		<div class="col-sm-9">${country}<div class="help-block">${country-info}</div></div>
-	</div>
-	<div class="form-group">
-		<label class="control-label col-sm-3" for="${id:name}">${tr:CityName}</label>
-		<div class="col-sm-9">${name}<div class="help-block">${name-info}</div></div>
-	</div>
-	<div class="form-group">
-		<div class="col-sm-9 col-sm-offset-3">${submit class="btn-primary hidden-print"}</div>
+		<div class="col-sm-9 col-sm-offset-3">${submitBtn class="btn-primary"}</div>
 	</div>
 </div>
 </message>
 
+<!-- PositionView -->
 <message id="GS.Admin.PositionView">
 <div class="form-horizontal">
+	${block:GS.FieldH.Narrow title PositionTitle}
 	<div class="form-group">
-		<label class="control-label col-sm-3" for="${id:title}">${tr:PositionTitle}</label>
-		<div class="col-sm-9">${title}<div class="help-block">${title-info}</div></div>
-	</div>
-	<div class="form-group">
-		<div class="col-sm-9 col-sm-offset-3">${submit class="btn-primary hidden-print"}</div>
+		<div class="col-sm-9 col-sm-offset-3">${submitBtn class="btn-primary"}</div>
 	</div>
 </div>
 </message>
 
+<!-- ServiceView -->
 <message id="GS.Admin.ServiceView">
 <div class="form-horizontal">
+	${block:GS.FieldH.Narrow title ServiceTitle}
 	<div class="form-group">
-		<label class="control-label col-sm-3" for="${id:title}">${tr:ServiceTitle}</label>
-		<div class="col-sm-9">${title}<div class="help-block">${title-info}</div></div>
-	</div>
-	<div class="form-group">
-		<div class="col-sm-9 col-sm-offset-3">${submit class="btn-primary hidden-print"}</div>
+		<div class="col-sm-9 col-sm-offset-3">${submitBtn class="btn-primary"}</div>
 	</div>
 </div>
 </message>
 
+<!-- AccountView -->
 <message id="GS.Admin.AccountView">
 <div class="panel panel-default">
 	<div class="panel-heading">${tr:AccountInfo}</div>
 	<div class="panel-body">
-		<div class="form-group">
-			<label class="control-label" for="${id:name}">${tr:AccountName}</label>
-			${name}
-			<div class="help-block">${name-info}</div>
-		</div>
-		${<if:type>}
-		<div class="form-group">
-			<label class="control-label" for="${id:type}">${tr:AccountType}</label>
-			${type}
-			<div class="help-block">${type-info}</div>
-		</div>
-		${</if:type>}
-		${submit class="btn-primary hidden-print"}
+		${block:GS.Field name AccountName}
+		${block:GS.Field type AccountType}
+		${submitBtn class="btn-primary"}
 	</div>
 </div>
 ${entry-list}
 </message>
 
-<message id="GS.Admin.AccountEntryBlock">
-<div class="form-group">
-	<label class="control-label" for="${id:description}">${tr:Description}</label>
-	${description}
-	<div class="help-block">${description-info}</div>
-</div>
-<div class="form-group">
-	<label class="control-label" for="${fwId:debitAccount}">${tr:DebitAccount}</label>
-	${debitAccount}
-	<div class="help-block">${debitAccount-info}</div>
-</div>
-<div class="form-group">
-	<label class="control-label" for="${fwId:creditAccount}">${tr:CreditAccount}</label>
-	${creditAccount}
-	<div class="help-block">${creditAccount-info}</div>
-</div>
-${<if:entity>}
-<div class="form-group">
-	<label class="control-label" for="${fwId:entity}">${tr:Entity}</label>
-	${entity}
-	<div class="help-block">${entity-info}</div>
-</div>
-${</if:entity>}
-<div class="form-group">
-	<label class="control-label" for="${id:amount}">${tr:Amount}</label>
-	<div class="input-group">
-		<div class="input-group-addon">Rs</div>
-		${amount}
-		<div class="input-group-addon">/=</div>
-	</div>
-	<div class="help-block">${amount-info}</div>
-</div>
-${submit class="btn-primary hidden-print"}
-</message>
-
+<!-- AccountEntryView -->
 <message id="GS.Admin.AccountEntryView">
 <div class="panel panel-default">
 	<div class="panel-heading">${tr:AccountEntryInfo}</div>
 	<div class="panel-body">${block:GS.Admin.AccountEntryBlock}</div>
 </div>
+</message>
+
+<message id="GS.Admin.AccountEntryBlock">
+${block:GS.Field description Description}
+${block:GS.Field.CW debitAccount DebitAccount}
+${block:GS.Field.CW creditAccount CreditAccount}
+${block:GS.Field.CW entity Entity}
+${block:GS.Field.Rs amount Amount}
+${submitBtn class="btn-primary"}
 </message>
 
 <message id="GS.Admin.TransactionView">
@@ -556,6 +581,7 @@ ${<select-direction>}<hr />${</select-direction>}
 ${</direction-selected>}
 </message>
 
+<!-- ImageUpload -->
 <message id="GS.ImageUpload">
 <label for="${label-for}" class="thumbnail">
 	${input class="hidden-upload"}
@@ -565,6 +591,7 @@ ${</direction-selected>}
 </label>
 </message>
 
+<!-- FindRecordEdit -->
 <message id="GS.FindRecordEdit">
 ${<readonly>}${edit}${</readonly>}
 ${<not-readonly>}
@@ -575,30 +602,51 @@ ${<not-readonly>}
 ${</not-readonly>}
 </message>
 
+<!-- AuthWidget -->
+<message id="Wt.Auth.template.login">
+<div class="container Wt-auth-login gs-auth">
+	<h1 class="text-center">${tr:Wt.Auth.login-form-title}</h1>
+	<p>${tr:Wt.Auth.login-form-info}</p>
+
+	<div class="form-horizontal">
+		${<if:passwords>}
+		${block:Wt.Auth.field2 user-name user-name-label}
+		${block:Wt.Auth.field password}
+		${block:Wt.Auth.fieldCB remember-me}
+		${</if:passwords>}
+
+		${<if:oauth>}
+		<div class="control-group">
+			<div class="controls">
+			  <p>Or login using:</p>
+			  ${icons}
+			</div>
+		</div>
+		${</if:oauth>}
+
+		<div class="form-actions pull-right">
+			<p>${login class="btn-primary"}</p>
+			<p>${lost-password class="btn-link"} ${sep}
+			${register class="btn-link"}</p>
+		</div>
+	</div>
+</div>
+</message>
+
+<message id="GS.DeniedPermission">
+<div class="container text-center">
+	<h1><i class="fa fa-lock"></i></h1>
+	<h1>${tr:PermissionDenied}</h1>
+</div>
+</message>
+
+<message id="GS.RecordFormView">
+${<p:denied>}
+	${block:GS.DeniedPermission}
+${</p:denied>}
+${<p:permitted>}
+	{1}
+${</p:permitted>}
+</message>
+
 </messages>
-
-<!--
-<message id="GS.Admin.ExpenseCycleSummary">
-<div class="row ${text-class}">
-	<div class="col-sm-2">${tr:RecurringExpense} ${index}</div>
-	<div class="col-sm-9">
-		${tr:StartDate}: ${startDate}, ${tr:Amount}: ${amount}
-		${<has-extra>}${tr:Position}: ${extra}${</has-extra>}
-		${<end-date>}${tr:EndDate}: ${endDate}${<has-ended>} (Ended)${</has-ended>}${</end-date>}
-	</div>
-	<a href="#/accounts/expenses/expense-${id}"><div class="col-sm-1">${block:GS.LinkIcon}</div></a>
-</div>
-</message>
-
-<message id="GS.Admin.IncomeCycleSummary">
-<div class="row ${text-class}">
-	<div class="col-sm-2">${tr:RecurringIncome} ${index}</div>
-	<div class="col-sm-9">
-		${tr:StartDate}: ${startDate}, ${tr:Amount}: ${amount}
-		${<has-extra>}${tr:Service}: ${extra}${</has-extra>}
-		${<end-date>}${tr:EndDate}: ${endDate}${<has-ended>} (Ended)${</has-ended>}${</end-date>}
-	</div>
-	<a href="#/accounts/expenses/income-${id}"><div class="col-sm-1">${block:GS.LinkIcon}</div></a>
-</div>
-</message>
--->

@@ -124,9 +124,11 @@ public:
    * correctly but have a DisabledLogin state() for example.
    */
   Signal<>& changed() { return changed_; }
+  //Signal<>& beforeChanged() { return beforeChanged_; }
+	Signal<> beforeChanged_;
 
 private:
-  Signal<> changed_;
+	Signal<> changed_;
 
   User user_;
   LoginState state_;

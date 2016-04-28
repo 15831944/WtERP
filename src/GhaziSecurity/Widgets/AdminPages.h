@@ -8,7 +8,6 @@
 
 namespace GS
 {
-	class MyTemplateFormView;
 	class AdminPageContentWidget;
 
 	class AdminPageWidget : public Wt::WTemplate
@@ -22,6 +21,7 @@ namespace GS
 		Wt::WMenuItem *createMenuItem(int index, const Wt::WString &label, const std::string &internalPath, Wt::WWidget *contents);
 		bool checkPathComponentExist(const std::string &pathComponent) const;
 		void connectFormSubmitted(Wt::WMenuItem *item);
+		void setDeniedPermissionWidget();
 
 		const std::string &basePathComponent() const { return _basePathComponent; }
 		Wt::WNavigationBar *sideBar() const { return _sideBar; }
@@ -36,6 +36,7 @@ namespace GS
 		Wt::WNavigationBar *_sideBar = nullptr;
 		Wt::WStackedWidget *_stackWidget = nullptr;
 		Wt::WMenu *_menu = nullptr;
+		Wt::WTemplate *_deniedPermissionWidget = nullptr;
 		std::string _basePathComponent;
 
 		typedef std::map<Wt::WMenuItem*, Wt::Signals::connection> SignalMap;

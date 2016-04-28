@@ -2,6 +2,7 @@
 #include "Widgets/EntityList.h"
 #include "Widgets/AccountMVC.h"
 #include "Widgets/EntryCycleMVC.h"
+#include "Widgets/HRMVC.h"
 
 #include <Wt/WNavigationBar>
 #include <Wt/WMenu>
@@ -90,7 +91,7 @@ namespace GS
 		if(!submittedItem)
 			return;
 
-		MyTemplateFormView *submittedView = dynamic_cast<MyTemplateFormView*>(itemContent(submittedItem));
+		SubmittableRecordWidget *submittedView = dynamic_cast<SubmittableRecordWidget*>(itemContent(submittedItem));
 		if(!submittedView)
 		{
 			_submitSignalMap[submittedItem].disconnect();
@@ -100,8 +101,8 @@ namespace GS
 
 		Wt::WMenuItem *newItem = createMenuItem(submittedView->viewName(), submittedView->viewInternalPath(), submittedItem->takeContents());
 
-		MyTemplateFormView *newFormView = submittedView->createFormView();
-		AdminPageContentWidget* newPageContainer = new AdminPageContentWidget(submittedItem->text(), newFormView);
+		SubmittableRecordWidget *newFormView = submittedView->createFormView();
+		AdminPageContentWidget* newPageContainer = new AdminPageContentWidget(submittedItem->text(), dynamic_cast<Wt::WWidget*>(newFormView));
 		submittedItem->setContents(newPageContainer, Wt::WMenuItem::LazyLoading);
 
 		_submitSignalMap[submittedItem].disconnect();
@@ -112,13 +113,21 @@ namespace GS
 
 	void AdminPageWidget::connectFormSubmitted(Wt::WMenuItem *item)
 	{
-		if(auto view = dynamic_cast<MyTemplateFormView*>(itemContent(item)))
+		if(auto view = dynamic_cast<SubmittableRecordWidget*>(itemContent(item)))
 			_submitSignalMap[item] = view->submitted().connect(boost::bind(&AdminPageWidget::handleFormSubmitted, this, item));
 	}
 
 	Wt::WWidget * AdminPageWidget::itemContent(Wt::WMenuItem *item)
 	{
 		return dynamic_cast<AdminPageContentWidget*>(item->contentsSafe())->content();
+	}
+
+	void AdminPageWidget::setDeniedPermissionWidget()
+	{
+		if(!_deniedPermissionWidget)
+			_deniedPermissionWidget = new Wt::WTemplate(tr("GS.DeniedPermission"), _stackWidget);
+
+		_stackWidget->setCurrentWidget(_deniedPermissionWidget);
 	}
 
 	AdminPageContentWidget::AdminPageContentWidget(const Wt::WString &title, Wt::WWidget *content, Wt::WContainerWidget *parent /*= nullptr*/)
@@ -184,14 +193,24 @@ namespace GS
 
 		menu()->addSeparator();
 
-		_newEntityMenuItem = new Wt::WMenuItem(tr("AddNewEntity"));
-		_newEntityMenuItem->setPathComponent(NEW_ENTITY_PATHC);
-		EntityView *entityView = new EntityView();
-		_newEntityMenuItem->setContents(new AdminPageContentWidget(_newEntityMenuItem->text(), entityView));
-		menu()->addItem(_newEntityMenuItem);
-		connectFormSubmitted(_newEntityMenuItem);
+		if(APP->authLogin().hasPermission(Permissions::CreateRecord))
+		{
+			_newEntityMenuItem = new Wt::WMenuItem(tr("AddNewX").arg(tr("entity")));
+			_newEntityMenuItem->setPathComponent(NEW_ENTITY_PATHC);
+			EntityView *entityView = new EntityView();
+			_newEntityMenuItem->setContents(new AdminPageContentWidget(_newEntityMenuItem->text(), entityView));
+			menu()->addItem(_newEntityMenuItem);
+			connectFormSubmitted(_newEntityMenuItem);
 
-		menu()->addSeparator();
+			auto assignEmployeeMenuItem = new Wt::WMenuItem(tr("AssignEmployee"));
+			assignEmployeeMenuItem->setPathComponent(EMPLOYEES_PATHC "/" NEW_EMPLOYEEASSIGNMENT_PATHC);
+			EmployeeExpenseView *employeeAssignmentView = new EmployeeExpenseView(true);
+			assignEmployeeMenuItem->setContents(new AdminPageContentWidget(assignEmployeeMenuItem->text(), employeeAssignmentView));
+			menu()->addItem(assignEmployeeMenuItem);
+			connectFormSubmitted(assignEmployeeMenuItem);
+
+			menu()->addSeparator();
+		}
 	}
 
 	AccountsAdminPage::AccountsAdminPage(Wt::WContainerWidget *parent /*= nullptr*/)
@@ -233,42 +252,45 @@ namespace GS
 
 		menu()->addSeparator();
 
-		auto createAccountMenuItem = new Wt::WMenuItem(tr("CreateAccount"));
-		createAccountMenuItem->setPathComponent(NEW_ACCOUNT_PATHC);
-		AccountView *accountView = new AccountView();
-		createAccountMenuItem->setContents(new AdminPageContentWidget(createAccountMenuItem->text(), accountView));
-		menu()->addItem(createAccountMenuItem);
-		connectFormSubmitted(createAccountMenuItem);
+		if(APP->authLogin().hasPermission(Permissions::CreateRecord))
+		{
+			auto createAccountMenuItem = new Wt::WMenuItem(tr("CreateAccount"));
+			createAccountMenuItem->setPathComponent(NEW_ACCOUNT_PATHC);
+			AccountView *accountView = new AccountView();
+			createAccountMenuItem->setContents(new AdminPageContentWidget(createAccountMenuItem->text(), accountView));
+			menu()->addItem(createAccountMenuItem);
+			connectFormSubmitted(createAccountMenuItem);
 
-		auto createAccountEntryMenuItem = new Wt::WMenuItem(tr("CreateAccountEntry"));
-		createAccountEntryMenuItem->setPathComponent(NEW_ACCOUNTENTRY_PATHC);
-		AccountEntryView* accountEntryView = new AccountEntryView();
-		createAccountEntryMenuItem->setContents(new AdminPageContentWidget(createAccountEntryMenuItem->text(), accountEntryView));
-		menu()->addItem(createAccountEntryMenuItem);
-		connectFormSubmitted(createAccountEntryMenuItem);
+			auto createAccountEntryMenuItem = new Wt::WMenuItem(tr("CreateAccountEntry"));
+			createAccountEntryMenuItem->setPathComponent(NEW_ACCOUNTENTRY_PATHC);
+			AccountEntryView* accountEntryView = new AccountEntryView();
+			createAccountEntryMenuItem->setContents(new AdminPageContentWidget(createAccountEntryMenuItem->text(), accountEntryView));
+			menu()->addItem(createAccountEntryMenuItem);
+			connectFormSubmitted(createAccountEntryMenuItem);
 
-		auto createTransactionMenuItem = new Wt::WMenuItem(tr("CreateTransaction"));
-		createTransactionMenuItem->setPathComponent(NEW_TRANSACTION_PATHC);
-		TransactionView* transactionView = new TransactionView();
-		createTransactionMenuItem->setContents(new AdminPageContentWidget(createTransactionMenuItem->text(), transactionView));
-		menu()->addItem(createTransactionMenuItem);
-		connectFormSubmitted(createTransactionMenuItem);
+			auto createTransactionMenuItem = new Wt::WMenuItem(tr("CreateTransaction"));
+			createTransactionMenuItem->setPathComponent(NEW_TRANSACTION_PATHC);
+			TransactionView* transactionView = new TransactionView();
+			createTransactionMenuItem->setContents(new AdminPageContentWidget(createTransactionMenuItem->text(), transactionView));
+			menu()->addItem(createTransactionMenuItem);
+			connectFormSubmitted(createTransactionMenuItem);
 
-		auto createRecurringIncomeMenuItem = new Wt::WMenuItem(tr("CreateRecurringIncome"));
-		createRecurringIncomeMenuItem->setPathComponent(INCOMECYCLES_PATHC "/" NEW_INCOMECYCLE_PATHC);
-		IncomeCycleView* incomeCycleView = new IncomeCycleView();
-		createRecurringIncomeMenuItem->setContents(new AdminPageContentWidget(createRecurringIncomeMenuItem->text(), incomeCycleView));
-		menu()->addItem(createRecurringIncomeMenuItem);
-		connectFormSubmitted(createRecurringIncomeMenuItem);
+			auto createRecurringIncomeMenuItem = new Wt::WMenuItem(tr("CreateRecurringIncome"));
+			createRecurringIncomeMenuItem->setPathComponent(INCOMECYCLES_PATHC "/" NEW_INCOMECYCLE_PATHC);
+			IncomeCycleView* incomeCycleView = new IncomeCycleView();
+			createRecurringIncomeMenuItem->setContents(new AdminPageContentWidget(createRecurringIncomeMenuItem->text(), incomeCycleView));
+			menu()->addItem(createRecurringIncomeMenuItem);
+			connectFormSubmitted(createRecurringIncomeMenuItem);
 
-		auto createRecurringExpenseMenuItem = new Wt::WMenuItem(tr("CreateRecurringExpense"));
-		createRecurringExpenseMenuItem->setPathComponent(EXPENSECYCLES_PATHC "/" NEW_EXPENSECYCLE_PATHC);
-		ExpenseCycleView* expenseCycleView = new ExpenseCycleView();
-		createRecurringExpenseMenuItem->setContents(new AdminPageContentWidget(createRecurringExpenseMenuItem->text(), expenseCycleView));
-		menu()->addItem(createRecurringExpenseMenuItem);
-		connectFormSubmitted(createRecurringExpenseMenuItem);
+			auto createRecurringExpenseMenuItem = new Wt::WMenuItem(tr("CreateRecurringExpense"));
+			createRecurringExpenseMenuItem->setPathComponent(EXPENSECYCLES_PATHC "/" NEW_EXPENSECYCLE_PATHC);
+			EmployeeExpenseView *expenseCycleView = new EmployeeExpenseView(false);
+			createRecurringExpenseMenuItem->setContents(new AdminPageContentWidget(createRecurringExpenseMenuItem->text(), expenseCycleView));
+			menu()->addItem(createRecurringExpenseMenuItem);
+			connectFormSubmitted(createRecurringExpenseMenuItem);
 
-		menu()->addSeparator();
+			menu()->addSeparator();
+		}
 	}
 
 // 	void EntitiesAdminPage::newEntityViewSubmitted()
@@ -289,7 +311,7 @@ namespace GS
 // 		_newEntityView = new EntityView(Entity::InvalidType);
 // 		_submittedConnection.disconnect();
 // 		_submittedConnection = _newEntityView->submitted().connect(this, &EntitiesAdminPage::newEntityViewSubmitted);
-// 		_newEntityMenuItem = createMenuItem(newEntityMenuItemIndex, tr("AddNewEntity"), "new", _newEntityView);
+// 		_newEntityMenuItem = createMenuItem(newEntityMenuItemIndex, tr("AddNewX").arg(tr("entity")), "new", _newEntityView);
 // 
 // 		submittedEntityItem->select();
 // 	}

@@ -46,6 +46,8 @@ namespace GS
 		if(!entityPtr->balAccountPtr)
 		{
 			auto accountPtr = dboSession.add(new Account(Account::EntityBalanceAccount));
+			accountPtr.modify()->creatorUserPtr = entityPtr->creatorUserPtr;
+			accountPtr.modify()->regionPtr = entityPtr->regionPtr;
 			accountPtr.modify()->name = Wt::WString::tr("EntityIdBalanceAccount").arg(entityPtr.id()).toUTF8();
 
 			entityPtr.modify()->balAccountPtr = accountPtr;
@@ -53,6 +55,8 @@ namespace GS
 		if(!entityPtr->pnlAccountPtr)
 		{
 			auto accountPtr = dboSession.add(new Account(Account::EntityPnlAccount));
+			accountPtr.modify()->creatorUserPtr = entityPtr->creatorUserPtr;
+			accountPtr.modify()->regionPtr = entityPtr->regionPtr;
 			accountPtr.modify()->name = Wt::WString::tr("EntityIdPnlAccount").arg(entityPtr.id()).toUTF8();
 
 			entityPtr.modify()->pnlAccountPtr = accountPtr;
@@ -61,13 +65,14 @@ namespace GS
 		t.commit();
 	}
 
-	Wt::Dbo::ptr<AccountEntry> AccountsDatabase::createAccountEntry(double amount, Wt::Dbo::ptr<Account> debitAccountPtr, Wt::Dbo::ptr<Account> creditAccountPtr)
+	Wt::Dbo::ptr<AccountEntry> AccountsDatabase::createAccountEntry(const Money &amount, Wt::Dbo::ptr<Account> debitAccountPtr, Wt::Dbo::ptr<Account> creditAccountPtr)
 	{
 		if(!debitAccountPtr || !creditAccountPtr)
 			return Wt::Dbo::ptr<AccountEntry>();
 
 		Wt::Dbo::Transaction t(dboSession);
 		auto result = dboSession.add(new AccountEntry(amount, debitAccountPtr, creditAccountPtr));
+		result.modify()->setCreatedByValues();
 
 		updateAccountBalances(result);
 		t.commit();
@@ -79,22 +84,22 @@ namespace GS
 	{
 		try
 		{
-			accountEntryPtr->_debitAccountPtr.modify()->_balance += accountEntryPtr->amount();
-			accountEntryPtr->_creditAccountPtr.modify()->_balance -= accountEntryPtr->amount();
+			accountEntryPtr->_debitAccountPtr.modify()->_balanceInCents += accountEntryPtr->amount().valueInCents();
+			accountEntryPtr->_creditAccountPtr.modify()->_balanceInCents -= accountEntryPtr->amount().valueInCents();
 			accountEntryPtr->_debitAccountPtr.flush();
 			accountEntryPtr->_creditAccountPtr.flush();
 		}
 		catch(const Wt::Dbo::StaleObjectException &)
 		{
 			Account debitAccount = *accountEntryPtr->_debitAccountPtr;
-			Account creditAccount = *accountEntryPtr->_debitAccountPtr;
+			Account creditAccount = *accountEntryPtr->_creditAccountPtr;
 
 			try
 			{
 				accountEntryPtr.modify()->_debitAccountPtr.reread();
 				accountEntryPtr.modify()->_creditAccountPtr.reread();
-				accountEntryPtr->_debitAccountPtr.modify()->_balance += accountEntryPtr->amount();
-				accountEntryPtr->_creditAccountPtr.modify()->_balance -= accountEntryPtr->amount();
+				accountEntryPtr->_debitAccountPtr.modify()->_balanceInCents += accountEntryPtr->amount().valueInCents();
+				accountEntryPtr->_creditAccountPtr.modify()->_balanceInCents -= accountEntryPtr->amount().valueInCents();
 				accountEntryPtr->_debitAccountPtr.flush();
 				accountEntryPtr->_creditAccountPtr.flush();
 			}
@@ -110,14 +115,14 @@ namespace GS
 
 	void AccountsDatabase::createPendingCycleEntry(Wt::Dbo::ptr<IncomeCycle> cyclePtr, Wt::Dbo::ptr<AccountEntry> lastEntryPtr, boost::posix_time::ptime currentPTime, boost::posix_time::time_duration *nextEntryDuration)
 	{
+		Wt::Dbo::Transaction t(dboSession);
+
 		if(!cyclePtr)
 			throw std::logic_error("AccountsDatabase::createPendingCycleEntry(): cyclePtr was null");
 		if(!cyclePtr->entityPtr)
 			throw std::logic_error("AccountsDatabase::createPendingCycleEntry(): cyclePtr->entityPtr was null");
 		if(currentPTime.is_special())
 			throw std::logic_error("AccountsDatabase::createPendingCycleEntry(): currentPTime was invalid");
-
-		Wt::Dbo::Transaction t(dboSession);
 
 		if(lastEntryPtr && lastEntryPtr->incomeCyclePtr && lastEntryPtr->incomeCyclePtr.id() != cyclePtr.id())
 			throw std::logic_error("AccountsDatabase::createPendingCycleEntry(): lastEntryPtr->incomeCyclePtr != cyclePtr");
@@ -144,6 +149,8 @@ namespace GS
 
 	void AccountsDatabase::createPendingCycleEntry(Wt::Dbo::ptr<ExpenseCycle> cyclePtr, Wt::Dbo::ptr<AccountEntry> lastEntryPtr, boost::posix_time::ptime currentPTime, boost::posix_time::time_duration *nextEntryDuration)
 	{
+		Wt::Dbo::Transaction t(dboSession);
+
 		if(!cyclePtr)
 			throw std::logic_error("AccountsDatabase::createPendingCycleEntry(): cyclePtr was null");
 		if(!cyclePtr->entityPtr)
@@ -151,8 +158,6 @@ namespace GS
 		if(currentPTime.is_special())
 			throw std::logic_error("AccountsDatabase::createPendingCycleEntry(): currentPTime was invalid");
 		
-		Wt::Dbo::Transaction t(dboSession);
-
 		if(lastEntryPtr && lastEntryPtr->expenseCyclePtr && lastEntryPtr->expenseCyclePtr.id() != cyclePtr.id())
 			throw std::logic_error("AccountsDatabase::createPendingCycleEntry(): lastEntryPtr->expenseCyclePtr != cyclePtr");
 
@@ -185,11 +190,11 @@ namespace GS
 		Wt::WDateTime currentDt(currentPTime);
 
 		//DO NOT ALLOW THESE NULL DATES(in scan query)
-		if(cycle.startDate.isNull() || cycle.creationDt.isNull())
+		if(cycle.startDate.isNull() || cycle.timestamp.isNull())
 			return Wt::Dbo::ptr<AccountEntry>();
 
 		//Do not allow cycles with start dates later than today and creation dt later than now(already filtered, yet asserted)
-		if(cycle.startDate > currentDt.date() || cycle.creationDt > currentDt)
+		if(cycle.startDate > currentDt.date() || cycle.timestamp > currentDt)
 			return Wt::Dbo::ptr<AccountEntry>();
 
 		//Do not allow cycles with end dates earlier or equal to start date
@@ -293,7 +298,7 @@ namespace GS
 			boost::gregorian::days cycleDays = nextCyclePeriodPTime.date() - previousCyclePeriodPTime.date();
 			boost::gregorian::days incompleteDays = cycle.endDate.toGregorianDate() - previousCyclePeriodPTime.date();
 			double ratio = static_cast<double>(incompleteDays.days()) / cycleDays.days();
-			newEntry._amount = cycle.amount * ratio;
+			newEntry._amountInCents = (cycle.amount() * ratio).valueInCents();
 
 			//Timestamp
 			if(!lastEntryPtr && cycle.endDate.toGregorianDate() == currentPTime.date())
@@ -308,7 +313,7 @@ namespace GS
 		}
 		else
 		{
-			newEntry._amount = cycle.amount;
+			newEntry._amountInCents = cycle._amountInCents;
 
 			//Timestamp
 			if(!lastEntryPtr && nextCyclePeriodPTime.date() == currentPTime.date())
@@ -335,7 +340,7 @@ namespace GS
 // 		if(cyclePtr->servicePtr)
 // 		{
 // 			if(!cyclePtr->servicePtr->accountPtr)
-// 				cyclePtr.modify()->servicePtr.modify()->accountPtr = dboSession.add(new Account());
+// 				cyclePtr.modify()->servicePtr.modify()->accountPtr = dboSession.add(new Account()); //todo BaseRecord::setUserValues()
 // 
 // 			return cyclePtr->servicePtr->accountPtr;
 // 		}
@@ -349,7 +354,7 @@ namespace GS
 // 		if(cyclePtr->positionPtr)
 // 		{
 // 			if(!cyclePtr->positionPtr->accountPtr)
-// 				cyclePtr.modify()->positionPtr.modify()->accountPtr = dboSession.add(new Account());
+// 				cyclePtr.modify()->positionPtr.modify()->accountPtr = dboSession.add(new Account()); //todo BaseRecord::setUserValues()
 // 
 // 			return cyclePtr->positionPtr->accountPtr;
 // 		}
@@ -374,7 +379,7 @@ namespace GS
 // 		//Create account if not found
 // 		if(!accountPtr)
 // 		{
-// 			accountPtr = dboSession.add(new Account());
+// 			accountPtr = dboSession.add(new Account()); //todo BaseRecord::setUserValues()
 // 
 // 			if(!server->configs()->addLongInt("GeneralIncomeAccountId", accountPtr.id(), &dboSession))
 // 				throw std::runtime_error("Error creating GeneralIncomeAccountId config, ConfigurationsDatabase::addLongInt() returned null");
@@ -402,7 +407,7 @@ namespace GS
 // 		//Create account if not found
 // 		if(!accountPtr)
 // 		{
-// 			accountPtr = dboSession.add(new Account());
+// 			accountPtr = dboSession.add(new Account()); //todo BaseRecord::setUserValues()
 // 
 // 			if(!server->configs()->addLongInt("GeneralExpenseAccountId", accountPtr.id(), &dboSession))
 // 				throw std::runtime_error("Error creating GeneralExpenseAccountId config, ConfigurationsDatabase::addLongInt() returned null");
@@ -423,7 +428,7 @@ namespace GS
 // 		if(!selfAccount)
 // 		{
 // 			Wt::log("warn") << "Self account was not found, creating self account";
-// 			selfAccount = dboSession.add(new Account());
+// 			selfAccount = dboSession.add(new Account()); //todo BaseRecord::setUserValues()
 // 			initEntityAccountValues(selfAccount, selfEntity);
 // 		}
 // 
@@ -440,7 +445,7 @@ namespace GS
 // 		Wt::Dbo::ptr<Account> accountPtr = entityPtr->accountWPtr.query();
 // 		if(!accountPtr)
 // 		{
-// 			accountPtr = dboSession.add(new Account());
+// 			accountPtr = dboSession.add(new Account()); //todo BaseRecord::setUserValues()
 // 			initEntityAccountValues(accountPtr, entityPtr);
 // 		}
 // 		t.commit();

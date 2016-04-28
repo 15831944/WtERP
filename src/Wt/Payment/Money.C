@@ -3,6 +3,9 @@
 #include "Wt/WException"
 #include "Wt/WStringStream"
 
+#include <boost/lexical_cast.hpp>
+//#include <boost/range/iterator_range.hpp>
+
 namespace Wt {
   namespace Payment {
 
@@ -24,6 +27,12 @@ Money::Money(long long valueInCents, const std::string &currency):
 
 }
 
+Money::Money(const std::string &str, const std::string& currency):
+  currency_(currency)
+{
+	setValueFromString(str);
+}
+
 const std::string Money::toString() const
 {
   WStringStream ans;
@@ -33,6 +42,23 @@ const std::string Money::toString() const
     ans << value() << ".0" << cents(); //todo use formater.
 
   return ans.str();
+}
+
+void Money::setValueFromString(const std::string &str)
+{
+	size_t dotPos = str.find(".");
+	if(dotPos == std::string::npos)
+		valueInCents_ = boost::lexical_cast<long long>(str) * 100;
+	else
+	{
+		long long left = boost::lexical_cast<long long>(str.substr(0, dotPos));
+		unsigned int right = boost::lexical_cast<unsigned int>(str.substr(dotPos + 1));
+		while(right > 99)
+		{
+			right /= 10;
+		}
+		valueInCents_ = (left * 100) + right;
+	}
 }
 
 void Money::checkCurrency(Money& ans, const Money& v1, const Money& v2)

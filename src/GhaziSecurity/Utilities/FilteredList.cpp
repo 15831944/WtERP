@@ -145,8 +145,8 @@ namespace GS
 		bindWidget("filters-container", _filterWidgetsContainer);
 	}
 
-	AbstractFilteredList::AbstractFilteredList(Wt::WContainerWidget *parent /*= nullptr*/)
-		: Wt::WTemplate(tr("GS.FilteredListView"), parent)
+	AbstractFilteredList::AbstractFilteredList()
+		: Wt::WTemplate(tr("GS.FilteredListView"))
 	{
 		addFunction("tr", Wt::WTemplate::Functions::tr);
 
@@ -159,16 +159,6 @@ namespace GS
 		bindWidget("table-view", _tableView);
 	}
 
-	void AbstractFilteredList::enableFilters()
-	{
-		if(conditionValue("filters-enabled"))
-			return;
-
-		setCondition("filters-enabled", true);
-		bindWidget("filters", _filtersTemplate = new FiltersTemplate(this));
-		initFilters();
-	}
-
 	void AbstractFilteredList::init()
 	{
 		if(_model || _proxyModel)
@@ -178,18 +168,39 @@ namespace GS
 		_tableView->setModel(_proxyModel ? _proxyModel : _model);
 		resetColumnWidths();
 
-		int diff = _proxyModel->columnCount() - _model->columnCount();
-		if(diff > 0)
+		if(_proxyModel)
 		{
-			//_tableView->setColumnWidth(_proxyModel->columnCount() - 1, 40);
-			_tableView->setColumnAlignment(_proxyModel->columnCount() - 1, Wt::AlignCenter);
-		}
+			int diff = _proxyModel->columnCount() - _model->columnCount();
+			if(diff > 0)
+			{
+				//_tableView->setColumnWidth(_proxyModel->columnCount() - 1, 40);
+				_tableView->setColumnAlignment(_proxyModel->columnCount() - 1, Wt::AlignCenter);
+			}
 
-		while(diff > 0)
-		{
-			_tableView->setSortingEnabled(_model->columnCount() + diff - 1, false);
-			--diff;
+			while(diff > 0)
+			{
+				_tableView->setSortingEnabled(_model->columnCount() + diff - 1, false);
+				--diff;
+			}
 		}
+	}
+
+	void AbstractFilteredList::load()
+	{
+		if(!loaded())
+			init();
+
+		Wt::WTemplate::load();
+	}
+
+	void AbstractFilteredList::enableFilters()
+	{
+		if(conditionValue("filters-enabled"))
+			return;
+
+		setCondition("filters-enabled", true);
+		bindWidget("filters", _filtersTemplate = new FiltersTemplate(this));
+		initFilters();
 	}
 
 	void AbstractFilteredList::resetColumnWidths()

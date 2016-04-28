@@ -12,7 +12,7 @@ namespace GS
 		AccountsDatabase(Wt::Dbo::Session &session) : dboSession(session), _entitiesDatabase(dboSession) { }
 		void createEntityAccountsIfNotFound(Wt::Dbo::ptr<Entity> entityPtr);
 
-		Wt::Dbo::ptr<AccountEntry> createAccountEntry(double amount, Wt::Dbo::ptr<Account> debitAccountPtr, Wt::Dbo::ptr<Account> creditAccountPtr);
+		Wt::Dbo::ptr<AccountEntry> createAccountEntry(const Money &amount, Wt::Dbo::ptr<Account> debitAccountPtr, Wt::Dbo::ptr<Account> creditAccountPtr);
 		void createPendingCycleEntry(Wt::Dbo::ptr<IncomeCycle> cyclePtr, Wt::Dbo::ptr<AccountEntry> lastEntryPtr, boost::posix_time::ptime currentPTime, boost::posix_time::time_duration *nextEntryDuration = nullptr);
 		void createPendingCycleEntry(Wt::Dbo::ptr<ExpenseCycle> cyclePtr, Wt::Dbo::ptr<AccountEntry> lastEntryPtr, boost::posix_time::ptime currentPTime, boost::posix_time::time_duration *nextEntryDuration = nullptr);
 		

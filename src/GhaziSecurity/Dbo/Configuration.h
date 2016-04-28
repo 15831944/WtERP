@@ -539,17 +539,11 @@ namespace WW
 		};
 
 	}
-}
 
-#define MAP_CONFIGURATION_DBO_TREE(dboSession) \
-	dboSession.mapClass<WW::Dbo::Configuration>(WW::Dbo::Configuration::tableName()); \
-	dboSession.mapClass<WW::Dbo::ConfigurationBool>(WW::Dbo::ConfigurationBool::tableName()); \
-	dboSession.mapClass<WW::Dbo::ConfigurationEnum>(WW::Dbo::ConfigurationEnum::tableName()); \
-	dboSession.mapClass<WW::Dbo::ConfigurationEnumValue>(WW::Dbo::ConfigurationEnumValue::tableName()); \
-	dboSession.mapClass<WW::Dbo::ConfigurationDouble>(WW::Dbo::ConfigurationDouble::tableName()); \
-	dboSession.mapClass<WW::Dbo::ConfigurationFloat>(WW::Dbo::ConfigurationFloat::tableName()); \
-	dboSession.mapClass<WW::Dbo::ConfigurationInt>(WW::Dbo::ConfigurationInt::tableName()); \
-	dboSession.mapClass<WW::Dbo::ConfigurationLongInt>(WW::Dbo::ConfigurationLongInt::tableName()); \
-	dboSession.mapClass<WW::Dbo::ConfigurationString>(WW::Dbo::ConfigurationString::tableName());
+	namespace Dbo
+	{
+		void mapConfigurationDboTree(Wt::Dbo::Session &dboSession);
+	}
+}
 
 #endif

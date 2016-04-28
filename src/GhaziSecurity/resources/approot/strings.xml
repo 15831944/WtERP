@@ -46,11 +46,15 @@
 <message id="Roles">Roles</message>
 <message id="Description">Description</message>
 <message id="Preview">Preview</message>
-
-<message id="SelectFromList">Select from list</message>
-<message id="SelectXFromList">Select {1} from list</message>
 <message id="Submit">Submit</message>
 <message id="Continue">Continue</message>
+
+<message id="AddNewX">Add new {1}</message>
+<message id="SelectFromList">Select from list</message>
+<message id="SelectXFromList">Select {1} from list</message>
+
+<!-- User related -->
+<message id="LogoutButton">Logout</message>
 
 <!-- Date time related -->
 <message id="Timestamp">Time stamp</message>
@@ -104,12 +108,16 @@
 
 <!-- Errors -->
 <message id="AnErrorOccurred">An error occurred</message>
-<message id="StaleObjectError">The {1} was modified in another session while you were making changes. Please ensure that no conflict may occur and then submit the form again to save your changes. Note: You may examine the changed information by opening this page on another tab.</message>
+<message id="StaleObjectError">The {1} was modified in another session. Submit the form again to save your changes. Note: Changes made by the other session may be overridden.</message>
 <message id="DbConnectionError">The system could not connect to the database backend. If this problem persists, please contact an administrator.</message>
 <message id="DbInternalError">An internal database error occurred, please contact an administrator.</message>
 <message id="GMThumbnailError">An incompatible file was uploaded.</message>
 <message id="ImageRelocationError">Could not save image(s) to permanent location, please contact an administrator.</message>
 <message id="DatabaseValidationFailed">Validation failed due to an internal error, try again</message>
+
+<!-- Permission related -->
+<message id="PermissionDenied">Permission denied</message>
+<message id="InvalidXSelectionPermissionDenied">You do not have permission to select this {1}</message>
 
 <!-- Pages -->
 <message id="Home">Home</message>
@@ -122,7 +130,6 @@
 <message id="Reports">Reports</message>
 
 <!-- Entities -->
-<message id="AddNewEntity">Add new entity</message>
 <message id="AllEntities">All entities</message>
 <message id="Entities">Entities</message>
 <message id="Entity">Entity</message>
@@ -135,22 +142,17 @@
 <message id="Businesses">Businesses</message>
 <message id="Employees">Employees</message>
 <message id="Employee">Employee</message>
+<message id="employee">employee</message>
 <message id="Personnel">Personnel</message>
+<message id="personnel">personnel</message>
 <message id="Clients">Clients</message>
 <message id="Client">Client</message>
+<message id="client">client</message>
 
 <!-- EntityView -->
 <message id="CNICLabel">National identity card number</message>
-<message id="AddNewEntity">Add new entity</message>
-<message id="AddNewPerson">Add new person</message>
-<message id="AddNewBusiness">Add new business</message>
 <message id="AddEmployeeLabel">Add employee information to this person</message>
 <message id="AddPersonnelLabel">Add personnel information to this person</message>
-
-<message id="InvalidPersonSelection">You must select a person or leave this field empty</message>
-<message id="InvalidPersonSelectionMandatory">You must select a person</message>
-<message id="InvalidBusinessSelection">You must select a business or leave this field empty</message>
-<message id="InvalidBusinessSelectionMandatory">You must select a business</message>
 
 <message id="SelectEntityType">Select an entity type</message>
 <message id="PersonalInfo">Personal Information</message>
@@ -174,22 +176,38 @@
 <message id="Rank">Rank</message>
 <message id="TrainingCourses">Training Courses</message>
 
+<!-- FindRecordEdit -->
+<message id="InvalidSelectionSpecificType">Invalid selected entity role</message>
+<message id="InvalidXSelection">You must select a {1} or leave this field empty</message>
+<message id="InvalidVSelection">You must select an {1} or leave this field empty</message>
+<message id="InvalidXSelectionMandatory">You must select a {1}</message>
+<message id="InvalidVSelectionMandatory">You must select an {1}</message>
+
 <!-- FindEntityEdit -->
-<message id="FindEntityEditPlaceholder">Find by name or id...</message>
+<message id="FindEntityEditPlaceholder">Find entity...</message>
 <message id="FindEntityEditValueTemplate">{1} (ID: {2})</message>
 
 <!-- FindAccountEdit -->
-<message id="FindAccountEditPlaceholder">Find by name, id, type or entity name...</message>
-<message id="FindAccountEditValueTemplate">{1} (ID: {2}), Type: {3}</message>
-<message id="FindAccountEditValueWithEntityTemplate">{1} (ID: {2}), Entity: {3}</message>
+<message id="FindAccountEditPlaceholder">Find account...</message>
+<message id="FindAccountEditValuePrefix">{1} (ID: {2})</message>
+<message id="FindAccountEditValueTemplate">{1}, Type: {2}</message>
+<message id="FindAccountEditValueWithEntityTemplate">{1}, Entity: {2}</message>
+
+<!-- FindLocationEdit -->
+<message id="FindLocationEditPlaceholder">Find location...</message>
+<message id="FindLocationEditValueTemplate">{1}, Country: {2}, City: {3}</message>
+<message id="FindLocationEditValueWithEntityTemplate">{1}, Country: {2}, City: {3}, Entity: {4}</message>
 
 <!-- LocationView, CountryView, CityView -->
+<message id="Location">Location</message>
+<message id="location">location</message>
 <message id="ContactNumber">Contact Number</message>
 <message id="AddressN">Address {1}</message>
 
 <message id="SelectCountry">Select country</message>
 <message id="SelectCity">Select city</message>
 <message id="Country">Country</message>
+<message id="City">City</message>
 <message id="CountryCode">Country code</message>
 <message id="CountryName">Country name</message>
 <message id="CityName">City name</message>
@@ -211,18 +229,18 @@
 <!-- PositionView -->
 <message id="EmployeePosition">Employee position</message>
 <message id="Position">Position</message>
+<message id="position">position</message>
 <message id="PositionTitle">Position title</message>
 <message id="SelectPosition">Select position</message>
-<message id="AddNewPosition">Add new position</message>
 <message id="MustSelectPosition">You must select a position or select a different type</message>
 
 <!-- ServiceView -->
 <message id="ClientService">Client service</message>
 <message id="Service">Service</message>
-<message id="ServiceTitle">Service title</message>
+<message id="service">service</message>
 <message id="Services">Services</message>
+<message id="ServiceTitle">Service title</message>
 <message id="SelectService">Select service</message>
-<message id="AddNewService">Add new service</message>
 <message id="MustSelectService">You must select a service or select a different type</message>
 
 <!-- AccountsDatabase -->
@@ -241,19 +259,15 @@
 <message id="AccountName">Account name</message>
 <message id="AccountType">Account type</message>
 <message id="NewAccount">New Account</message>
-<message id="AddNewAccount">Add new account</message>
 <message id="CreateAccount">Create account</message>
 <message id="AccountInfo">Account Information</message>
+<message id="AccountNameInUse">This account name is already in use</message>
 
 <message id="EntityBalanceAccount">Entity Balance</message>
 <message id="EntityIdBalanceAccount">Entity #{1} Balance Account</message>
 <message id="EntityPnlAccount">Entity Income and Expense</message>
 <message id="EntityIdPnlAccount">Entity #{1} Income and Expense Account</message>
 <message id="OppositeEntryAccount">Opposite Entry Account</message>
-
-<message id="AccountNameInUse">This account name is already in use</message>
-<message id="InvalidAccountSelection">You must select an account or leave this field empty</message>
-<message id="InvalidAccountSelectionMandatory">You must select an account</message>
 
 <!-- AccountEntryView, AccountEntryList -->
 <message id="AccountEntryViewName">Account Entry #{1}</message>
@@ -270,6 +284,12 @@
 <message id="CreateTransaction">Create transaction</message>
 <message id="TransactionInfo">Transaction Information</message>
 
+<!-- EmployeeAssignmentView -->
+<message id="AssignEmployee">Assign employee</message>
+<message id="AddEmployeeAssignment">Add employee assignment</message>
+<message id="EmployeeAssignmentViewName">Employee Assignment #{1}</message>
+<message id="EmployeeAssignmentInfo">Employee Assignment Information</message>
+
 <!-- EntryCycles -->
 <message id="ExpenseCycleViewName">Recurring Expense #{1}: {2}</message>
 <message id="ExpenseCycleViewNameWithoutEntity">Recurring Expense {1}</message>
@@ -278,11 +298,11 @@
 
 <message id="RecurringExpenses">Recurring expenses</message>
 <message id="RecurringExpense">Recurring expense</message>
+<message id="recurringexpense">recurring expense</message>
 <message id="RecurringIncomes">Recurring incomes</message>
 <message id="RecurringIncome">Recurring income</message>
-<message id="AddNewRecurringExpense">Add new recurring expense</message>
+<message id="recurringincome">recurring income</message>
 <message id="NewRecurringExpense">New Recurring Expense</message>
-<message id="AddNewRecurringIncome">Add new recurring income</message>
 <message id="NewRecurringIncome">New Recurring Income</message>
 <message id="AddRecurringExpense">Add recurring expense</message>
 <message id="AddRecurringIncome">Add recurring income</message>

@@ -10,7 +10,7 @@ namespace Wt {
   namespace Auth {
 
 Login::Login()
-  : changed_(this),
+  : changed_(this), beforeChanged_(this),
     state_(LoggedOut)
 { }
 
@@ -25,10 +25,12 @@ void Login::login(const User& user, LoginState state)
 
     if (user != user_) {
       user_ = user;
-      state_ = state;
-      changed_.emit();
+	  state_ = state;
+	  beforeChanged_.emit();
+	  changed_.emit();
     } else if (state != state_) {
       state_ = state;
+	  beforeChanged_.emit();
       changed_.emit();
     }
   }
@@ -38,7 +40,8 @@ void Login::logout()
 {
   if (user_.isValid()) {
     user_ = User();
-    state_ = LoggedOut;
+	state_ = LoggedOut;
+	beforeChanged_.emit();
     changed_.emit();
   }
 }

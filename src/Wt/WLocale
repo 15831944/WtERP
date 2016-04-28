@@ -227,6 +227,8 @@ public:
    */
   WT_USTRING toFixedString(double value, int precision) const;
 
+  WT_USTRING toString(const Wt::Payment::Money &value) const;
+
   boost::local_time::time_zone_ptr time_zone_ptr() const { return time_zone_; }
 
 private:

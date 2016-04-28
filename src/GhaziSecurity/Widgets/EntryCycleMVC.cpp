@@ -1,8 +1,9 @@
 #include "Widgets/EntryCycleMVC.h"
 #include "Widgets/EntityView.h"
 #include "Widgets/EntityList.h"
+#include "Widgets/HRMVC.h"
+#include "Widgets/FindRecordEdit.h"
 #include "Application/WApplication.h"
-#include "Utilities/FindRecordEdit.h"
 
 #include <Wt/WLineEdit>
 #include <Wt/WPushButton>
@@ -17,63 +18,66 @@
 namespace GS
 {
 	//POSITION VIEW
-	const Wt::WFormModel::Field PositionView::titleField = "title";
+	const Wt::WFormModel::Field PositionFormModel::titleField = "title";
 
-	PositionView::PositionView(Wt::WContainerWidget *parent /*= nullptr*/)
-		: MyTemplateFormView(tr("GS.Admin.PositionView"), parent)
+	PositionFormModel::PositionFormModel(PositionView *view, Wt::Dbo::ptr<EmployeePosition> positionPtr /*= Wt::Dbo::ptr<EmployeePosition>()*/)
+		: RecordFormModel(view, positionPtr), _view(view)
 	{
-		_model = new Wt::WFormModel(this);
-		_model->addField(titleField);
+		addField(titleField);
 
-		Wt::WLineEdit *title = new Wt::WLineEdit();
-		title->setMaxLength(70);
-		auto titleValidator = new Wt::WLengthValidator(0, 70);
-		titleValidator->setMandatory(true);
-		_model->setValidator(titleField, titleValidator);
-		setFormWidget(titleField, title);
-
-		Wt::WPushButton *submit = new Wt::WPushButton(tr("Submit"));
-		submit->clicked().connect(this, &PositionView::submit);
-		bindWidget("submit", submit);
-
-		updateView(_model);
+		if(_recordPtr)
+		{
+			TRANSACTION(APP);
+			setValue(titleField, Wt::WString::fromUTF8(_recordPtr->title));
+		}
 	}
 
-	void PositionView::submit()
+	Wt::WWidget * PositionFormModel::createFormWidget(Field field)
 	{
-		if(_model->isAllReadOnly())
-			return;
-
-		WApplication *app = WApplication::instance();
-		Wt::Dbo::Transaction t(app->session());
-
-		updateModel(_model);
-		if(!_model->validate())
+		if(field == titleField)
 		{
-			updateView(_model);
-			return;
+			Wt::WLineEdit *title = new Wt::WLineEdit();
+			title->setMaxLength(70);
+			auto titleValidator = new Wt::WLengthValidator(0, 70);
+			titleValidator->setMandatory(true);
+			setValidator(titleField, titleValidator);
+			return title;
 		}
+		return RecordFormModel::createFormWidget(field);
+	}
 
-		try
-		{
-			if(!_positionPtr)
-				_positionPtr = app->session().add(new EmployeePosition());
+	bool PositionFormModel::saveChanges()
+	{
+		if(!valid())
+			return false;
 
-			_positionPtr.modify()->title = _model->valueText(titleField).toUTF8();
+		WApplication *app = APP;
+		TRANSACTION(app);
 
-			if(app->positionQueryModel())
-				app->positionQueryModel()->reload();
+		if(!_recordPtr)
+			_recordPtr = app->dboSession().add(new EmployeePosition());
 
-			t.commit();
+		_recordPtr.modify()->title = valueText(titleField).toUTF8();
 
-			updateView(_model);
-			submitted().emit();
-		}
-		catch(Wt::Dbo::Exception &e)
-		{
-			Wt::log("error") << "PositionView::submit(): Dbo error(" << e.code() << "): " << e.what();
-			app->showDbBackendError(e.code());
-		}
+		if(app->positionQueryModel())
+			app->positionQueryModel()->reload();
+
+		t.commit();
+		return true;
+	}
+
+	PositionView::PositionView()
+		: RecordFormView(tr("GS.Admin.PositionView"))
+	{ }
+
+	PositionView::PositionView(Wt::Dbo::ptr<EmployeePosition> positionPtr)
+		: RecordFormView(tr("GS.Admin.PositionView")), _tempPtr(positionPtr)
+	{ }
+
+	void PositionView::init()
+	{
+		_model = new PositionFormModel(this, _tempPtr);
+		addFormModel("position", _model);
 	}
 	
 	//POSITION PROXY MODEL
@@ -96,69 +100,72 @@ namespace GS
 		int lastRow = rowCount();
 		if(insertRow(lastRow))
 		{
-			setData(index(lastRow, 0), Wt::WString::tr("AddNewPosition"));
+			setData(index(lastRow, 0), Wt::WString::tr("AddNewX").arg(Wt::WString::tr("position")));
 			setData(index(lastRow, 0), true, Wt::AdditionalRowRole);
 		}
 	}
 
 	//SERVICE VIEW
-	const Wt::WFormModel::Field ServiceView::titleField = "title";
+	const Wt::WFormModel::Field ServiceFormModel::titleField = "title";
 
-	ServiceView::ServiceView(Wt::WContainerWidget *parent /*= nullptr*/)
-		: MyTemplateFormView(tr("GS.Admin.ServiceView"), parent)
+	ServiceFormModel::ServiceFormModel(ServiceView *view, Wt::Dbo::ptr<ClientService> servicePtr /*= Wt::Dbo::ptr<ClientService>()*/)
+		: RecordFormModel(view, servicePtr), _view(view)
 	{
-		_model = new Wt::WFormModel(this);
-		_model->addField(titleField);
+		addField(titleField);
 
-		Wt::WLineEdit *title = new Wt::WLineEdit();
-		title->setMaxLength(70);
-		auto titleValidator = new Wt::WLengthValidator(0, 70);
-		titleValidator->setMandatory(true);
-		_model->setValidator(titleField, titleValidator);
-		setFormWidget(titleField, title);
-
-		Wt::WPushButton *submit = new Wt::WPushButton(tr("Submit"));
-		submit->clicked().connect(this, &ServiceView::submit);
-		bindWidget("submit", submit);
-
-		updateView(_model);
+		if(_recordPtr)
+		{
+			TRANSACTION(APP);
+			setValue(titleField, Wt::WString::fromUTF8(_recordPtr->title));
+		}
 	}
 
-	void ServiceView::submit()
+	Wt::WWidget *ServiceFormModel::createFormWidget(Field field)
 	{
-		if(_model->isAllReadOnly())
-			return;
-
-		WApplication *app = WApplication::instance();
-		Wt::Dbo::Transaction t(app->session());
-
-		updateModel(_model);
-		if(!_model->validate())
+		if(field == titleField)
 		{
-			updateView(_model);
-			return;
+			Wt::WLineEdit *title = new Wt::WLineEdit();
+			title->setMaxLength(70);
+			auto titleValidator = new Wt::WLengthValidator(0, 70);
+			titleValidator->setMandatory(true);
+			setValidator(titleField, titleValidator);
+			return title;
 		}
+		return RecordFormModel::createFormWidget(field);
+	}
 
-		try
-		{
-			if(!_servicePtr)
-				_servicePtr = app->session().add(new ClientService());
+	bool ServiceFormModel::saveChanges()
+	{
+		if(!valid())
+			return false;
 
-			_servicePtr.modify()->title = _model->valueText(titleField).toUTF8();
+		WApplication *app = APP;
+		TRANSACTION(app);
 
-			if(app->serviceQueryModel())
-				app->serviceQueryModel()->reload();
+		if(!_recordPtr)
+			_recordPtr = app->dboSession().add(new ClientService());
 
-			t.commit();
+		_recordPtr.modify()->title = valueText(titleField).toUTF8();
 
-			updateView(_model);
-			submitted().emit();
-		}
-		catch(Wt::Dbo::Exception &e)
-		{
-			Wt::log("error") << "ServiceView::submit(): Dbo error(" << e.code() << "): " << e.what();
-			app->showDbBackendError(e.code());
-		}
+		if(app->serviceQueryModel())
+			app->serviceQueryModel()->reload();
+
+		t.commit();
+		return true;
+	}
+
+	ServiceView::ServiceView()
+		: RecordFormView(tr("GS.Admin.ServiceView"))
+	{ }
+
+	ServiceView::ServiceView(Wt::Dbo::ptr<ClientService> servicePtr)
+		: RecordFormView(tr("GS.Admin.ServiceView")), _tempPtr(servicePtr)
+	{ }
+
+	void ServiceView::init()
+	{
+		_model = new ServiceFormModel(this, _tempPtr);
+		addFormModel("service", _model);
 	}
 
 	//SERVICE PROXY MODEL
@@ -181,7 +188,7 @@ namespace GS
 		int lastRow = rowCount();
 		if(insertRow(lastRow))
 		{
-			setData(index(lastRow, 0), Wt::WString::tr("AddNewService"));
+			setData(index(lastRow, 0), Wt::WString::tr("AddNewX").arg(Wt::WString::tr("service")));
 			setData(index(lastRow, 0), true, Wt::AdditionalRowRole);
 		}
 	}
@@ -195,98 +202,179 @@ namespace GS
 	const Wt::WFormModel::Field EntryCycleFormModel::amountField = "amount";
 	const Wt::WFormModel::Field EntryCycleFormModel::firstEntryAfterCycleField = "firstEntryAfterCycle";
 
-	EntryCycleFormModel::EntryCycleFormModel(Wt::WObject *parent)
-		: Wt::WFormModel(parent)
+	void EntryCycleFormModel::addFields(Wt::WFormModel *model)
 	{
-		addField(entityField);
-		addField(startDateField);
-		addField(endDateField);
-		addField(intervalField);
-		addField(nIntervalsField);
-		addField(amountField);
-		addField(firstEntryAfterCycleField);
+		model->addField(entityField);
+		model->addField(startDateField);
+		model->addField(endDateField);
+		model->addField(intervalField);
+		model->addField(nIntervalsField);
+		model->addField(amountField);
+		model->addField(firstEntryAfterCycleField);
 	}
 
-	void EntryCycleFormModel::updateFromCycle(const EntryCycle &cycle)
+	void EntryCycleFormModel::updateModelFromCycle(Wt::WFormModel *model, const EntryCycle &cycle)
 	{
-		setValue(entityField, cycle.entityPtr);
-		setValue(startDateField, cycle.startDate);
-		setValue(endDateField, cycle.endDate);
-		setValue(intervalField, (int)cycle.interval);
-		setValue(nIntervalsField, cycle.nIntervals);
-		setValue(amountField, cycle.amount);
-		setValue(firstEntryAfterCycleField, cycle.firstEntryAfterCycle ? 1 : 0);
+		model->setValue(entityField, cycle.entityPtr);
+		model->setValue(startDateField, cycle.startDate);
+		model->setValue(endDateField, cycle.endDate);
+		model->setValue(intervalField, (int)cycle.interval);
+		model->setValue(nIntervalsField, cycle.nIntervals);
+		model->setValue(amountField, cycle.amount());
+		model->setValue(firstEntryAfterCycleField, cycle.firstEntryAfterCycle ? 1 : 0);
+	}
+
+	template<class Dbo>
+	void EntryCycleFormModel::updateCycleFromModel(Wt::WFormModel *model, Wt::Dbo::ptr<Dbo> ptr, bool newCycle)
+	{
+		ptr.modify()->entityPtr = boost::any_cast<Wt::Dbo::ptr<Entity>>(model->value(EntryCycleFormModel::entityField));
+		ptr.modify()->startDate = boost::any_cast<Wt::WDate>(model->value(EntryCycleFormModel::startDateField));
+		ptr.modify()->endDate = boost::any_cast<Wt::WDate>(model->value(EntryCycleFormModel::endDateField));
+		ptr.modify()->interval = CycleInterval(boost::any_cast<int>(model->value(EntryCycleFormModel::intervalField)));
+		ptr.modify()->nIntervals = boost::lexical_cast<int>(model->valueText(EntryCycleFormModel::nIntervalsField).toUTF8());
+		if(newCycle)
+			ptr.modify()->_amountInCents = Money(model->valueText(EntryCycleFormModel::amountField).toUTF8(), DEFAULT_CURRENCY).valueInCents();
+		ptr.modify()->firstEntryAfterCycle = boost::any_cast<int>(model->value(EntryCycleFormModel::firstEntryAfterCycleField)) == 1;
+	}
+
+	Wt::WWidget *EntryCycleFormModel::createFormWidget(Wt::WFormModel *model, EntryCycleView *view, Wt::WFormModel::Field field)
+	{
+		if(field == entityField)
+		{
+			FindEntityEdit *findEntityEdit = new FindEntityEdit();
+			FindEntityValidator *findEntityValidator = new FindEntityValidator(findEntityEdit, true);
+			findEntityValidator->setModifyPermissionRequired(true);
+			model->setValidator(EntryCycleFormModel::entityField, findEntityValidator);
+			return findEntityEdit;
+		}
+		if(field == startDateField)
+		{
+			auto startDateEdit = new Wt::WDateEdit();
+			startDateEdit->setPlaceholderText(Wt::WLocale::currentLocale().dateFormat());
+			auto startDateValidator = new Wt::WDateValidator();
+			startDateValidator->setMandatory(true);
+			startDateValidator->setBottom(Wt::WDate(boost::gregorian::day_clock::local_day()));
+			model->setValidator(EntryCycleFormModel::startDateField, startDateValidator);
+			startDateEdit->changed().connect(boost::bind(&EntryCycleFormModel::updateEndDateValidator, model, view, true));
+			return startDateEdit;
+		}
+		if(field == endDateField)
+		{
+			auto endDateEdit = new Wt::WDateEdit();
+			endDateEdit->setPlaceholderText(Wt::WString::tr("EmptyEndDate"));
+			auto endDateValidator = new CycleEndDateValidator(model);
+			model->setValidator(EntryCycleFormModel::endDateField, endDateValidator);
+			return endDateEdit;
+		}
+		if(field == intervalField)
+		{
+			auto intervalCombo = new Wt::WComboBox();
+			intervalCombo->insertItem(DailyInterval, Wt::WString::tr("Days"));
+			intervalCombo->insertItem(WeeklyInterval, Wt::WString::tr("Weeks"));
+			intervalCombo->insertItem(MonthlyInterval, Wt::WString::tr("Months"));
+			intervalCombo->insertItem(YearlyInterval, Wt::WString::tr("Years"));
+			intervalCombo->setCurrentIndex(MonthlyInterval);
+			intervalCombo->changed().connect(view, &EntryCycleView::handleIntervalChanged);
+			intervalCombo->changed().connect(boost::bind(&EntryCycleFormModel::updateEndDateValidator, model, view, true));
+			return intervalCombo;
+		}
+		if(field == amountField)
+		{
+			auto amountEdit = new Wt::WLineEdit();
+			auto amountValidator = new Wt::WDoubleValidator();
+			amountValidator->setBottom(0);
+			amountValidator->setMandatory(true);
+			model->setValidator(EntryCycleFormModel::amountField, amountValidator);
+			return amountEdit;
+		}
+		if(field == nIntervalsField)
+		{
+			auto nIntervalsEdit = new Wt::WLineEdit();
+			auto nIntervalsValidator = new Wt::WIntValidator();
+			nIntervalsValidator->setBottom(1);
+			nIntervalsValidator->setMandatory(true);
+			model->setValidator(EntryCycleFormModel::nIntervalsField, nIntervalsValidator);
+			nIntervalsEdit->changed().connect(view, &EntryCycleView::handleIntervalChanged);
+			nIntervalsEdit->changed().connect(boost::bind(&EntryCycleFormModel::updateEndDateValidator, model, view, true));
+			return nIntervalsEdit;
+		}
+		if(field == firstEntryAfterCycleField)
+		{
+			auto firstEntryOnEdit = new Wt::WComboBox();
+			firstEntryOnEdit->insertItem(0, Wt::WString::tr("OnStartingDate"));
+			firstEntryOnEdit->insertItem(1, Wt::WString());
+			firstEntryOnEdit->changed().connect(boost::bind(&EntryCycleFormModel::updateEndDateValidator, model, view, true));
+			return firstEntryOnEdit;
+		}
+		return nullptr;
+	}
+	
+	void EntryCycleFormModel::updateEndDateValidator(Wt::WFormModel *model, EntryCycleView *view, bool update)
+	{
+		if(update)
+		{
+			view->updateModelField(model, EntryCycleFormModel::startDateField);
+			view->updateModelField(model, EntryCycleFormModel::intervalField);
+			view->updateModelField(model, EntryCycleFormModel::nIntervalsField);
+			view->updateModelField(model, EntryCycleFormModel::firstEntryAfterCycleField);
+		}
+
+		const boost::any &startDateVal = model->value(EntryCycleFormModel::startDateField);
+		if(startDateVal.empty())
+			return;
+
+		Wt::WDate startDate = boost::any_cast<Wt::WDate>(startDateVal);
+		CycleInterval interval = (CycleInterval)boost::any_cast<int>(model->value(EntryCycleFormModel::intervalField));
+		Wt::WString nIntervalsStr = Wt::asString(model->value(EntryCycleFormModel::nIntervalsField));
+		int FEAC = boost::any_cast<int>(model->value(EntryCycleFormModel::firstEntryAfterCycleField));
+
+		Wt::WDateValidator *endDateValidator = dynamic_cast<Wt::WDateValidator*>(model->validator(EntryCycleFormModel::endDateField));
+		if(!startDate.isValid())
+		{
+			endDateValidator->setBottom(Wt::WDate());
+			return;
+		}
+
+		Wt::WDate endDateBottom = startDate.addDays(1);
+		if(FEAC == 1)
+		{
+			try
+			{
+				int nIntervals = boost::lexical_cast<int>(nIntervalsStr.toUTF8());
+				endDateBottom.setGregorianDate(addCycleInterval(boost::posix_time::ptime(endDateBottom.toGregorianDate()), interval, nIntervals).date());
+			}
+			catch(const boost::bad_lexical_cast &) {}
+		}
+
+		endDateValidator->setBottom(endDateBottom);
 	}
 
 	//ENTRY CYCLE VIEW
-	void EntryCycleView::initEntryCycleView()
+	void EntryCycleView::updateView(Wt::WFormModel *model)
 	{
-		FindEntityEdit *entityFindEdit = new FindEntityEdit();
-		setFormWidget(EntryCycleFormModel::entityField, entityFindEdit);
-		model()->setValidator(EntryCycleFormModel::entityField, new FindEntityValidator(entityFindEdit, true));
-
-		auto startDateEdit = new Wt::WDateEdit();
-		startDateEdit->setPlaceholderText(APP->locale().dateFormat());
-		auto startDateValidator = new Wt::WDateValidator();
-		startDateValidator->setMandatory(true);
-		startDateValidator->setBottom(Wt::WDate(boost::gregorian::day_clock::local_day()));
-		model()->setValidator(EntryCycleFormModel::startDateField, startDateValidator);
-		startDateEdit->changed().connect(boost::bind(&EntryCycleView::updateEndDateValidator, this, true));
-		setFormWidget(EntryCycleFormModel::startDateField, startDateEdit);
-
-		auto endDateEdit = new Wt::WDateEdit();
-		endDateEdit->setPlaceholderText(tr("EmptyEndDate"));
-		auto endDateValidator = new Wt::WDateValidator();
-		model()->setValidator(EntryCycleFormModel::endDateField, endDateValidator);
-		setFormWidget(EntryCycleFormModel::endDateField, endDateEdit);
-
-		auto intervalCombo = new Wt::WComboBox();
-		intervalCombo->insertItem(DailyInterval, tr("Days"));
-		intervalCombo->insertItem(WeeklyInterval, tr("Weeks"));
-		intervalCombo->insertItem(MonthlyInterval, tr("Months"));
-		intervalCombo->insertItem(YearlyInterval, tr("Years"));
-		intervalCombo->setCurrentIndex(MonthlyInterval);
-		setFormWidget(EntryCycleFormModel::intervalField, intervalCombo);
-
-		auto amountEdit = new Wt::WLineEdit();
-		auto amountValidator = new Wt::WDoubleValidator();
-		amountValidator->setBottom(0);
-		amountValidator->setMandatory(true);
-		model()->setValidator(EntryCycleFormModel::amountField, amountValidator);
-		setFormWidget(EntryCycleFormModel::amountField, amountEdit);
-
-		auto nIntervalsEdit = new Wt::WLineEdit();
-		auto nIntervalsValidator = new Wt::WIntValidator();
-		nIntervalsValidator->setBottom(1);
-		nIntervalsValidator->setMandatory(true);
-		model()->setValidator(EntryCycleFormModel::nIntervalsField, nIntervalsValidator);
-		setFormWidget(EntryCycleFormModel::nIntervalsField, nIntervalsEdit);
-
-		auto firstEntryOnEdit = new Wt::WComboBox();
-		firstEntryOnEdit->insertItem(0, tr("OnStartingDate"));
-		firstEntryOnEdit->insertItem(1, Wt::WString());
-		firstEntryOnEdit->changed().connect(boost::bind(&EntryCycleView::updateEndDateValidator, this, true));
-		setFormWidget(EntryCycleFormModel::firstEntryAfterCycleField, firstEntryOnEdit);
-
-		nIntervalsEdit->changed().connect(this, &EntryCycleView::handleIntervalChanged);
-		intervalCombo->changed().connect(this, &EntryCycleView::handleIntervalChanged);
-		nIntervalsEdit->changed().connect(boost::bind(&EntryCycleView::updateEndDateValidator, this, true));
-		intervalCombo->changed().connect(boost::bind(&EntryCycleView::updateEndDateValidator, this, true));
-
+		EntryCycleFormModel::updateEndDateValidator(model, this, false);
+		RecordFormView::updateView(model);
 		handleIntervalChanged();
+	}
 
-		Wt::WPushButton *submit = new Wt::WPushButton(tr("Submit"));
-		submit->clicked().connect(this, &EntryCycleView::submit);
-		bindWidget("submit", submit);
+	void EntryCycleView::updateModel(Wt::WFormModel *model)
+	{
+		RecordFormView::updateModel(model);
+		EntryCycleFormModel::updateEndDateValidator(model, this, false);
 	}
 
 	void EntryCycleView::handleIntervalChanged()
 	{
+		auto firstEntryOnEdit = resolve<Wt::WComboBox*>(EntryCycleFormModel::firstEntryAfterCycleField);
+		if(firstEntryOnEdit)
+			firstEntryOnEdit->setItemText(1, tr("AfterTheInterval"));
+		else
+			return;
+
 		auto nIntervalsEdit = resolve<Wt::WLineEdit*>(EntryCycleFormModel::nIntervalsField);
 		auto intervalCombo = resolve<Wt::WComboBox*>(EntryCycleFormModel::intervalField);
-		auto firstEntryOnEdit = resolve<Wt::WComboBox*>(EntryCycleFormModel::firstEntryAfterCycleField);
-
-		firstEntryOnEdit->setItemText(1, tr("AfterTheInterval"));
+		if(!nIntervalsEdit || !intervalCombo)
+			return;
 
 		if(!nIntervalsEdit->valueText().empty() && nIntervalsEdit->validate() == Wt::WValidator::Valid)
 		{
@@ -302,43 +390,16 @@ namespace GS
 		}
 	}
 
-	void EntryCycleView::updateEndDateValidator(bool update)
+	Wt::WValidator::Result CycleEndDateValidator::validate(const Wt::WString &input) const
 	{
-		if(update)
-			updateModel(model());
-
-		const boost::any &startDateData = model()->value(EntryCycleFormModel::startDateField);
-		const boost::any &intervalData = model()->value(EntryCycleFormModel::intervalField);
-		const boost::any &nIntervalsData = model()->value(EntryCycleFormModel::nIntervalsField);
-		const boost::any &FEACData = model()->value(EntryCycleFormModel::firstEntryAfterCycleField);
-
-		Wt::WDate startDate = boost::any_cast<Wt::WDate>(startDateData);
-		CycleInterval interval = (CycleInterval)boost::any_cast<int>(intervalData);
-		Wt::WString nIntervalsStr = Wt::asString(nIntervalsData);
-		int FEAC = boost::any_cast<int>(FEACData);
-
-		Wt::WDateValidator *endDateValidator = dynamic_cast<Wt::WDateValidator*>(model()->validator(EntryCycleFormModel::endDateField));
-		if(!endDateValidator)
-			model()->setValidator(EntryCycleFormModel::endDateField, endDateValidator = new Wt::WDateValidator());
-
-		if(!startDate.isValid())
+		if(_model->value(EntryCycleFormModel::nIntervalsField).empty()
+			|| _model->value(EntryCycleFormModel::intervalField).empty()
+			|| _model->value(EntryCycleFormModel::startDateField).empty()
+			|| _model->value(EntryCycleFormModel::firstEntryAfterCycleField).empty())
 		{
-			endDateValidator->setBottom(Wt::WDate());
-			return;
+			return Result(Invalid, Wt::WString::tr("Error"));
 		}
-
-		Wt::WDate endDateBottom = startDate.addDays(1);
-		if(FEAC == 1)
-		{
-			try
-			{
-				int nIntervals = boost::lexical_cast<int>(nIntervalsStr.toUTF8());
-				endDateBottom.setGregorianDate(addCycleInterval(boost::posix_time::ptime(endDateBottom.toGregorianDate()), interval, nIntervals).date());
-			}
-			catch(const boost::bad_lexical_cast &) { }
-		}
-
-		endDateValidator->setBottom(endDateBottom);
+		return Wt::WDateValidator::validate(input);
 	}
 
 	//EXPENSE CYCLE MODEL
@@ -346,97 +407,107 @@ namespace GS
 	const Wt::WFormModel::Field ExpenseCycleFormModel::positionField = "position";
 
 	ExpenseCycleFormModel::ExpenseCycleFormModel(ExpenseCycleView *view, Wt::Dbo::ptr<ExpenseCycle> cyclePtr /*= Wt::Dbo::ptr<ExpenseCycle>()*/)
-		: EntryCycleFormModel(view), _view(view), _cyclePtr(cyclePtr)
+		: RecordFormModel(view, cyclePtr), _view(view)
 	{
+		EntryCycleFormModel::addFields(this);
 		addField(purposeField);
 		addField(positionField);
 
-		if(cyclePtr)
+		if(_recordPtr)
 		{
-			updateFromCycle(*cyclePtr);
-			setValue(purposeField, (int)(cyclePtr->positionPtr ? ExpenseCycle::Salary : ExpenseCycle::UnspecifiedPurpose));
-			setValue(positionField, cyclePtr->positionPtr);
+			TRANSACTION(APP);
+			EntryCycleFormModel::updateModelFromCycle(this, *_recordPtr);
+			setValue(purposeField, (int)(_recordPtr->positionPtr ? ExpenseCycle::Salary : ExpenseCycle::UnspecifiedPurpose));
+			setValue(positionField, _recordPtr->positionPtr);
+			setVisible(positionField, _recordPtr->positionPtr ? true : false);
 		}
+		else
+			setVisible(positionField, false);
 	}
 
-	void ExpenseCycleFormModel::saveChanges()
+	Wt::WWidget *ExpenseCycleFormModel::createFormWidget(Wt::WFormModel::Field field)
+	{
+		if(auto w = EntryCycleFormModel::createFormWidget(this, _view, field))
+			return w;
+
+		return RecordFormModel::createFormWidget(field);
+	}
+
+	bool ExpenseCycleFormModel::saveChanges()
 	{
 		if(!valid())
-			return;
+			return false;
 
 		WApplication *app = WApplication::instance();
-		Wt::Dbo::Transaction t(app->session());
+		TRANSACTION(app);
 
 		bool newCycle = false;
-		if(!_cyclePtr)
+		if(!_recordPtr)
 		{
-			_cyclePtr = app->session().add(new ExpenseCycle());
+			_recordPtr = app->dboSession().add(new ExpenseCycle());
+			_recordPtr.modify()->setCreatedByValues();
 			newCycle = true;
 		}
 
-		_cyclePtr.modify()->entityPtr = boost::any_cast<Wt::Dbo::ptr<Entity>>(value(entityField));
-		_cyclePtr.modify()->startDate = boost::any_cast<Wt::WDate>(value(startDateField));
-		_cyclePtr.modify()->endDate = boost::any_cast<Wt::WDate>(value(endDateField));
-		_cyclePtr.modify()->interval = CycleInterval(boost::any_cast<int>(value(intervalField)));
-		_cyclePtr.modify()->nIntervals = boost::lexical_cast<int>(valueText(nIntervalsField).toUTF8());
-		_cyclePtr.modify()->amount = boost::lexical_cast<double>(valueText(amountField).toUTF8());
-		_cyclePtr.modify()->firstEntryAfterCycle = boost::any_cast<int>(value(firstEntryAfterCycleField)) == 1;
+		EntryCycleFormModel::updateCycleFromModel(this, _recordPtr, newCycle);
 
 		const boost::any &positionVal = value(positionField);
 		if(positionVal.empty())
-			_cyclePtr.modify()->positionPtr = Wt::Dbo::ptr<EmployeePosition>();
+			_recordPtr.modify()->positionPtr = Wt::Dbo::ptr<EmployeePosition>();
 		else
-			_cyclePtr.modify()->positionPtr = boost::any_cast<Wt::Dbo::ptr<EmployeePosition>>(positionVal);
+			_recordPtr.modify()->positionPtr = boost::any_cast<Wt::Dbo::ptr<EmployeePosition>>(positionVal);
 
-		if(newCycle && _cyclePtr->firstEntryAfterCycle == false)
-			app->accountsDatabase().createPendingCycleEntry(_cyclePtr, Wt::Dbo::ptr<AccountEntry>(), boost::posix_time::microsec_clock::local_time());
+		if(newCycle && _recordPtr->firstEntryAfterCycle == false)
+			app->accountsDatabase().createPendingCycleEntry(_recordPtr, Wt::Dbo::ptr<AccountEntry>(), boost::posix_time::microsec_clock::local_time());
 
+		_recordPtr.flush();
 		t.commit();
+		return true;
 	}
 
 	//EXPENSE CYCLE VIEW
-	ExpenseCycleView::ExpenseCycleView(Wt::Dbo::ptr<ExpenseCycle> cyclePtr, Wt::WContainerWidget *parent /*= nullptr*/)
-		: EntryCycleView(tr("GS.Admin.ExpenseCycleView"), parent)
+	ExpenseCycleView::ExpenseCycleView(Wt::Dbo::ptr<ExpenseCycle> cyclePtr)
+		: EntryCycleView(tr("GS.Admin.ExpenseCycleView")), _tempPtr(cyclePtr)
+	{ }
+
+	void ExpenseCycleView::init()
 	{
-		_model = new ExpenseCycleFormModel(this, cyclePtr);
-		if(cyclePtr)
-			_model->setAllReadOnly(true);
-		initEntryCycleView();
-
-		WApplication *app = WApplication::instance();
-		app->initPositionQueryModel();
-
-		_purposeCombo = new Wt::WComboBox();
-		_purposeCombo->insertItem(ExpenseCycle::UnspecifiedPurpose, Wt::boost_any_traits<ExpenseCycle::Purpose>::asString(ExpenseCycle::UnspecifiedPurpose, ""));
-		_purposeCombo->insertItem(ExpenseCycle::Salary, Wt::boost_any_traits<ExpenseCycle::Purpose>::asString(ExpenseCycle::Salary, ""));
-		_purposeCombo->changed().connect(this, &ExpenseCycleView::handlePurposeChanged);
-		setFormWidget(ExpenseCycleFormModel::purposeField, _purposeCombo);
-
-		_model->setVisible(ExpenseCycleFormModel::positionField, false);
-		updateView(_model);
-		updateEndDateValidator(true);
+		_model = new ExpenseCycleFormModel(this, _tempPtr);
+		addFormModel("expense", _model);
 	}
 
 	Wt::WWidget *ExpenseCycleView::createFormWidget(Wt::WFormModel::Field field)
 	{
+		if(auto result = EntryCycleView::createFormWidget(field))
+			return result;
+
 		if(field == ExpenseCycleFormModel::positionField)
 		{
-			delete _positionCombo;
-			_positionCombo = new ProxyModelComboBox<PositionProxyModel>(APP->positionProxyModel());
+			WApplication *app = APP;
+			app->initPositionQueryModel();
+			_positionCombo = new QueryProxyModelCB<PositionProxyModel>(app->positionProxyModel());
 			auto validator = new ProxyModelCBValidator<PositionProxyModel>(_positionCombo);
 			validator->setErrorString(tr("MustSelectPosition"));
 			_model->setValidator(field, validator);
 			_positionCombo->changed().connect(this, &ExpenseCycleView::handlePositionChanged);
 			return _positionCombo;
 		}
+		if(field == ExpenseCycleFormModel::purposeField)
+		{
+			_purposeCombo = new Wt::WComboBox();
+			_purposeCombo->insertItem(ExpenseCycle::UnspecifiedPurpose, Wt::boost_any_traits<ExpenseCycle::Purpose>::asString(ExpenseCycle::UnspecifiedPurpose, ""));
+			_purposeCombo->insertItem(ExpenseCycle::Salary, Wt::boost_any_traits<ExpenseCycle::Purpose>::asString(ExpenseCycle::Salary, ""));
+			_purposeCombo->changed().connect(this, &ExpenseCycleView::handlePurposeChanged);
+			return _purposeCombo;
+		}
 		return nullptr;
 	}
 
 	void ExpenseCycleView::handlePurposeChanged()
 	{
-		updateModel(_model);
+		updateModelField(_model, ExpenseCycleFormModel::positionField);
 		_model->setVisible(ExpenseCycleFormModel::positionField, _purposeCombo->currentIndex() == ExpenseCycle::Salary);
-		updateView(_model);
+		updateViewField(_model, ExpenseCycleFormModel::positionField);
 	}
 
 	void ExpenseCycleView::handlePositionChanged()
@@ -451,28 +522,26 @@ namespace GS
 
 	Wt::WDialog *ExpenseCycleView::createAddPositionDialog()
 	{
-		updateModel(_model);
-		Wt::WDialog *dialog = new Wt::WDialog(tr("AddNewPosition"), this);
+		Wt::WDialog *dialog = new Wt::WDialog(tr("AddNewX").arg(tr("position")), this);
 		dialog->setClosable(true);
 		dialog->setTransient(true);
 		dialog->rejectWhenEscapePressed(true);
+		dialog->setDeleteWhenHidden(true);
 		dialog->setWidth(Wt::WLength(500));
-		PositionView *positionView = new PositionView(dialog->contents());
+		PositionView *positionView = new PositionView();
+		dialog->contents()->addWidget(positionView);
 
 		dialog->finished().connect(std::bind([=](Wt::WDialog::DialogCode code) {
-			delete dialog;
 			if(code == Wt::WDialog::Rejected)
 			{
-				updateModel(_model);
 				_model->setValue(ExpenseCycleFormModel::positionField, Wt::Dbo::ptr<EmployeePosition>());
-				updateView(_model);
+				updateViewField(_model, ExpenseCycleFormModel::positionField);
 			}
 		}, std::placeholders::_1));
 
 		positionView->submitted().connect(std::bind([=]() {
-			updateModel(_model);
 			_model->setValue(ExpenseCycleFormModel::positionField, positionView->positionPtr());
-			updateView(_model);
+			updateViewField(_model, ExpenseCycleFormModel::positionField);
 			dialog->accept();
 		}));
 
@@ -482,48 +551,15 @@ namespace GS
 
 	Wt::WString ExpenseCycleView::viewName() const
 	{
-		Wt::Dbo::Transaction t(APP->session());
 		if(cyclePtr())
 		{
+			TRANSACTION(APP);
 			if(cyclePtr()->entityPtr)
 				return tr("ExpenseCycleViewName").arg(cyclePtr().id()).arg(cyclePtr()->entityPtr->name);
 			else
 				return tr("ExpenseCycleViewNameWithoutEntity").arg(cyclePtr().id());
 		}
-		return MyTemplateFormView::viewName();
-	}
-
-	void ExpenseCycleView::submit()
-	{
-		if(_model->isAllReadOnly())
-			return;
-
-		WApplication *app = APP;
-		Wt::Dbo::Transaction t(app->session());
-
-		updateModel(_model);
-		updateEndDateValidator(false);
-		if(!_model->validate())
-		{
-			updateView(_model);
-			return;
-		}
-
-		try
-		{
-			_model->saveChanges();
-			t.commit();
-
-			_model->setAllReadOnly(true);
-
-			updateView(_model);
-			submitted().emit();
-		}
-		catch(const Wt::Dbo::Exception &e)
-		{
-			Wt::log("error") << "ExpenseCycleView::submit(): Dbo error(" << e.code() << "): " << e.what();
-			app->showDbBackendError(e.code());
-		}
+		return RecordFormView::viewName();
 	}
 
 	//INCOME CYCLE MODEL
@@ -531,97 +567,108 @@ namespace GS
 	const Wt::WFormModel::Field IncomeCycleFormModel::serviceField = "service";
 
 	IncomeCycleFormModel::IncomeCycleFormModel(IncomeCycleView *view, Wt::Dbo::ptr<IncomeCycle> cyclePtr /*= Wt::Dbo::ptr<IncomeCycle>()*/)
-		: EntryCycleFormModel(view), _view(view), _cyclePtr(cyclePtr)
+		: RecordFormModel(view, cyclePtr), _view(view)
 	{
+		EntryCycleFormModel::addFields(this);
 		addField(purposeField);
 		addField(serviceField);
 
-		if(cyclePtr)
+		if(_recordPtr)
 		{
-			updateFromCycle(*cyclePtr);
-			setValue(purposeField, (int)(cyclePtr->servicePtr ? IncomeCycle::Services : IncomeCycle::UnspecifiedPurpose));
-			setValue(serviceField, cyclePtr->servicePtr);
+			TRANSACTION(APP);
+			EntryCycleFormModel::updateModelFromCycle(this, *_recordPtr);
+			setValue(purposeField, (int)(_recordPtr->servicePtr ? IncomeCycle::Services : IncomeCycle::UnspecifiedPurpose));
+			setValue(serviceField, _recordPtr->servicePtr);
+			setVisible(serviceField, _recordPtr->servicePtr ? true : false);
 		}
+		else
+			setVisible(serviceField, false);
+
 	}
 
-	void IncomeCycleFormModel::saveChanges()
+	Wt::WWidget *IncomeCycleFormModel::createFormWidget(Wt::WFormModel::Field field)
+	{
+		if(auto w = EntryCycleFormModel::createFormWidget(this, _view, field))
+			return w;
+
+		return RecordFormModel::createFormWidget(field);
+	}
+
+	bool IncomeCycleFormModel::saveChanges()
 	{
 		if(!valid())
-			return;
+			return false;
 
 		WApplication *app = WApplication::instance();
-		Wt::Dbo::Transaction t(app->session());
+		TRANSACTION(app);
 
 		bool newCycle = false;
-		if(!_cyclePtr)
+		if(!_recordPtr)
 		{
-			_cyclePtr = app->session().add(new IncomeCycle());
+			_recordPtr = app->dboSession().add(new IncomeCycle());
+			_recordPtr.modify()->setCreatedByValues();
 			newCycle = true;
 		}
 
-		_cyclePtr.modify()->entityPtr = boost::any_cast<Wt::Dbo::ptr<Entity>>(value(entityField));
-		_cyclePtr.modify()->startDate = boost::any_cast<Wt::WDate>(value(startDateField));
-		_cyclePtr.modify()->endDate = boost::any_cast<Wt::WDate>(value(endDateField));
-		_cyclePtr.modify()->interval = CycleInterval(boost::any_cast<int>(value(intervalField)));
-		_cyclePtr.modify()->nIntervals = boost::lexical_cast<int>(valueText(nIntervalsField).toUTF8());
-		_cyclePtr.modify()->amount = boost::lexical_cast<double>(valueText(amountField).toUTF8());
-		_cyclePtr.modify()->firstEntryAfterCycle = boost::any_cast<int>(value(firstEntryAfterCycleField)) == 1;
+		EntryCycleFormModel::updateCycleFromModel(this, _recordPtr, newCycle);
 
 		const boost::any &serviceVal = value(serviceField);
 		if(serviceVal.empty())
-			_cyclePtr.modify()->servicePtr = Wt::Dbo::ptr<ClientService>();
+			_recordPtr.modify()->servicePtr = Wt::Dbo::ptr<ClientService>();
 		else
-			_cyclePtr.modify()->servicePtr = boost::any_cast<Wt::Dbo::ptr<ClientService>>(serviceVal);
+			_recordPtr.modify()->servicePtr = boost::any_cast<Wt::Dbo::ptr<ClientService>>(serviceVal);
 
-		if(newCycle && _cyclePtr->firstEntryAfterCycle == false)
-			app->accountsDatabase().createPendingCycleEntry(_cyclePtr, Wt::Dbo::ptr<AccountEntry>(), boost::posix_time::microsec_clock::local_time());
+		if(newCycle && _recordPtr->firstEntryAfterCycle == false)
+			app->accountsDatabase().createPendingCycleEntry(_recordPtr, Wt::Dbo::ptr<AccountEntry>(), boost::posix_time::microsec_clock::local_time());
 
 		t.commit();
+		return true;
 	}
 
 	//INCOME CYCLE VIEW
-	IncomeCycleView::IncomeCycleView(Wt::Dbo::ptr<IncomeCycle> cyclePtr, Wt::WContainerWidget *parent /*= nullptr*/)
-		: EntryCycleView(tr("GS.Admin.IncomeCycleView"), parent)
+	IncomeCycleView::IncomeCycleView(Wt::Dbo::ptr<IncomeCycle> cyclePtr)
+		: EntryCycleView(tr("GS.Admin.IncomeCycleView")), _tempPtr(cyclePtr)
+	{ }
+
+	void IncomeCycleView::init()
 	{
-		_model = new IncomeCycleFormModel(this, cyclePtr);
-		if(cyclePtr)
-			_model->setAllReadOnly(true);
-		initEntryCycleView();
-
-		WApplication *app = WApplication::instance();
-		app->initServiceQueryModel();
-
-		_purposeCombo = new Wt::WComboBox();
-		_purposeCombo->insertItem(IncomeCycle::UnspecifiedPurpose, Wt::boost_any_traits<IncomeCycle::Purpose>::asString(IncomeCycle::UnspecifiedPurpose, ""));
-		_purposeCombo->insertItem(IncomeCycle::Services, Wt::boost_any_traits<IncomeCycle::Purpose>::asString(IncomeCycle::Services, ""));
-		_purposeCombo->changed().connect(this, &IncomeCycleView::handlePurposeChanged);
-		setFormWidget(IncomeCycleFormModel::purposeField, _purposeCombo);
-
-		_model->setVisible(IncomeCycleFormModel::serviceField, false);
-		updateView(_model);
-		updateEndDateValidator(true);
+		_model = new IncomeCycleFormModel(this, _tempPtr);
+		addFormModel("income", _model);
 	}
 
 	Wt::WWidget *IncomeCycleView::createFormWidget(Wt::WFormModel::Field field)
 	{
+		if(auto result = EntryCycleView::createFormWidget(field))
+			return result;
+
 		if(field == IncomeCycleFormModel::serviceField)
 		{
 			delete _serviceCombo;
-			_serviceCombo = new ProxyModelComboBox<ServiceProxyModel>(APP->serviceProxyModel());
+			WApplication *app = APP;
+			app->initServiceQueryModel();
+			_serviceCombo = new QueryProxyModelCB<ServiceProxyModel>(app->serviceProxyModel());
 			auto validator = new ProxyModelCBValidator<ServiceProxyModel>(_serviceCombo);
 			validator->setErrorString(tr("MustSelectService"));
 			_model->setValidator(field, validator);
 			_serviceCombo->changed().connect(this, &IncomeCycleView::handleServiceChanged);
 			return _serviceCombo;
 		}
+		if(field == IncomeCycleFormModel::purposeField)
+		{
+			_purposeCombo = new Wt::WComboBox();
+			_purposeCombo->insertItem(IncomeCycle::UnspecifiedPurpose, Wt::boost_any_traits<IncomeCycle::Purpose>::asString(IncomeCycle::UnspecifiedPurpose, ""));
+			_purposeCombo->insertItem(IncomeCycle::Services, Wt::boost_any_traits<IncomeCycle::Purpose>::asString(IncomeCycle::Services, ""));
+			_purposeCombo->changed().connect(this, &IncomeCycleView::handlePurposeChanged);
+			return _purposeCombo;
+		}
 		return nullptr;
 	}
 
 	void IncomeCycleView::handlePurposeChanged()
 	{
-		updateModel(_model);
-		_model->setVisible(IncomeCycleFormModel::serviceField, _purposeCombo->currentIndex() == IncomeCycle::Services);
-		updateView(_model);
+		updateModelField(_model, IncomeCycleFormModel::serviceField);
+		_model->setVisible(IncomeCycleFormModel::serviceField, _purposeCombo->currentIndex() == ExpenseCycle::Salary);
+		updateViewField(_model, IncomeCycleFormModel::serviceField);
 	}
 
 	void IncomeCycleView::handleServiceChanged()
@@ -637,27 +684,26 @@ namespace GS
 	Wt::WDialog *IncomeCycleView::createAddServiceDialog()
 	{
 		updateModel(_model);
-		Wt::WDialog *dialog = new Wt::WDialog(tr("AddNewService"), this);
+		Wt::WDialog *dialog = new Wt::WDialog(tr("AddNewX").arg(tr("service")), this);
 		dialog->setTransient(true);
 		dialog->rejectWhenEscapePressed(true);
+		dialog->setDeleteWhenHidden(true);
 		dialog->setClosable(true);
 		dialog->setWidth(Wt::WLength(500));
-		ServiceView *serviceView = new ServiceView(dialog->contents());
+		ServiceView *serviceView = new ServiceView();
+		dialog->contents()->addWidget(serviceView);
 
 		dialog->finished().connect(std::bind([=](Wt::WDialog::DialogCode code) {
-			delete dialog;
 			if(code == Wt::WDialog::Rejected)
 			{
-				updateModel(_model);
 				_model->setValue(IncomeCycleFormModel::serviceField, Wt::Dbo::ptr<ClientService>());
-				updateView(_model);
+				updateViewField(_model, IncomeCycleFormModel::serviceField);
 			}
 		}, std::placeholders::_1));
 
 		serviceView->submitted().connect(std::bind([=]() {
-			updateModel(_model);
 			_model->setValue(IncomeCycleFormModel::serviceField, serviceView->servicePtr());
-			updateView(_model);
+			updateViewField(_model, IncomeCycleFormModel::serviceField);
 			dialog->accept();
 		}));
 
@@ -667,48 +713,15 @@ namespace GS
 
 	Wt::WString IncomeCycleView::viewName() const
 	{
-		Wt::Dbo::Transaction t(APP->session());
 		if(cyclePtr())
 		{
+			TRANSACTION(APP);
 			if(cyclePtr()->entityPtr)
 				return tr("IncomeCycleViewName").arg(cyclePtr().id()).arg(cyclePtr()->entityPtr->name);
 			else
 				return tr("IncomeCycleViewNameWithoutEntity").arg(cyclePtr().id());
 		}
-		return MyTemplateFormView::viewName();
-	}
-
-	void IncomeCycleView::submit()
-	{
-		if(_model->isAllReadOnly())
-			return;
-
-		WApplication *app = APP;
-		Wt::Dbo::Transaction t(app->session());
-
-		updateModel(_model);
-		updateEndDateValidator(false); //also calls updateModel
-		if(!_model->validate())
-		{
-			updateView(_model);
-			return;
-		}
-
-		try
-		{
-			_model->saveChanges();
-			t.commit();
-
-			_model->setAllReadOnly(true);
-
-			updateView(_model);
-			submitted().emit();
-		}
-		catch(const Wt::Dbo::Exception &e)
-		{
-			Wt::log("error") << "IncomeCycleView::submit(): Dbo error(" << e.code() << "): " << e.what();
-			app->showDbBackendError(e.code());
-		}
+		return RecordFormView::viewName();
 	}
 
 #define IdColumnWidth 80
@@ -718,30 +731,38 @@ namespace GS
 #define AmountColumnWidth 200
 #define ExtraColumnWidth 180
 
-	EntryCycleList::EntryCycleList(Wt::WContainerWidget *parent /*= nullptr*/)
-		: QueryModelFilteredList<ResultType>(parent)
+	EntryCycleList::EntryCycleList()
+		: QueryModelFilteredList()
 	{ }
 
-	EntityEntryCycleList::EntityEntryCycleList(Wt::WContainerWidget *parent /*= nullptr*/)
-		: QueryModelFilteredList<ResultType>(parent)
+	EntityEntryCycleList::EntityEntryCycleList()
+		: QueryModelFilteredList()
 	{ }
 
-	void EntryCycleList::initEntryCycleList()
+	void EntryCycleList::load()
 	{
-		init();
+		bool ld = !loaded();
+		QueryModelFilteredList::load();
 
-		int timestampColumn = viewIndexToColumn(ViewCreatedOn);
-		if(timestampColumn != -1)
-			_tableView->sortByColumn(timestampColumn, Wt::DescendingOrder);
+		if(ld)
+		{
+			int timestampColumn = viewIndexToColumn(ViewCreatedOn);
+			if(timestampColumn != -1)
+				_tableView->sortByColumn(timestampColumn, Wt::DescendingOrder);
+		}
 	}
 
-	void EntityEntryCycleList::initEntityEntryCycleList()
+	void EntityEntryCycleList::load()
 	{
-		init();
+		bool ld = !loaded();
+		QueryModelFilteredList::load();
 
-		int timestampColumn = viewIndexToColumn(EntryCycleList::ViewCreatedOn);
-		if(timestampColumn != -1)
-			_tableView->sortByColumn(timestampColumn, Wt::DescendingOrder);
+		if(ld)
+		{
+			int timestampColumn = viewIndexToColumn(EntryCycleList::ViewCreatedOn);
+			if(timestampColumn != -1)
+				_tableView->sortByColumn(timestampColumn, Wt::DescendingOrder);
+		}
 	}
 
 	void EntryCycleList::initFilters()
@@ -756,34 +777,32 @@ namespace GS
 		filtersTemplate()->addFilterModel(new RangeFilterModel(tr("Amount"), "amount")); filtersTemplate()->addFilter(2);
 	}
 
-	IncomeCycleList::IncomeCycleList(Wt::WContainerWidget *parent /*= nullptr*/)
-		: EntryCycleList(parent)
-	{
-		initEntryCycleList();
-	}
+	IncomeCycleList::IncomeCycleList()
+		: EntryCycleList()
+	{ }
 
-	EntityIncomeCycleList::EntityIncomeCycleList(Wt::Dbo::ptr<Entity> entityPtr, Wt::WContainerWidget *parent /*= nullptr*/)
-		: EntityEntryCycleList(parent), _entityPtr(entityPtr)
-	{
-		initEntityEntryCycleList();
-	}
+	EntityIncomeCycleList::EntityIncomeCycleList(Wt::Dbo::ptr<Entity> entityPtr)
+		: EntityEntryCycleList(), _entityPtr(entityPtr)
+	{ }
 
 	void IncomeCycleList::initModel()
 	{
 		QueryModelType *model;
 		_model = model = new QueryModelType(this);
 
-		_baseQuery = APP->session().query<ResultType>(
-			"SELECT c.id, c.creationDt, e.name, c.startDate, c.endDate, c.amount, s.title, c.interval, c.nIntervals, e.id e_id "
+		WApplication *app = APP;
+		_baseQuery = app->dboSession().query<ResultType>(
+			"SELECT c.id, c.timestamp, e.name, c.startDate, c.endDate, c.amount, s.title, c.interval, c.nIntervals, e.id e_id "
 			"FROM " + std::string(IncomeCycle::tableName()) + " c "
 			"INNER JOIN " + std::string(Entity::tableName()) + " e ON (e.id = c.entity_id) "
 			"LEFT JOIN " + ClientService::tableName() + " s ON (s.id = c.clientservice_id)");
+		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "c.");
 
 		Wt::Dbo::Query<ResultType> query(_baseQuery); //must copy the query first
 		model->setQuery(query);
 
 		addColumn(ViewId, model->addColumn("c.id"), tr("ID"), IdColumnWidth);
-		addColumn(ViewCreatedOn, model->addColumn("c.creationDt"), tr("CreatedOn"), TimestampColumnWidth);
+		addColumn(ViewCreatedOn, model->addColumn("c.timestamp"), tr("CreatedOn"), TimestampColumnWidth);
 		addColumn(ViewEntity, model->addColumn("e.name"), tr("Entity"), EntityColumnWidth);
 		addColumn(ViewStartDate, model->addColumn("c.startDate"), tr("StartDate"), DateColumnWidth);
 		addColumn(ViewEndDate, model->addColumn("c.endDate"), tr("EndDate"), DateColumnWidth);
@@ -798,17 +817,19 @@ namespace GS
 		QueryModelType *model;
 		_model = model = new QueryModelType(this);
 
-		_baseQuery = APP->session().query<ResultType>(
-			"SELECT c.id, c.creationDt, c.startDate, c.endDate, c.amount, s.title, c.interval, c.nIntervals "
+		WApplication *app = APP;
+		_baseQuery = app->dboSession().query<ResultType>(
+			"SELECT c.id, c.timestamp, c.startDate, c.endDate, c.amount, s.title, c.interval, c.nIntervals "
 			"FROM " + std::string(IncomeCycle::tableName()) + " c "
 			"LEFT JOIN " + ClientService::tableName() + " s ON (s.id = c.clientservice_id)")
 			.where("c.entity_id = ?").bind(_entityPtr.id());
+		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "c.");
 
 		Wt::Dbo::Query<ResultType> query(_baseQuery); //must copy the query first
 		model->setQuery(query);
 
 		addColumn(EntryCycleList::ViewId, model->addColumn("c.id"), tr("ID"), IdColumnWidth);
-		addColumn(EntryCycleList::ViewCreatedOn, model->addColumn("c.creationDt"), tr("CreatedOn"), TimestampColumnWidth);
+		addColumn(EntryCycleList::ViewCreatedOn, model->addColumn("c.timestamp"), tr("CreatedOn"), TimestampColumnWidth);
 		addColumn(EntryCycleList::ViewStartDate, model->addColumn("c.startDate"), tr("StartDate"), DateColumnWidth);
 		addColumn(EntryCycleList::ViewEndDate, model->addColumn("c.endDate"), tr("EndDate"), DateColumnWidth);
 		addColumn(EntryCycleList::ViewAmount, model->addColumn("c.amount"), tr("RecurringAmount"), AmountColumnWidth);
@@ -817,34 +838,32 @@ namespace GS
 		_proxyModel = new BaseEntryCycleListProxyModel<EntityIncomeCycleList>(IncomeCycle::viewInternalPath(""), _model, _model);
 	}
 
-	ExpenseCycleList::ExpenseCycleList(Wt::WContainerWidget *parent /*= nullptr*/)
-		: EntryCycleList(parent)
-	{
-		initEntryCycleList();
-	}
+	ExpenseCycleList::ExpenseCycleList()
+		: EntryCycleList()
+	{ }
 
-	EntityExpenseCycleList::EntityExpenseCycleList(Wt::Dbo::ptr<Entity> entityPtr, Wt::WContainerWidget *parent /*= nullptr*/)
-		: EntityEntryCycleList(parent), _entityPtr(entityPtr)
-	{
-		initEntityEntryCycleList();
-	}
+	EntityExpenseCycleList::EntityExpenseCycleList(Wt::Dbo::ptr<Entity> entityPtr)
+		: EntityEntryCycleList(), _entityPtr(entityPtr)
+	{ }
 
 	void ExpenseCycleList::initModel()
 	{
 		QueryModelType *model;
 		_model = model = new QueryModelType(this);
 
-		_baseQuery = APP->session().query<ResultType>(
-			"SELECT c.id, c.creationDt, e.name, c.startDate, c.endDate, c.amount, p.title, c.interval, c.nIntervals, e.id e_id "
+		WApplication *app = APP;
+		_baseQuery = app->dboSession().query<ResultType>(
+			"SELECT c.id, c.timestamp, e.name, c.startDate, c.endDate, c.amount, p.title, c.interval, c.nIntervals, e.id e_id "
 			"FROM " + std::string(ExpenseCycle::tableName()) + " c "
 			"INNER JOIN " + std::string(Entity::tableName()) + " e ON (e.id = c.entity_id) "
 			"LEFT JOIN " + EmployeePosition::tableName() + " p ON (p.id = c.employeeposition_id)");
+		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "c.");
 
 		Wt::Dbo::Query<ResultType> query(_baseQuery); //must copy the query first
 		model->setQuery(query);
 
 		addColumn(ViewId, model->addColumn("c.id"), tr("ID"), IdColumnWidth);
-		addColumn(ViewCreatedOn, model->addColumn("c.creationDt"), tr("CreatedOn"), TimestampColumnWidth);
+		addColumn(ViewCreatedOn, model->addColumn("c.timestamp"), tr("CreatedOn"), TimestampColumnWidth);
 		addColumn(ViewEntity, model->addColumn("e.name"), tr("Entity"), EntityColumnWidth);
 		addColumn(ViewStartDate, model->addColumn("c.startDate"), tr("StartDate"), DateColumnWidth);
 		addColumn(ViewEndDate, model->addColumn("c.endDate"), tr("EndDate"), DateColumnWidth);
@@ -859,17 +878,19 @@ namespace GS
 		QueryModelType *model;
 		_model = model = new QueryModelType(this);
 
-		_baseQuery = APP->session().query<ResultType>(
-			"SELECT c.id, c.creationDt, c.startDate, c.endDate, c.amount, p.title, c.interval, c.nIntervals "
+		WApplication *app = APP;
+		_baseQuery = app->dboSession().query<ResultType>(
+			"SELECT c.id, c.timestamp, c.startDate, c.endDate, c.amount, p.title, c.interval, c.nIntervals "
 			"FROM " + std::string(ExpenseCycle::tableName()) + " c "
 			"LEFT JOIN " + EmployeePosition::tableName() + " p ON (p.id = c.employeeposition_id)")
 			.where("c.entity_id = ?").bind(_entityPtr.id());
+		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "c.");
 
 		Wt::Dbo::Query<ResultType> query(_baseQuery); //must copy the query first
 		model->setQuery(query);
 
 		addColumn(ExpenseCycleList::ViewId, model->addColumn("c.id"), tr("ID"), IdColumnWidth);
-		addColumn(ExpenseCycleList::ViewCreatedOn, model->addColumn("c.creationDt"), tr("CreatedOn"), TimestampColumnWidth);
+		addColumn(ExpenseCycleList::ViewCreatedOn, model->addColumn("c.timestamp"), tr("CreatedOn"), TimestampColumnWidth);
 		addColumn(ExpenseCycleList::ViewStartDate, model->addColumn("c.startDate"), tr("StartDate"), DateColumnWidth);
 		addColumn(ExpenseCycleList::ViewEndDate, model->addColumn("c.endDate"), tr("EndDate"), DateColumnWidth);
 		addColumn(ExpenseCycleList::ViewAmount, model->addColumn("c.amount"), tr("RecurringAmount"), AmountColumnWidth);
@@ -954,7 +975,7 @@ namespace GS
 			default: return boost::any();
 			}
 
-			str.arg(APP->locale().toFixedString(boost::get<FilteredList::ResAmount>(res), 2));
+			str.arg(Wt::WLocale::currentLocale().toString(Money(boost::get<FilteredList::ResAmount>(res), DEFAULT_CURRENCY)));
 			str.arg(boost::get<FilteredList::ResNIntervals>(res));
 			return str;
 		}
@@ -963,14 +984,14 @@ namespace GS
 		{
 			const Wt::WDate &date = boost::get<FilteredList::ResStartDate>(res);
 			if(date.isValid() && date > Wt::WDate(boost::gregorian::day_clock::local_day()))
-				return Wt::WString::tr("XNotStarted").arg(boost::get<FilteredList::ResStartDate>(res).toString(APP->locale().dateFormat()));
+				return Wt::WString::tr("XNotStarted").arg(boost::get<FilteredList::ResStartDate>(res).toString(Wt::WLocale::currentLocale().dateFormat()));
 		}
 
 		if(viewIndex == EntryCycleList::ViewEndDate && role == Wt::DisplayRole)
 		{
 			const Wt::WDate &date = boost::get<FilteredList::ResEndDate>(res);
 			if(date.isValid() && Wt::WDate(boost::gregorian::day_clock::local_day()) >= date)
-				return Wt::WString::tr("XEnded").arg(date.toString(APP->locale().dateFormat()));
+				return Wt::WString::tr("XEnded").arg(date.toString(Wt::WLocale::currentLocale().dateFormat()));
 		}
 
 		if(role == Wt::StyleClassRole)

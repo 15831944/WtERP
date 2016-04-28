@@ -2,7 +2,7 @@
 #define GS_ENTITYVIEW_WIDGET_H
 
 #include "Dbo/Dbos.h"
-#include "Utilities/MyFormView.h"
+#include "Utilities/RecordFormView.h"
 
 #include <Wt/WTemplateFormView>
 #include <Wt/WDialog>
@@ -22,25 +22,24 @@ namespace GS
 	class ExpenseCycleSummaryContainer;
 	class EntityExpenseCycleList;
 	class EntityIncomeCycleList;
+	class ContactNumberView;
 
 	//EntityFormModel
-	class EntityFormModel : public Wt::WFormModel
+	class EntityFormModel : public RecordFormModel<Entity>
 	{
 	public:
 		static const Field nameField;
 
 		EntityFormModel(EntityView *view, Wt::Dbo::ptr<Entity> entityPtr = Wt::Dbo::ptr<Entity>());
-		Wt::WWidget *createFormWidget(Field field);
-		Wt::Dbo::ptr<Entity> entityPtr() const { return _entityPtr; }
-		void saveChanges();
+		virtual Wt::WWidget *createFormWidget(Field field) override;
+		virtual bool saveChanges() override;
 
 	protected:
 		EntityView *_view = nullptr;
-		Wt::Dbo::ptr<Entity> _entityPtr;
 	};
 
 	//PersonFormModel
-	class PersonFormModel : public Wt::WFormModel
+	class PersonFormModel : public ChildRecordFormModel<Person>
 	{
 	public:
 		static const Field dobField;
@@ -59,17 +58,15 @@ namespace GS
 		static const Field cnicUpload2Field;
 
 		PersonFormModel(EntityView *view, Wt::Dbo::ptr<Person> personPtr = Wt::Dbo::ptr<Person>());
-		Wt::WWidget *createFormWidget(Field field);
-		Wt::Dbo::ptr<Person> personPtr() const { return _personPtr; }
-		void saveChanges();
+		virtual Wt::WWidget *createFormWidget(Field field) override;
+		virtual bool saveChanges() override;
 
 	protected:
 		EntityView *_view = nullptr;
-		Wt::Dbo::ptr<Person> _personPtr;
 	};
 
 	//EmployeeFormModel
-	class EmployeeFormModel : public Wt::WFormModel
+	class EmployeeFormModel : public ChildRecordFormModel<Employee>
 	{
 	public:
 		static const Field companyNumberField;
@@ -80,17 +77,15 @@ namespace GS
 		static const Field addQualificationsField;
 
 		EmployeeFormModel(EntityView *view, Wt::Dbo::ptr<Employee> employeePtr = Wt::Dbo::ptr<Employee>());
-		Wt::WWidget *createFormWidget(Field field);
-		Wt::Dbo::ptr<Employee> employeePtr() const { return _employeePtr; }
-		void saveChanges();
+		virtual Wt::WWidget *createFormWidget(Field field) override;
+		virtual bool saveChanges() override;
 
 	protected:
 		EntityView *_view = nullptr;
-		Wt::Dbo::ptr<Employee> _employeePtr;
 	};
 
 	//PersonnelFormModel
-	class PersonnelFormModel : public Wt::WFormModel
+	class PersonnelFormModel : public ChildRecordFormModel<Personnel>
 	{
 	public:
 		static const Field policeStationField;
@@ -100,132 +95,106 @@ namespace GS
 		static const Field rankField;
 
 		PersonnelFormModel(EntityView *view, Wt::Dbo::ptr<Personnel> personnelPtr = Wt::Dbo::ptr<Personnel>());
-		Wt::WWidget *createFormWidget(Field field);
-		Wt::Dbo::ptr<Personnel> personnelPtr() const { return _personnelPtr; }
-		void saveChanges();
+		virtual Wt::WWidget *createFormWidget(Field field) override;
+		virtual bool saveChanges() override;
 
 	protected:
 		EntityView *_view = nullptr;
-		Wt::Dbo::ptr<Personnel> _personnelPtr;
 	};
 
 	//BusinessFormModel
-	class BusinessFormModel : public Wt::WFormModel
+	class BusinessFormModel : public ChildRecordFormModel<Business>
 	{
 	public:
 		BusinessFormModel(EntityView *view, Wt::Dbo::ptr<Business> businessPtr = Wt::Dbo::ptr<Business>());
-		Wt::WWidget *createFormWidget(Field field);
-		Wt::Dbo::ptr<Business> businessPtr() const { return _businessPtr; }
-		void saveChanges();
+		virtual Wt::WWidget *createFormWidget(Field field) override;
+		virtual bool saveChanges() override;
 
 	protected:
 		EntityView *_view = nullptr;
-		Wt::Dbo::ptr<Business> _businessPtr;
+	};
+	
+	class ContactNumberFormModel : public RecordFormModel<ContactNumber>
+	{
+	public:
+		static const Wt::WFormModel::Field entityField;
+		static const Wt::WFormModel::Field numberField;
+
+		ContactNumberFormModel(ContactNumberView *view, Wt::Dbo::ptr<ContactNumber> contactNumberPtr = Wt::Dbo::ptr<ContactNumber>());
+		virtual Wt::WWidget *createFormWidget(Field field) override;
+		virtual bool saveChanges() override;
+
+	protected:
+		ContactNumberView *_view = nullptr;
+	};
+
+	class ContactNumberView : public RecordFormView
+	{
+	public:
+		ContactNumberView(Wt::Dbo::ptr<ContactNumber> contactNumberPtr);
+		ContactNumberView();
+		virtual void init() override;
+
+		Wt::Dbo::ptr<ContactNumber> contactNumberPtr() const { return _model->recordPtr(); }
+		ContactNumberFormModel *model() const { return _model; }
+
+	protected:
+		ContactNumberFormModel *_model = nullptr;
+		Wt::Dbo::ptr<ContactNumber> _tempPtr;
 	};
 
 	//ContactNumbersFormModel
-	class ContactNumbersManagerModel : public Wt::WFormModel
+	class ContactNumbersManagerModel : public MultipleRecordModel<ContactNumber>
 	{
 	public:
-		typedef std::vector<Wt::WString> NumberVector;
-		typedef std::vector<Wt::Dbo::ptr<ContactNumber>> PtrVector;
-		static const Field field;
-
-		ContactNumbersManagerModel(EntityView *view);
-		Wt::WWidget *createFormWidget(Field field);
-		const PtrVector &ptrVector() const { return _ptrVector; }
-		void saveChanges();
+		ContactNumbersManagerModel(EntityView *view, PtrCollection collection = PtrCollection());
 
 	protected:
-		EntityView *_view = nullptr;
-		PtrVector _ptrVector;
+		virtual RecordViewsContainer *createFormWidget(Field field) override;
+		virtual std::tuple<RecordFormView*, ModelType*> createRecordView(Wt::Dbo::ptr<Dbo> recordPtr) override;
 
-	private:
-		friend class ContactNumbersContainer;
+		EntityView *_view = nullptr;
 	};
 
 	//LocationsManagerModel
-	class LocationsManagerModel : public Wt::WFormModel
+	class LocationsManagerModel : public MultipleRecordModel<Location>
 	{
 	public:
-		typedef std::vector<Wt::Dbo::ptr<Location>> PtrVector;
-		static const Field field;
-
-		LocationsManagerModel(EntityView *view);
-		virtual bool validate() override;
-		Wt::WWidget *createFormWidget(Field field);
-		const PtrVector &ptrVector() const { return boost::any_cast<const PtrVector&>(value(field)); }
-		void saveChanges();
+		LocationsManagerModel(EntityView *view, PtrCollection collection = PtrCollection());
 
 	protected:
+		virtual RecordViewsContainer *createFormWidget(Field field) override;
+		virtual std::tuple<RecordFormView*, ModelType*> createRecordView(Wt::Dbo::ptr<Dbo> recordPtr) override;
+
 		EntityView *_view = nullptr;
 	};
 
 	//EntityView
-	class EntityView : public MyTemplateFormView
+	class EntityView : public RecordFormView
 	{
 	public:
-		EntityView(Entity::Type type = Entity::InvalidType, Wt::WContainerWidget *parent = nullptr);
-		EntityView(Wt::Dbo::ptr<Entity> EntityPtr, Wt::WContainerWidget *parent = nullptr);
-		void init();
-		virtual Wt::WWidget *createFormWidget(Wt::WFormModel::Field field) override;
-		virtual bool updateViewValue(Wt::WFormModel *model, Wt::WFormModel::Field field, Wt::WWidget *edit) override;
-		virtual bool updateModelValue(Wt::WFormModel *model, Wt::WFormModel::Field field, Wt::WWidget *edit) override;
-		//virtual void indicateValidation(Wt::WFormModel::Field field, bool validated, Wt::WText *info, Wt::WWidget *edit, const Wt::WValidator::Result &validation) override;
+		EntityView(Entity::Type type = Entity::InvalidType);
+		EntityView(Wt::Dbo::ptr<Entity> entityPtr);
+		virtual void init() override;
 
 		void selectEntityType(Entity::Type type);
-		void submit();
-
 		void setSpecificType(Entity::SpecificType type);
-		Entity::Type entityType() const { return _type; }
-		void addEmployeeModel(Wt::Dbo::ptr<GS::Employee> employeePtr = Wt::Dbo::ptr<GS::Employee>());
-		void addPersonnelModel(Wt::Dbo::ptr<GS::Personnel> personnelPtr = Wt::Dbo::ptr<GS::Personnel>());
+		void addEmployeeModel(Wt::Dbo::ptr<Employee> employeePtr = Wt::Dbo::ptr<Employee>());
+		void addPersonnelModel(Wt::Dbo::ptr<Personnel> personnelPtr = Wt::Dbo::ptr<Personnel>());
 
-		Wt::Dbo::ptr<Entity> entityPtr() const { return _entityModel->entityPtr(); }
+		Entity::Type entityType() const { return _type; }
+		Wt::Dbo::ptr<Entity> entityPtr() const { return _entityModel->recordPtr(); }
+
 		virtual Wt::WString viewName() const override { return _entityModel->valueText(EntityFormModel::nameField); }
 		virtual std::string viewInternalPath() const override { return entityPtr() ? Entity::viewInternalPath(entityPtr().id()) : ""; }
-		virtual MyTemplateFormView *createFormView() override { return new EntityView(); }
-
-		void updateModel()
-		{
-			if(_entityModel) updateModel(_entityModel);
-			if(_personModel) updateModel(_personModel);
-			if(_employeeModel) updateModel(_employeeModel);
-			if(_personnelModel) updateModel(_personnelModel);
-			if(_contactNumbersModel) updateModel(_contactNumbersModel);
-			if(_locationsModel) updateModel(_locationsModel);
-			if(_businessModel) updateModel(_businessModel);
-		}
-		void updateView()
-		{
-			if(_entityModel) updateView(_entityModel);
-			if(_personModel) updateView(_personModel);
-			if(_employeeModel) updateView(_employeeModel);
-			if(_personnelModel) updateView(_personnelModel);
-			if(_contactNumbersModel) updateView(_contactNumbersModel);
-			if(_locationsModel) updateView(_locationsModel);
-			if(_businessModel) updateView(_businessModel);
-		}
-// 		void resetValidation()
-// 		{
-// 			if(_entityModel) _entityModel->resetValidation();
-// 			if(_personModel) _personModel->resetValidation();
-// 			if(_employeeModel) _employeeModel->resetValidation();
-// 			if(_personnelModel) _personnelModel->resetValidation();
-// 			if(_contactNumbersModel) _contactNumbersModel->resetValidation();
-// 			if(_locationsModel) _locationsModel->resetValidation();
-// 			if(_businessModel) _businessModel->resetValidation();
-// 		}
+		virtual RecordFormView *createFormView() override { return new EntityView(); }
 
 	protected:
-		using Wt::WTemplateFormView::updateView;
-		using Wt::WTemplateFormView::updateModel;
-		virtual void applyArguments(Wt::WWidget *w, const std::vector<Wt::WString> &args) override;
+		virtual void submit() override;
+		virtual void afterSubmitHandler() override;
 
 		Wt::WPushButton *_selectPerson = nullptr;
 		Wt::WPushButton *_selectBusiness = nullptr;
-		Wt::WPushButton *_addEmployee = nullptr;
-		Wt::WPushButton *_addPersonnel = nullptr;
 		EntityExpenseCycleList *_expenseCycles = nullptr;
 		EntityIncomeCycleList *_incomeCycles = nullptr;
 
@@ -240,6 +209,7 @@ namespace GS
 		Entity::Type _type = Entity::InvalidType;
 		Entity::Type _defaultType = Entity::InvalidType;
 		Entity::SpecificType _specificType = Entity::UnspecificType;
+		Wt::Dbo::ptr<Entity> _tempPtr;
 
 	private:
 		friend class EntityFormModel;
@@ -272,108 +242,6 @@ namespace GS
 		void setUnit(Unit unit);
 		Unit _unit = cm;
 	};
-
-	//ContactNumbersContainer
-	class ContactNumbersContainer : public Wt::WContainerWidget
-	{
-	public:
-		ContactNumbersContainer(ContactNumbersManagerModel *model, Wt::WContainerWidget *parent = nullptr);
-		void reset();
-		void updateViews(const ContactNumbersManagerModel::NumberVector &numberVector);
-		void updateModels(ContactNumbersManagerModel::NumberVector &numberVector);
-		void addFieldWidget();
-
-	protected:
-		ContactNumbersManagerModel *_model;
-	};
-
-// 	void initEntryCycleSummary(Wt::WTemplate *summaryTemplate, const EntryCycle &cycle, long long id);
-// 
-// 	class ExpenseCycleSummaryContainer : public Wt::WContainerWidget
-// 	{
-// 	public:
-// 		typedef std::vector<Wt::Dbo::ptr<ExpenseCycle>> PtrVector;
-// 
-// 		ExpenseCycleSummaryContainer(Wt::Dbo::ptr<Entity> entityPtr, Wt::WContainerWidget *parent = nullptr);
-// 		const PtrVector &ptrVector() const { return _ptrVector; }
-// 
-// 	protected:
-// 		PtrVector _ptrVector;
-// 	};
-// 
-// 	class IncomeCycleSummaryContainer : public Wt::WContainerWidget
-// 	{
-// 	public:
-// 		typedef std::vector<Wt::Dbo::ptr<IncomeCycle>> PtrVector;
-// 
-// 		IncomeCycleSummaryContainer(Wt::Dbo::ptr<Entity> entityPtr, Wt::WContainerWidget *parent = nullptr);
-// 		const PtrVector &ptrVector() const { return _ptrVector; }
-// 
-// 	protected:
-// 		PtrVector _ptrVector;
-// 	};
-
-// 	class ExpenseCycleSummary : public Wt::WText
-// 	{
-// 	public:
-// 		ExpenseCycleSummary(int index, Wt::Dbo::ptr<ExpenseCycle> cyclePtr, Wt::WContainerWidget *parent = nullptr)
-// 			: Wt::WText(parent)
-// 		{
-// 			setText(tr("ExpenseCycleSummary"));
-// 		}
-// 
-// 	protected:
-// 		Wt::Dbo::ptr<ExpenseCycle> _cyclePtr;
-// 	};
-// 
-// 	class IncomeCycleSummary : public Wt::WText
-// 	{
-// 	public:
-// 		IncomeCycleSummary(int index, Wt::Dbo::ptr<IncomeCycle> cyclePtr, Wt::WContainerWidget *parent = nullptr)
-// 			: Wt::WText(parent)
-// 		{
-// 			setText(tr("IncomeCycleSummary"));
-// 		}
-// 
-// 	protected:
-// 		Wt::Dbo::ptr<IncomeCycle> _cyclePtr;
-// 	};
-// 
-// 	//ExpenseCyclesManagerModel
-// 	class ExpenseCyclesManagerModel : public Wt::WFormModel
-// 	{
-// 	public:
-// 		typedef std::vector<Wt::Dbo::ptr<ExpenseCycle>> PtrVector;
-// 		static const Field field;
-// 
-// 		ExpenseCyclesManagerModel(EntityView *view);
-// 		Wt::WDialog *createAddCycleDialog();
-// 		virtual bool validate() override;
-// 		Wt::WWidget *createFormWidget(Field field);
-// 		const PtrVector &ptrVector() const { return boost::any_cast<const PtrVector&>(value(field)); }
-// 		void saveChanges();
-// 
-// 	protected:
-// 		EntityView *_view = nullptr;
-// 	};
-// 
-// 	//IncomeCyclesManagerModel
-// 	class IncomeCyclesManagerModel : public Wt::WFormModel
-// 	{
-// 	public:
-// 		typedef std::vector<Wt::Dbo::ptr<IncomeCycle>> PtrVector;
-// 		static const Field field;
-// 
-// 		IncomeCyclesManagerModel(EntityView *view);
-// 		Wt::WDialog *createAddCycleDialog();
-// 		virtual bool validate() override;
-// 		Wt::WWidget *createFormWidget(Field field);
-// 		const PtrVector &ptrVector() const { return boost::any_cast<const PtrVector&>(value(field)); }
-// 		void saveChanges();
-// 
-// 	protected:
-// 		EntityView *_view = nullptr;
-// 	};
 
 }
 

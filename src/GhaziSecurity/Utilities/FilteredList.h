@@ -169,11 +169,12 @@ namespace GS
 	class AbstractFilteredList : public Wt::WTemplate
 	{
 	public:
+		virtual void load() override;
+		virtual void reload() = 0;
+		virtual void applyFilter(const std::string &sqlCondition) = 0;
 		void enableFilters();
 		void resetColumnWidths();
 		int viewIndexToColumn(int viewIndex) const;
-		virtual void reload() = 0;
-		virtual void applyFilter(const std::string &sqlCondition) = 0;
 		
 		Wt::WTableView *tableView() const { return _tableView; }
 		FiltersTemplate *filtersTemplate() const { return _filtersTemplate; }
@@ -181,9 +182,8 @@ namespace GS
 		Wt::WAbstractItemModel *proxyModel() const { return _proxyModel; }
 
 	protected:
-		AbstractFilteredList(Wt::WContainerWidget *parent = nullptr);
+		AbstractFilteredList();
 
-		void init();
 		virtual void initFilters() { }
 		virtual void initModel() = 0;
 		void addColumn(int viewIndex, int column, const Wt::WString &header, int width);
@@ -195,6 +195,9 @@ namespace GS
 		FiltersTemplate *_filtersTemplate = nullptr;
 		Wt::WAbstractItemModel *_model = nullptr;
 		Wt::WAbstractItemModel *_proxyModel = nullptr;
+
+	private:
+		void init();
 	};
 
 	template<typename T>
@@ -204,7 +207,7 @@ namespace GS
 		typedef typename T ResultType;
 		typedef Wt::Dbo::QueryModel<ResultType> QueryModelType;
 
-		QueryModelFilteredList(Wt::WContainerWidget *parent = nullptr) : AbstractFilteredList(parent) { }
+		QueryModelFilteredList() : AbstractFilteredList() { }
 		QueryModelType *queryModel() const { return dynamic_cast<QueryModelType*>(_model); }
 		virtual void reload() override;
 
@@ -220,7 +223,10 @@ namespace GS
 	{
 		try
 		{
-			queryModel()->reload();
+			if(loaded())
+				queryModel()->reload();
+			else
+				load();
 		}
 		catch(Wt::Dbo::Exception &e)
 		{

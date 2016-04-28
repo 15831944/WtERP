@@ -17,11 +17,9 @@ namespace GS
 #define TypeColumnWidth 80
 #define RolesColumnWidth 250
 
-	AllEntityList::AllEntityList(Wt::WContainerWidget *parent /*= nullptr*/)
-		: QueryModelFilteredList<ResultType>(parent)
-	{
-		init();
-	}
+	AllEntityList::AllEntityList()
+		: QueryModelFilteredList()
+	{ }
 
 	void AllEntityList::initFilters()
 	{
@@ -36,7 +34,10 @@ namespace GS
 		QueryModelType *model;
 		_model = model = new QueryModelType(this);
 
-		_baseQuery = APP->session().query<ResultType>("SELECT id, name, type, specificTypeMask FROM " + std::string(Entity::tableName()));
+		WApplication *app = APP;
+		_baseQuery = app->dboSession().query<ResultType>("SELECT id, name, type, specificTypeMask FROM " + std::string(Entity::tableName()));
+		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false);
+
 		Wt::Dbo::Query<ResultType> query(_baseQuery); //must copy the query first
 		model->setQuery(query);
 
@@ -48,11 +49,9 @@ namespace GS
 		_proxyModel = new EntityListProxyModel<Id>(_model, _model);
 	}
 
-	PersonList::PersonList(Wt::WContainerWidget *parent /*= nullptr*/)
-		: QueryModelFilteredList<ResultType>(parent)
-	{
-		init();
-	}
+	PersonList::PersonList()
+		: QueryModelFilteredList()
+	{ }
 
 	void PersonList::initFilters()
 	{
@@ -66,7 +65,10 @@ namespace GS
 		QueryModelType *model;
 		_model = model = new QueryModelType(this);
 
-		_baseQuery = APP->session().query<ResultType>("SELECT id, name, specificTypeMask FROM " + std::string(Entity::tableName())).where("type = ?").bind(Entity::PersonType);
+		WApplication *app = APP;
+		_baseQuery = app->dboSession().query<ResultType>("SELECT id, name, specificTypeMask FROM " + std::string(Entity::tableName())).where("type = ?").bind(Entity::PersonType);
+		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false);
+
 		Wt::Dbo::Query<ResultType> query(_baseQuery); //must copy the query first
 		model->setQuery(query);
 
@@ -77,11 +79,9 @@ namespace GS
 		_proxyModel = new EntityListProxyModel<Id>(_model, _model);
 	}
 
-	BusinessList::BusinessList(Wt::WContainerWidget *parent /*= nullptr*/)
-		: QueryModelFilteredList<ResultType>(parent)
-	{
-		init();
-	}
+	BusinessList::BusinessList()
+		: QueryModelFilteredList()
+	{ }
 
 	void BusinessList::initFilters()
 	{
@@ -95,7 +95,10 @@ namespace GS
 		QueryModelType *model;
 		_model = model = new QueryModelType(this);
 
-		_baseQuery = APP->session().query<ResultType>("SELECT id, name, specificTypeMask FROM " + std::string(Entity::tableName())).where("type = ?").bind(Entity::BusinessType);
+		WApplication *app = APP;
+		_baseQuery = app->dboSession().query<ResultType>("SELECT id, name, specificTypeMask FROM " + std::string(Entity::tableName())).where("type = ?").bind(Entity::BusinessType);
+		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false);
+
 		Wt::Dbo::Query<ResultType> query(_baseQuery); //must copy the query first
 		model->setQuery(query);
 
@@ -106,11 +109,9 @@ namespace GS
 		_proxyModel = new EntityListProxyModel<Id>(_model, _model);
 	}
 
-	EmployeeList::EmployeeList(Wt::WContainerWidget *parent /*= nullptr*/)
-		: QueryModelFilteredList<ResultType>(parent)
-	{
-		init();
-	}
+	EmployeeList::EmployeeList()
+		: QueryModelFilteredList()
+	{ }
 
 	void EmployeeList::initFilters()
 	{
@@ -124,8 +125,11 @@ namespace GS
 		QueryModelType *model;
 		_model = model = new QueryModelType(this);
 
-		_baseQuery = APP->session().query<ResultType>("SELECT id, name, specificTypeMask FROM " + std::string(Entity::tableName()))
+		WApplication *app = APP;
+		_baseQuery = app->dboSession().query<ResultType>("SELECT id, name, specificTypeMask FROM " + std::string(Entity::tableName()))
 			.where("type = ? AND specificTypeMask & ?").bind(Entity::PersonType).bind(Entity::EmployeeType);
+		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false);
+
 		Wt::Dbo::Query<ResultType> query(_baseQuery); //must copy the query first
 		model->setQuery(query);
 
@@ -136,11 +140,9 @@ namespace GS
 		_proxyModel = new EntityListProxyModel<Id>(_model, _model);
 	}
 
-	PersonnelList::PersonnelList(Wt::WContainerWidget *parent /*= nullptr*/)
-		: QueryModelFilteredList<ResultType>(parent)
-	{
-		init();
-	}
+	PersonnelList::PersonnelList()
+		: QueryModelFilteredList()
+	{ }
 
 	void PersonnelList::initFilters()
 	{
@@ -154,9 +156,12 @@ namespace GS
 		QueryModelType *model;
 		_model = model = new QueryModelType(this);
 
-		_baseQuery = APP->session().query<ResultType>("SELECT id, name, specificTypeMask FROM " + std::string(Entity::tableName()))
+		WApplication *app = APP;
+		_baseQuery = app->dboSession().query<ResultType>("SELECT id, name, specificTypeMask FROM " + std::string(Entity::tableName()))
 			.where("type = ? AND (specificTypeMask & ?) = ?")
 			.bind(Entity::PersonType).bind(Entity::EmployeeType | Entity::PersonnelType).bind(Entity::EmployeeType | Entity::PersonnelType);
+		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false);
+
 		Wt::Dbo::Query<ResultType> query(_baseQuery); //must copy the query first
 		model->setQuery(query);
 
@@ -167,18 +172,9 @@ namespace GS
 		_proxyModel = new EntityListProxyModel<Id>(_model, _model);
 	}
 
-	ClientList::ClientList(Wt::WContainerWidget *parent /*= nullptr*/)
-		: QueryModelFilteredList<ResultType>(parent)
-	{
-		init();
-		auto model = queryModel();
-		model->setHeaderData(Id, Wt::Horizontal, tr("ID"));
-		_tableView->setColumnWidth(Id, IdColumnWidth);
-		model->setHeaderData(Name, Wt::Horizontal, tr("Name"));
-		_tableView->setColumnWidth(Name, NameColumnWidth);
-		model->setHeaderData(SpecificTypeMask, Wt::Horizontal, tr("Roles"));
-		_tableView->setColumnWidth(SpecificTypeMask, RolesColumnWidth);
-	}
+	ClientList::ClientList()
+		: QueryModelFilteredList()
+	{ }
 
 	void ClientList::initFilters()
 	{
@@ -192,7 +188,10 @@ namespace GS
 		QueryModelType *model;
 		_model = model = new QueryModelType(this);
 
-		_baseQuery = APP->session().query<ResultType>("SELECT id, name, type, specificTypeMask FROM " + std::string(Entity::tableName())).where("specificTypeMask & ?").bind(Entity::ClientType);
+		WApplication *app = APP;
+		_baseQuery = app->dboSession().query<ResultType>("SELECT id, name, type, specificTypeMask FROM " + std::string(Entity::tableName())).where("specificTypeMask & ?").bind(Entity::ClientType);
+		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false);
+
 		Wt::Dbo::Query<ResultType> query(_baseQuery); //must copy the query first
 		model->setQuery(query);
 

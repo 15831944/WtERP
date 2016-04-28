@@ -1,5 +1,6 @@
 #include "Widgets/LocationMVC.h"
 #include "Widgets/EntityView.h"
+#include "Widgets/FindRecordEdit.h"
 #include "Application/WApplication.h"
 
 #include <Wt/WLineEdit>
@@ -10,73 +11,88 @@
 namespace GS
 {
 
-	const Wt::WFormModel::Field CountryView::codeField = "code";
-	const Wt::WFormModel::Field CountryView::nameField = "name";
+	const Wt::WFormModel::Field CountryFormModel::codeField = "code";
+	const Wt::WFormModel::Field CountryFormModel::nameField = "name";
 
-	CountryView::CountryView(Wt::WContainerWidget *parent /*= nullptr*/)
-		: Wt::WTemplateFormView(tr("GS.Admin.CountryView"), parent)
+	CountryFormModel::CountryFormModel(CountryView *view, Wt::Dbo::ptr<Country> countryPtr /*= Wt::Dbo::ptr<Country>()*/)
+		: RecordFormModel(view, countryPtr), _view(view)
 	{
-		_model = new Wt::WFormModel(this);
-		model()->addField(codeField);
-		model()->addField(nameField);
+		addField(codeField);
+		addField(nameField);
 
-		Wt::WLineEdit *code = new Wt::WLineEdit();
-		code->setMaxLength(3);
-		setFormWidget(codeField, code);
-		model()->setValidator(codeField, new CountryCodeValidator(true));
-		code->blurred().connect(std::bind([this]() {
-			updateModel(model());
-			model()->validateField(codeField);
-			updateView(model());
-		}));
-
-		Wt::WLineEdit *name = new Wt::WLineEdit();
-		name->setMaxLength(70);
-		setFormWidget(nameField, name);
-		auto nameValidator = new Wt::WLengthValidator(0, 70);
-		nameValidator->setMandatory(true);
-		model()->setValidator(nameField, nameValidator);
-
-		Wt::WPushButton *submit = new Wt::WPushButton(tr("Submit"));
-		submit->clicked().connect(this, &CountryView::submit);
-		bindWidget("submit", submit);
-
-		updateView(model());
+		if(_recordPtr)
+		{
+			TRANSACTION(APP);
+			setValue(codeField, Wt::WString::fromUTF8(_recordPtr->code));
+			setValue(nameField, Wt::WString::fromUTF8(_recordPtr->name));
+		}
 	}
 
-	void CountryView::submit()
+	Wt::WWidget *CountryFormModel::createFormWidget(Field field)
 	{
-		WApplication *app = WApplication::instance();
-		Wt::Dbo::Transaction t(app->session());
-
-		updateModel(model());
-		if(!model()->validate())
+		if(field == codeField)
 		{
-			updateView(model());
-			return;
+			Wt::WLineEdit *code = new Wt::WLineEdit();
+			code->setMaxLength(3);
+			CountryCodeValidator* validator = new CountryCodeValidator(true);
+			if(isRecordPersisted())
+				validator->setAllowedCode(_recordPtr->code);
+			setValidator(codeField, validator);
+			code->changed().connect(boost::bind(&AbstractRecordFormModel::validateUpdateField, this, codeField));
+			return code;
+		}
+		if(field == nameField)
+		{
+			Wt::WLineEdit *name = new Wt::WLineEdit();
+			name->setMaxLength(70);
+			auto nameValidator = new Wt::WLengthValidator(0, 70);
+			nameValidator->setMandatory(true);
+			setValidator(nameField, nameValidator);
+			return name;
+		}
+		return RecordFormModel::createFormWidget(field);
+	}
+
+	bool CountryFormModel::saveChanges()
+	{
+		if(!valid())
+			return false;
+
+		WApplication *app = APP;
+		TRANSACTION(app);
+
+		if(!_recordPtr)
+		{
+			_recordPtr = app->dboSession().add(new Country());
+			//_recordPtr.modify()->setCreatedByValues();
 		}
 
-		try
-		{
-			if(!_countryPtr)
-				_countryPtr = app->session().add(new Country());
+		_recordPtr.modify()->code = valueText(codeField).toUTF8();
+		_recordPtr.modify()->name = valueText(nameField).toUTF8();
 
-			_countryPtr.modify()->code = model()->valueText(codeField).toUTF8();
-			_countryPtr.modify()->name = model()->valueText(nameField).toUTF8();
+		if(app->countryQueryModel())
+			app->countryQueryModel()->reload();
 
-			if(app->countryQueryModel())
-				app->countryQueryModel()->reload();
+		t.commit();
 
-			t.commit();
+		app->dboSession().flush();
+		auto codeValidator = dynamic_cast<CountryCodeValidator*>(validator(nameField));
+		codeValidator->setAllowedCode(_recordPtr->code);
+		return true;
+	}
 
-			updateView(model());
-			submitted().emit();
-		}
-		catch(Wt::Dbo::Exception &e)
-		{
-			Wt::log("error") << "CountryView::submit(): Dbo error(" << e.code() << "): " << e.what();
-			app->showDbBackendError(e.code());
-		}
+	CountryView::CountryView(Wt::Dbo::ptr<Country> countryPtr)
+		: RecordFormView(tr("GS.Admin.CountryView")), _tempPtr(countryPtr)
+	{ }
+
+	CountryView::CountryView()
+		: RecordFormView(tr("GS.Admin.CountryView"))
+	{ }
+
+	void CountryView::init()
+	{
+		_model = new CountryFormModel(this, _tempPtr);
+		addFormModel("country", _model);
 	}
 
 	Wt::WValidator::Result CountryCodeValidator::validate(const Wt::WString &input) const
@@ -88,11 +104,14 @@ namespace GS
 		if(input.empty())
 			return baseResult;
 
+		if(!_allowedCode.empty() && input == _allowedCode)
+			return baseResult;
+
 		WApplication *app = WApplication::instance();
 		try
 		{
-			Wt::Dbo::Transaction t(app->session());
-			int rows = app->session().query<int>("SELECT COUNT(1) FROM " + std::string(Country::tableName())).where("code = ?").bind(input);
+			TRANSACTION(app);
+			int rows = app->dboSession().query<int>("SELECT COUNT(1) FROM " + std::string(Country::tableName())).where("code = ?").bind(input);
 			t.commit();
 
 			if(rows != 0)
@@ -108,71 +127,82 @@ namespace GS
 		return baseResult;
 	}
 
-	const Wt::WFormModel::Field CityView::countryField = "country";
-	const Wt::WFormModel::Field CityView::nameField = "name";
+	const Wt::WFormModel::Field CityFormModel::countryField = "country";
+	const Wt::WFormModel::Field CityFormModel::nameField = "name";
 
-	CityView::CityView(Wt::WContainerWidget *parent /*= nullptr*/)
-		: MyTemplateFormView(tr("GS.Admin.CityView"), parent)
+	CityFormModel::CityFormModel(CityView *view, Wt::Dbo::ptr<City> cityPtr /*= Wt::Dbo::ptr<City>()*/)
+		: RecordFormModel(view, cityPtr), _view(view)
 	{
-		_model = new Wt::WFormModel(this);
-		model()->addField(countryField);
-		model()->addField(nameField);
+		addField(countryField);
+		addField(nameField);
 
-		WApplication *app = WApplication::instance();
-		auto country = new ProxyModelComboBox<CountryProxyModel>(app->countryProxyModel());
-		setFormWidget(countryField, country);
-		auto countryValidator = new ProxyModelCBValidator<CountryProxyModel>(country);
-		countryValidator->setErrorString(tr("MustSelectCountry"));
-		model()->setValidator(countryField, countryValidator);
-		country->blurred().connect(boost::bind(&Wt::WComboBox::validate, country));
-
-		Wt::WLineEdit *name = new Wt::WLineEdit();
-		name->setMaxLength(70);
-		setFormWidget(nameField, name);
-		auto nameValidator = new Wt::WLengthValidator(0, 70);
-		nameValidator->setMandatory(true);
-		model()->setValidator(nameField, nameValidator);
-
-		Wt::WPushButton *submit = new Wt::WPushButton(tr("Submit"));
-		submit->clicked().connect(this, &CityView::submit);
-		bindWidget("submit", submit);
-
-		updateView(model());
+		if(_recordPtr)
+		{
+			TRANSACTION(APP);
+			setValue(countryField, _recordPtr->countryPtr);
+			setValue(nameField, Wt::WString::fromUTF8(_recordPtr->name));
+		}
 	}
 
-	void CityView::submit()
+	Wt::WWidget *CityFormModel::createFormWidget(Field field)
 	{
-		WApplication *app = WApplication::instance();
-		Wt::Dbo::Transaction t(app->session());
-
-		updateModel(model());
-		if(!model()->validate())
+		if(field = countryField)
 		{
-			updateView(model());
-			return;
+			auto country = new QueryProxyModelCB<CountryProxyModel>(APP->countryProxyModel());
+			auto countryValidator = new ProxyModelCBValidator<CountryProxyModel>(country);
+			countryValidator->setErrorString(Wt::WString::tr("MustSelectCountry"));
+			setValidator(countryField, countryValidator);
+			country->blurred().connect(boost::bind(&Wt::WComboBox::validate, country));
+			return country;
+		}
+		if(field = nameField)
+		{
+			Wt::WLineEdit *name = new Wt::WLineEdit();
+			name->setMaxLength(70);
+			auto nameValidator = new Wt::WLengthValidator(0, 70);
+			nameValidator->setMandatory(true);
+			setValidator(nameField, nameValidator);
+			return name;
+		}
+		return RecordFormModel::createFormWidget(field);
+	}
+
+	bool CityFormModel::saveChanges()
+	{
+		if(!valid())
+			return false;
+
+		WApplication *app = APP;
+		TRANSACTION(app);
+
+		if(!_recordPtr)
+		{
+			_recordPtr = app->dboSession().add(new City());
+			//_recordPtr.modify()->setCreatedByValues();
 		}
 
-		try
-		{
-			if(!_cityPtr)
-				_cityPtr = app->session().add(new City());
+		_recordPtr.modify()->countryPtr = boost::any_cast<Wt::Dbo::ptr<Country>>(value(countryField));
+		_recordPtr.modify()->name = valueText(nameField).toUTF8();
 
-			_cityPtr.modify()->countryPtr = boost::any_cast<Wt::Dbo::ptr<Country>>(model()->value(countryField));
-			_cityPtr.modify()->name = model()->valueText(nameField).toUTF8();
+		if(app->cityQueryModel())
+			app->cityQueryModel()->reload();
 
-			if(app->cityQueryModel())
-				app->cityQueryModel()->reload();
+		t.commit();
+		return true;
+	}
 
-			t.commit();
+	CityView::CityView(Wt::Dbo::ptr<City> cityPtr /*= Wt::Dbo::ptr<City>()*/)
+		: RecordFormView(tr("GS.Admin.CityView")), _tempPtr(cityPtr)
+	{ }
 
-			updateView(model());
-			submitted().emit();
-		}
-		catch(Wt::Dbo::Exception &e)
-		{
-			Wt::log("error") << "CityView::submit(): Dbo error(" << e.code() << "): " << e.what();
-			app->showDbBackendError(e.code());
-		}
+	CityView::CityView()
+		: RecordFormView(tr("GS.Admin.CityView"))
+	{ }
+
+	void CityView::init()
+	{
+		_model = new CityFormModel(this, _tempPtr);
+		addFormModel("city", _model);
 	}
 
 	CityFilterModel::CityFilterModel(Wt::WObject *parent)
@@ -251,83 +281,106 @@ namespace GS
 	}
 
 	//LocationModel
+	const Wt::WFormModel::Field LocationFormModel::entityField = "entity";
 	const Wt::WFormModel::Field LocationFormModel::countryField = "country";
 	const Wt::WFormModel::Field LocationFormModel::cityField = "city";
 	const Wt::WFormModel::Field LocationFormModel::addressField = "address";
 
 	LocationFormModel::LocationFormModel(LocationView *view, Wt::Dbo::ptr<Location> locationPtr /*= Wt::Dbo::ptr<Location>()*/)
-		: Wt::WFormModel(view), _view(view), _locationPtr(locationPtr)
+		: RecordFormModel(view, locationPtr), _view(view)
 	{
+		addField(entityField);
 		addField(countryField);
 		addField(cityField);
 		addField(addressField);
 
-		if(locationPtr)
+		if(_recordPtr)
 		{
-			setValue(countryField, locationPtr->countryPtr);
-			setValue(cityField, locationPtr->cityPtr);
-			setValue(addressField, Wt::WString::fromUTF8(locationPtr->address));
+			TRANSACTION(APP);
+			setValue(entityField, _recordPtr->entityPtr);
+			setValue(countryField, _recordPtr->countryPtr);
+			setValue(cityField, _recordPtr->cityPtr);
+			setValue(addressField, Wt::WString::fromUTF8(_recordPtr->address));
 		}
 	}
 
-	void LocationFormModel::saveChanges(Wt::Dbo::ptr<Location> &inputLocationPtr, Wt::Dbo::ptr<Entity> entityPtr)
+	Wt::WWidget *LocationFormModel::createFormWidget(Field field)
+	{
+		if(field == addressField)
+		{
+			auto addressEdit = new Wt::WLineEdit();
+			return addressEdit;
+		}
+		if(field == entityField)
+		{
+			auto w = new FindEntityEdit();
+			auto validator = new FindEntityValidator(w, false);
+			validator->setModifyPermissionRequired(true);
+			setValidator(entityField, validator);
+			return w;
+		}
+		return RecordFormModel::createFormWidget(field);
+	}
+
+	bool LocationFormModel::saveChanges()
 	{
 		if(!valid())
-			return;
+			return false;
 
 		WApplication *app = WApplication::instance();
-		Wt::Dbo::Transaction t(app->session());
+		TRANSACTION(app);
 
 		auto address = valueText(addressField).toUTF8();
 		auto countryPtr = boost::any_cast<Wt::Dbo::ptr<Country>>(value(countryField));
 		auto cityPtr = boost::any_cast<Wt::Dbo::ptr<City>>(value(cityField));
 
-		if(inputLocationPtr)
-			_locationPtr = inputLocationPtr;
-		else
+		if(!_recordPtr)
 		{
-			if(!_locationPtr)
-			{
-				if(address.empty() && !countryPtr && !cityPtr)
-					return;
+			if(address.empty() && !countryPtr && !cityPtr)
+				return false;
 
-				_locationPtr = app->session().add(new Location()); //TODO: modification restriction instead
-			}
+			_recordPtr = app->dboSession().add(new Location());
+			_recordPtr.modify()->setCreatedByValues();
 		}
 
-		_locationPtr.modify()->address = address;
-		_locationPtr.modify()->countryPtr = countryPtr;
-		_locationPtr.modify()->cityPtr = cityPtr;
-		_locationPtr.modify()->entityPtr = entityPtr;
-		t.commit();
+		_recordPtr.modify()->entityPtr = boost::any_cast<Wt::Dbo::ptr<Entity>>(value(entityField));
+		_recordPtr.modify()->address = address;
+		_recordPtr.modify()->countryPtr = countryPtr;
+		_recordPtr.modify()->cityPtr = cityPtr;
 
-		inputLocationPtr = _locationPtr;
+		t.commit();
+		return true;
 	}
 
 	//LocationView
-	LocationView::LocationView(Wt::Dbo::ptr<Location> locationPtr, Wt::WContainerWidget *parent)
-		: MyTemplateFormView(tr("GS.Admin.LocationView"), parent)
+	LocationView::LocationView(Wt::Dbo::ptr<Location> locationPtr)
+		: RecordFormView(tr("GS.Admin.LocationView")), _tempPtr(locationPtr)
 	{
+		bindEmpty("index");
+	}
+
+	void LocationView::init()
+	{
+		_model = new LocationFormModel(this, _tempPtr);
+		addFormModel("location", _model);
+
 		WApplication *app = WApplication::instance();
 		app->initCountryQueryModel();
 		app->initCityQueryModel();
-		_model = new LocationFormModel(this, locationPtr);
-		_cityProxyModel = new CityProxyModel(app->cityQueryModel(), this);
 
-		_countryCombo = new ProxyModelComboBox<CountryProxyModel>(app->countryProxyModel());
+		_countryCombo = new QueryProxyModelCB<CountryProxyModel>(app->countryProxyModel());
 		_countryCombo->changed().connect(this, &LocationView::handleCountryChanged);
 		setFormWidget(LocationFormModel::countryField, _countryCombo);
 
-		_cityCombo = new ProxyModelComboBox<CityProxyModel>(_cityProxyModel);
+		_cityProxyModel = new CityProxyModel(app->cityQueryModel(), this);
+		_cityCombo = new QueryProxyModelCB<CityProxyModel>(_cityProxyModel);
 		_cityCombo->changed().connect(this, &LocationView::handleCityChanged);
 		setFormWidget(LocationFormModel::cityField, _cityCombo);
+	}
 
-		_addressEdit = new Wt::WLineEdit();
-		setFormWidget(LocationFormModel::addressField, _addressEdit);
-
-		bindEmpty("index");
-
-		updateView(model());
+	void LocationView::updateView(Wt::WFormModel *model)
+	{
+		RecordFormView::updateView(model);
 		handleCountryChanged();
 	}
 
@@ -357,28 +410,28 @@ namespace GS
 
 	Wt::WDialog *LocationView::createAddCountryDialog()
 	{
-		updateModel(model());
 		Wt::WDialog *dialog = new Wt::WDialog(tr("AddCountry"), this);
 		dialog->setClosable(true);
 		dialog->setTransient(true);
 		dialog->rejectWhenEscapePressed(true);
+		dialog->setDeleteWhenHidden(true);
 		dialog->setWidth(Wt::WLength(500));
-		CountryView *countryView = new CountryView(dialog->contents());
+		CountryView *countryView = new CountryView();
+		dialog->contents()->addWidget(countryView);
 
 		dialog->finished().connect(std::bind([=](Wt::WDialog::DialogCode code) {
-			delete dialog;
 			if(code == Wt::WDialog::Rejected)
 			{
-				updateModel(model());
+				updateModel();
 				model()->setValue(LocationFormModel::countryField, Wt::Dbo::ptr<Country>());
-				updateView(model());
+				updateView();
 			}
 		}, std::placeholders::_1));
 
 		countryView->submitted().connect(std::bind([=]() {
-			updateModel(model());
+			updateModel();
 			model()->setValue(LocationFormModel::countryField, countryView->countryPtr());
-			updateView(model());
+			updateView();
 			dialog->accept();
 		}));
 
@@ -388,31 +441,33 @@ namespace GS
 
 	Wt::WDialog *LocationView::createAddCityDialog()
 	{
-		updateModel(model());
+		updateModel();
 		Wt::WDialog *dialog = new Wt::WDialog(tr("AddCity"), this);
 		dialog->setClosable(true);
 		dialog->setTransient(true);
 		dialog->rejectWhenEscapePressed(true);
+		dialog->setDeleteWhenHidden(true);
 		dialog->setWidth(Wt::WLength(500));
-		CityView *cityView = new CityView(dialog->contents());
+		CityView *cityView = new CityView();
+		dialog->contents()->addWidget(cityView);
 
 		dialog->finished().connect(std::bind([=](Wt::WDialog::DialogCode code) {
-			delete dialog;
 			if(code == Wt::WDialog::Rejected)
 			{
-				updateModel(model());
+				updateModel();
 				model()->setValue(LocationFormModel::cityField, Wt::Dbo::ptr<City>());
-				updateView(model());
+				updateView();
 			}
 		}, std::placeholders::_1));
 
-		cityView->model()->setValue(CityView::countryField, model()->value(LocationFormModel::countryField));
-		cityView->updateView(cityView->model());
+		cityView->model()->setValue(CityFormModel::countryField, model()->value(LocationFormModel::countryField));
+		cityView->updateView();
 		cityView->submitted().connect(std::bind([=]() {
-			updateModel(model());
+			updateModel();
+			TRANSACTION(APP);
 			model()->setValue(LocationFormModel::countryField, cityView->cityPtr()->countryPtr);
 			model()->setValue(LocationFormModel::cityField, cityView->cityPtr());
-			updateView(model());
+			updateView();
 			dialog->accept();
 		}));
 
@@ -420,18 +475,48 @@ namespace GS
 		return dialog;
 	}
 
-	LocationsContainer::LocationsContainer(LocationsManagerModel *model, Wt::WContainerWidget *parent)
-		: TemplateViewsContainer<LocationView, LocationFormModel>(parent), _model(model)
+#define IdColumnWidth 80
+#define AddressColumnWidth 500
+#define CountryColumnWidth 200
+#define CityColumnWidth 200
+#define EntityColumnWidth 250
+
+	LocationList::LocationList()
+		: QueryModelFilteredList()
+	{ }
+
+	void LocationList::initFilters()
 	{
-		for(size_t i = 0; i < _model->ptrVector().size() + 1; ++i)
-			addFieldWidget(i < _model->ptrVector().size() ? _model->ptrVector()[i] : Wt::Dbo::ptr<Location>());
+		filtersTemplate()->addFilterModel(new WLineEditFilterModel(tr("ID"), "l.id", std::bind(&FiltersTemplate::initIdEdit, std::placeholders::_1)));
+		filtersTemplate()->addFilterModel(new NameFilterModel(tr("Address"), "l.address")); filtersTemplate()->addFilter(2);
+		filtersTemplate()->addFilterModel(new NameFilterModel(tr("Country"), "cnt.name"));
+		filtersTemplate()->addFilterModel(new NameFilterModel(tr("City"), "city.name"));
+		filtersTemplate()->addFilterModel(new NameFilterModel(tr("Entity"), "e.name"));
 	}
 
-	void LocationsContainer::addFieldWidget(Wt::Dbo::ptr<Location> locationPtr /*= Wt::Dbo::ptr<Location>()*/)
+	void LocationList::initModel()
 	{
-		auto w = new LocationView(locationPtr);
-		addWidget(w);
-		w->bindInt("index", count());
+		QueryModelType *model;
+		_model = model = new QueryModelType(this);
+
+		WApplication *app = APP;
+		_baseQuery = app->dboSession().query<ResultType>(
+			"SELECT l.id, l.address, cnt.name cnt_name, city.name city_name, e.name e_name FROM " + std::string(Location::tableName()) + " l "
+			"LEFT JOIN " + Country::tableName() + " cnt ON cnt.code = l.country_code "
+			"LEFT JOIN " + City::tableName() + " city ON city.id = l.city_id "
+			"LEFT JOIN " + Entity::tableName() + " e ON e.id = l.entity_id ");
+		app->authLogin().setPermissionConditionsToQuery(_baseQuery, true, "l.");
+
+		Wt::Dbo::Query<ResultType> query(_baseQuery); //must copy the query first
+		model->setQuery(query);
+
+		addColumn(ViewId, model->addColumn("l.id"), tr("ID"), IdColumnWidth);
+		addColumn(ViewAddress, model->addColumn("l.address"), tr("Address"), AddressColumnWidth);
+		addColumn(ViewCountryName, model->addColumn("cnt.name cnt_name"), tr("Country"), CountryColumnWidth);
+		addColumn(ViewCityName, model->addColumn("city.name city_name"), tr("City"), CityColumnWidth);
+		addColumn(ViewEntityName, model->addColumn("e.name e_name"), tr("Entity"), EntityColumnWidth);
+
+		//_proxyModel = new LocationListProxyModel(_model, _model);
 	}
 
 }
