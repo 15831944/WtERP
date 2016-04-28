@@ -463,7 +463,15 @@ namespace GS
 
 	ContactNumbersManagerModel::ContactNumbersManagerModel(EntityView *view, PtrCollection collection)
 		: MultipleRecordModel(view, collection), _view(view)
-	{ }
+	{
+		const PtrVector &vec = boost::any_cast<PtrVector>(value(field));
+		if(vec.empty())
+		{
+			PtrVector newVec;
+			newVec.push_back(Wt::Dbo::ptr<Dbo>());
+			setValue(field, newVec);
+		}
+	}
 
 	RecordViewsContainer *ContactNumbersManagerModel::createFormWidget(Field f)
 	{
@@ -485,6 +493,7 @@ namespace GS
 		view->model()->setVisible(ContactNumberFormModel::entityField, false);
 		view->model()->setReadOnly(ContactNumberFormModel::entityField, true);
 		view->model()->setValue(ContactNumberFormModel::entityField, _view->entityPtr());
+		view->updateViewField(view->model(), ContactNumberFormModel::entityField);
 		return std::make_tuple(view, view->model());
 	}
 
@@ -493,7 +502,15 @@ namespace GS
 
 	LocationsManagerModel::LocationsManagerModel(EntityView *view, PtrCollection collection)
 		: MultipleRecordModel(view, collection), _view(view)
-	{ }
+	{
+		const PtrVector &vec = boost::any_cast<PtrVector>(value(field));
+		if(vec.empty())
+		{
+			PtrVector newVec;
+			newVec.push_back(Wt::Dbo::ptr<Dbo>());
+			setValue(field, newVec);
+		}
+	}
 
 	RecordViewsContainer *LocationsManagerModel::createFormWidget(Field f)
 	{
@@ -516,6 +533,7 @@ namespace GS
 		view->model()->setVisible(LocationFormModel::entityField, false);
 		view->model()->setReadOnly(LocationFormModel::entityField, true);
 		view->model()->setValue(LocationFormModel::entityField, _view->entityPtr());
+		view->updateViewField(view->model(), LocationFormModel::entityField);
 
 		return std::make_tuple(view, view->model());
 	}
@@ -626,7 +644,6 @@ namespace GS
 		bindWidget("add-employee", addEmployee);
 		if(_employeeModel)
 		{
-			addEmployee->hide();
 			addEmployee->disable();
 		}
 
@@ -635,7 +652,6 @@ namespace GS
 		bindWidget("add-personnel", addPersonnel);
 		if(_personnelModel)
 		{
-			addPersonnel->hide();
 			addPersonnel->disable();
 		}
 
@@ -645,10 +661,12 @@ namespace GS
 		if(entityPtr())
 		{
 			_expenseCycles = new EntityExpenseCycleList(entityPtr());
+			_expenseCycles->load();
 			bindWidget("expenseCycles", _expenseCycles);
 			setCondition("show-expenseCycles", _expenseCycles->queryModel()->rowCount() != 0);
 
 			_incomeCycles = new EntityIncomeCycleList(entityPtr());
+			_incomeCycles->load();
 			bindWidget("incomeCycles", _incomeCycles);
 			setCondition("show-incomeCycles", _incomeCycles->queryModel()->rowCount() != 0);
 		}
@@ -724,7 +742,6 @@ namespace GS
 
 		if(auto btn = resolveWidget("add-employee"))
 		{
-			btn->hide();
 			btn->disable();
 		}
 	}
@@ -741,7 +758,6 @@ namespace GS
 
 		if(auto btn = resolveWidget("add-personnel"))
 		{
-			btn->hide();
 			btn->disable();
 		}
 	}
@@ -877,11 +893,13 @@ namespace GS
 	ContactNumberFormModel::ContactNumberFormModel(ContactNumberView *view, Wt::Dbo::ptr<ContactNumber> countryPtr /*= Wt::Dbo::ptr<ContactNumber>()*/)
 		: RecordFormModel(view, countryPtr), _view(view)
 	{
+		addField(entityField);
 		addField(numberField);
 
 		if(_recordPtr)
 		{
 			TRANSACTION(APP);
+			setValue(entityField, _recordPtr->entityPtr);
 			setValue(numberField, Wt::WString::fromUTF8(_recordPtr->nationalNumber));
 		}
 	}
@@ -892,6 +910,14 @@ namespace GS
 		{
 			Wt::WLineEdit *number = new Wt::WLineEdit();
 			return number;
+		}
+		if(field == entityField)
+		{
+			auto w = new FindEntityEdit();
+			auto validator = new FindEntityValidator(w, false);
+			validator->setModifyPermissionRequired(true);
+			setValidator(entityField, validator);
+			return w;
 		}
 		return RecordFormModel::createFormWidget(field);
 	}
@@ -925,6 +951,7 @@ namespace GS
 			}
 		}
 
+		_recordPtr.modify()->entityPtr = boost::any_cast<Wt::Dbo::ptr<Entity>>(value(entityField));
 		_recordPtr.modify()->nationalNumber = number.toUTF8();
 
 		t.commit();

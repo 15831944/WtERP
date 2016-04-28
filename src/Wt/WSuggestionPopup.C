@@ -292,6 +292,8 @@ void WSuggestionPopup::modelLayoutChanged()
 
 void WSuggestionPopup::forEdit(WFormWidget *edit, WFlags<PopupTrigger> triggers)
 {
+	if(!edit)
+		return;
   if(Utils::indexOf(edits_, edit) != -1)
 	return;
 

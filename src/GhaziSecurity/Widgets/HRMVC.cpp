@@ -115,8 +115,8 @@ namespace GS
 
 	void EmployeeAssignmentView::updateView(Wt::WFormModel *model)
 	{
-		_model->updateEndDateValidator(false);
 		RecordFormView::updateView(model);
+		_model->updateEndDateValidator(false);
 	}
 
 	void EmployeeAssignmentView::updateModel(Wt::WFormModel *model)
@@ -148,20 +148,23 @@ namespace GS
 	}
 
 	EmployeeExpenseView::EmployeeExpenseView(bool isEmployeeAssignment)
-		: Wt::WTemplate(), _isEmployeeAssignment(isEmployeeAssignment)
+		: Wt::WTemplate(), SubmittableRecordWidget(this),
+		_isEmployeeAssignment(isEmployeeAssignment)
 	{
 		setTemplateText(_isEmployeeAssignment ? tr("GS.Admin.EmployeeExpenseView.Assignment") : tr("GS.Admin.EmployeeExpenseView.ExpenseCycle"));
 		init();
 	}
 
 	EmployeeExpenseView::EmployeeExpenseView(Wt::Dbo::ptr<EmployeeAssignment> employeeAssignmentPtr)
-		: Wt::WTemplate(tr("GS.Admin.EmployeeExpenseView.Assignment")), _isEmployeeAssignment(true), _tempAssignment(employeeAssignmentPtr)
+		: Wt::WTemplate(tr("GS.Admin.EmployeeExpenseView.Assignment")), SubmittableRecordWidget(this),
+		_isEmployeeAssignment(true), _tempAssignment(employeeAssignmentPtr)
 	{
 		init();
 	}
 
 	EmployeeExpenseView::EmployeeExpenseView(Wt::Dbo::ptr<ExpenseCycle> expenseCyclePtr)
-		: Wt::WTemplate(tr("GS.Admin.EmployeeExpenseView.ExpenseCycle")), _isEmployeeAssignment(false), _tempCycle(expenseCyclePtr)
+		: Wt::WTemplate(tr("GS.Admin.EmployeeExpenseView.ExpenseCycle")), SubmittableRecordWidget(this),
+		_isEmployeeAssignment(false), _tempCycle(expenseCyclePtr)
 	{
 		init();
 	}
@@ -172,6 +175,14 @@ namespace GS
 		{
 			_assignments = new Wt::WContainerWidget();
 			_cycles = new Wt::WContainerWidget();
+
+			auto addAssignmentBtn = new ShowEnabledButton(tr("AddEmployeeAssignment"));
+			addAssignmentBtn->clicked().connect(this, &EmployeeExpenseView::handleAddAssignment);
+			bindWidget("add-assignment", addAssignmentBtn);
+
+			auto addCycleBtn = new ShowEnabledButton(tr("AddRecurringExpense"));
+			addCycleBtn->clicked().connect(this, &EmployeeExpenseView::handleAddCycle);
+			bindWidget("add-cycle", addCycleBtn);
 
 			if(_isEmployeeAssignment)
 			{
@@ -201,19 +212,8 @@ namespace GS
 
 			bindWidget("assignments", _assignments);
 			bindWidget("cycles", _cycles);
-
-			auto addAssignment = new Wt::WPushButton(tr("AddEmployeeAssignment"));
-			addAssignment->clicked().connect(this, &EmployeeExpenseView::handleAddAssignment);
-			bindWidget("add-assignment", addAssignment);
-
-			if(_cycles->count() > 0)
-				bindEmpty("add-cycle");
-			else
-			{
-				auto addCycle = new Wt::WPushButton(tr("AddRecurringExpense"));
-				addCycle->clicked().connect(this, &EmployeeExpenseView::handleAddCycle);
-				bindWidget("add-cycle", addCycle);
-			}
+			addAssignmentBtn->setDisabled(!canAddAssignment());
+			addCycleBtn->setDisabled(!canAddCycle());
 		}
 
 		Wt::WTemplate::load();
@@ -255,7 +255,7 @@ namespace GS
 
 	void EmployeeExpenseView::handleAddCycle()
 	{
-		if(_cycles->count() > 0) //There can only be one expense cycle
+		if(!canAddCycle())
 			return;
 
 		addCycle(Wt::Dbo::ptr<ExpenseCycle>());
@@ -263,7 +263,7 @@ namespace GS
 
 	void EmployeeExpenseView::handleAddAssignment()
 	{
-		if(_cycles->count() == 0) //Multiple assignments only allowed if there is an expense cycle associated
+		if(!canAddAssignment())
 			return;
 
 		addAssignment(Wt::Dbo::ptr<EmployeeAssignment>());
@@ -299,6 +299,7 @@ namespace GS
 		}
 
 		_assignments->addWidget(newView);
+		resolveWidget("add-assignment")->setDisabled(!canAddAssignment());
 		return newView;
 	}
 
@@ -332,6 +333,7 @@ namespace GS
 		}
 
 		_cycles->addWidget(newView);
+		resolveWidget("add-cycle")->setDisabled(!canAddCycle());
 		return newView;
 	}
 

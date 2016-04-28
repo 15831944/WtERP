@@ -449,16 +449,16 @@ ${submitBtn class="btn-primary"}
 
 <!-- EmployeeExpenseView -->
 <message id="GS.Admin.EmployeeExpenseView.Assignment">
-${assignments}
-${add-assignment}
 ${cycles}
+${assignments}
 ${add-cycle}
+${add-assignment}
 </message>
 <message id="GS.Admin.EmployeeExpenseView.ExpenseCycle">
 ${cycles}
-${add-cycle}
 ${assignments}
 ${add-assignment}
+${add-cycle}
 </message>
 
 <!-- LocationView -->

@@ -19,8 +19,17 @@ namespace GS
 		QueryProxyModel(Wt::WObject *parent = nullptr) : Wt::WBatchEditProxyModel(parent) { }
 		int indexOf(const Result &result) const
 		{
-			auto proxyModel = this;
-			auto qryModel = queryModel();
+			auto thisModel = this;
+			auto srcModel = sourceModel();
+			auto qryModel = dynamic_cast<Wt::Dbo::QueryModel<Result>*>(srcModel);
+			Wt::WAbstractProxyModel *proxyModel = nullptr;
+			if(!qryModel)
+			{
+				proxyModel = dynamic_cast<Wt::WAbstractProxyModel*>(srcModel);
+				if(proxyModel)
+					qryModel = dynamic_cast<Wt::Dbo::QueryModel<Result>*>(proxyModel->sourceModel());
+			}
+
 			if(!qryModel)
 			{
 				Wt::log("error") << "QueryProxyModel::indexOf() called without a source QueryModel";
@@ -31,14 +40,25 @@ namespace GS
 			if(sourceRow == -1)
 				return sourceRow;
 
-			return proxyModel->mapFromSource(qryModel->index(sourceRow, 0)).row();
+			Wt::WModelIndex idx;
+			if(proxyModel)
+			{
+				//When there is a WSortFilterProxyModel between proxyModel and queryModel
+				//srcModel should be WSortFilterProxyModel
+				idx = proxyModel->mapFromSource(qryModel->index(sourceRow, 0));
+				idx = thisModel->mapFromSource(idx);
+			}
+			else
+				idx = thisModel->mapFromSource(qryModel->index(sourceRow, 0));
+
+			return idx.row();
 		}
 		const Result *resultRow(int proxyRow) const
 		{
 			if(proxyRow == -1)
 				return nullptr;
 
-			auto proxyModel = this;
+			auto thisModel = this;
 			auto qryModel = queryModel();
 			if(!qryModel)
 			{
@@ -46,7 +66,7 @@ namespace GS
 				return nullptr;
 			}
 
-			auto sourceIndex = proxyModel->mapToSource(proxyModel->index(proxyRow, 0));
+			auto sourceIndex = thisModel->mapToSource(thisModel->index(proxyRow, 0));
 			if(!sourceIndex.isValid())
 				return nullptr;
 
@@ -58,9 +78,9 @@ namespace GS
 			auto qryModel = dynamic_cast<Wt::Dbo::QueryModel<Result>*>(sourceModel());
 			if(!qryModel)
 			{
-				auto sortFilterModel = dynamic_cast<Wt::WSortFilterProxyModel*>(sourceModel());
-				if(sortFilterModel)
-					qryModel = dynamic_cast<Wt::Dbo::QueryModel<Result>*>(sortFilterModel->sourceModel());
+				auto proxyModel = dynamic_cast<Wt::WAbstractProxyModel*>(sourceModel());
+				if(proxyModel)
+					qryModel = dynamic_cast<Wt::Dbo::QueryModel<Result>*>(proxyModel->sourceModel());
 			}
 			return qryModel;
 		}

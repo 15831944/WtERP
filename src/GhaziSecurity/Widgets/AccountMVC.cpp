@@ -637,7 +637,9 @@ namespace GS
 			entityPtr = debitPtr->balOfEntityWPtr;
 
 		setValue(entityField, entityPtr);
-		setVisible(entityField, true);
+		if(entityPtr)
+			setVisible(entityField, true);
+
 		if(update)
 			_view->updateViewField(this, entityField);
 	}

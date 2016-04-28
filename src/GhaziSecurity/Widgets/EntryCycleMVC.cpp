@@ -352,8 +352,8 @@ namespace GS
 	//ENTRY CYCLE VIEW
 	void EntryCycleView::updateView(Wt::WFormModel *model)
 	{
-		EntryCycleFormModel::updateEndDateValidator(model, this, false);
 		RecordFormView::updateView(model);
+		EntryCycleFormModel::updateEndDateValidator(model, this, false);
 		handleIntervalChanged();
 	}
 

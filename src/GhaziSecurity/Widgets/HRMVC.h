@@ -74,11 +74,13 @@ namespace GS
 		ExpenseCycleView *cycleView(int index) const;
 
 	protected:
+		void handleMainViewSubmitted();
 		EmployeeAssignmentView *addAssignment(Wt::Dbo::ptr<EmployeeAssignment> employeeAssignmentPtr);
 		ExpenseCycleView *addCycle(Wt::Dbo::ptr<ExpenseCycle> expenseCyclePtr);
 		void handleAddCycle();
 		void handleAddAssignment();
-		void handleMainViewSubmitted();
+		bool canAddCycle() const { return _cycles->count() == 0; }
+		bool canAddAssignment() const { return _cycles->count() > 0; }
 
 		bool _isEmployeeAssignment;
 		Wt::Dbo::ptr<EmployeeAssignment> _tempAssignment;

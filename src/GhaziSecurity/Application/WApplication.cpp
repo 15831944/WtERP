@@ -337,6 +337,7 @@ void WApplication::handleInternalPathChanged(std::string path)
 						if(authLogin().checkRecordViewPermission(ptr.get()) == AuthLogin::Permitted)
 						{
 							EntityView *view = new EntityView(ptr);
+							view->load();
 							auto menuItem = _entitiesAdminPage->createMenuItemWrapped(view->viewName(), view->viewInternalPath(), view);
 						}
 						else
@@ -345,7 +346,7 @@ void WApplication::handleInternalPathChanged(std::string path)
 				}
 
 				//employee assignemnt view
-				id = getUsableIdFromPathPrefix(EmployeeAssignment::viewInternalPath(""), _entitiesAdminPage, EMPLOYEEASSIGNMENTS_PREFIX);
+				id = getUsableIdFromPathPrefix(EmployeeAssignment::viewInternalPath(""), _entitiesAdminPage, EMPLOYEES_PATHC "/" EMPLOYEEASSIGNMENTS_PREFIX);
 				if(id != -1)
 				{
 					Wt::Dbo::Transaction t(dboSession());
@@ -355,6 +356,7 @@ void WApplication::handleInternalPathChanged(std::string path)
 						if(authLogin().checkRecordViewPermission(ptr.get()) == AuthLogin::Permitted)
 						{
 							EmployeeExpenseView *view = new EmployeeExpenseView(ptr);
+							view->load();
 							auto menuItem = _entitiesAdminPage->createMenuItemWrapped(view->viewName(), view->viewInternalPath(), view);
 						}
 						else
@@ -373,6 +375,7 @@ void WApplication::handleInternalPathChanged(std::string path)
 						if(authLogin().checkRecordViewPermission(ptr.get()) == AuthLogin::Permitted)
 						{
 							AccountView *view = new AccountView(ptr);
+							view->load();
 							auto menuItem = _accountsAdminPage->createMenuItemWrapped(view->viewName(), view->viewInternalPath(), view);
 						}
 						else
@@ -391,6 +394,7 @@ void WApplication::handleInternalPathChanged(std::string path)
 						if(authLogin().checkRecordViewPermission(ptr.get()) == AuthLogin::Permitted)
 						{
 							AccountEntryView *view = new AccountEntryView(ptr);
+							view->load();
 							auto menuItem = _accountsAdminPage->createMenuItemWrapped(view->viewName(), view->viewInternalPath(), view);
 						}
 						else
@@ -409,6 +413,7 @@ void WApplication::handleInternalPathChanged(std::string path)
 						if(authLogin().checkRecordViewPermission(ptr.get()) == AuthLogin::Permitted)
 						{
 							IncomeCycleView *view = new IncomeCycleView(ptr);
+							view->load();
 							auto menuItem = _accountsAdminPage->createMenuItemWrapped(view->viewName(), view->viewInternalPath(), view);
 						}
 						else
@@ -427,6 +432,7 @@ void WApplication::handleInternalPathChanged(std::string path)
 						if(authLogin().checkRecordViewPermission(ptr.get()) == AuthLogin::Permitted)
 						{
 							EmployeeExpenseView *view = new EmployeeExpenseView(ptr);
+							view->load();
 							auto menuItem = _accountsAdminPage->createMenuItemWrapped(view->viewName(), view->viewInternalPath(), view);
 						}
 						else

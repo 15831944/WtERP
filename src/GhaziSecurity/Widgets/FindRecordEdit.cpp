@@ -53,7 +53,7 @@ namespace GS
 
 	template<class Value>
 	FindRecordEdit<Value>::FindRecordEdit()
-		: AbstractFindRecordEdit()
+		: AbstractFindRecordEdit(), _valueChanged(this)
 	{
 		setFormWidgetImpl(_lineEdit = new Wt::WLineEdit());
 		setImplementation(_containerTemplate = new FindRecordEditTemplate(_lineEdit));
@@ -575,6 +575,7 @@ namespace GS
 					   " "		//wordSeparators
 			}, parent)
 	{
+		setEditRole(Wt::DisplayRole);
 		setMaximumSize(Wt::WLength(), 300);
 		setFilterLength(3);
 		filterModel().connect(this, &FindEntitySuggestionPopup::handleFilterModel);
@@ -666,6 +667,7 @@ namespace GS
 					   " "		//wordSeparators
 			}, parent)
 	{
+		setEditRole(Wt::DisplayRole);
 		setMaximumSize(Wt::WLength(), 300);
 		setFilterLength(3);
 		filterModel().connect(this, &FindAccountSuggestionPopup::handleFilterModel);
@@ -745,6 +747,7 @@ namespace GS
 					   " "		//wordSeparators
 			}, parent)
 	{
+		setEditRole(Wt::DisplayRole);
 		setMaximumSize(600, 300);
 		setFilterLength(3);
 		filterModel().connect(this, &FindLocationSuggestionPopup::handleFilterModel);

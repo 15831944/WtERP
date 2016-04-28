@@ -76,7 +76,7 @@ namespace GS
 		t.commit();
 
 		app->dboSession().flush();
-		auto codeValidator = dynamic_cast<CountryCodeValidator*>(validator(nameField));
+		auto codeValidator = dynamic_cast<CountryCodeValidator*>(validator(codeField));
 		codeValidator->setAllowedCode(_recordPtr->code);
 		return true;
 	}
@@ -146,16 +146,16 @@ namespace GS
 
 	Wt::WWidget *CityFormModel::createFormWidget(Field field)
 	{
-		if(field = countryField)
+		if(field == countryField)
 		{
 			auto country = new QueryProxyModelCB<CountryProxyModel>(APP->countryProxyModel());
 			auto countryValidator = new ProxyModelCBValidator<CountryProxyModel>(country);
 			countryValidator->setErrorString(Wt::WString::tr("MustSelectCountry"));
 			setValidator(countryField, countryValidator);
-			country->blurred().connect(boost::bind(&Wt::WComboBox::validate, country));
+			country->changed().connect(boost::bind(&Wt::WComboBox::validate, country));
 			return country;
 		}
-		if(field = nameField)
+		if(field == nameField)
 		{
 			Wt::WLineEdit *name = new Wt::WLineEdit();
 			name->setMaxLength(70);
@@ -422,16 +422,16 @@ namespace GS
 		dialog->finished().connect(std::bind([=](Wt::WDialog::DialogCode code) {
 			if(code == Wt::WDialog::Rejected)
 			{
-				updateModel();
 				model()->setValue(LocationFormModel::countryField, Wt::Dbo::ptr<Country>());
-				updateView();
+				updateViewField(model(), LocationFormModel::countryField);
+				handleCountryChanged();
 			}
 		}, std::placeholders::_1));
 
 		countryView->submitted().connect(std::bind([=]() {
-			updateModel();
 			model()->setValue(LocationFormModel::countryField, countryView->countryPtr());
-			updateView();
+			updateViewField(model(), LocationFormModel::countryField);
+			handleCountryChanged();
 			dialog->accept();
 		}));
 
@@ -454,20 +454,20 @@ namespace GS
 		dialog->finished().connect(std::bind([=](Wt::WDialog::DialogCode code) {
 			if(code == Wt::WDialog::Rejected)
 			{
-				updateModel();
 				model()->setValue(LocationFormModel::cityField, Wt::Dbo::ptr<City>());
-				updateView();
+				updateViewField(model(), LocationFormModel::cityField);
 			}
 		}, std::placeholders::_1));
 
 		cityView->model()->setValue(CityFormModel::countryField, model()->value(LocationFormModel::countryField));
 		cityView->updateView();
 		cityView->submitted().connect(std::bind([=]() {
-			updateModel();
 			TRANSACTION(APP);
 			model()->setValue(LocationFormModel::countryField, cityView->cityPtr()->countryPtr);
 			model()->setValue(LocationFormModel::cityField, cityView->cityPtr());
-			updateView();
+			updateViewField(model(), LocationFormModel::countryField);
+			handleCountryChanged();
+			updateViewField(model(), LocationFormModel::cityField);
 			dialog->accept();
 		}));
 

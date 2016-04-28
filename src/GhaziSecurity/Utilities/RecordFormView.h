@@ -17,7 +17,7 @@ namespace GS
 	class SubmittableRecordWidget
 	{
 	public:
-		SubmittableRecordWidget() { }
+		SubmittableRecordWidget(Wt::WObject *parent = nullptr) : _submitted(parent) { }
 		virtual Wt::WString viewName() const { return Wt::WString::tr("Unknown"); }
 		virtual std::string viewInternalPath() const { return ""; }
 		virtual SubmittableRecordWidget *createFormView() { return nullptr; }
@@ -34,8 +34,8 @@ namespace GS
 	public:
 		typedef const char *ModelKey;
 
-		RecordFormView() : Wt::WTemplateFormView() { addFunction("fwId", &Wt::WTemplate::Functions::fwId); }
-		RecordFormView(const Wt::WString &text) : Wt::WTemplateFormView(text) { addFunction("fwId", &Wt::WTemplate::Functions::fwId); }
+		RecordFormView() : Wt::WTemplateFormView(), SubmittableRecordWidget(this) { addFunction("fwId", &Wt::WTemplate::Functions::fwId); }
+		RecordFormView(const Wt::WString &text) : Wt::WTemplateFormView(text), SubmittableRecordWidget(this) { addFunction("fwId", &Wt::WTemplate::Functions::fwId); }
 
 		virtual void load() override;
 		virtual bool updateViewValue(Wt::WFormModel *model, Wt::WFormModel::Field field, Wt::WWidget *edit) override;
@@ -101,7 +101,7 @@ namespace GS
 		ShowEnabledButton(const Wt::WString &text, Wt::WContainerWidget *parent = nullptr) : Wt::WPushButton(text, parent) { addStyleClass("hidden-print"); }
 
 	protected:
-		virtual void propagateSetEnabled(bool enabled) override { setHidden(enabled); }
+		virtual void propagateSetEnabled(bool enabled) override { setHidden(!enabled); }
 	};
 
 	//MODELS
@@ -257,6 +257,7 @@ namespace GS
 			if(!res->validate())
 				valid = false;
 		}
+		setValidation(field, Wt::WValidator::Result(valid ? Wt::WValidator::Valid : Wt::WValidator::Invalid));
 		return valid;
 	}
 
@@ -275,7 +276,7 @@ namespace GS
 		bool nothingSaved = true;
 		for(const auto &model : _modelVector)
 		{
-			if(model->isAllReadOnly() || !model->checkSubmitPermission())
+			if(model->isAllReadOnly() || model->checkSubmitPermission() != AuthLogin::Permitted)
 				continue;
 
 			if(model->saveChanges())
