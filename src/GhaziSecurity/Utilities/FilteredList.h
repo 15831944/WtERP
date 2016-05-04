@@ -8,6 +8,10 @@
 #include <Wt/WTemplate>
 #include <Wt/WLineEdit>
 
+#define IdColumnWidth 80
+#define DateColumnWidth 120
+#define DateTimeColumnWidth 150
+
 namespace GS
 {
 	class AbstractFilteredList;

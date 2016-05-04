@@ -419,9 +419,16 @@ namespace GS
 		WApplication *app = APP;
 		TRANSACTION(app);
 
-		Wt::WString requiredPrefix = Wt::WString::tr("FindAccountEditValuePrefix").arg(_findEdit->valuePtr()->name).arg(_findEdit->valuePtr().id());
-		if(!_findEdit->valuePtr() ||
-			_findEdit->lineEdit()->valueText().toUTF8().compare(0, requiredPrefix.toUTF8().length(), requiredPrefix.toUTF8()) != 0)
+		if(!_findEdit->valuePtr())
+		{
+			if(isMandatory())
+				return Result(Invalid, Wt::WString::tr("InvalidAccountSelectionMandatory"));
+			else
+				return Result(Invalid, Wt::WString::tr("InvalidAccountSelection"));
+		}
+
+		std::string requiredPrefixStr = Wt::WString::tr("FindAccountEditValuePrefix").arg(_findEdit->valuePtr()->name).arg(_findEdit->valuePtr().id()).toUTF8();
+		if(_findEdit->lineEdit()->valueText().toUTF8().compare(0, requiredPrefixStr.length(), requiredPrefixStr) != 0)
 		{
 			if(isMandatory())
 				return Result(Invalid, Wt::WString::tr("InvalidAccountSelectionMandatory"));

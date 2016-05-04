@@ -12,6 +12,7 @@
 		#define EMPLOYEES_PATHC "employees"
 			#define NEW_EMPLOYEEASSIGNMENT_PATHC "assign"
 			#define EMPLOYEEASSIGNMENTS_PREFIX "assignment-"
+			#define EMPLOYEEASSIGNMENTS_PATHC "assignments"
 		#define PERSONNEL_PATHC "personnel"
 		#define BUSINESSES_PATHC "businesses"
 		#define CLIENTS_PATHC "clients"

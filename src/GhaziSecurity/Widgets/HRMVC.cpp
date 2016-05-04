@@ -5,6 +5,7 @@
 #include <Wt/WTextArea>
 #include <Wt/WPushButton>
 #include <Wt/WDateEdit>
+#include <Wt/WTableView>
 
 namespace GS
 {
@@ -357,6 +358,144 @@ namespace GS
 				view->updateViewField(view->model(), EmployeeAssignmentFormModel::entityField);
 			}
 		}
+	}
+
+	EmployeeAssignmentListProxyModel::EmployeeAssignmentListProxyModel(Wt::WAbstractItemModel *model, Wt::WObject *parent /*= nullptr*/)
+		: Wt::WBatchEditProxyModel(parent)
+	{
+		setSourceModel(model);
+		addAdditionalColumns();
+	}
+
+	void EmployeeAssignmentListProxyModel::addAdditionalColumns()
+	{
+		int lastColumn = columnCount();
+
+		if(insertColumn(lastColumn))
+			_linkColumn = lastColumn;
+		else
+			_linkColumn = -1;
+	}
+
+	Wt::WFlags<Wt::ItemFlag> EmployeeAssignmentListProxyModel::flags(const Wt::WModelIndex &index) const
+	{
+		if(index.column() == _linkColumn)
+			return Wt::ItemIsXHTMLText;
+		return Wt::WBatchEditProxyModel::flags(index);
+	}
+
+	boost::any EmployeeAssignmentListProxyModel::headerData(int section, Wt::Orientation orientation /*= Wt::Horizontal*/, int role /*= Wt::DisplayRole*/) const
+	{
+		if(section == _linkColumn)
+		{
+			if(role == Wt::WidthRole)
+				return 40;
+			return Wt::WAbstractItemModel::headerData(section, orientation, role);
+		}
+
+		return Wt::WBatchEditProxyModel::headerData(section, orientation, role);
+	}
+
+	boost::any EmployeeAssignmentListProxyModel::data(const Wt::WModelIndex &idx, int role /*= Wt::DisplayRole*/) const
+	{
+		if(_linkColumn != -1 && idx.column() == _linkColumn)
+		{
+			if(role == Wt::DisplayRole)
+				return Wt::WString::tr("GS.LinkIcon");
+			else if(role == Wt::LinkRole)
+			{
+				const EmployeeAssignmentList::ResultType &res = dynamic_cast<Wt::Dbo::QueryModel<EmployeeAssignmentList::ResultType>*>(sourceModel())->resultRow(idx.row());
+				long long id = boost::get<EmployeeAssignmentList::ResId>(res);
+				return Wt::WLink(Wt::WLink::InternalPath, EmployeeAssignment::viewInternalPath(id));
+			}
+		}
+
+		boost::any viewIndexData = headerData(idx.column(), Wt::Horizontal, Wt::ViewIndexRole);
+		if(viewIndexData.empty())
+			return Wt::WBatchEditProxyModel::data(idx, role);
+		int viewIndex = boost::any_cast<int>(viewIndexData);
+
+		const EmployeeAssignmentList::ResultType &res = dynamic_cast<Wt::Dbo::QueryModel<EmployeeAssignmentList::ResultType>*>(sourceModel())->resultRow(idx.row());
+
+		if(viewIndex == EntryCycleList::ViewStartDate && role == Wt::DisplayRole)
+		{
+			const Wt::WDate &date = boost::get<EmployeeAssignmentList::ResStartDate>(res);
+			if(date.isValid() && date > Wt::WDate(boost::gregorian::day_clock::local_day()))
+				return Wt::WString::tr("XNotStarted").arg(boost::get<EmployeeAssignmentList::ResStartDate>(res).toString(Wt::WLocale::currentLocale().dateFormat()));
+		}
+
+		if(viewIndex == EntryCycleList::ViewEndDate && role == Wt::DisplayRole)
+		{
+			const Wt::WDate &date = boost::get<EmployeeAssignmentList::ResEndDate>(res);
+			if(date.isValid() && Wt::WDate(boost::gregorian::day_clock::local_day()) >= date)
+				return Wt::WString::tr("XEnded").arg(date.toString(Wt::WLocale::currentLocale().dateFormat()));
+		}
+
+		if(role == Wt::StyleClassRole)
+		{
+			const Wt::WDate &startDate = boost::get<EmployeeAssignmentList::ResStartDate>(res);
+			if(startDate.isValid() && startDate > Wt::WDate(boost::gregorian::day_clock::local_day()))
+				return "text-info";
+
+			const Wt::WDate &endDate = boost::get<EmployeeAssignmentList::ResEndDate>(res);
+			if(endDate.isValid() && Wt::WDate(boost::gregorian::day_clock::local_day()) >= endDate)
+				return "text-muted";
+		}
+
+		return Wt::WBatchEditProxyModel::data(idx, role);
+	}
+
+	EmployeeAssignmentList::EmployeeAssignmentList()
+		: QueryModelFilteredList()
+	{ }
+
+	void EmployeeAssignmentList::load()
+	{
+		bool ld = !loaded();
+		QueryModelFilteredList::load();
+
+		if(ld)
+		{
+			int timestampColumn = viewIndexToColumn(ViewCreatedOn);
+			if(timestampColumn != -1)
+				_tableView->sortByColumn(timestampColumn, Wt::DescendingOrder);
+		}
+	}
+
+	void EmployeeAssignmentList::initFilters()
+	{
+		filtersTemplate()->addFilterModel(new WLineEditFilterModel(tr("ID"), "a.id", std::bind(&FiltersTemplate::initIdEdit, std::placeholders::_1))); filtersTemplate()->addFilter(1);
+	}
+
+	void EmployeeAssignmentList::initModel()
+	{
+		QueryModelType *model;
+		_model = model = new QueryModelType(this);
+
+		WApplication *app = APP;
+		_baseQuery = app->dboSession().query<ResultType>(
+			"SELECT a.id a_id, a.timestamp, e.name e_name, a.startDate, a.endDate, cnt.name cnt_name, city.name city_name, l.address FROM "
+			+ std::string(EmployeeAssignment::tableName()) + " a "
+			"INNER JOIN " + Entity::tableName() + " e ON (e.id = a.entity_id) "
+			"LEFT JOIN " + Location::tableName() + " l ON (l.id = a.location_id) "
+			"LEFT JOIN " + Country::tableName() + " cnt ON (cnt.code = l.country_code) "
+			"LEFT JOIN " + City::tableName() + " city ON (city.id = l.city_id)");
+
+		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "a.");
+
+		Wt::Dbo::Query<ResultType> query(_baseQuery); //must copy the query first
+		model->setQuery(query);
+
+		addColumn(ViewId, model->addColumn("a.id a_id"), tr("ID"), IdColumnWidth);
+		addColumn(ViewCreatedOn, model->addColumn("a.timestamp"), tr("CreatedOn"), DateTimeColumnWidth);
+		addColumn(ViewEntity, model->addColumn("e.name e_name"), tr("Entity"), 200);
+		addColumn(ViewStartDate, model->addColumn("a.startDate"), tr("StartDate"), DateColumnWidth);
+		addColumn(ViewEndDate, model->addColumn("a.endDate"), tr("EndDate"), DateColumnWidth);
+		addColumn(ViewCountry, model->addColumn("cnt.name cnt_name"), tr("Country"), 150);
+		addColumn(ViewCity, model->addColumn("city.name city_name"), tr("City"), 150);
+		addColumn(ViewAddress, model->addColumn("l.address"), tr("Address"), 300);
+
+		_proxyModel = new EmployeeAssignmentListProxyModel(_model, _model);
 	}
 
 }

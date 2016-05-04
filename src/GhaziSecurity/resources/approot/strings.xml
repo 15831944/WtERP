@@ -287,8 +287,12 @@
 <!-- EmployeeAssignmentView -->
 <message id="AssignEmployee">Assign employee</message>
 <message id="AddEmployeeAssignment">Add employee assignment</message>
+<message id="AddAssignmentButtonLabel">Assign an employee to recurring expense</message>
+<message id="AddCycleButtonLabel">Add recurring expense for employee assignment</message>
 <message id="EmployeeAssignmentViewName">Employee Assignment #{1}</message>
 <message id="EmployeeAssignmentInfo">Employee Assignment Information</message>
+<message id="EmployeeAssignment">Employee assignment</message>
+<message id="EmployeeAssignments">Employee assignments</message>
 
 <!-- EntryCycles -->
 <message id="ExpenseCycleViewName">Recurring Expense #{1}: {2}</message>

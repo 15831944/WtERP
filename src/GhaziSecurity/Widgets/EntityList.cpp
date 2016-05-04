@@ -12,7 +12,6 @@
 namespace GS
 {
 
-#define IdColumnWidth 80
 #define NameColumnWidth 250
 #define TypeColumnWidth 80
 #define RolesColumnWidth 250

@@ -475,7 +475,6 @@ namespace GS
 		return dialog;
 	}
 
-#define IdColumnWidth 80
 #define AddressColumnWidth 500
 #define CountryColumnWidth 200
 #define CityColumnWidth 200

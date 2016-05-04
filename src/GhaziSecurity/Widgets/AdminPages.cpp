@@ -193,6 +193,16 @@ namespace GS
 
 		menu()->addSeparator();
 
+		auto assignmentsMenuItem = new Wt::WMenuItem(tr("EmployeeAssignments"));
+		assignmentsMenuItem->setPathComponent(EMPLOYEES_PATHC "/" EMPLOYEEASSIGNMENTS_PATHC);
+		EmployeeAssignmentList *assignmentList = new EmployeeAssignmentList();
+		assignmentList->enableFilters();
+		assignmentsMenuItem->setContents(new AdminPageContentWidget(assignmentsMenuItem->text(), assignmentList));
+		assignmentsMenuItem->triggered().connect(assignmentList, &EmployeeAssignmentList::reload);
+		menu()->addItem(assignmentsMenuItem);
+
+		menu()->addSeparator();
+
 		if(APP->authLogin().hasPermission(Permissions::CreateRecord))
 		{
 			_newEntityMenuItem = new Wt::WMenuItem(tr("AddNewX").arg(tr("entity")));

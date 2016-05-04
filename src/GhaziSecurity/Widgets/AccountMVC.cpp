@@ -17,11 +17,11 @@
 namespace GS
 {
 
-#define IdColumnWidth 80
 #define AccountNameColumnWidth 250
 #define BalanceColumnWidth 200
 #define EntityColumnWidth 200
 #define TypeColumnWidth 250
+#define AmountColumnWidth 100
 
 	AccountList::AccountList()
 		: QueryModelFilteredList<ResultType>()
@@ -156,10 +156,6 @@ namespace GS
 		return Wt::WBatchEditProxyModel::data(idx, role);
 	}
 
-#define TimestampColumnWidth 180
-#define DescriptionColumnWidth 400
-#define AmountColumnWidth 100
-
 	AccountEntryList::AccountEntryList(Wt::Dbo::ptr<Account> accountPtr)
 		: QueryModelFilteredList(), _accountPtr(accountPtr)
 	{ }
@@ -198,8 +194,8 @@ namespace GS
 		Wt::Dbo::Query<ResultType> query(_baseQuery); //must copy the query first
 		model->setQuery(query);
 
-		addColumn(ViewTimestamp, model->addColumn("e.timestamp"), tr("Timestamp"), TimestampColumnWidth);
-		addColumn(ViewDescription, model->addColumn("e.description"), tr("Description"), DescriptionColumnWidth);
+		addColumn(ViewTimestamp, model->addColumn("e.timestamp"), tr("Timestamp"), DateTimeColumnWidth);
+		addColumn(ViewDescription, model->addColumn("e.description"), tr("Description"), 400);
 		addColumn(ViewOppositeAccount, model->addColumn("e.amount"), tr("OppositeEntryAccount"), AccountNameColumnWidth);
 		addColumn(ViewDebitAmount, model->addColumn("e.debit_account_id"), tr("DebitRs"), AmountColumnWidth);
 		addColumn(ViewCreditAmount, model->addColumn("e.credit_account_id"), tr("CreditRs"), AmountColumnWidth);

@@ -449,8 +449,8 @@ ${submitBtn class="btn-primary"}
 
 <!-- EmployeeExpenseView -->
 <message id="GS.Admin.EmployeeExpenseView.Assignment">
-${cycles}
 ${assignments}
+${cycles}
 ${add-cycle}
 ${add-assignment}
 </message>

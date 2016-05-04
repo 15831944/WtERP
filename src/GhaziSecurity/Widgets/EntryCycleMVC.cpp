@@ -724,9 +724,6 @@ namespace GS
 		return RecordFormView::viewName();
 	}
 
-#define IdColumnWidth 80
-#define TimestampColumnWidth 160
-#define DateColumnWidth 130
 #define EntityColumnWidth 180
 #define AmountColumnWidth 200
 #define ExtraColumnWidth 180
@@ -802,7 +799,7 @@ namespace GS
 		model->setQuery(query);
 
 		addColumn(ViewId, model->addColumn("c.id"), tr("ID"), IdColumnWidth);
-		addColumn(ViewCreatedOn, model->addColumn("c.timestamp"), tr("CreatedOn"), TimestampColumnWidth);
+		addColumn(ViewCreatedOn, model->addColumn("c.timestamp"), tr("CreatedOn"), DateTimeColumnWidth);
 		addColumn(ViewEntity, model->addColumn("e.name"), tr("Entity"), EntityColumnWidth);
 		addColumn(ViewStartDate, model->addColumn("c.startDate"), tr("StartDate"), DateColumnWidth);
 		addColumn(ViewEndDate, model->addColumn("c.endDate"), tr("EndDate"), DateColumnWidth);
@@ -829,7 +826,7 @@ namespace GS
 		model->setQuery(query);
 
 		addColumn(EntryCycleList::ViewId, model->addColumn("c.id"), tr("ID"), IdColumnWidth);
-		addColumn(EntryCycleList::ViewCreatedOn, model->addColumn("c.timestamp"), tr("CreatedOn"), TimestampColumnWidth);
+		addColumn(EntryCycleList::ViewCreatedOn, model->addColumn("c.timestamp"), tr("CreatedOn"), DateTimeColumnWidth);
 		addColumn(EntryCycleList::ViewStartDate, model->addColumn("c.startDate"), tr("StartDate"), DateColumnWidth);
 		addColumn(EntryCycleList::ViewEndDate, model->addColumn("c.endDate"), tr("EndDate"), DateColumnWidth);
 		addColumn(EntryCycleList::ViewAmount, model->addColumn("c.amount"), tr("RecurringAmount"), AmountColumnWidth);
@@ -863,7 +860,7 @@ namespace GS
 		model->setQuery(query);
 
 		addColumn(ViewId, model->addColumn("c.id"), tr("ID"), IdColumnWidth);
-		addColumn(ViewCreatedOn, model->addColumn("c.timestamp"), tr("CreatedOn"), TimestampColumnWidth);
+		addColumn(ViewCreatedOn, model->addColumn("c.timestamp"), tr("CreatedOn"), DateTimeColumnWidth);
 		addColumn(ViewEntity, model->addColumn("e.name"), tr("Entity"), EntityColumnWidth);
 		addColumn(ViewStartDate, model->addColumn("c.startDate"), tr("StartDate"), DateColumnWidth);
 		addColumn(ViewEndDate, model->addColumn("c.endDate"), tr("EndDate"), DateColumnWidth);
@@ -890,7 +887,7 @@ namespace GS
 		model->setQuery(query);
 
 		addColumn(ExpenseCycleList::ViewId, model->addColumn("c.id"), tr("ID"), IdColumnWidth);
-		addColumn(ExpenseCycleList::ViewCreatedOn, model->addColumn("c.timestamp"), tr("CreatedOn"), TimestampColumnWidth);
+		addColumn(ExpenseCycleList::ViewCreatedOn, model->addColumn("c.timestamp"), tr("CreatedOn"), DateTimeColumnWidth);
 		addColumn(ExpenseCycleList::ViewStartDate, model->addColumn("c.startDate"), tr("StartDate"), DateColumnWidth);
 		addColumn(ExpenseCycleList::ViewEndDate, model->addColumn("c.endDate"), tr("EndDate"), DateColumnWidth);
 		addColumn(ExpenseCycleList::ViewAmount, model->addColumn("c.amount"), tr("RecurringAmount"), AmountColumnWidth);

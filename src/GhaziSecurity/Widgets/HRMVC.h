@@ -3,6 +3,7 @@
 
 #include "Dbo/Dbos.h"
 #include "Utilities/RecordFormView.h"
+#include "Utilities/FilteredList.h"
 
 namespace GS
 {
@@ -88,6 +89,32 @@ namespace GS
 		Wt::WContainerWidget *_assignments = nullptr;
 		Wt::WContainerWidget *_cycles = nullptr;
 		RecordFormView *_mainView = nullptr;
+	};
+
+	class EmployeeAssignmentListProxyModel : public Wt::WBatchEditProxyModel
+	{
+	public:
+		EmployeeAssignmentListProxyModel(Wt::WAbstractItemModel *model, Wt::WObject *parent = nullptr);
+		virtual boost::any data(const Wt::WModelIndex &idx, int role = Wt::DisplayRole) const override;
+		virtual boost::any headerData(int section, Wt::Orientation orientation = Wt::Horizontal, int role = Wt::DisplayRole) const override;
+		virtual Wt::WFlags<Wt::ItemFlag> flags(const Wt::WModelIndex &index) const override;
+
+	protected:
+		void addAdditionalColumns();
+		int _linkColumn = -1;
+	};
+
+	class EmployeeAssignmentList : public QueryModelFilteredList<boost::tuple<long long, Wt::WDateTime, std::string, Wt::WDate, Wt::WDate, std::string, std::string, std::string>>
+	{
+	public:
+		enum ResultColumns { ResId, ResTimestamp, ResEntityName, ResStartDate, ResEndDate, ResCountryName, ResCityName, ResAddress };
+		enum ViewColumns { ViewId, ViewCreatedOn, ViewEntity, ViewStartDate, ViewEndDate, ViewCountry, ViewCity, ViewAddress };
+		EmployeeAssignmentList();
+		virtual void load() override;
+
+	protected:
+		virtual void initFilters() override;
+		virtual void initModel() override;
 	};
 
 }
