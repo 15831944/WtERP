@@ -1,8 +1,6 @@
 #ifndef GS_ADMINPAGES_WIDGET_H
 #define GS_ADMINPAGES_WIDGET_H
 
-#include "Widgets/EntityView.h"
-
 #include <Wt/WTemplate>
 #include <Wt/WTabWidget>
 
@@ -53,6 +51,12 @@ namespace GS
 	protected:
 		Wt::WText *_title = nullptr;
 		Wt::WWidget *_content = nullptr;
+	};
+
+	class DashboardAdminPage : public AdminPageWidget
+	{
+	public:
+		DashboardAdminPage(Wt::WContainerWidget *parent = nullptr);
 	};
 
 	class EntitiesAdminPage : public AdminPageWidget

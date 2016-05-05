@@ -2,6 +2,7 @@
 #define GS_LISTFILTERMODEL_UTILITY_H
 
 #include "Application/WApplication.h"
+#include "Utilities/ReloadableWidget.h"
 
 #include <Wt/WObject>
 #include <Wt/WString>
@@ -170,11 +171,9 @@ namespace GS
 	};
 
 	//LIST MODEL
-	class AbstractFilteredList : public Wt::WTemplate
+	class AbstractFilteredList : public ReloadOnVisibleWidget<Wt::WTemplate>
 	{
 	public:
-		virtual void load() override;
-		virtual void reload() = 0;
 		virtual void applyFilter(const std::string &sqlCondition) = 0;
 		void enableFilters();
 		void resetColumnWidths();
@@ -201,7 +200,7 @@ namespace GS
 		Wt::WAbstractItemModel *_proxyModel = nullptr;
 
 	private:
-		void init();
+		virtual void init() override;
 	};
 
 	template<typename T>

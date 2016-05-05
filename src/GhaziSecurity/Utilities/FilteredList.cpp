@@ -146,8 +146,8 @@ namespace GS
 	}
 
 	AbstractFilteredList::AbstractFilteredList()
-		: Wt::WTemplate(tr("GS.FilteredListView"))
 	{
+		setTemplateText(tr("GS.FilteredListView"));
 		addFunction("tr", Wt::WTemplate::Functions::tr);
 
 		_tableView = new Wt::WTableView();
@@ -183,14 +183,6 @@ namespace GS
 				--diff;
 			}
 		}
-	}
-
-	void AbstractFilteredList::load()
-	{
-		if(!loaded())
-			init();
-
-		Wt::WTemplate::load();
 	}
 
 	void AbstractFilteredList::enableFilters()

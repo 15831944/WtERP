@@ -377,7 +377,6 @@ void WApplication::handleInternalPathChanged(std::string path)
 							AccountView *view = new AccountView(ptr);
 							view->load();
 							auto menuItem = _accountsAdminPage->createMenuItemWrapped(view->viewName(), view->viewInternalPath(), view);
-							menuItem->triggered().connect(view, &AccountView::reloadList);
 						}
 						else
 							_accountsAdminPage->setDeniedPermissionWidget();
@@ -472,16 +471,13 @@ void WApplication::lazyLoadVisitorWidgets()
 		return;
 
 	_mainVisitorTemplate = new Wt::WTemplate(Wt::WString::tr("GS.Main"), _mainStack);
-	_visitorStack = new Wt::WStackedWidget(_mainStack);
-	_mainVisitorTemplate->bindWidget("content", _visitorStack);
 
 	_visitorNavBar = new Wt::WNavigationBar();
 	_visitorNavBar->setTemplateText(Wt::WString::tr("GS.NavigationBar"));
 	_visitorNavBar->bindString("container-class", "container");
 	_visitorNavBar->setResponsive(true);
-	_visitorNavBar->addMenu(_visitorMenu = new Wt::WMenu(_visitorStack));
+	_visitorNavBar->addMenu(_visitorMenu = new Wt::WMenu(_visitorStack = new Wt::WStackedWidget()));
 	_visitorMenu->setInternalPathEnabled("/");
-	_mainVisitorTemplate->bindWidget("navigation", _visitorNavBar);
 
 	//Logo
 	Wt::WImage *logoImage = new Wt::WImage(Wt::WLink("images/logo.png"), Wt::WString::tr("GS.Logo.Alt"));
@@ -497,6 +493,9 @@ void WApplication::lazyLoadVisitorWidgets()
 	auto contactMenuItem = new Wt::WMenuItem(Wt::WString::tr("Contact"), new Wt::WText(Wt::WString::tr("Contact")));
 	contactMenuItem->setPathComponent("contact");
 	_visitorMenu->addItem(contactMenuItem);
+
+	_mainVisitorTemplate->bindWidget("content", _visitorStack);
+	_mainVisitorTemplate->bindWidget("navigation", _visitorNavBar);
 }
 
 void WApplication::lazyLoadAdminWidgets()
@@ -505,17 +504,14 @@ void WApplication::lazyLoadAdminWidgets()
 		return;
 
 	_mainAdminTemplate = new Wt::WTemplate(Wt::WString::tr("GS.Main"), _mainStack);
-	_adminStack = new Wt::WStackedWidget(_mainStack);
-	_mainAdminTemplate->bindWidget("content", _adminStack);
 
 	_adminNavBar = new Wt::WNavigationBar();
 	_adminNavBar->setTemplateText(Wt::WString::tr("GS.NavigationBar"));
 	_adminNavBar->addStyleClass("navbar-admin");
 	_adminNavBar->bindString("container-class", "container-fluid");
 	_adminNavBar->setResponsive(true);
-	_adminNavBar->addMenu(_adminMenu = new Wt::WMenu(_adminStack));
+	_adminNavBar->addMenu(_adminMenu = new Wt::WMenu(_adminStack = new Wt::WStackedWidget()));
 	_adminMenu->setInternalPathEnabled("/" ADMIN_PATHC "/");
-	_mainAdminTemplate->bindWidget("navigation", _adminNavBar);
 
 	auto logoutBtn = new Wt::WPushButton(Wt::WString::tr("LogoutButton"), Wt::XHTMLText);
 	logoutBtn->clicked().connect(&authLogin(), &Wt::Auth::Login::logout);
@@ -526,13 +522,7 @@ void WApplication::lazyLoadAdminWidgets()
 
 	//Admin page widgets
 	//Dashboard
-	AdminPageWidget *dashboardTemplate = new AdminPageWidget("");
-
-	auto overviewMenuItem = new Wt::WMenuItem(Wt::WString::tr("Overview"), new Wt::WText(Wt::WString::tr("Admin.OverviewPage")));
-	overviewMenuItem->setPathComponent("");
-	dashboardTemplate->menu()->addItem(overviewMenuItem);
-
-	auto dashboardMenuItem = new Wt::WMenuItem(Wt::WString::tr("Dashboard"), dashboardTemplate);
+	auto dashboardMenuItem = new Wt::WMenuItem(Wt::WString::tr("Dashboard"), new DashboardAdminPage());
 	dashboardMenuItem->setPathComponent("");
 	_adminMenu->addItem(dashboardMenuItem);
 
@@ -541,10 +531,13 @@ void WApplication::lazyLoadAdminWidgets()
 	entitiesMenuItem->setPathComponent(_entitiesAdminPage->basePathComponent());
 	_adminMenu->addItem(entitiesMenuItem);
 
-	//Entites
+	//Accounts
 	auto accountsMenuItem = new Wt::WMenuItem(Wt::WString::tr("FinancialRecords"), _accountsAdminPage = new AccountsAdminPage());
 	accountsMenuItem->setPathComponent(_accountsAdminPage->basePathComponent());
 	_adminMenu->addItem(accountsMenuItem);
+
+	_mainAdminTemplate->bindWidget("content", _adminStack);
+	_mainAdminTemplate->bindWidget("navigation", _adminNavBar);
 }
 
 void WApplication::initFindEntitySuggestion()

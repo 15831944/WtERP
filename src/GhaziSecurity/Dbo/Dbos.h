@@ -1321,6 +1321,7 @@ namespace GS
 		std::string name;
 		Type type = Asset;
 		Money balance() const { return Money(_balanceInCents, DEFAULT_CURRENCY); }
+		long long balanceInCents() const { return _balanceInCents; }
 
 		AccountEntryCollection debitEntryCollection;
 		AccountEntryCollection creditEntryCollection;

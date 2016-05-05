@@ -48,6 +48,9 @@
 <message id="Preview">Preview</message>
 <message id="Submit">Submit</message>
 <message id="Continue">Continue</message>
+<message id="Error">Error</message>
+<message id="Loading">Loading</message>
+<message id="Loading...">Loading...</message>
 
 <message id="AddNewX">Add new {1}</message>
 <message id="SelectFromList">Select from list</message>
@@ -126,8 +129,22 @@
 
 <!-- Admin Dashboard Pages -->
 <message id="Dashboard">Dashboard</message>
-<message id="Overview">Overview</message>
 <message id="Reports">Reports</message>
+
+<!-- Overview -->
+<message id="Overview">Overview</message>
+<message id="DatabaseOverview">Database Overview</message>
+<message id="CouldNotLoad">Could not load</message>
+<message id="TotalEntities">Total entities</message>
+<message id="TotalAccounts">Total accounts</message>
+<message id="EntityAccounts">Entity accounts</message>
+<message id="CustomAccounts">Custom accounts</message>
+<message id="CashAccountBalance">Cash account balance</message>
+<message id="ReceivablesBalance">Receivables balance</message>
+<message id="PayablesBalance">Payables balance</message>
+<message id="AssignedEmployees">Assigned employees</message>
+<message id="NActive">{1} active</message>
+<message id="NInactive">{2} inactive</message>
 
 <!-- Entities -->
 <message id="AllEntities">All entities</message>
@@ -322,10 +339,14 @@
 <message id="CreditRs">Credit (Rs.)</message>
 <message id="XDebit">{1} Debit</message>
 <message id="XCredit">{1} Credit</message>
+<message id="RsXDebit">Rs. {1}/= Debit</message>
+<message id="RsXCredit">Rs. {1}/= Credit</message>
 <message id="XProfit">{1} Profit</message>
 <message id="XLoss">{1} Loss</message>
 <message id="XReceivable">{1} Receivable</message>
 <message id="XPayable">{1} Payable</message>
+<message id="RsXReceivable">Rs. {1}/= Receivable</message>
+<message id="RsXPayable">Rs. {1}/= Payable</message>
 <message id="XExpense">{1} Expense</message>
 <message id="XIncome">{1} Income</message>
 

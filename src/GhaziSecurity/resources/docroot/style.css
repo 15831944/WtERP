@@ -279,6 +279,10 @@ width:550px;
 margin-bottom:40px;
 }
 
+.progress-bar-gs{
+min-width:3em;
+}
+
 @media print {
 .col-print-12 {width: 100%; margin-left:0px;}
 }

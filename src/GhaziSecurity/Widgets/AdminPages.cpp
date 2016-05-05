@@ -1,8 +1,10 @@
 #include "Widgets/AdminPages.h"
+#include "Widgets/EntityView.h"
 #include "Widgets/EntityList.h"
 #include "Widgets/AccountMVC.h"
 #include "Widgets/EntryCycleMVC.h"
 #include "Widgets/HRMVC.h"
+#include "Widgets/DashboardWidgets.h"
 
 #include <Wt/WNavigationBar>
 #include <Wt/WMenu>
@@ -137,6 +139,15 @@ namespace GS
 		bindWidget("content", _content);
 	}
 
+	DashboardAdminPage::DashboardAdminPage(Wt::WContainerWidget *parent /*= nullptr*/)
+		: AdminPageWidget("", parent)
+	{
+		auto overviewMenuItem = new Wt::WMenuItem(Wt::WString::tr("Overview"));
+		overviewMenuItem->setPathComponent("");
+		overviewMenuItem->setContents(new DashboardOverviewTemplate());
+		menu()->addItem(overviewMenuItem);
+	}
+
 	EntitiesAdminPage::EntitiesAdminPage(Wt::WContainerWidget *parent /*= nullptr*/)
 		: AdminPageWidget(ENTITIES_PATHC, parent)
 	{
@@ -145,7 +156,6 @@ namespace GS
 		AllEntityList *allEntityList = new AllEntityList();
 		allEntityList->enableFilters();
 		allEntitiesMenuItem->setContents(new AdminPageContentWidget(allEntitiesMenuItem->text(), allEntityList));
-		allEntitiesMenuItem->triggered().connect(allEntityList, &AllEntityList::reload);
 		menu()->addItem(allEntitiesMenuItem);
 
 		auto personsMenuItem = new Wt::WMenuItem(tr("Persons"));
@@ -153,7 +163,6 @@ namespace GS
 		PersonList *personList = new PersonList();
 		personList->enableFilters();
 		personsMenuItem->setContents(new AdminPageContentWidget(personsMenuItem->text(), personList));
-		personsMenuItem->triggered().connect(personList, &PersonList::reload);
 		menu()->addItem(personsMenuItem);
 
 		auto employeesMenuItem = new Wt::WMenuItem(tr("Employees"));
@@ -161,7 +170,6 @@ namespace GS
 		EmployeeList *employeeList = new EmployeeList();
 		employeeList->enableFilters();
 		employeesMenuItem->setContents(new AdminPageContentWidget(employeesMenuItem->text(), employeeList));
-		employeesMenuItem->triggered().connect(employeeList, &EmployeeList::reload);
 		menu()->addItem(employeesMenuItem);
 
 		auto personnelMenuItem = new Wt::WMenuItem(tr("Personnel"));
@@ -169,7 +177,6 @@ namespace GS
 		PersonnelList *personnelList = new PersonnelList();
 		personnelList->enableFilters();
 		personnelMenuItem->setContents(new AdminPageContentWidget(personnelMenuItem->text(), personnelList));
-		personnelMenuItem->triggered().connect(personnelList, &PersonnelList::reload);
 		menu()->addItem(personnelMenuItem);
 
 		auto businessesMenuItem = new Wt::WMenuItem(tr("Businesses"));
@@ -177,7 +184,6 @@ namespace GS
 		BusinessList *businessList = new BusinessList();
 		businessList->enableFilters();
 		businessesMenuItem->setContents(new AdminPageContentWidget(businessesMenuItem->text(), businessList));
-		businessesMenuItem->triggered().connect(businessList, &BusinessList::reload);
 		menu()->addItem(businessesMenuItem);
 
 		auto clientsMenuItem = new Wt::WMenuItem(tr("Clients"));
@@ -185,7 +191,6 @@ namespace GS
 		ClientList *clientList = new ClientList();
 		clientList->enableFilters();
 		clientsMenuItem->setContents(new AdminPageContentWidget(clientsMenuItem->text(), clientList));
-		clientsMenuItem->triggered().connect(clientList, &ClientList::reload);
 		menu()->addItem(clientsMenuItem);
 
 		menu()->addSeparator();
@@ -195,7 +200,6 @@ namespace GS
 		EmployeeAssignmentList *assignmentList = new EmployeeAssignmentList();
 		assignmentList->enableFilters();
 		assignmentsMenuItem->setContents(new AdminPageContentWidget(assignmentsMenuItem->text(), assignmentList));
-		assignmentsMenuItem->triggered().connect(assignmentList, &EmployeeAssignmentList::reload);
 		menu()->addItem(assignmentsMenuItem);
 
 		menu()->addSeparator();
@@ -230,7 +234,6 @@ namespace GS
 		AccountList *accountList = new AccountList();
 		accountList->enableFilters();
 		accountsMenuItem->setContents(new AdminPageContentWidget(accountsMenuItem->text(), accountList));
-		accountsMenuItem->triggered().connect(accountList, &AccountList::reload);
 		menu()->addItem(accountsMenuItem);
 
 		Wt::Dbo::ptr<Account> cashAccountPtr = app->accountsDatabase().findOrCreateCashAccount();
@@ -238,7 +241,6 @@ namespace GS
 		transactionsMenuItem->setPathComponent(ACCOUNT_PREFIX + boost::lexical_cast<std::string>(cashAccountPtr.id()));
 		AccountView *cashAccountView = new AccountView(cashAccountPtr);
 		transactionsMenuItem->setContents(new AdminPageContentWidget(transactionsMenuItem->text(), cashAccountView));
-		transactionsMenuItem->triggered().connect(cashAccountView, &AccountView::reloadList);
 		menu()->addItem(transactionsMenuItem);
 
 		auto recurringIncomesMenuItem = new Wt::WMenuItem(tr("RecurringIncomes"));
@@ -246,7 +248,6 @@ namespace GS
 		IncomeCycleList *incomeCycleList = new IncomeCycleList();
 		incomeCycleList->enableFilters();
 		recurringIncomesMenuItem->setContents(new AdminPageContentWidget(recurringIncomesMenuItem->text(), incomeCycleList));
-		recurringIncomesMenuItem->triggered().connect(incomeCycleList, &IncomeCycleList::reload);
 		menu()->addItem(recurringIncomesMenuItem);
 
 		auto recurringExpensesMenuItem = new Wt::WMenuItem(tr("RecurringExpenses"));
@@ -254,7 +255,6 @@ namespace GS
 		ExpenseCycleList *expenseCycleList = new ExpenseCycleList();
 		expenseCycleList->enableFilters();
 		recurringExpensesMenuItem->setContents(new AdminPageContentWidget(recurringExpensesMenuItem->text(), expenseCycleList));
-		recurringExpensesMenuItem->triggered().connect(expenseCycleList, &ExpenseCycleList::reload);
 		menu()->addItem(recurringExpensesMenuItem);
 
 		menu()->addSeparator();

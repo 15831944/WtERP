@@ -240,6 +240,50 @@ ${<filters-enabled>}${filters}${</filters-enabled>}
 ${table-view}
 </message>
 
+<!-- Overview -->
+<message id="GS.RecordCountTemplate.Block">
+<div class="row">
+	<div class="col-sm-2 col-xs-3">${tr:{1}}</div>
+	<div class="col-sm-10 col-xs-9">${{2}}</div>
+</div>
+</message>
+
+<message id="GS.RecordCountTemplate.ProgressBar">
+<div class="progress">
+	${progress-bar class="progress-bar progress-bar-gs"}
+</div>
+</message>
+<message id="GS.RecordCountTemplate.MultiProgressBar">
+<div class="progress">
+	${progress-bar class="progress-bar"}
+	${progress-bar-right class="progress-bar progress-bar-danger"}
+</div>
+</message>
+
+<message id="GS.Admin.Dashboard.Overview">
+<div class="page-header"><h1>${tr:Entities}</h1></div>
+
+${block:GS.RecordCountTemplate.Block TotalEntities totalEntities}
+${block:GS.RecordCountTemplate.Block Persons persons}
+${block:GS.RecordCountTemplate.Block Employees employees}
+${block:GS.RecordCountTemplate.Block AssignedEmployees assignedEmployees}
+${block:GS.RecordCountTemplate.Block Personnel personnel}
+${block:GS.RecordCountTemplate.Block Businesses businesses}
+${block:GS.RecordCountTemplate.Block Clients clients}
+
+<div class="page-header"><h1>${tr:FinancialRecords}</h1></div>
+
+${block:GS.RecordCountTemplate.Block TotalAccounts totalAccounts}
+${block:GS.RecordCountTemplate.Block EntityAccounts entityAccounts}
+<hr />
+${block:GS.RecordCountTemplate.Block RecurringIncomes recurringIncomes}
+${block:GS.RecordCountTemplate.Block RecurringExpenses recurringExpenses}
+<hr />
+${block:GS.RecordCountTemplate.Block CashAccountBalance cashAccount}
+${block:GS.RecordCountTemplate.Block ReceivablesBalance receivables}
+${block:GS.RecordCountTemplate.Block PayablesBalance payables}
+</message>
+
 <!-- EntityView -->
 <message id="GS.Admin.Entities.New">
 ${<type-selection>}

@@ -63,6 +63,7 @@ namespace GS
 			RegionalUser = 1002,
 		};
 	}
+
 }
 
 #endif 

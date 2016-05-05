@@ -285,10 +285,9 @@
  * WProgressBar
  */
 .progress {
-  width: 200px;
   vertical-align: middle;
   position: relative;
-  margin-bottom: 0px;
+  margin-bottom: 10px;
 }
 .progress .bar-label {
   position: absolute;
