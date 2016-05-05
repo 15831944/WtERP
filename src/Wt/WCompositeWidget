@@ -149,6 +149,7 @@ public:
   virtual void setSelectable(bool selectable);  
   virtual void doJavaScript(const std::string& js);
   virtual void propagateSetEnabled(bool enabled);
+  virtual void propagateSetVisible(bool visible);
 
   static WFormWidget *getFormWidget(WWidget *widget);
   WFormWidget* formWidgetImpl() { return fwImpl_; };

@@ -1057,6 +1057,8 @@ void WWebWidget::setHidden(bool hidden, const WAnimation& animation)
   if (canOptimizeUpdates() && (animation.empty() && hidden == isHidden()))
     return;
 
+  bool wasVisible = isVisible();
+
   flags_.set(BIT_HIDDEN, hidden);
   flags_.set(BIT_HIDDEN_CHANGED);
 
@@ -1067,6 +1069,13 @@ void WWebWidget::setHidden(bool hidden, const WAnimation& animation)
       transientImpl_ = new TransientImpl();
     transientImpl_->animation_ = animation;
   }
+
+  bool shouldBeVisible = !hidden;
+  if(shouldBeVisible && parent())
+	  shouldBeVisible = parent()->isVisible();
+
+  if(shouldBeVisible != wasVisible)
+	  propagateSetVisible(shouldBeVisible);
 
   WApplication::instance()
     ->session()->renderer().updateFormObjects(this, true);
@@ -1142,6 +1151,16 @@ void WWebWidget::propagateSetEnabled(bool enabled)
       WWidget *c = (*children_)[i];
       if (!c->isDisabled())
 	c->webWidget()->propagateSetEnabled(enabled);
+    }
+}
+
+void WWebWidget::propagateSetVisible(bool visible)
+{
+  if (children_)
+    for (unsigned i = 0; i < children_->size(); ++i) {
+      WWidget *c = (*children_)[i];
+      if (!c->isHidden())
+	c->webWidget()->propagateSetVisible(visible);
     }
 }
 
