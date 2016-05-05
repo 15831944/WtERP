@@ -70,9 +70,6 @@ namespace GS
 		menuItem->setPathComponent(pathComponent);
 		menu()->insertItem(index, menuItem);
 
-		if(AccountView *accountView = dynamic_cast<AccountView*>(contents))
-			menuItem->triggered().connect(accountView, &AccountView::reloadList);
-
 		return menuItem;
 	}
 

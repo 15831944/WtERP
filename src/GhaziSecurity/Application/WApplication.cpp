@@ -377,6 +377,7 @@ void WApplication::handleInternalPathChanged(std::string path)
 							AccountView *view = new AccountView(ptr);
 							view->load();
 							auto menuItem = _accountsAdminPage->createMenuItemWrapped(view->viewName(), view->viewInternalPath(), view);
+							menuItem->triggered().connect(view, &AccountView::reloadList);
 						}
 						else
 							_accountsAdminPage->setDeniedPermissionWidget();

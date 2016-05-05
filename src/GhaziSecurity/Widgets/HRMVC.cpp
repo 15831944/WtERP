@@ -15,6 +15,7 @@ namespace GS
 	const Wt::WFormModel::Field EmployeeAssignmentFormModel::endDateField = "endDate";
 	const Wt::WFormModel::Field EmployeeAssignmentFormModel::entityField = "entity";
 	const Wt::WFormModel::Field EmployeeAssignmentFormModel::locationField = "location";
+	const Wt::WFormModel::Field EmployeeAssignmentFormModel::expenseCycleField = "expenseCycle";
 
 	EmployeeAssignmentFormModel::EmployeeAssignmentFormModel(EmployeeAssignmentView *view, Wt::Dbo::ptr<EmployeeAssignment> employeeAssignmentPtr /*= Wt::Dbo::ptr<EmployeeAssignment>()*/)
 		: RecordFormModel(view, employeeAssignmentPtr), _view(view)
@@ -24,6 +25,7 @@ namespace GS
 		addField(endDateField);
 		addField(entityField);
 		addField(locationField);
+		addField(expenseCycleField);
 
 		if(_recordPtr)
 		{
@@ -33,6 +35,7 @@ namespace GS
 			setValue(endDateField, _recordPtr->endDate);
 			setValue(entityField, _recordPtr->entityPtr);
 			setValue(locationField, _recordPtr->locationPtr);
+			setValue(expenseCycleField, _recordPtr->expenseCyclePtr);
 		}
 	}
 
@@ -99,6 +102,9 @@ namespace GS
 		_recordPtr.modify()->endDate = boost::any_cast<Wt::WDate>(value(endDateField));
 		_recordPtr.modify()->entityPtr = boost::any_cast<Wt::Dbo::ptr<Entity>>(value(entityField));
 		_recordPtr.modify()->locationPtr = boost::any_cast<Wt::Dbo::ptr<Location>>(value(locationField));
+
+		const boost::any &expenseCycleVal = value(expenseCycleField);
+		_recordPtr.modify()->expenseCyclePtr = expenseCycleVal.empty() ? Wt::Dbo::ptr<ExpenseCycle>() : boost::any_cast<Wt::Dbo::ptr<ExpenseCycle>>(expenseCycleVal);
 
 		t.commit();
 		return true;
@@ -177,17 +183,18 @@ namespace GS
 			_assignments = new Wt::WContainerWidget();
 			_cycles = new Wt::WContainerWidget();
 
-			auto addAssignmentBtn = new ShowEnabledButton(tr("AddEmployeeAssignment"));
+			auto addAssignmentBtn = new ShowEnabledButton(tr("AddAssignmentButtonLabel"));
 			addAssignmentBtn->clicked().connect(this, &EmployeeExpenseView::handleAddAssignment);
 			bindWidget("add-assignment", addAssignmentBtn);
 
-			auto addCycleBtn = new ShowEnabledButton(tr("AddRecurringExpense"));
+			auto addCycleBtn = new ShowEnabledButton(tr("AddCycleButtonLabel"));
 			addCycleBtn->clicked().connect(this, &EmployeeExpenseView::handleAddCycle);
 			bindWidget("add-cycle", addCycleBtn);
 
 			if(_isEmployeeAssignment)
 			{
 				_mainView = addAssignment(_tempAssignment);
+				_mainView->load();
 				if(_tempAssignment)
 				{
 					TRANSACTION(APP);
@@ -198,6 +205,7 @@ namespace GS
 			else
 			{
 				_mainView = addCycle(_tempCycle);
+				_mainView->load();
 				if(_tempCycle)
 				{
 					TRANSACTION(APP);
@@ -278,28 +286,23 @@ namespace GS
 			if(ExpenseCycleView *cMainView = dynamic_cast<ExpenseCycleView*>(_mainView))
 			{
 				//_mainView->loaded() == true is asserted
-				newView->load();
-				newView->model()->setReadOnly(EmployeeAssignmentFormModel::entityField, true);
-
 				if(cMainView->model()->isRecordPersisted())
 				{
+					newView->load();
+					newView->model()->setValue(EmployeeAssignmentFormModel::expenseCycleField, cMainView->cyclePtr());
+
 					const boost::any &entityVal = cMainView->model()->value(EntryCycleFormModel::entityField);
 					if(!entityVal.empty())
-					{
-						if(Wt::Dbo::ptr<Entity> entityPtr = boost::any_cast<Wt::Dbo::ptr<Entity>>(entityVal))
-						{
-							WApplication *app = APP;
-							TRANSACTION(app);
-							newView->model()->setValue(EmployeeAssignmentFormModel::entityField, entityPtr);
-						}
-					}
-				}
+						newView->model()->setValue(EmployeeAssignmentFormModel::entityField, boost::any_cast<Wt::Dbo::ptr<Entity>>(entityVal));
 
-				newView->updateViewField(newView->model(), EmployeeAssignmentFormModel::entityField);
+					newView->updateViewField(newView->model(), EmployeeAssignmentFormModel::entityField);
+				}
 			}
 		}
 
 		_assignments->addWidget(newView);
+		if(_mainView)
+			newView->setDisabled(!canSubmitAdditionalViews());
 		resolveWidget("add-assignment")->setDisabled(!canAddAssignment());
 		return newView;
 	}
@@ -312,28 +315,21 @@ namespace GS
 			if(EmployeeAssignmentView *cMainView = dynamic_cast<EmployeeAssignmentView*>(_mainView))
 			{
 				//_mainView->loaded() == true is asserted
-				newView->load();
-				newView->model()->setReadOnly(EntryCycleFormModel::entityField, true);
-
 				if(cMainView->model()->isRecordPersisted())
 				{
+					newView->load();
 					const boost::any &entityVal = cMainView->model()->value(EmployeeAssignmentFormModel::entityField);
 					if(!entityVal.empty())
-					{
-						if(Wt::Dbo::ptr<Entity> entityPtr = boost::any_cast<Wt::Dbo::ptr<Entity>>(entityVal))
-						{
-							WApplication *app = APP;
-							TRANSACTION(app);
-							newView->model()->setValue(EntryCycleFormModel::entityField, entityPtr);
-						}
-					}
-				}
+						newView->model()->setValue(EntryCycleFormModel::entityField, boost::any_cast<Wt::Dbo::ptr<Entity>>(entityVal));
 
-				newView->updateViewField(newView->model(), EntryCycleFormModel::entityField);
+					newView->updateViewField(newView->model(), EntryCycleFormModel::entityField);
+				}
 			}
 		}
 
 		_cycles->addWidget(newView);
+		if(_mainView)
+			newView->setDisabled(!canSubmitAdditionalViews());
 		resolveWidget("add-cycle")->setDisabled(!canAddCycle());
 		return newView;
 	}
@@ -345,17 +341,18 @@ namespace GS
 			for(int i = 0; i < _cycles->count(); ++i)
 			{
 				auto view = dynamic_cast<ExpenseCycleView*>(_cycles->widget(i));
-				view->model()->setValue(EntryCycleFormModel::entityField, _mainView->model()->value(EmployeeAssignmentFormModel::entityField));
-				view->updateViewField(view->model(), EntryCycleFormModel::entityField);
+				view->setDisabled(!canSubmitAdditionalViews());
 			}
 		}
 		else
 		{
+			auto cMainView = dynamic_cast<ExpenseCycleView*>(_mainView);
 			for(int i = 0; i < _assignments->count(); ++i)
 			{
 				auto view = dynamic_cast<EmployeeAssignmentView*>(_assignments->widget(i));
-				view->model()->setValue(EmployeeAssignmentFormModel::entityField, _mainView->model()->value(EntryCycleFormModel::entityField));
+				view->model()->setValue(EmployeeAssignmentFormModel::expenseCycleField, cMainView->cyclePtr());
 				view->updateViewField(view->model(), EmployeeAssignmentFormModel::entityField);
+				view->setDisabled(!canSubmitAdditionalViews());
 			}
 		}
 	}

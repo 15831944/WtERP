@@ -18,6 +18,7 @@ namespace GS
 		static const Field endDateField;
 		static const Field entityField;
 		static const Field locationField;
+		static const Field expenseCycleField;
 
 		EmployeeAssignmentFormModel(EmployeeAssignmentView *view, Wt::Dbo::ptr<EmployeeAssignment> employeeAssignmentPtr = Wt::Dbo::ptr<EmployeeAssignment>());
 		virtual Wt::WWidget *createFormWidget(Wt::WFormModel::Field field) override;
@@ -41,7 +42,7 @@ namespace GS
 		using RecordFormView::updateModel;
 
 		virtual Wt::WString viewName() const override;
-		virtual std::string viewInternalPath() const override { return employeeAssignmentPtr() && employeeAssignmentPtr()->entityPtr ? EmployeeAssignment::viewInternalPath(employeeAssignmentPtr()->entityPtr.id()) : ""; }
+		virtual std::string viewInternalPath() const override { return employeeAssignmentPtr() && employeeAssignmentPtr()->entityPtr ? EmployeeAssignment::viewInternalPath(employeeAssignmentPtr().id()) : ""; }
 		virtual RecordFormView *createFormView() override { return new EmployeeAssignmentView(); }
 
 		Wt::Dbo::ptr<EmployeeAssignment> employeeAssignmentPtr() const { return _model->recordPtr(); }
@@ -80,8 +81,10 @@ namespace GS
 		ExpenseCycleView *addCycle(Wt::Dbo::ptr<ExpenseCycle> expenseCyclePtr);
 		void handleAddCycle();
 		void handleAddAssignment();
+
 		bool canAddCycle() const { return _cycles->count() == 0; }
 		bool canAddAssignment() const { return _cycles->count() > 0; }
+		bool canSubmitAdditionalViews() const { return _mainView->model()->isRecordPersisted(); }
 
 		bool _isEmployeeAssignment;
 		Wt::Dbo::ptr<EmployeeAssignment> _tempAssignment;
