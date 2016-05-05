@@ -1,5 +1,5 @@
-#ifndef GS_POSITION_MVC_H
-#define GS_POSITION_MVC_H
+#ifndef GS_ENTRYCYCLE_MVC_H
+#define GS_ENTRYCYCLE_MVC_H
 
 #include "Dbo/Dbos.h"
 #include "Utilities/QueryProxyMVC.h"

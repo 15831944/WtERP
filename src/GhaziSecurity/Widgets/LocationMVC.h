@@ -1,5 +1,5 @@
-#ifndef GS_COUNTRYCITYVIEWS_WIDGET_H
-#define GS_COUNTRYCITYVIEWS_WIDGET_H
+#ifndef GS_LOCATION_MVC_H
+#define GS_LOCATION_MVC_H
 
 #include "Dbo/Dbos.h"
 #include "Utilities/QueryProxyMVC.h"

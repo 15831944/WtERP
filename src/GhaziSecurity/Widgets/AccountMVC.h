@@ -1,5 +1,5 @@
-#ifndef GS_ACCOUNTLIST_WIDGET_H
-#define GS_ACCOUNTLIST_WIDGET_H
+#ifndef GS_ACCOUNT_MVC_H
+#define GS_ACCOUNT_MVC_H
 
 #include "Dbo/Dbos.h"
 #include "Utilities/FilteredList.h"

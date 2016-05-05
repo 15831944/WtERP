@@ -1,5 +1,5 @@
-#ifndef GS_HRMVC_WIDGET_H
-#define GS_HRMVC_WIDGET_H
+#ifndef GS_HR_MVC_H
+#define GS_HR_MVC_H
 
 #include "Dbo/Dbos.h"
 #include "Utilities/RecordFormView.h"
