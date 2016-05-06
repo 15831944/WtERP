@@ -5,10 +5,12 @@
 
 #define ADMIN_PATHC "admin"
 
-	#define SYSTEM_PATHC "system"
-		#define ATTENDANCEDEVICES_PATHC "attendance-devices"
-			#define NEW_ATTENDANCEDEVICE_PATHC "new"
+	#define ATTENDANCE_PATHC "attendance"
+		#define ATTENDANCEDEVICES_PATHC "devices"
+			#define NEW_ATTENDANCEDEVICE_PATHC "add"
 			#define ATTENDANCEDEVICE_PREFIX "device-"
+		#define NEW_ATTENDANCEENTRY_PATHC "new-entry"
+		#define ATTENDANCEENTRY_PREFIX "entry-"
 
 	#define ENTITIES_PATHC "entities"
 		#define ENTITY_PREFIX "entity-"

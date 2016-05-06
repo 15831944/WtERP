@@ -1,4 +1,5 @@
 #include "Dbos.h"
+#include "Application/WServer.h"
 #include "Application/WApplication.h"
 #include <boost/filesystem/path.hpp>
 
@@ -55,6 +56,7 @@ namespace GS
 		dboSession.mapClass<ExpenseCycle>(ExpenseCycle::tableName());
 		dboSession.mapClass<UploadedFile>(UploadedFile::tableName());
 		dboSession.mapClass<AttendanceDevice>(AttendanceDevice::tableName());
+		dboSession.mapClass<AttendanceEntry>(AttendanceEntry::tableName());
 	}
 	
 	std::string UploadedFile::pathToFile() const
@@ -66,7 +68,7 @@ namespace GS
 
 	std::string UploadedFile::pathToDirectory() const
 	{
-		auto result = boost::filesystem::path(APP->appRoot()) / "uploads" / boost::lexical_cast<std::string>(entityPtr.id());
+		auto result = boost::filesystem::path(SERVER->appRoot()) / "uploads" / boost::lexical_cast<std::string>(entityPtr.id());
 		return result.string();
 	}
 

@@ -250,11 +250,9 @@ namespace GS
 		if(field == startDateField)
 		{
 			auto startDateEdit = new Wt::WDateEdit();
-			startDateEdit->setPlaceholderText(Wt::WLocale::currentLocale().dateFormat());
-			auto startDateValidator = new Wt::WDateValidator();
-			startDateValidator->setMandatory(true);
-			startDateValidator->setBottom(Wt::WDate(boost::gregorian::day_clock::local_day()));
-			model->setValidator(EntryCycleFormModel::startDateField, startDateValidator);
+			startDateEdit->validator()->setMandatory(true);
+			startDateEdit->validator()->setBottom(Wt::WDate(boost::gregorian::day_clock::local_day()));
+			model->setValidator(EntryCycleFormModel::startDateField, startDateEdit->validator());
 			startDateEdit->changed().connect(boost::bind(&EntryCycleFormModel::updateEndDateValidator, model, view, true));
 			return startDateEdit;
 		}

@@ -11,6 +11,7 @@
 #include "Widgets/LocationMVC.h"
 #include "Widgets/EntryCycleMVC.h"
 #include "Widgets/HRMVC.h"
+#include "Widgets/AttendanceMVC.h"
 #include "Widgets/AuthWidget.h"
 
 #include <Wt/WNavigationBar>
@@ -439,6 +440,44 @@ void WApplication::handleInternalPathChanged(std::string path)
 							_accountsAdminPage->setDeniedPermissionWidget();
 					}
 				}
+
+				//attendance entry view
+				id = getUsableIdFromPathPrefix(AttendanceEntry::viewInternalPath(""), _attendanceAdminPage, ATTENDANCEENTRY_PREFIX);
+				if(id != -1)
+				{
+					Wt::Dbo::Transaction t(dboSession());
+					Wt::Dbo::ptr<AttendanceEntry> ptr = dboSession().load<AttendanceEntry>(id, true);
+					if(ptr)
+					{
+						if(authLogin().checkRecordViewPermission(ptr.get()) == AuthLogin::Permitted)
+						{
+							AttendanceEntryView *view = new AttendanceEntryView(ptr);
+							view->load();
+							auto menuItem = _attendanceAdminPage->createMenuItemWrapped(view->viewName(), view->viewInternalPath(), view);
+						}
+						else
+							_attendanceAdminPage->setDeniedPermissionWidget();
+					}
+				}
+
+				//attendance device view
+				id = getUsableIdFromPathPrefix(AttendanceDevice::viewInternalPath(""), _attendanceAdminPage, ATTENDANCEDEVICES_PATHC "/" ATTENDANCEDEVICE_PREFIX);
+				if(id != -1)
+				{
+					Wt::Dbo::Transaction t(dboSession());
+					Wt::Dbo::ptr<AttendanceDevice> ptr = dboSession().load<AttendanceDevice>(id, true);
+					if(ptr)
+					{
+						if(authLogin().checkRecordViewPermission(ptr.get()) == AuthLogin::Permitted)
+						{
+							AttendanceDeviceView *view = new AttendanceDeviceView(ptr);
+							view->load();
+							auto menuItem = _attendanceAdminPage->createMenuItemWrapped(view->viewName(), view->viewInternalPath(), view);
+						}
+						else
+							_attendanceAdminPage->setDeniedPermissionWidget();
+					}
+				}
 			}
 			catch(Wt::Dbo::Exception &e)
 			{
@@ -522,9 +561,8 @@ void WApplication::lazyLoadAdminWidgets()
 
 	//Admin page widgets
 	//Dashboard
-	auto dashbaordAdminPage = new DashboardAdminPage();
-	auto dashboardMenuItem = new Wt::WMenuItem(Wt::WString::tr("Dashboard"), dashbaordAdminPage);
-	dashboardMenuItem->setPathComponent(dashbaordAdminPage->basePathComponent());
+	auto dashboardMenuItem = new Wt::WMenuItem(Wt::WString::tr("Dashboard"), _dashboardAdminPage = new DashboardAdminPage());
+	dashboardMenuItem->setPathComponent(_dashboardAdminPage->basePathComponent());
 	_adminMenu->addItem(dashboardMenuItem);
 
 	//Entites
@@ -538,9 +576,8 @@ void WApplication::lazyLoadAdminWidgets()
 	_adminMenu->addItem(accountsMenuItem);
 
 	//System
-	auto systemAdminPage = new SystemAdminPage();
-	auto systemMenuItem = new Wt::WMenuItem(Wt::WString::tr("System"), systemAdminPage);
-	systemMenuItem->setPathComponent(systemAdminPage->basePathComponent());
+	auto systemMenuItem = new Wt::WMenuItem(Wt::WString::tr("System"), _attendanceAdminPage = new AttendanceAdminPage());
+	systemMenuItem->setPathComponent(_attendanceAdminPage->basePathComponent());
 	_adminMenu->addItem(systemMenuItem);
 
 	_mainAdminTemplate->bindWidget("content", _adminStack);

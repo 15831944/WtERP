@@ -5,6 +5,7 @@
 #include "Widgets/AccountMVC.h"
 
 #include <Wt/WDateEdit>
+#include <Wt/WTimeEdit>
 #include <Wt/WComboBox>
 #include <Wt/WPushButton>
 
@@ -23,6 +24,15 @@ namespace GS
 				dateEdit->setDate(Wt::WDate());
 			else
 				dateEdit->setDate(boost::any_cast<Wt::WDate>(v));
+			return true;
+		}
+		if(auto timeEdit = dynamic_cast<Wt::WTimeEdit*>(edit))
+		{
+			const boost::any &v = model->value(field);
+			if(v.empty())
+				timeEdit->setTime(Wt::WTime());
+			else
+				timeEdit->setTime(boost::any_cast<Wt::WTime>(v));
 			return true;
 		}
 		if(auto proxyModelComboBox = dynamic_cast<AbstractQueryProxyModelCB*>(edit))
@@ -92,6 +102,11 @@ namespace GS
 		if(auto dateEdit = dynamic_cast<Wt::WDateEdit*>(edit))
 		{
 			model->setValue(field, dateEdit->date());
+			return true;
+		}
+		if(auto timeEdit = dynamic_cast<Wt::WTimeEdit*>(edit))
+		{
+			model->setValue(field, timeEdit->time());
 			return true;
 		}
 		if(auto findRecordEdit = dynamic_cast<AbstractFindRecordEdit*>(edit))

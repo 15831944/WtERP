@@ -14,6 +14,8 @@ namespace GS
 {
 	class CountryProxyModel;
 	class EntitiesAdminPage;
+	class DashboardAdminPage;
+	class AttendanceAdminPage;
 	class PositionProxyModel;
 	class ServiceProxyModel;
 	class AccountsAdminPage;
@@ -158,8 +160,10 @@ namespace GS
 		Wt::WDialog *_passwordPromptDialog = nullptr;
 		Wt::WTemplate *_deniedPermissionWidget = nullptr;
 
+		DashboardAdminPage *_dashboardAdminPage = nullptr;
 		EntitiesAdminPage *_entitiesAdminPage = nullptr;
 		AccountsAdminPage *_accountsAdminPage = nullptr;
+		AttendanceAdminPage *_attendanceAdminPage = nullptr;
 
 		Wt::WDialog *_errorDialog = nullptr;
 		Wt::WText *_errorDialogText = nullptr;

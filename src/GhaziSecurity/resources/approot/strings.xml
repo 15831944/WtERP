@@ -3,8 +3,8 @@
 
 <!-- Date and number formatting -->
 <message id="DateFormat">dd/MM/yyyy</message>
-<message id="TimeFormat">h:mm AP</message>
-<message id="DateTimeFormat">dd/MM/yyyy, h:mm AP</message>
+<message id="TimeFormat">hh:mm AP</message>
+<message id="DateTimeFormat">dd/MM/yyyy, hh:mm AP</message>
 <message id="DecimalPoint">.</message>
 <message id="GroupSeparator">,</message>
 
@@ -63,6 +63,8 @@
 
 <!-- Date time related -->
 <message id="Timestamp">Time stamp</message>
+<message id="TimeIn">Time in</message>
+<message id="TimeOut">Time out</message>
 <message id="StartingDate">Starting date</message>
 <message id="StartDate">Start date</message>
 <message id="CreatedOn">Created on</message>
@@ -154,6 +156,13 @@
 <message id="AttendanceDevice">Attendance device</message>
 <message id="AttendanceDevices">Attendance devices</message>
 <message id="AttendanceDeviceInfo">Attendance Device Information</message>
+
+<!-- AttendanceEntryView -->
+<message id="AttendanceEntryViewName">Attendance Entry #{1}: {2}</message>
+<message id="CreateAttendanceEntry">Create attendance entry</message>
+<message id="AttendanceEntry">Attendance device</message>
+<message id="AttendanceEntries">Attendance devices</message>
+<message id="AttendanceEntryInfo">Attendance Entry Information</message>
 
 <!-- Entities -->
 <message id="AllEntities">All entities</message>

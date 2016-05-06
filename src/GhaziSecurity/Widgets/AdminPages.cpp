@@ -326,9 +326,16 @@ namespace GS
 // 		submittedEntityItem->select();
 // 	}
 
-	SystemAdminPage::SystemAdminPage(Wt::WContainerWidget *parent /*= nullptr*/)
-		: AdminPageWidget(SYSTEM_PATHC, parent)
+	AttendanceAdminPage::AttendanceAdminPage(Wt::WContainerWidget *parent /*= nullptr*/)
+		: AdminPageWidget(ATTENDANCE_PATHC, parent)
 	{
+		auto attendanceEntriesMenuItem = new Wt::WMenuItem(Wt::WString::tr("AttendanceEntries"));
+		attendanceEntriesMenuItem->setPathComponent("");
+		AttendanceEntryList *attendanceEntryList = new AttendanceEntryList();
+		attendanceEntryList->enableFilters();
+		attendanceEntriesMenuItem->setContents(new AdminPageContentWidget(attendanceEntriesMenuItem->text(), attendanceEntryList));
+		menu()->addItem(attendanceEntriesMenuItem);
+
 		auto attendanceDevicesMenuItem = new Wt::WMenuItem(Wt::WString::tr("AttendanceDevices"));
 		attendanceDevicesMenuItem->setPathComponent(ATTENDANCEDEVICES_PATHC);
 		AttendanceDeviceList *attendanceDeviceList = new AttendanceDeviceList();
@@ -337,6 +344,12 @@ namespace GS
 		menu()->addItem(attendanceDevicesMenuItem);
 
 		menu()->addSeparator();
+
+		auto newAttendanceEntryMenuItem = new Wt::WMenuItem(Wt::WString::tr("CreateAttendanceEntry"));
+		newAttendanceEntryMenuItem->setPathComponent(NEW_ATTENDANCEENTRY_PATHC);
+		newAttendanceEntryMenuItem->setContents(new AdminPageContentWidget(newAttendanceEntryMenuItem->text(), new AttendanceEntryView()));
+		connectFormSubmitted(newAttendanceEntryMenuItem);
+		menu()->addItem(newAttendanceEntryMenuItem);
 
 		auto newAttendanceDeviceMenuItem = new Wt::WMenuItem(Wt::WString::tr("AddAttendanceDevice"));
 		newAttendanceDeviceMenuItem->setPathComponent(ATTENDANCEDEVICES_PATHC "/" NEW_ATTENDANCEDEVICE_PATHC);

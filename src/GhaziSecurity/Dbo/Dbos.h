@@ -88,6 +88,7 @@ namespace GS
 
 	class UploadedFile;
 	class AttendanceDevice;
+	class AttendanceEntry;
 
 	typedef Wt::Dbo::collection<Wt::Dbo::ptr<Entity>> EntityCollection;
 	typedef Wt::Dbo::collection<Wt::Dbo::ptr<Person>> PersonCollection;
@@ -129,6 +130,7 @@ namespace GS
 	typedef Wt::Dbo::collection<Wt::Dbo::ptr<PettyExpenditureInfo>> PettyExpenditureInfoCollection;
 	typedef Wt::Dbo::collection<Wt::Dbo::ptr<UploadedFile>> UploadedFileCollection;
 	typedef Wt::Dbo::collection<Wt::Dbo::ptr<AttendanceDevice>> AttendanceDeviceCollection;
+	typedef Wt::Dbo::collection<Wt::Dbo::ptr<AttendanceEntry>> AttendanceEntryCollection;
 }
 
 namespace Wt
@@ -553,6 +555,7 @@ namespace GS
 		IncomeCycleCollection incomeCycleCollection;
 		ExpenseCycleCollection expenseCycleCollection;
 		EmployeeAssignmentCollection employeeAssignmentCollection;
+		AttendanceEntryCollection attendanceCollection;
 
 		template<class Action>
 		void persist(Action& a)
@@ -576,6 +579,7 @@ namespace GS
 			Wt::Dbo::hasMany(a, incomeCycleCollection, Wt::Dbo::ManyToOne, "entity");
 			Wt::Dbo::hasMany(a, expenseCycleCollection, Wt::Dbo::ManyToOne, "entity");
 			Wt::Dbo::hasMany(a, employeeAssignmentCollection, Wt::Dbo::ManyToOne, "entity");
+			Wt::Dbo::hasMany(a, attendanceCollection, Wt::Dbo::ManyToOne, "entity");
 
 			BaseAdminRecord::persist(a);
 		}
@@ -904,6 +908,7 @@ namespace GS
 		AssetCollection assetCollection;
 		RentHouseCollection rentHouseCollection;
 		AttendanceDeviceCollection attendanceDeviceCollection;
+		AttendanceEntryCollection attendanceCollection;
 
 		template<class Action>
 		void persist(Action& a)
@@ -919,6 +924,7 @@ namespace GS
 			Wt::Dbo::hasMany(a, assetCollection, Wt::Dbo::ManyToOne, "location");
 			Wt::Dbo::hasMany(a, rentHouseCollection, Wt::Dbo::ManyToOne, "location");
 			Wt::Dbo::hasMany(a, attendanceDeviceCollection, Wt::Dbo::ManyToOne, "location");
+			Wt::Dbo::hasMany(a, attendanceCollection, Wt::Dbo::ManyToOne, "location");
 
 			BaseAdminRecord::persist(a);
 		}
@@ -1628,19 +1634,51 @@ namespace GS
 		std::string hostName;
 		Wt::Dbo::ptr<Location> locationPtr;
 
-		static std::string newInternalPath() { return "/" ADMIN_PATHC "/" SYSTEM_PATHC "/" ATTENDANCEDEVICES_PATHC "/" NEW_ATTENDANCEDEVICE_PATHC; }
+		AttendanceEntryCollection attendanceCollection;
+
+		static std::string newInternalPath() { return "/" ADMIN_PATHC "/" ATTENDANCE_PATHC "/" ATTENDANCEDEVICES_PATHC "/" NEW_ATTENDANCEDEVICE_PATHC; }
 		static std::string viewInternalPath(long long id) { return viewInternalPath(boost::lexical_cast<std::string>(id)); }
-		static std::string viewInternalPath(const std::string idStr) { return "/" ADMIN_PATHC "/" SYSTEM_PATHC "/" ATTENDANCEDEVICES_PATHC "/" ATTENDANCEDEVICE_PREFIX + idStr; }
+		static std::string viewInternalPath(const std::string idStr) { return "/" ADMIN_PATHC "/" ATTENDANCE_PATHC "/" ATTENDANCEDEVICES_PATHC "/" ATTENDANCEDEVICE_PREFIX + idStr; }
 
 		template<class Action>
 		void persist(Action& a)
 		{
 			Wt::Dbo::field(a, hostName, "hostName", 255);
 			Wt::Dbo::belongsTo(a, locationPtr, "location", Wt::Dbo::OnDeleteSetNull | Wt::Dbo::OnUpdateCascade);
+
+			Wt::Dbo::hasMany(a, attendanceCollection, Wt::Dbo::ManyToOne, "attendancedevice");
 		}
 		constexpr static const char *tableName()
 		{
 			return "attendancedevice";
+		}
+	};
+
+	class AttendanceEntry
+	{
+	public:
+		Wt::WDateTime timestampIn;
+		Wt::WDateTime timestampOut;
+		Wt::Dbo::ptr<Entity> entityPtr;
+		Wt::Dbo::ptr<AttendanceDevice> attendanceDevicePtr;
+		Wt::Dbo::ptr<Location> locationPtr;
+
+		static std::string newInternalPath() { return "/" ADMIN_PATHC "/" ATTENDANCE_PATHC "/" NEW_ATTENDANCEENTRY_PATHC; }
+		static std::string viewInternalPath(long long id) { return viewInternalPath(boost::lexical_cast<std::string>(id)); }
+		static std::string viewInternalPath(const std::string idStr) { return "/" ADMIN_PATHC "/" ATTENDANCE_PATHC "/" ATTENDANCEENTRY_PREFIX + idStr; }
+
+		template<class Action>
+		void persist(Action& a)
+		{
+			Wt::Dbo::field(a, timestampIn, "timestampIn");
+			Wt::Dbo::field(a, timestampOut, "timestampOut");
+			Wt::Dbo::belongsTo(a, entityPtr, "entity", Wt::Dbo::OnDeleteCascade | Wt::Dbo::OnUpdateCascade | Wt::Dbo::NotNull);
+			Wt::Dbo::belongsTo(a, attendanceDevicePtr, "attendancedevice", Wt::Dbo::OnDeleteSetNull | Wt::Dbo::OnUpdateCascade);
+			Wt::Dbo::belongsTo(a, locationPtr, "location", Wt::Dbo::OnDeleteSetNull | Wt::Dbo::OnUpdateCascade);
+		}
+		constexpr static const char *tableName()
+		{
+			return "attendanceentry";
 		}
 	};
 
