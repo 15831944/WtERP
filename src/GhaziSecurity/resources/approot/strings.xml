@@ -39,6 +39,7 @@
 <message id="Remarks">Remarks</message>
 
 <!-- General -->
+<message id="System">System</message>
 <message id="Purpose">Purpose</message>
 <message id="UnspecificPurpose">Unspecific purpose</message>
 <message id="Type">Type</message>
@@ -51,6 +52,7 @@
 <message id="Error">Error</message>
 <message id="Loading">Loading</message>
 <message id="Loading...">Loading...</message>
+<message id="Hostname">Hostname</message>
 
 <message id="AddNewX">Add new {1}</message>
 <message id="SelectFromList">Select from list</message>
@@ -144,7 +146,14 @@
 <message id="PayablesBalance">Payables balance</message>
 <message id="AssignedEmployees">Assigned employees</message>
 <message id="NActive">{1} active</message>
-<message id="NInactive">{2} inactive</message>
+<message id="NInactive">{1} inactive</message>
+
+<!-- AttendanceDeviceView -->
+<message id="AttendanceDeviceViewName">Attendance Device #{1}</message>
+<message id="AddAttendanceDevice">Add attendance device</message>
+<message id="AttendanceDevice">Attendance device</message>
+<message id="AttendanceDevices">Attendance devices</message>
+<message id="AttendanceDeviceInfo">Attendance Device Information</message>
 
 <!-- Entities -->
 <message id="AllEntities">All entities</message>

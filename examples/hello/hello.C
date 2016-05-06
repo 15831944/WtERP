@@ -1,90 +1,108 @@
 #include <Wt/WApplication>
 #include <Wt/WContainerWidget>
-#include <Wt/WDateEdit>
 #include <Wt/WPushButton>
 #include <Wt/WText>
-#include <Wt/WDialog>
-#include <Wt/WTemplateFormView>
-#include <Wt/WFormModel>
+#include <Wt/WColor>
+#include <Wt/WCssDecorationStyle>
 
 using namespace Wt;
+
+//My Classes
+class Reloadable
+{
+public:
+	Reloadable() { }
+	virtual void reload() = 0;
+};
+
+template<class Base>
+class ReloadOnVisibleWidget : public Base, public Reloadable
+{
+public:
+	ReloadOnVisibleWidget() { }
+
+protected:
+	virtual void propagateSetVisible(bool visible) override;
+	virtual void render(Wt::WFlags<Wt::RenderFlag> flags) override;
+	bool _wasVisible = true;
+};
+
+class ReloadableContainer : public ReloadOnVisibleWidget<Wt::WContainerWidget>
+{
+protected:
+	virtual void reload() override
+	{
+		decorationStyle().setBackgroundColor(WColor(rand() % 256, rand() % 256, rand() % 256));
+		for(auto w : children())
+		{
+			if(auto rW = dynamic_cast<Reloadable*>(w))
+				rW->reload();
+		}
+	}
+};
+
+class ReloadableText : public WText, public Reloadable
+{
+public:
+	ReloadableText(const WString &text, WContainerWidget *parent = nullptr) : WText(text, parent) { }
+
+protected:
+	virtual void reload() override { decorationStyle().setForegroundColor(WColor(rand() % 256, rand() % 256, rand() % 256)); }
+};
 
 class HelloApplication : public WApplication
 {
 public:
-  HelloApplication(const WEnvironment& env);
+	HelloApplication(const WEnvironment& env);
 };
 
-const WFormModel::Field startDateField = "startDate";
-const WFormModel::Field endDateField = "endDate";
-
+//MAIN LOGIC
 HelloApplication::HelloApplication(const WEnvironment& env)
   : WApplication(env)
 {
 	setTitle("HELP ME :'(");
 
-	//FORM MODEL//
-	WFormModel *model = new WFormModel(this);
-	model->addField(startDateField);
-	model->addField(endDateField);
+	auto container = new ReloadableContainer();
+	root()->addWidget(container);
+	new ReloadableText("Text 1", container);
+	new ReloadableText("Text 2", container);
+	new ReloadableText("Text 3", container);
+	new ReloadableText("Text 4", container);
+	new ReloadableText("Text 5", container);
+	new ReloadableText("Text 6", container);
 
-	//FORM VIEW//
-	WTemplateFormView *view = new WTemplateFormView("${startDate}<br />${endDate}");
-
-	//Start date
-	auto startDateEdit = new Wt::WDateEdit();
-	auto startDateValidator = new Wt::WDateValidator();
-	startDateValidator->setMandatory(true);
-	startDateValidator->setBottom(Wt::WDate(boost::gregorian::day_clock::local_day()));
-	model->setValidator(startDateField, startDateValidator);
-	view->setFormWidget(startDateField, startDateEdit);
-
-	//End date
-	auto endDateEdit = new Wt::WDateEdit();
-	auto endDateValidator = new Wt::WDateValidator();
-	model->setValidator(endDateField, endDateValidator);
-
-	startDateEdit->changed().connect(std::bind([startDateEdit, endDateValidator]() {
-		endDateValidator->setBottom(startDateEdit->date().addDays(1));
+	auto btn = new WPushButton("Show/Hide", root());
+	btn->clicked().connect(std::bind([container]() {
+		container->setHidden(!container->isHidden());
 	}));
-	view->setFormWidget(endDateField, endDateEdit);
-
-	//Update view
-	view->updateView(model);
-
-	//DIALOG//
-	WDialog *dialog = new Wt::WDialog(this);
-	dialog->contents()->addWidget(view);
-
-	Wt::WPushButton *submitBtn = new Wt::WPushButton("Continue", dialog->contents());
-	submitBtn->clicked().connect(std::bind([=]() {
-		view->updateModel(model);
-		bool valid = model->validate();
-		view->updateView(model);
-
-		if(valid)
-			dialog->accept();
-	}));
-
-	dialog->finished().connect(std::bind([=](Wt::WDialog::DialogCode code) {
-		if(code == Wt::WDialog::Accepted)
-		{
-			dialog->contents()->removeWidget(view);
-			root()->addWidget(view);
-		}
-		delete dialog;
-	}, std::placeholders::_1));
-
-	dialog->show();
 }
 
-WApplication *createApplication(const WEnvironment& env)
-{
-  return new HelloApplication(env);
-}
-
+//MAIN
+WApplication *createApplication(const WEnvironment& env) { return new HelloApplication(env); }
 int main(int argc, char **argv)
 {
   return WRun(argc, argv, &createApplication);
 }
 
+//TEMPLATE CLASS DEFINITIONS
+template<class Base>
+void ReloadOnVisibleWidget<Base>::propagateSetVisible(bool visible)
+{
+	scheduleRender();
+	Base::propagateSetVisible(visible);
+}
+
+template<class Base>
+void ReloadOnVisibleWidget<Base>::render(Wt::WFlags<Wt::RenderFlag> flags)
+{
+	if(canOptimizeUpdates() && (flags & Wt::RenderFull) == 0)
+	{
+		bool visible = isVisible();
+		if(visible && !_wasVisible)
+			reload();
+
+		_wasVisible = visible;
+	}
+
+	Base::render(flags);
+}

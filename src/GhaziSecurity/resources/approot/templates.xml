@@ -284,6 +284,18 @@ ${block:GS.RecordCountTemplate.Block ReceivablesBalance receivables}
 ${block:GS.RecordCountTemplate.Block PayablesBalance payables}
 </message>
 
+<!-- AttendanceDeviceView -->
+<message id="GS.Admin.AttendanceDeviceView">
+<div class="panel panel-default">
+	<div class="panel-heading">${tr:AttendanceDeviceInfo}</div>
+	<div class="panel-body">
+		${block:GS.Field hostName Hostname}
+		${block:GS.Field.CW location Location}
+		${submitBtn class="btn-primary"}
+	</div>
+</div>
+</message>
+
 <!-- EntityView -->
 <message id="GS.Admin.Entities.New">
 ${<type-selection>}

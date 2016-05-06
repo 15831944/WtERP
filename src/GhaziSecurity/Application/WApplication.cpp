@@ -522,8 +522,9 @@ void WApplication::lazyLoadAdminWidgets()
 
 	//Admin page widgets
 	//Dashboard
-	auto dashboardMenuItem = new Wt::WMenuItem(Wt::WString::tr("Dashboard"), new DashboardAdminPage());
-	dashboardMenuItem->setPathComponent("");
+	auto dashbaordAdminPage = new DashboardAdminPage();
+	auto dashboardMenuItem = new Wt::WMenuItem(Wt::WString::tr("Dashboard"), dashbaordAdminPage);
+	dashboardMenuItem->setPathComponent(dashbaordAdminPage->basePathComponent());
 	_adminMenu->addItem(dashboardMenuItem);
 
 	//Entites
@@ -535,6 +536,12 @@ void WApplication::lazyLoadAdminWidgets()
 	auto accountsMenuItem = new Wt::WMenuItem(Wt::WString::tr("FinancialRecords"), _accountsAdminPage = new AccountsAdminPage());
 	accountsMenuItem->setPathComponent(_accountsAdminPage->basePathComponent());
 	_adminMenu->addItem(accountsMenuItem);
+
+	//System
+	auto systemAdminPage = new SystemAdminPage();
+	auto systemMenuItem = new Wt::WMenuItem(Wt::WString::tr("System"), systemAdminPage);
+	systemMenuItem->setPathComponent(systemAdminPage->basePathComponent());
+	_adminMenu->addItem(systemMenuItem);
 
 	_mainAdminTemplate->bindWidget("content", _adminStack);
 	_mainAdminTemplate->bindWidget("navigation", _adminNavBar);

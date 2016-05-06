@@ -87,6 +87,7 @@ namespace GS
 	class ExpenseCycle;
 
 	class UploadedFile;
+	class AttendanceDevice;
 
 	typedef Wt::Dbo::collection<Wt::Dbo::ptr<Entity>> EntityCollection;
 	typedef Wt::Dbo::collection<Wt::Dbo::ptr<Person>> PersonCollection;
@@ -127,6 +128,7 @@ namespace GS
 	typedef Wt::Dbo::collection<Wt::Dbo::ptr<FineInfo>> FineInfoCollection;
 	typedef Wt::Dbo::collection<Wt::Dbo::ptr<PettyExpenditureInfo>> PettyExpenditureInfoCollection;
 	typedef Wt::Dbo::collection<Wt::Dbo::ptr<UploadedFile>> UploadedFileCollection;
+	typedef Wt::Dbo::collection<Wt::Dbo::ptr<AttendanceDevice>> AttendanceDeviceCollection;
 }
 
 namespace Wt
@@ -901,6 +903,7 @@ namespace GS
 		InquiryCollection inquiryCollection;
 		AssetCollection assetCollection;
 		RentHouseCollection rentHouseCollection;
+		AttendanceDeviceCollection attendanceDeviceCollection;
 
 		template<class Action>
 		void persist(Action& a)
@@ -915,6 +918,7 @@ namespace GS
 			Wt::Dbo::hasMany(a, inquiryCollection, Wt::Dbo::ManyToOne, "location");
 			Wt::Dbo::hasMany(a, assetCollection, Wt::Dbo::ManyToOne, "location");
 			Wt::Dbo::hasMany(a, rentHouseCollection, Wt::Dbo::ManyToOne, "location");
+			Wt::Dbo::hasMany(a, attendanceDeviceCollection, Wt::Dbo::ManyToOne, "location");
 
 			BaseAdminRecord::persist(a);
 		}
@@ -1615,6 +1619,28 @@ namespace GS
 		constexpr static const char *tableName()
 		{
 			return "uploadedfile";
+		}
+	};
+
+	class AttendanceDevice
+	{
+	public:
+		std::string hostName;
+		Wt::Dbo::ptr<Location> locationPtr;
+
+		static std::string newInternalPath() { return "/" ADMIN_PATHC "/" SYSTEM_PATHC "/" ATTENDANCEDEVICES_PATHC "/" NEW_ATTENDANCEDEVICE_PATHC; }
+		static std::string viewInternalPath(long long id) { return viewInternalPath(boost::lexical_cast<std::string>(id)); }
+		static std::string viewInternalPath(const std::string idStr) { return "/" ADMIN_PATHC "/" SYSTEM_PATHC "/" ATTENDANCEDEVICES_PATHC "/" ATTENDANCEDEVICE_PREFIX + idStr; }
+
+		template<class Action>
+		void persist(Action& a)
+		{
+			Wt::Dbo::field(a, hostName, "hostName", 255);
+			Wt::Dbo::belongsTo(a, locationPtr, "location", Wt::Dbo::OnDeleteSetNull | Wt::Dbo::OnUpdateCascade);
+		}
+		constexpr static const char *tableName()
+		{
+			return "attendancedevice";
 		}
 	};
 

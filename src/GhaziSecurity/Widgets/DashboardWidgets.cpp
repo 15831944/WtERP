@@ -45,8 +45,8 @@ namespace GS
 		bindWidget("totalAccounts", totalAccounts);
 		bindWidget("entityAccounts", new RecordCountTemplate([]() -> long long {
 			return APP->dboSession().query<long long>(
-				"SELECT COUNT(1) FROM " + std::string(Account::tableName()) + " acc LEFT JOIN " + Entity::tableName() + " e ON (e.bal_account_id = acc.id OR e.pnl_account_id = acc.id)"
-			).where("e.id IS null");
+				"SELECT COUNT(1) FROM " + std::string(Account::tableName()) + " acc INNER JOIN " + Entity::tableName() + " e ON (e.bal_account_id = acc.id OR e.pnl_account_id = acc.id)"
+			);
 		}, totalAccounts));
 
 		auto recurringIncomes = new RecordMultiCountTemplate([]() -> long long {
@@ -161,6 +161,17 @@ namespace GS
 		{
 			TRANSACTION(APP);
 			_totalCount = _totalCountFunction();
+
+			if(_totalCount == 0)
+			{
+				_currentCount = 0;
+				_text->setText(_leftStr.arg(0));
+				_rightText->setText(_rightStr.arg(0));
+				resolveWidget("progress-bar")->setWidth(Wt::WLength(50, Wt::WLength::Percentage));
+				resolveWidget("progress-bar-right")->setWidth(Wt::WLength(50, Wt::WLength::Percentage));
+				return;
+			}
+
 			_currentCount = _queryFunction();
 			_text->setText(_leftStr.arg(_currentCount));
 			_rightText->setText(_rightStr.arg(_totalCount - _currentCount));

@@ -4,6 +4,7 @@
 #include "Widgets/AccountMVC.h"
 #include "Widgets/EntryCycleMVC.h"
 #include "Widgets/HRMVC.h"
+#include "Widgets/AttendanceMVC.h"
 #include "Widgets/DashboardWidgets.h"
 
 #include <Wt/WNavigationBar>
@@ -142,10 +143,12 @@ namespace GS
 	DashboardAdminPage::DashboardAdminPage(Wt::WContainerWidget *parent /*= nullptr*/)
 		: AdminPageWidget("", parent)
 	{
-		auto overviewMenuItem = new Wt::WMenuItem(Wt::WString::tr("Overview"));
+		auto overviewMenuItem = new Wt::WMenuItem(tr("Overview"));
 		overviewMenuItem->setPathComponent("");
-		overviewMenuItem->setContents(new DashboardOverviewTemplate());
+		overviewMenuItem->setContents(new AdminPageContentWidget(overviewMenuItem->text(), new DashboardOverviewTemplate()));
 		menu()->addItem(overviewMenuItem);
+
+		menu()->addSeparator();
 	}
 
 	EntitiesAdminPage::EntitiesAdminPage(Wt::WContainerWidget *parent /*= nullptr*/)
@@ -322,5 +325,26 @@ namespace GS
 // 
 // 		submittedEntityItem->select();
 // 	}
+
+	SystemAdminPage::SystemAdminPage(Wt::WContainerWidget *parent /*= nullptr*/)
+		: AdminPageWidget(SYSTEM_PATHC, parent)
+	{
+		auto attendanceDevicesMenuItem = new Wt::WMenuItem(Wt::WString::tr("AttendanceDevices"));
+		attendanceDevicesMenuItem->setPathComponent(ATTENDANCEDEVICES_PATHC);
+		AttendanceDeviceList *attendanceDeviceList = new AttendanceDeviceList();
+		attendanceDeviceList->enableFilters();
+		attendanceDevicesMenuItem->setContents(new AdminPageContentWidget(attendanceDevicesMenuItem->text(), attendanceDeviceList));
+		menu()->addItem(attendanceDevicesMenuItem);
+
+		menu()->addSeparator();
+
+		auto newAttendanceDeviceMenuItem = new Wt::WMenuItem(Wt::WString::tr("AddAttendanceDevice"));
+		newAttendanceDeviceMenuItem->setPathComponent(ATTENDANCEDEVICES_PATHC "/" NEW_ATTENDANCEDEVICE_PATHC);
+		newAttendanceDeviceMenuItem->setContents(new AdminPageContentWidget(newAttendanceDeviceMenuItem->text(), new AttendanceDeviceView()));
+		connectFormSubmitted(newAttendanceDeviceMenuItem);
+		menu()->addItem(newAttendanceDeviceMenuItem);
+
+		menu()->addSeparator();
+	}
 
 }

@@ -74,6 +74,12 @@ namespace GS
 		AccountsAdminPage(Wt::WContainerWidget *parent = nullptr);
 	};
 
+	class SystemAdminPage : public AdminPageWidget
+	{
+	public:
+		SystemAdminPage(Wt::WContainerWidget *parent = nullptr);
+	};
+
 }
 
 #endif

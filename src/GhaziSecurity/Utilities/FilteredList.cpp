@@ -183,6 +183,9 @@ namespace GS
 				--diff;
 			}
 		}
+
+		if(_filtersTemplate)
+			initFilters();
 	}
 
 	void AbstractFilteredList::enableFilters()
@@ -192,7 +195,8 @@ namespace GS
 
 		setCondition("filters-enabled", true);
 		bindWidget("filters", _filtersTemplate = new FiltersTemplate(this));
-		initFilters();
+		if(loaded())
+			initFilters();
 	}
 
 	void AbstractFilteredList::resetColumnWidths()

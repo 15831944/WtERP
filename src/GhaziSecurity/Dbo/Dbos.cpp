@@ -54,6 +54,7 @@ namespace GS
 		dboSession.mapClass<IncomeCycle>(IncomeCycle::tableName());
 		dboSession.mapClass<ExpenseCycle>(ExpenseCycle::tableName());
 		dboSession.mapClass<UploadedFile>(UploadedFile::tableName());
+		dboSession.mapClass<AttendanceDevice>(AttendanceDevice::tableName());
 	}
 	
 	std::string UploadedFile::pathToFile() const
