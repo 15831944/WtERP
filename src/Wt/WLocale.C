@@ -71,7 +71,7 @@ void WLocale::setTimeFormat(const WT_USTRING &format)
   timeFormat_ = format;
 }
 
-void WLocale::setDateTimeFormat(const WT_USTRING &format)
+void WLocale::setDateTimeFormat(const WT_USTRING& format)
 {
   dateTimeFormat_ = format;
 }

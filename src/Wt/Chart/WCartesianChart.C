@@ -1130,6 +1130,7 @@ WCartesianChart::WCartesianChart(WContainerWidget *parent)
     axisPadding_(5),
     borderPen_(NoPen),
     hasToolTips_(false),
+    jsDefined_(false),
     zoomEnabled_(false),
     panEnabled_(false),
     rubberBandEnabled_(true),
@@ -1157,6 +1158,7 @@ WCartesianChart::WCartesianChart(ChartType type, WContainerWidget *parent)
     axisPadding_(5),
     borderPen_(NoPen),
     hasToolTips_(false),
+    jsDefined_(false),
     zoomEnabled_(false),
     panEnabled_(false),
     rubberBandEnabled_(true),
@@ -1217,12 +1219,6 @@ void WCartesianChart::init()
   yTransform_ = WTransform();
 
   if (WApplication::instance() != 0) {
-    WApplication *app = WApplication::instance();
-    LOAD_JAVASCRIPT(app, "js/ChartCommon.js", "ChartCommon", wtjs2);
-    app->doJavaScript(std::string("if (!" WT_CLASS ".chartCommon) {"
-				  WT_CLASS ".chartCommon = new ") +
-		      WT_CLASS ".ChartCommon(" + app->javaScriptClass() + "); }", false);
-
     mouseWentDown().connect("function(o, e){var o=" + this->cObjJsRef() + ";if(o){o.mouseDown(o, e);}}");
     mouseWentUp().connect("function(o, e){var o=" + this->cObjJsRef() + ";if(o){o.mouseUp(o, e);}}");
     mouseDragged().connect("function(o, e){var o=" + this->cObjJsRef() + ";if(o){o.mouseDrag(o, e);}}");
@@ -1594,13 +1590,30 @@ WPointF WCartesianChart::inverseHv(double x, double y, double width) const
     return WPointF(y, width - x); 
 }
 
+void WCartesianChart::defineJavaScript()
+{
+  WApplication *app = WApplication::instance();
+
+  if (app && isInteractive()) {
+    LOAD_JAVASCRIPT(app, "js/ChartCommon.js", "ChartCommon", wtjs2);
+    app->doJavaScript(std::string("if (!" WT_CLASS ".chartCommon) {"
+				  WT_CLASS ".chartCommon = new ") +
+		      WT_CLASS ".ChartCommon(" + app->javaScriptClass() + "); }", false);
+
+    LOAD_JAVASCRIPT(app, "js/WCartesianChart.js", "WCartesianChart", wtjs1);
+    jsDefined_ = true;
+  } else {
+    jsDefined_ = false;
+  }
+}
+
 void WCartesianChart::render(WFlags<RenderFlag> flags)
 {
   WAbstractChart::render(flags);
 
-  WApplication *app = WApplication::instance();
-
-  LOAD_JAVASCRIPT(app, "js/WCartesianChart.js", "WCartesianChart", wtjs1);
+  if (flags & RenderFull || !jsDefined_) {
+    defineJavaScript();
+  }
 }
 
 void WCartesianChart::setFormData(const FormData& formData)
@@ -2592,6 +2605,15 @@ bool WCartesianChart::prepareAxes() const
   Orientation yDir = orientation_;
   Orientation xDir = orientation_ == Vertical ? Horizontal : Vertical;
 
+  if (!xAxis.prepareRender(xDir, chartArea_.width()))
+    return false;
+
+  if (!yAxis.prepareRender(yDir, chartArea_.height()))
+    return false;
+
+  if (!y2Axis.prepareRender(yDir, chartArea_.height()))
+    return false;
+
   if (xAxis.scale() == CategoryScale) {
     switch (xAxis.location()) {
     case MinimumValue:
@@ -2642,15 +2664,6 @@ bool WCartesianChart::prepareAxes() const
     location_[Y2Axis] = MaximumValue;
   } else
     location_[Y2Axis] = MaximumValue;
-
-  if (!xAxis.prepareRender(xDir, chartArea_.width()))
-    return false;
-
-  if (!yAxis.prepareRender(yDir, chartArea_.height()))
-    return false;
-
-  if (!y2Axis.prepareRender(yDir, chartArea_.height()))
-    return false;
 
   return true;
 }
@@ -3361,7 +3374,7 @@ void WCartesianChart::renderLegend(WPainter& painter) const
     WFont f = painter.font();
 
     if (isAutoLayoutEnabled() &&
-	((painter.device()->features() & WPaintDevice::HasFontMetrics) != 0)) {
+	(painter.device()->features() & WPaintDevice::HasFontMetrics)) {
       int columnWidth = 0;
       for (unsigned i = 0; i < series().size(); ++i)
 	if (series()[i]->isLegendEnabled()) {
@@ -3370,8 +3383,13 @@ void WCartesianChart::renderLegend(WPainter& painter) const
 	  columnWidth = std::max(columnWidth, (int)t.width());
 	}
 
+      columnWidth += 25;
       WCartesianChart *self = const_cast<WCartesianChart *>(this);
-      self->legend_.setLegendColumnWidth(columnWidth + 25);
+      self->legend_.setLegendColumnWidth(columnWidth);
+
+      if (legendSide() == Top || legendSide() == Bottom) {
+	self->legend_.setLegendColumns(std::max(1, w / columnWidth - 1));
+      }
     }
 
     int numLegendRows = (numSeriesWithLegend - 1) / legendColumns() + 1;
@@ -3773,7 +3791,8 @@ void WCartesianChart::clearPens()
 
 void WCartesianChart::createPensForAxis(Axis ax)
 {
-  if (!axis(ax).isVisible()) return;
+  if (!axis(ax).isVisible() || axis(ax).scale() == LogScale)
+    return;
 
   double zoom = axis(ax).zoom();
   if (zoom > axis(ax).maxZoom()) {
