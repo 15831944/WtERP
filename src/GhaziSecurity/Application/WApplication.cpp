@@ -575,10 +575,10 @@ void WApplication::lazyLoadAdminWidgets()
 	accountsMenuItem->setPathComponent(_accountsAdminPage->basePathComponent());
 	_adminMenu->addItem(accountsMenuItem);
 
-	//System
-	auto systemMenuItem = new Wt::WMenuItem(Wt::WString::tr("System"), _attendanceAdminPage = new AttendanceAdminPage());
-	systemMenuItem->setPathComponent(_attendanceAdminPage->basePathComponent());
-	_adminMenu->addItem(systemMenuItem);
+	//Attendance
+	auto attendanceMenuItem = new Wt::WMenuItem(Wt::WString::tr("Attendance"), _attendanceAdminPage = new AttendanceAdminPage());
+	attendanceMenuItem->setPathComponent(_attendanceAdminPage->basePathComponent());
+	_adminMenu->addItem(attendanceMenuItem);
 
 	_mainAdminTemplate->bindWidget("content", _adminStack);
 	_mainAdminTemplate->bindWidget("navigation", _adminNavBar);

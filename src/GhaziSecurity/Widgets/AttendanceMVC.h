@@ -91,6 +91,8 @@ namespace GS
 		enum ResultColumns { ResId, ResEntityName, ResTimestampIn, ResTimestampOut, ResCountryName, ResCityName, ResAddress };
 		enum ViewColumns { ViewId, ViewEntity, ViewTimestampIn, ViewTimestampOut, ViewCountry, ViewCity, ViewAddress };
 
+		virtual void load() override;
+
 	protected:
 		virtual void initFilters() override;
 		virtual void initModel() override;

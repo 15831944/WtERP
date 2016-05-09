@@ -3,8 +3,8 @@
 
 <!-- Date and number formatting -->
 <message id="DateFormat">dd/MM/yyyy</message>
-<message id="TimeFormat">hh:mm AP</message>
-<message id="DateTimeFormat">dd/MM/yyyy, hh:mm AP</message>
+<message id="TimeFormat">h:mm:ss AP</message>
+<message id="DateTimeFormat">dd/MM/yyyy, h:mm:ss AP</message>
 <message id="DecimalPoint">.</message>
 <message id="GroupSeparator">,</message>
 
@@ -151,6 +151,7 @@
 <message id="NInactive">{1} inactive</message>
 
 <!-- AttendanceDeviceView -->
+<message id="Attendance">Attendance</message>
 <message id="AttendanceDeviceViewName">Attendance Device #{1}</message>
 <message id="AddAttendanceDevice">Add attendance device</message>
 <message id="AttendanceDevice">Attendance device</message>
@@ -161,7 +162,7 @@
 <message id="AttendanceEntryViewName">Attendance Entry #{1}: {2}</message>
 <message id="CreateAttendanceEntry">Create attendance entry</message>
 <message id="AttendanceEntry">Attendance device</message>
-<message id="AttendanceEntries">Attendance devices</message>
+<message id="AttendanceEntries">Attendance entries</message>
 <message id="AttendanceEntryInfo">Attendance Entry Information</message>
 
 <!-- Entities -->

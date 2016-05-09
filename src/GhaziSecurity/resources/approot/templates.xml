@@ -314,7 +314,7 @@ ${block:GS.RecordCountTemplate.Block PayablesBalance payables}
 			<div class="help-block">${timeIn-info}</div>
 		</div>
 		<div class="form-group">
-			<label class="control-label" for="${id:dateIn}">${tr:TimeOut}</label>
+			<label class="control-label" for="${id:dateOut}">${tr:TimeOut}</label>
 			<div class="input-group">
 				<div class="input-group-addon">Date</div>
 				${dateOut}

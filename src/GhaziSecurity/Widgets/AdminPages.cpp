@@ -167,6 +167,13 @@ namespace GS
 		personList->enableFilters();
 		personsMenuItem->setContents(new AdminPageContentWidget(personsMenuItem->text(), personList));
 		menu()->addItem(personsMenuItem);
+		
+		auto businessesMenuItem = new Wt::WMenuItem(tr("Businesses"));
+		businessesMenuItem->setPathComponent(BUSINESSES_PATHC);
+		BusinessList *businessList = new BusinessList();
+		businessList->enableFilters();
+		businessesMenuItem->setContents(new AdminPageContentWidget(businessesMenuItem->text(), businessList));
+		menu()->addItem(businessesMenuItem);
 
 		auto employeesMenuItem = new Wt::WMenuItem(tr("Employees"));
 		employeesMenuItem->setPathComponent(EMPLOYEES_PATHC);
@@ -181,13 +188,6 @@ namespace GS
 		personnelList->enableFilters();
 		personnelMenuItem->setContents(new AdminPageContentWidget(personnelMenuItem->text(), personnelList));
 		menu()->addItem(personnelMenuItem);
-
-		auto businessesMenuItem = new Wt::WMenuItem(tr("Businesses"));
-		businessesMenuItem->setPathComponent(BUSINESSES_PATHC);
-		BusinessList *businessList = new BusinessList();
-		businessList->enableFilters();
-		businessesMenuItem->setContents(new AdminPageContentWidget(businessesMenuItem->text(), businessList));
-		menu()->addItem(businessesMenuItem);
 
 		auto clientsMenuItem = new Wt::WMenuItem(tr("Clients"));
 		clientsMenuItem->setPathComponent(CLIENTS_PATHC);
@@ -262,7 +262,7 @@ namespace GS
 
 		menu()->addSeparator();
 
-		if(APP->authLogin().hasPermission(Permissions::CreateRecord))
+		if(app->authLogin().hasPermission(Permissions::CreateRecord))
 		{
 			auto createAccountMenuItem = new Wt::WMenuItem(tr("CreateAccount"));
 			createAccountMenuItem->setPathComponent(NEW_ACCOUNT_PATHC);
@@ -345,19 +345,22 @@ namespace GS
 
 		menu()->addSeparator();
 
-		auto newAttendanceEntryMenuItem = new Wt::WMenuItem(Wt::WString::tr("CreateAttendanceEntry"));
-		newAttendanceEntryMenuItem->setPathComponent(NEW_ATTENDANCEENTRY_PATHC);
-		newAttendanceEntryMenuItem->setContents(new AdminPageContentWidget(newAttendanceEntryMenuItem->text(), new AttendanceEntryView()));
-		connectFormSubmitted(newAttendanceEntryMenuItem);
-		menu()->addItem(newAttendanceEntryMenuItem);
+		if(APP->authLogin().hasPermission(Permissions::CreateRecord))
+		{
+			auto newAttendanceEntryMenuItem = new Wt::WMenuItem(Wt::WString::tr("CreateAttendanceEntry"));
+			newAttendanceEntryMenuItem->setPathComponent(NEW_ATTENDANCEENTRY_PATHC);
+			newAttendanceEntryMenuItem->setContents(new AdminPageContentWidget(newAttendanceEntryMenuItem->text(), new AttendanceEntryView()));
+			connectFormSubmitted(newAttendanceEntryMenuItem);
+			menu()->addItem(newAttendanceEntryMenuItem);
 
-		auto newAttendanceDeviceMenuItem = new Wt::WMenuItem(Wt::WString::tr("AddAttendanceDevice"));
-		newAttendanceDeviceMenuItem->setPathComponent(ATTENDANCEDEVICES_PATHC "/" NEW_ATTENDANCEDEVICE_PATHC);
-		newAttendanceDeviceMenuItem->setContents(new AdminPageContentWidget(newAttendanceDeviceMenuItem->text(), new AttendanceDeviceView()));
-		connectFormSubmitted(newAttendanceDeviceMenuItem);
-		menu()->addItem(newAttendanceDeviceMenuItem);
+			auto newAttendanceDeviceMenuItem = new Wt::WMenuItem(Wt::WString::tr("AddAttendanceDevice"));
+			newAttendanceDeviceMenuItem->setPathComponent(ATTENDANCEDEVICES_PATHC "/" NEW_ATTENDANCEDEVICE_PATHC);
+			newAttendanceDeviceMenuItem->setContents(new AdminPageContentWidget(newAttendanceDeviceMenuItem->text(), new AttendanceDeviceView()));
+			connectFormSubmitted(newAttendanceDeviceMenuItem);
+			menu()->addItem(newAttendanceDeviceMenuItem);
 
-		menu()->addSeparator();
+			menu()->addSeparator();
+		}
 	}
 
 }

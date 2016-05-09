@@ -2,6 +2,7 @@
 #include <Wt/WLengthValidator>
 #include <Wt/WDateEdit>
 #include <Wt/WTimeEdit>
+#include <Wt/WTableView>
 
 namespace GS
 {
@@ -201,6 +202,7 @@ namespace GS
 		if(field == dateInField)
 		{
 			auto edit = new Wt::WDateEdit();
+			edit->changed().connect(boost::bind(&AttendanceEntryFormModel::updateTimestampOutValidator, this, true));
 			edit->validator()->setMandatory(true);
 			setValidator(field, edit->validator());
 			return edit;
@@ -208,6 +210,7 @@ namespace GS
 		if(field == timeInField)
 		{
 			auto edit = new Wt::WTimeEdit();
+			edit->changed().connect(boost::bind(&AttendanceEntryFormModel::updateTimestampOutValidator, this, true));
 			edit->validator()->setMandatory(true);
 			setValidator(field, edit->validator());
 			return edit;
@@ -241,7 +244,8 @@ namespace GS
 		_recordPtr.modify()->entityPtr = boost::any_cast<Wt::Dbo::ptr<Entity>>(value(entityField));
 		_recordPtr.modify()->locationPtr = boost::any_cast<Wt::Dbo::ptr<Location>>(value(locationField));
 		_recordPtr.modify()->timestampIn = Wt::WDateTime(boost::any_cast<Wt::WDate>(value(dateInField)), boost::any_cast<Wt::WTime>(value(timeInField)));
-		_recordPtr.modify()->timestampOut = Wt::WDateTime(boost::any_cast<Wt::WDate>(value(dateOutField)), boost::any_cast<Wt::WTime>(value(timeOutField)));
+		Wt::WDateTime out(boost::any_cast<Wt::WDate>(value(dateOutField)), boost::any_cast<Wt::WTime>(value(timeOutField)));
+		_recordPtr.modify()->timestampOut = out.isValid() ? out : Wt::WDateTime();
 		return true;
 	}
 
@@ -296,6 +300,19 @@ namespace GS
 
 		RecordFormView::updateModel(model);
 		_model->updateTimestampOutValidator(false);
+	}
+
+	void AttendanceEntryList::load()
+	{
+		bool ld = !loaded();
+		QueryModelFilteredList::load();
+
+		if(ld)
+		{
+			int timestampColumn = viewIndexToColumn(ViewTimestampIn);
+			if(timestampColumn != -1)
+				_tableView->sortByColumn(timestampColumn, Wt::DescendingOrder);
+		}
 	}
 
 	void AttendanceEntryList::initFilters()

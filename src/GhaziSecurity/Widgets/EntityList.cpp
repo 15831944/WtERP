@@ -108,10 +108,6 @@ namespace GS
 		_proxyModel = new EntityListProxyModel<Id>(_model, _model);
 	}
 
-	EmployeeList::EmployeeList()
-		: QueryModelFilteredList()
-	{ }
-
 	void EmployeeList::initFilters()
 	{
 		filtersTemplate()->addFilterModel(new WLineEditFilterModel(tr("ID"), "id", std::bind(&FiltersTemplate::initIdEdit, std::placeholders::_1)));

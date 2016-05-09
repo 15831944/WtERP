@@ -87,10 +87,14 @@ namespace GS
 	void DashboardOverviewTemplate::reload()
 	{
 		TRANSACTION(APP);
+		setHidden(true);
 		for(auto w : children())
 		{
 			if(auto rW = dynamic_cast<Reloadable*>(w))
+			{
+				w->setHidden(false);
 				rW->reload();
+			}
 		}
 	}
 
@@ -226,7 +230,7 @@ namespace GS
 		}
 		catch(const Wt::Dbo::Exception &e)
 		{
-			Wt::log("error") << "RecordMultiCountTemplate::reload(): Dbo error(" << e.code() << "): " << e.what();
+			Wt::log("error") << "CashAccountBalance::reload(): Dbo error(" << e.code() << "): " << e.what();
 			setText(tr("CouldNotLoad"));
 			setStyleClass("");
 		}
@@ -295,7 +299,7 @@ namespace GS
 			Wt::WString balanceStr = Wt::WLocale::currentLocale().toString(Money(std::abs(static_cast<long long>(balanceInCents)), DEFAULT_CURRENCY));
 			if(balanceInCents < 0)
 			{
-				setText(tr("RsXReceivable").arg(balanceStr));
+				setText(tr("RsXPayable").arg(balanceStr));
 				setStyleClass("text-danger");
 			}
 			else
