@@ -2,6 +2,7 @@
 
 #include "Wt/WException"
 #include "Wt/WStringStream"
+#include "Wt/WLocale"
 
 #include <boost/lexical_cast.hpp>
 //#include <boost/range/iterator_range.hpp>
@@ -46,12 +47,13 @@ const std::string Money::toString() const
 
 void Money::setValueFromString(const std::string &str)
 {
+	const WLocale &locale = WLocale::currentLocale();
 	size_t dotPos = str.find(".");
 	if(dotPos == std::string::npos)
-		valueInCents_ = boost::lexical_cast<long long>(str) * 100;
+		valueInCents_ = WLocale::currentLocale().toLong(str) * 100;
 	else
 	{
-		long long left = boost::lexical_cast<long long>(str.substr(0, dotPos));
+		long long left = WLocale::currentLocale().toLong(str.substr(0, dotPos));
 		unsigned int right = boost::lexical_cast<unsigned int>(str.substr(dotPos + 1));
 		while(right > 99)
 		{

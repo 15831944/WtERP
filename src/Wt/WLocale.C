@@ -119,6 +119,21 @@ double WLocale::toDouble(const WT_USTRING& value) const
   return boost::lexical_cast<double>(v);
 }
 
+float WLocale::toFloat(const WT_USTRING& value) const
+{
+  if (isDefaultNumberLocale())
+    return boost::lexical_cast<float>(value);
+
+  std::string v = value.toUTF8();
+
+  if (!groupSeparator_.empty())
+    Utils::replace(v, groupSeparator_, "");
+  if (decimalPoint_ != ".")
+    Utils::replace(v, decimalPoint_, ".");
+
+  return boost::lexical_cast<float>(v);
+}
+
 int WLocale::toInt(const WT_USTRING& value) const
 {
   if (groupSeparator_.empty())
@@ -129,6 +144,18 @@ int WLocale::toInt(const WT_USTRING& value) const
   Utils::replace(v, groupSeparator_, "");
 
   return boost::lexical_cast<int>(v);
+}
+
+long long WLocale::toLong(const WT_USTRING& value) const
+{
+	if(groupSeparator_.empty())
+		return boost::lexical_cast<long long>(value);
+
+	std::string v = value.toUTF8();
+
+	Utils::replace(v, groupSeparator_, "");
+
+	return boost::lexical_cast<long long>(v);
 }
 
 #ifndef DOXYGEN_ONLY

@@ -196,12 +196,14 @@ public:
    * Throws a runtime exception if the number could not be parsed.
    */
   double toDouble(const WT_USTRING& value) const;
+  float toFloat(const WT_USTRING& value) const;
 
   /*! \brief Parses an integer number.
    *
    * Throws a runtime exception if the number could not be parsed.
    */
   int toInt(const WT_USTRING& value) const;
+  long long toLong(const WT_USTRING& value) const;
 
   /*! \brief Formats an integer number.
    */
