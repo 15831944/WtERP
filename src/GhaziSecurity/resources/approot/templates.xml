@@ -265,11 +265,13 @@ ${table-view}
 
 ${block:GS.RecordCountTemplate.Block TotalEntities totalEntities}
 ${block:GS.RecordCountTemplate.Block Persons persons}
-${block:GS.RecordCountTemplate.Block Employees employees}
-${block:GS.RecordCountTemplate.Block AssignedEmployees assignedEmployees}
-${block:GS.RecordCountTemplate.Block Personnel personnel}
 ${block:GS.RecordCountTemplate.Block Businesses businesses}
+${block:GS.RecordCountTemplate.Block Employees employees}
+${block:GS.RecordCountTemplate.Block Personnel personnel}
 ${block:GS.RecordCountTemplate.Block Clients clients}
+<hr />
+${block:GS.RecordCountTemplate.Block ClientAssignments clientAssignments}
+${block:GS.RecordCountTemplate.Block EmployeeAssignments employeeAssignments}
 
 <div class="page-header"><h1>${tr:FinancialRecords}</h1></div>
 
@@ -484,7 +486,6 @@ ${submitBtn class="btn-primary"}
 <div class="panel panel-default">
 	<div class="panel-heading">${tr:RecurringIncomeInfo}</div>
 	<div class="panel-body">
-		${block:GS.Field purpose Purpose}
 		${block:GS.Field service Service}
 		${block:GS.Admin.EntryCycleBlock}
 		<div class="form-group">
@@ -505,8 +506,6 @@ ${submitBtn class="btn-primary"}
 <div class="panel panel-default">
 	<div class="panel-heading">${tr:RecurringExpenseInfo}</div>
 	<div class="panel-body">
-		${block:GS.Field purpose Purpose}
-		${block:GS.Field position Position}
 		${block:GS.Admin.EntryCycleBlock}
 		<div class="form-group">
 			<label class="control-label" for="${id:nIntervals}">${tr:ToBePaidEvery}</label>
@@ -522,14 +521,14 @@ ${submitBtn class="btn-primary"}
 </div>
 </message>
 
-<!-- EmployeeAssignmentView -->
-<message id="GS.Admin.EmployeeAssignmentView">
+<!-- ClientAssignmentView -->
+<message id="GS.Admin.ClientAssignmentView">
 <div class="panel panel-default">
-	<div class="panel-heading">${tr:EmployeeAssignmentInfo}</div>
+	<div class="panel-heading">${tr:ClientAssignmentInfo}</div>
 	<div class="panel-body">
 		${block:GS.Field description Description}
-		${block:GS.Field.CW entity Employee}
-		${block:GS.Field.CW location Location}
+		${block:GS.Field.CW entity Entity}
+		${block:GS.Field service Service}
 		${block:GS.Field startDate StartingDate}
 		${block:GS.Field endDate EndDate}
 		${submitBtn class="btn-primary"}
@@ -537,18 +536,20 @@ ${submitBtn class="btn-primary"}
 </div>
 </message>
 
-<!-- EmployeeExpenseView -->
-<message id="GS.Admin.EmployeeExpenseView.Assignment">
-${assignments}
-${cycles}
-${add-cycle}
-${add-assignment}
-</message>
-<message id="GS.Admin.EmployeeExpenseView.ExpenseCycle">
-${cycles}
-${assignments}
-${add-assignment}
-${add-cycle}
+<!-- EmployeeAssignmentView -->
+<message id="GS.Admin.EmployeeAssignmentView">
+<div class="panel panel-default">
+	<div class="panel-heading">${tr:EmployeeAssignmentInfo}</div>
+	<div class="panel-body">
+		${block:GS.Field description Description}
+		${block:GS.Field.CW entity Person}
+		${block:GS.Field position Position}
+		${block:GS.Field.CW location Location}
+		${block:GS.Field startDate StartingDate}
+		${block:GS.Field endDate EndDate}
+		${submitBtn class="btn-primary"}
+	</div>
+</div>
 </message>
 
 <!-- LocationView -->
@@ -606,6 +607,7 @@ ${block:GS.FieldH.CW entity Entity}
 <message id="GS.Admin.PositionView">
 <div class="form-horizontal">
 	${block:GS.FieldH.Narrow title PositionTitle}
+	${block:GS.FieldH.Narrow type PositionType}
 	<div class="form-group">
 		<div class="col-sm-9 col-sm-offset-3">${submitBtn class="btn-primary"}</div>
 	</div>
@@ -738,5 +740,37 @@ ${<p:permitted>}
 	{1}
 ${</p:permitted>}
 </message>
+
+<!-- 
+<message id="GS.Admin.EmployeeExpenseView.Assignment">
+${assignments}
+<hr />
+${cycles}
+${add-cycle}
+${add-assignment}
+</message>
+<message id="GS.Admin.EmployeeExpenseView.ExpenseCycle">
+${cycles}
+<hr />
+${assignments}
+${add-assignment}
+${add-cycle}
+</message>
+
+<message id="GS.Admin.ClientIncomeView.Assignment">
+${assignments}
+<hr />
+${cycles}
+${add-cycle}
+${add-assignment}
+</message>
+<message id="GS.Admin.ClientIncomeView.IncomeCycle">
+${cycles}
+<hr />
+${assignments}
+${add-assignment}
+${add-cycle}
+</message>
+-->
 
 </messages>

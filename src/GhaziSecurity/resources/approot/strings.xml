@@ -21,6 +21,7 @@
 <message id="Add">Add</message>
 <message id="List">List</message>
 <message id="New">New</message>
+<message id="Other">Other</message>
 
 <!-- Personal Information -->
 <message id="Name">Name</message>
@@ -53,6 +54,8 @@
 <message id="Loading">Loading</message>
 <message id="Loading...">Loading...</message>
 <message id="Hostname">Hostname</message>
+<message id="SelectType">Select type</message>
+<message id="MustSelectType">You must select a type</message>
 
 <message id="AddNewX">Add new {1}</message>
 <message id="SelectFromList">Select from list</message>
@@ -149,6 +152,7 @@
 <message id="AssignedEmployees">Assigned employees</message>
 <message id="NActive">{1} active</message>
 <message id="NInactive">{1} inactive</message>
+<message id="NNotStarted">{1} not started</message>
 
 <!-- AttendanceDeviceView -->
 <message id="Attendance">Attendance</message>
@@ -267,6 +271,8 @@
 <message id="Position">Position</message>
 <message id="position">position</message>
 <message id="PositionTitle">Position title</message>
+<message id="PositionType">Position type</message>
+<message id="PersonnelPosition">Personnel position</message>
 <message id="SelectPosition">Select position</message>
 <message id="MustSelectPosition">You must select a position or select a different type</message>
 
@@ -284,9 +290,15 @@
 <message id="RecurringEntry">Recurring {1} entry</message>
 <message id="IncompleteEntry">Incomplete duration {1} entry</message>
 <message id="FinalEntry">Final {1} entry</message>
-<message id="ForService"> for service: {1}</message>
-<message id="ForPosition"> for position: {1}</message>
 <message id="CashAccountName">Cash Account</message>
+<message id="forNEmployeeAssignments">
+	<plural case="0"> for {1} employee assignment</plural>
+	<plural case="1"> for {1} employee assignments</plural>
+</message>
+<message id="forNClientAssignments">
+	<plural case="0"> for {1} client assignment</plural>
+	<plural case="1"> for {1} client assignments</plural>
+</message>
 
 <!-- AccountView, AccountList -->
 <message id="FinancialRecords">Financial Records</message>
@@ -323,12 +335,23 @@
 <!-- EmployeeAssignmentView -->
 <message id="AssignEmployee">Assign employee</message>
 <message id="AddEmployeeAssignment">Add employee assignment</message>
-<message id="AddAssignmentButtonLabel">Assign an employee to recurring expense</message>
-<message id="AddCycleButtonLabel">Add recurring expense for employee assignment</message>
+<message id="AssignEmployeeBtnLabel">Add employee assignment to recurring expense</message>
+<message id="AssignRecurringExpenseBtnLabel">Add recurring expense for employee assignment</message>
 <message id="EmployeeAssignmentViewName">Employee Assignment #{1}</message>
 <message id="EmployeeAssignmentInfo">Employee Assignment Information</message>
 <message id="EmployeeAssignment">Employee assignment</message>
 <message id="EmployeeAssignments">Employee assignments</message>
+
+<!-- ClientAssignmentView -->
+<message id="AssignClient">Assign client</message>
+<message id="AddClientAssignment">Add client assignment</message>
+<message id="AssignClientBtnLabel">Add client assignment to recurring income</message>
+<message id="AssignRecurringIncomeBtnLabel">Add recurring income for client assignment</message>
+<message id="ClientAssignmentViewName">Client Assignment #{1}</message>
+<message id="ClientAssignmentInfo">Client Assignment Information</message>
+<message id="ClientAssignment">Client assignment</message>
+<message id="ClientAssignments">Client assignments</message>
+<message id="EmployeesAssigned">Employees assigned</message>
 
 <!-- EntryCycles -->
 <message id="ExpenseCycleViewName">Recurring Expense #{1}: {2}</message>

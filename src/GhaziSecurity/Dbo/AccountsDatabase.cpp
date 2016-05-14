@@ -129,6 +129,8 @@ namespace GS
 
 		createEntityAccountsIfNotFound(cyclePtr->entityPtr);
 
+		auto assignmentCount = cyclePtr->clientAssignmentCollection.size();
+
 		while(Wt::Dbo::ptr<AccountEntry> newEntry = _createPendingCycleEntry(*cyclePtr, lastEntryPtr, currentPTime, nextEntryDuration))
 		{
 			newEntry.modify()->incomeCyclePtr = cyclePtr;
@@ -136,8 +138,8 @@ namespace GS
 			newEntry.modify()->_creditAccountPtr = cyclePtr->entityPtr->pnlAccountPtr;
 			newEntry.modify()->type = AccountEntry::UnspecifiedType;
 			newEntry.modify()->description.arg(Wt::WString::tr("income"));
-			if(cyclePtr->servicePtr)
-				newEntry.modify()->description += Wt::WString::tr("ForService").arg(cyclePtr->servicePtr->title).toUTF8();
+			if(assignmentCount > 0)
+				newEntry.modify()->description += Wt::WString::trn("forNClientAssignments", assignmentCount).arg(assignmentCount).toUTF8();
 
 			updateAccountBalances(newEntry);
 
@@ -163,6 +165,8 @@ namespace GS
 
 		createEntityAccountsIfNotFound(cyclePtr->entityPtr);
 
+		auto assignmentCount = cyclePtr->employeeAssignmentCollection.size();
+
 		while(Wt::Dbo::ptr<AccountEntry> newEntry = _createPendingCycleEntry(*cyclePtr, lastEntryPtr, currentPTime, nextEntryDuration))
 		{
 			newEntry.modify()->expenseCyclePtr = cyclePtr;
@@ -170,8 +174,8 @@ namespace GS
 			newEntry.modify()->_creditAccountPtr = cyclePtr->entityPtr->balAccountPtr;
 			newEntry.modify()->type = AccountEntry::UnspecifiedType;
 			newEntry.modify()->description.arg(Wt::WString::tr("expense"));
-			if(cyclePtr->positionPtr)
-				newEntry.modify()->description += Wt::WString::tr("ForPosition").arg(cyclePtr->positionPtr->title).toUTF8();
+			if(assignmentCount > 0)
+				newEntry.modify()->description += Wt::WString::trn("forNEmployeeAssignments", assignmentCount).arg(assignmentCount).toUTF8();
 
 			updateAccountBalances(newEntry);
 

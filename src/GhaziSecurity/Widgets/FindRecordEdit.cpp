@@ -225,6 +225,7 @@ namespace GS
 
 	void FindEntityEdit::setValuePtr(Wt::Dbo::ptr<Entity> ptr)
 	{
+		TRANSACTION(APP);
 		if(ptr)
 			_lineEdit->setText(tr("FindEntityEditValueTemplate").arg(ptr->name).arg(ptr.id()));
 		else
@@ -398,6 +399,7 @@ namespace GS
 
 	void FindAccountEdit::setValuePtr(Wt::Dbo::ptr<Account> ptr)
 	{
+		TRANSACTION(APP);
 		if(ptr)
 			_lineEdit->setText(tr("FindAccountEditValueTemplate")
 				.arg(Wt::WString::tr("FindAccountEditValuePrefix").arg(ptr->name).arg(ptr.id())).arg(Wt::boost_any_traits<Account::Type>::asString(ptr->type, "")));
@@ -468,6 +470,7 @@ namespace GS
 
 	void FindLocationEdit::setValuePtr(Wt::Dbo::ptr<Location> ptr)
 	{
+		TRANSACTION(APP);
 		if(ptr)
 			_lineEdit->setText(ptr->address);
 		else

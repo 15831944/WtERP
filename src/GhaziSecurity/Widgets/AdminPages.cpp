@@ -91,7 +91,11 @@ namespace GS
 		if(!submittedItem)
 			return;
 
-		SubmittableRecordWidget *submittedView = dynamic_cast<SubmittableRecordWidget*>(itemContent(submittedItem));
+		SubmittableRecordWidget *submittedView = nullptr;
+		AdminPageContentWidget *contentContainer = dynamic_cast<AdminPageContentWidget*>(submittedItem->contentsSafe());
+		if(contentContainer)
+			submittedView = dynamic_cast<SubmittableRecordWidget*>(contentContainer->content());
+
 		if(!submittedView)
 		{
 			_submitSignalMap[submittedItem].disconnect();
@@ -100,6 +104,7 @@ namespace GS
 		}
 
 		Wt::WMenuItem *newItem = createMenuItem(submittedView->viewName(), submittedView->viewInternalPath(), submittedItem->takeContents());
+		contentContainer->title()->setText(submittedView->viewName());
 
 		SubmittableRecordWidget *newFormView = submittedView->createFormView();
 		AdminPageContentWidget* newPageContainer = new AdminPageContentWidget(submittedItem->text(), dynamic_cast<Wt::WWidget*>(newFormView));
@@ -198,12 +203,19 @@ namespace GS
 
 		menu()->addSeparator();
 
-		auto assignmentsMenuItem = new Wt::WMenuItem(tr("EmployeeAssignments"));
-		assignmentsMenuItem->setPathComponent(EMPLOYEES_PATHC "/" EMPLOYEEASSIGNMENTS_PATHC);
-		EmployeeAssignmentList *assignmentList = new EmployeeAssignmentList();
-		assignmentList->enableFilters();
-		assignmentsMenuItem->setContents(new AdminPageContentWidget(assignmentsMenuItem->text(), assignmentList));
-		menu()->addItem(assignmentsMenuItem);
+		auto employeeAssignmentsMenuItem = new Wt::WMenuItem(tr("EmployeeAssignments"));
+		employeeAssignmentsMenuItem->setPathComponent(EMPLOYEES_PATHC "/" EMPLOYEEASSIGNMENTS_PATHC);
+		EmployeeAssignmentList *employeeAssignmentList = new EmployeeAssignmentList();
+		employeeAssignmentList->enableFilters();
+		employeeAssignmentsMenuItem->setContents(new AdminPageContentWidget(employeeAssignmentsMenuItem->text(), employeeAssignmentList));
+		menu()->addItem(employeeAssignmentsMenuItem);
+
+		auto clientAssignmentsMenuItem = new Wt::WMenuItem(tr("ClientAssignments"));
+		clientAssignmentsMenuItem->setPathComponent(CLIENTS_PATHC "/" CLIENTASSIGNMENTS_PATHC);
+		ClientAssignmentList *clientAssignmentList = new ClientAssignmentList();
+		clientAssignmentList->enableFilters();
+		clientAssignmentsMenuItem->setContents(new AdminPageContentWidget(clientAssignmentsMenuItem->text(), clientAssignmentList));
+		menu()->addItem(clientAssignmentsMenuItem);
 
 		menu()->addSeparator();
 
@@ -218,10 +230,17 @@ namespace GS
 
 			auto assignEmployeeMenuItem = new Wt::WMenuItem(tr("AssignEmployee"));
 			assignEmployeeMenuItem->setPathComponent(EMPLOYEES_PATHC "/" NEW_EMPLOYEEASSIGNMENT_PATHC);
-			EmployeeExpenseView *employeeAssignmentView = new EmployeeExpenseView(true);
+			EmployeeAssignmentView *employeeAssignmentView = new EmployeeAssignmentView();
 			assignEmployeeMenuItem->setContents(new AdminPageContentWidget(assignEmployeeMenuItem->text(), employeeAssignmentView));
 			menu()->addItem(assignEmployeeMenuItem);
 			connectFormSubmitted(assignEmployeeMenuItem);
+
+			auto assignClientMenuItem = new Wt::WMenuItem(tr("AssignClient"));
+			assignClientMenuItem->setPathComponent(CLIENTS_PATHC "/" NEW_CLIENTASSIGNMENT_PATHC);
+			ClientAssignmentView *clientAssignmentView = new ClientAssignmentView();
+			assignClientMenuItem->setContents(new AdminPageContentWidget(assignClientMenuItem->text(), clientAssignmentView));
+			menu()->addItem(assignClientMenuItem);
+			connectFormSubmitted(assignClientMenuItem);
 
 			menu()->addSeparator();
 		}
@@ -294,7 +313,7 @@ namespace GS
 
 			auto createRecurringExpenseMenuItem = new Wt::WMenuItem(tr("CreateRecurringExpense"));
 			createRecurringExpenseMenuItem->setPathComponent(EXPENSECYCLES_PATHC "/" NEW_EXPENSECYCLE_PATHC);
-			EmployeeExpenseView *expenseCycleView = new EmployeeExpenseView(false);
+			ExpenseCycleView *expenseCycleView = new ExpenseCycleView();
 			createRecurringExpenseMenuItem->setContents(new AdminPageContentWidget(createRecurringExpenseMenuItem->text(), expenseCycleView));
 			menu()->addItem(createRecurringExpenseMenuItem);
 			connectFormSubmitted(createRecurringExpenseMenuItem);
@@ -302,29 +321,6 @@ namespace GS
 			menu()->addSeparator();
 		}
 	}
-
-// 	void EntitiesAdminPage::newEntityViewSubmitted()
-// 	{
-// 		if(!_newEntityView || _newEntityView->entityPtr().id() == -1)
-// 			return;
-// 
-// 		auto submittedEntityView = _newEntityView;
-// 		auto submittedEntityItem = _newEntityMenuItem;
-// 		int newEntityMenuItemIndex = menu()->indexOf(submittedEntityItem);
-// 		std::string newPathComponent = ENTITY_PREFIX + boost::lexical_cast<std::string>(submittedEntityView->entityPtr().id());
-// 
-// 		menu()->removeItem(submittedEntityItem);
-// 		submittedEntityItem->setText(submittedEntityView->viewName());
-// 		submittedEntityItem->setPathComponent(newPathComponent);
-// 		menu()->addItem(submittedEntityItem);
-// 
-// 		_newEntityView = new EntityView(Entity::InvalidType);
-// 		_submittedConnection.disconnect();
-// 		_submittedConnection = _newEntityView->submitted().connect(this, &EntitiesAdminPage::newEntityViewSubmitted);
-// 		_newEntityMenuItem = createMenuItem(newEntityMenuItemIndex, tr("AddNewX").arg(tr("entity")), "new", _newEntityView);
-// 
-// 		submittedEntityItem->select();
-// 	}
 
 	AttendanceAdminPage::AttendanceAdminPage(Wt::WContainerWidget *parent /*= nullptr*/)
 		: AdminPageWidget(ATTENDANCE_PATHC, parent)

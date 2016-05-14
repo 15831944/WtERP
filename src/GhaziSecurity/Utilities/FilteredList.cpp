@@ -251,7 +251,7 @@ namespace GS
 			return;
 
 		Wt::WTemplate *filterTemplate = new Wt::WTemplate();
-		filterTemplate->addFunction("tr", &Wt::WTemplate::Functions::tr);
+		filterTemplate->addFunction("id", &Wt::WTemplate::Functions::id);
 		if(auto rangeEdit = dynamic_cast<RangeEdit*>(newWidget))
 		{
 			filterTemplate->setTemplateText(tr("GS.ListRangeFilterView"));

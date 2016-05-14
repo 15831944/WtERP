@@ -129,10 +129,10 @@ namespace GS
 		}
 	};
 
-	class BaseProxyModelComboBoxValidator : public Wt::WValidator
+	class BaseComboBoxValidator : public Wt::WValidator
 	{
 	public:
-		BaseProxyModelComboBoxValidator(Wt::WObject *parent) : Wt::WValidator(parent) { }
+		BaseComboBoxValidator(Wt::WObject *parent) : Wt::WValidator(parent) { }
 		void setErrorString(const Wt::WString &str) { _errorStr = str; }
 
 	protected:
@@ -140,12 +140,12 @@ namespace GS
 	};
 
 	template<class QueryProxyModel>
-	class ProxyModelCBValidator : public BaseProxyModelComboBoxValidator
+	class QueryProxyModelCBValidator : public BaseComboBoxValidator
 	{
 	public:
 		//typedef typename ProxyModel ProxyModel;
-		ProxyModelCBValidator(QueryProxyModelCB<QueryProxyModel> *cb)
-			: BaseProxyModelComboBoxValidator((Wt::WObject*)cb), _cb(cb)
+		QueryProxyModelCBValidator(QueryProxyModelCB<QueryProxyModel> *cb)
+			: BaseComboBoxValidator((Wt::WObject*)cb), _cb(cb)
 		{ }
 		virtual Result validate(const Wt::WString &input) const override
 		{
@@ -162,6 +162,36 @@ namespace GS
 
 	protected:
 		QueryProxyModelCB<QueryProxyModel> *_cb = nullptr;
+	};
+
+	class ProxyModelCBValidator : public BaseComboBoxValidator
+	{
+	public:
+		//typedef typename ProxyModel ProxyModel;
+		ProxyModelCBValidator(Wt::WComboBox *cb)
+			: BaseComboBoxValidator((Wt::WObject*)cb), _cb(cb)
+		{ }
+		virtual Result validate(const Wt::WString &input) const override
+		{
+			if(_cb->currentIndex() == -1)
+				return Result(Invalid, _errorStr);
+
+			auto proxyModel = dynamic_cast<Wt::WAbstractProxyModel*>(_cb->model());
+			if(!proxyModel)
+			{
+				Wt::log("warn") << "ProxyModelCBValidator::validator(): null proxyModel";
+				return Result(Invalid, Wt::WString::tr("Error"));
+			}
+
+			auto sourceIndex = proxyModel->mapToSource(proxyModel->index(_cb->currentIndex(), 0));
+			if(!sourceIndex.isValid())
+				return Result(Invalid, _errorStr);
+
+			return Result(Valid);
+		}
+
+	protected:
+		Wt::WComboBox *_cb = nullptr;
 	};
 
 }

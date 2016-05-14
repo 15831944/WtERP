@@ -148,7 +148,7 @@ namespace GS
 		LocationView(Wt::Dbo::ptr<Location> locationPtr = Wt::Dbo::ptr<Location>());
 		virtual void init() override;
 
-		void handleCountryChanged();
+		void handleCountryChanged(bool resetCity);
 		void handleCityChanged();
 		Wt::WDialog *createAddCountryDialog();
 		Wt::WDialog *createAddCityDialog();

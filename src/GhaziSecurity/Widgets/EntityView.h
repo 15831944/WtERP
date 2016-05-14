@@ -35,6 +35,7 @@ namespace GS
 		virtual bool saveChanges() override;
 
 	protected:
+		virtual void persistedHandler() override;
 		EntityView *_view = nullptr;
 	};
 
@@ -150,6 +151,7 @@ namespace GS
 		ContactNumbersManagerModel(EntityView *view, PtrCollection collection = PtrCollection());
 
 	protected:
+		virtual bool saveChanges() override;
 		virtual RecordViewsContainer *createFormWidget(Field field) override;
 		virtual std::tuple<RecordFormView*, ModelType*> createRecordView(Wt::Dbo::ptr<Dbo> recordPtr) override;
 
@@ -163,6 +165,7 @@ namespace GS
 		LocationsManagerModel(EntityView *view, PtrCollection collection = PtrCollection());
 
 	protected:
+		virtual bool saveChanges() override;
 		virtual RecordViewsContainer *createFormWidget(Field field) override;
 		virtual std::tuple<RecordFormView*, ModelType*> createRecordView(Wt::Dbo::ptr<Dbo> recordPtr) override;
 

@@ -16,16 +16,11 @@ namespace GS
 #define TypeColumnWidth 80
 #define RolesColumnWidth 250
 
-	AllEntityList::AllEntityList()
-		: QueryModelFilteredList()
-	{ }
-
 	void AllEntityList::initFilters()
 	{
-		filtersTemplate()->addFilterModel(new WLineEditFilterModel(tr("ID"), "id", std::bind(&FiltersTemplate::initIdEdit, std::placeholders::_1)));
-		filtersTemplate()->addFilterModel(new NameFilterModel(tr("Name"), "name")); filtersTemplate()->addFilter(2);
-		filtersTemplate()->addFilterModel(new WComboBoxFilterModel(tr("Type"), "type", std::bind(&FiltersTemplate::initEntityTypeEdit, std::placeholders::_1)));
-		filtersTemplate()->addFilterModel(new BitmaskFilterModel(tr("Role"), "specificTypeMask", std::bind(&FiltersTemplate::initRoleEdit, std::placeholders::_1)));
+		filtersTemplate()->addFilterModel(new WLineEditFilterModel(tr("ID"), "e.id", std::bind(&FiltersTemplate::initIdEdit, std::placeholders::_1)));
+		filtersTemplate()->addFilterModel(new NameFilterModel(tr("Name"), "e.name")); filtersTemplate()->addFilter(2);
+		filtersTemplate()->addFilterModel(new WComboBoxFilterModel(tr("Type"), "e.type", std::bind(&FiltersTemplate::initEntityTypeEdit, std::placeholders::_1)));
 	}
 
 	void AllEntityList::initModel()
@@ -34,29 +29,30 @@ namespace GS
 		_model = model = new QueryModelType(this);
 
 		WApplication *app = APP;
-		_baseQuery = app->dboSession().query<ResultType>("SELECT id, name, type, specificTypeMask FROM " + std::string(Entity::tableName()));
-		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false);
+		Wt::WDate currentDate(boost::gregorian::day_clock::local_day());
+		_baseQuery = app->dboSession().query<ResultType>(
+			"SELECT e.id e_id, e.name, e.type e_type, ea.id ea_id, p.id p_id, ca.id ca_id FROM " + std::string(Entity::tableName()) + " e "
+			"LEFT JOIN " + EmployeeAssignment::tableName() + " ea ON (ea.entity_id = e.id AND ea.startDate <= ? AND (ea.endDate IS NULL OR ea.endDate > ?)) "
+			"LEFT JOIN " + EmployeePosition::tableName() + " p ON (p.id = ea.employeeposition_id AND p.type = ?) "
+			"LEFT JOIN " + ClientAssignment::tableName() + " ca ON (ca.entity_id = e.id AND ca.startDate <= ? AND (ca.endDate IS NULL OR ca.endDate > ?))"
+			).bind(currentDate).bind(currentDate).bind(EmployeePosition::PersonnelType).bind(currentDate).bind(currentDate).groupBy("e.id");
+		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "e.");
 
 		Wt::Dbo::Query<ResultType> query(_baseQuery); //must copy the query first
 		model->setQuery(query);
 
-		addColumn(Id, model->addColumn("id"), tr("ID"), IdColumnWidth);
-		addColumn(Name, model->addColumn("name"), tr("Name"), NameColumnWidth);
-		addColumn(EntityType, model->addColumn("type"), tr("Type"), TypeColumnWidth);
-		addColumn(SpecificTypeMask, model->addColumn("specificTypeMask"), tr("Roles"), RolesColumnWidth);
+		addColumn(ViewId, model->addColumn("e.id e_id"), tr("ID"), IdColumnWidth);
+		addColumn(ViewName, model->addColumn("e.name"), tr("Name"), NameColumnWidth);
+		addColumn(ViewEntityType, model->addColumn("e.type e_type"), tr("Type"), TypeColumnWidth);
+		addColumn(ViewRole, model->addColumn("ea.id ea_id"), tr("Roles"), RolesColumnWidth);
 
-		_proxyModel = new EntityListProxyModel<Id>(_model, _model);
+		_proxyModel = new EntityListProxyModel<AllEntityList>(_model, _model);
 	}
-
-	PersonList::PersonList()
-		: QueryModelFilteredList()
-	{ }
 
 	void PersonList::initFilters()
 	{
-		filtersTemplate()->addFilterModel(new WLineEditFilterModel(tr("ID"), "id", std::bind(&FiltersTemplate::initIdEdit, std::placeholders::_1)));
-		filtersTemplate()->addFilterModel(new NameFilterModel(tr("Name"), "name")); filtersTemplate()->addFilter(2);
-		filtersTemplate()->addFilterModel(new BitmaskFilterModel(tr("Role"), "specificTypeMask", std::bind(&FiltersTemplate::initRoleEdit, std::placeholders::_1)));
+		filtersTemplate()->addFilterModel(new WLineEditFilterModel(tr("ID"), "e.id", std::bind(&FiltersTemplate::initIdEdit, std::placeholders::_1)));
+		filtersTemplate()->addFilterModel(new NameFilterModel(tr("Name"), "e.name")); filtersTemplate()->addFilter(2);
 	}
 
 	void PersonList::initModel()
@@ -65,28 +61,30 @@ namespace GS
 		_model = model = new QueryModelType(this);
 
 		WApplication *app = APP;
-		_baseQuery = app->dboSession().query<ResultType>("SELECT id, name, specificTypeMask FROM " + std::string(Entity::tableName())).where("type = ?").bind(Entity::PersonType);
-		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false);
+		Wt::WDate currentDate(boost::gregorian::day_clock::local_day());
+		_baseQuery = app->dboSession().query<ResultType>(
+			"SELECT e.id e_id, e.name, ea.id ea_id, p.id p_id, ca.id ca_id FROM " + std::string(Entity::tableName()) + " e "
+			"LEFT JOIN " + EmployeeAssignment::tableName() + " ea ON (ea.entity_id = e.id AND ea.startDate <= ? AND (ea.endDate IS NULL OR ea.endDate > ?)) "
+			"LEFT JOIN " + EmployeePosition::tableName() + " p ON (p.id = ea.employeeposition_id AND p.type = ?) "
+			"LEFT JOIN " + ClientAssignment::tableName() + " ca ON (ca.entity_id = e.id AND ca.startDate <= ? AND (ca.endDate IS NULL OR ca.endDate > ?))"
+			).bind(currentDate).bind(currentDate).bind(EmployeePosition::PersonnelType).bind(currentDate).bind(currentDate)
+			.where("e.type = ?").bind(Entity::PersonType).groupBy("e.id");
+		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "e.");
 
 		Wt::Dbo::Query<ResultType> query(_baseQuery); //must copy the query first
 		model->setQuery(query);
 
-		addColumn(Id, model->addColumn("id"), tr("ID"), IdColumnWidth);
-		addColumn(Name, model->addColumn("name"), tr("Name"), NameColumnWidth);
-		addColumn(SpecificTypeMask, model->addColumn("specificTypeMask"), tr("Roles"), RolesColumnWidth);
+		addColumn(ViewId, model->addColumn("e.id e_id"), tr("ID"), IdColumnWidth);
+		addColumn(ViewName, model->addColumn("e.name"), tr("Name"), NameColumnWidth);
+		addColumn(ViewRole, model->addColumn("ea.id ea_id"), tr("Roles"), RolesColumnWidth);
 
-		_proxyModel = new EntityListProxyModel<Id>(_model, _model);
+		_proxyModel = new EntityListProxyModel<PersonList>(_model, _model);
 	}
-
-	BusinessList::BusinessList()
-		: QueryModelFilteredList()
-	{ }
 
 	void BusinessList::initFilters()
 	{
-		filtersTemplate()->addFilterModel(new WLineEditFilterModel(tr("ID"), "id", std::bind(&FiltersTemplate::initIdEdit, std::placeholders::_1)));
-		filtersTemplate()->addFilterModel(new NameFilterModel(tr("Name"), "name")); filtersTemplate()->addFilter(2);
-		filtersTemplate()->addFilterModel(new BitmaskFilterModel(tr("Role"), "specificTypeMask", std::bind(&FiltersTemplate::initRoleEdit, std::placeholders::_1)));
+		filtersTemplate()->addFilterModel(new WLineEditFilterModel(tr("ID"), "e.id", std::bind(&FiltersTemplate::initIdEdit, std::placeholders::_1)));
+		filtersTemplate()->addFilterModel(new NameFilterModel(tr("Name"), "e.name")); filtersTemplate()->addFilter(2);
 	}
 
 	void BusinessList::initModel()
@@ -95,24 +93,30 @@ namespace GS
 		_model = model = new QueryModelType(this);
 
 		WApplication *app = APP;
-		_baseQuery = app->dboSession().query<ResultType>("SELECT id, name, specificTypeMask FROM " + std::string(Entity::tableName())).where("type = ?").bind(Entity::BusinessType);
-		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false);
+		Wt::WDate currentDate(boost::gregorian::day_clock::local_day());
+		_baseQuery = app->dboSession().query<ResultType>(
+			"SELECT e.id e_id, e.name, ea.id ea_id, p.id p_id, ca.id ca_id FROM " + std::string(Entity::tableName()) + " e "
+			"LEFT JOIN " + EmployeeAssignment::tableName() + " ea ON (ea.entity_id = e.id AND ea.startDate <= ? AND (ea.endDate IS NULL OR ea.endDate > ?)) "
+			"LEFT JOIN " + EmployeePosition::tableName() + " p ON (p.id = ea.employeeposition_id AND p.type = ?) "
+			"LEFT JOIN " + ClientAssignment::tableName() + " ca ON (ca.entity_id = e.id AND ca.startDate <= ? AND (ca.endDate IS NULL OR ca.endDate > ?))"
+			).bind(currentDate).bind(currentDate).bind(EmployeePosition::PersonnelType).bind(currentDate).bind(currentDate)
+			.where("e.type = ?").bind(Entity::BusinessType).groupBy("e.id");
+		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "e.");
 
 		Wt::Dbo::Query<ResultType> query(_baseQuery); //must copy the query first
 		model->setQuery(query);
 
-		addColumn(Id, model->addColumn("id"), tr("ID"), IdColumnWidth);
-		addColumn(Name, model->addColumn("name"), tr("Name"), NameColumnWidth);
-		addColumn(SpecificTypeMask, model->addColumn("specificTypeMask"), tr("Roles"), RolesColumnWidth);
+		addColumn(ViewId, model->addColumn("e.id e_id"), tr("ID"), IdColumnWidth);
+		addColumn(ViewName, model->addColumn("e.name"), tr("Name"), NameColumnWidth);
+		addColumn(ViewRole, model->addColumn("ea.id ea_id"), tr("Roles"), RolesColumnWidth);
 
-		_proxyModel = new EntityListProxyModel<Id>(_model, _model);
+		_proxyModel = new EntityListProxyModel<BusinessList>(_model, _model);
 	}
 
 	void EmployeeList::initFilters()
 	{
-		filtersTemplate()->addFilterModel(new WLineEditFilterModel(tr("ID"), "id", std::bind(&FiltersTemplate::initIdEdit, std::placeholders::_1)));
-		filtersTemplate()->addFilterModel(new NameFilterModel(tr("Name"), "name")); filtersTemplate()->addFilter(2);
-		filtersTemplate()->addFilterModel(new BitmaskFilterModel(tr("Role"), "specificTypeMask", std::bind(&FiltersTemplate::initRoleEdit, std::placeholders::_1)));
+		filtersTemplate()->addFilterModel(new WLineEditFilterModel(tr("ID"), "e.id", std::bind(&FiltersTemplate::initIdEdit, std::placeholders::_1)));
+		filtersTemplate()->addFilterModel(new NameFilterModel(tr("Name"), "e.name")); filtersTemplate()->addFilter(2);
 	}
 
 	void EmployeeList::initModel()
@@ -121,29 +125,29 @@ namespace GS
 		_model = model = new QueryModelType(this);
 
 		WApplication *app = APP;
-		_baseQuery = app->dboSession().query<ResultType>("SELECT id, name, specificTypeMask FROM " + std::string(Entity::tableName()))
-			.where("type = ? AND specificTypeMask & ?").bind(Entity::PersonType).bind(Entity::EmployeeType);
-		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false);
+		Wt::WDate currentDate(boost::gregorian::day_clock::local_day());
+		_baseQuery = app->dboSession().query<ResultType>(
+			"SELECT e.id e_id, e.name, ea.id ea_id, p.id p_id, ca.id ca_id FROM " + std::string(Entity::tableName()) + " e "
+			"INNER JOIN " + EmployeeAssignment::tableName() + " ea ON (ea.entity_id = e.id AND ea.startDate <= ? AND (ea.endDate IS NULL OR ea.endDate > ?)) "
+			"LEFT JOIN " + EmployeePosition::tableName() + " p ON (p.id = ea.employeeposition_id AND p.type = ?) "
+			"LEFT JOIN " + ClientAssignment::tableName() + " ca ON (ca.entity_id = e.id AND ca.startDate <= ? AND (ca.endDate IS NULL OR ca.endDate > ?))"
+			).bind(currentDate).bind(currentDate).bind(EmployeePosition::PersonnelType).bind(currentDate).bind(currentDate).groupBy("e.id");
+		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "e.");
 
 		Wt::Dbo::Query<ResultType> query(_baseQuery); //must copy the query first
 		model->setQuery(query);
 
-		addColumn(Id, model->addColumn("id"), tr("ID"), IdColumnWidth);
-		addColumn(Name, model->addColumn("name"), tr("Name"), NameColumnWidth);
-		addColumn(SpecificTypeMask, model->addColumn("specificTypeMask"), tr("Roles"), RolesColumnWidth);
+		addColumn(ViewId, model->addColumn("e.id e_id"), tr("ID"), IdColumnWidth);
+		addColumn(ViewName, model->addColumn("e.name"), tr("Name"), NameColumnWidth);
+		addColumn(ViewRole, model->addColumn("ea.id ea_id"), tr("Roles"), RolesColumnWidth);
 
-		_proxyModel = new EntityListProxyModel<Id>(_model, _model);
+		_proxyModel = new EntityListProxyModel<EmployeeList>(_model, _model);
 	}
-
-	PersonnelList::PersonnelList()
-		: QueryModelFilteredList()
-	{ }
 
 	void PersonnelList::initFilters()
 	{
-		filtersTemplate()->addFilterModel(new WLineEditFilterModel(tr("ID"), "id", std::bind(&FiltersTemplate::initIdEdit, std::placeholders::_1)));
-		filtersTemplate()->addFilterModel(new NameFilterModel(tr("Name"), "name")); filtersTemplate()->addFilter(2);
-		filtersTemplate()->addFilterModel(new BitmaskFilterModel(tr("Role"), "specificTypeMask", std::bind(&FiltersTemplate::initRoleEdit, std::placeholders::_1)));
+		filtersTemplate()->addFilterModel(new WLineEditFilterModel(tr("ID"), "e.id", std::bind(&FiltersTemplate::initIdEdit, std::placeholders::_1)));
+		filtersTemplate()->addFilterModel(new NameFilterModel(tr("Name"), "e.name")); filtersTemplate()->addFilter(2);
 	}
 
 	void PersonnelList::initModel()
@@ -152,30 +156,30 @@ namespace GS
 		_model = model = new QueryModelType(this);
 
 		WApplication *app = APP;
-		_baseQuery = app->dboSession().query<ResultType>("SELECT id, name, specificTypeMask FROM " + std::string(Entity::tableName()))
-			.where("type = ? AND (specificTypeMask & ?) = ?")
-			.bind(Entity::PersonType).bind(Entity::EmployeeType | Entity::PersonnelType).bind(Entity::EmployeeType | Entity::PersonnelType);
-		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false);
+		Wt::WDate currentDate(boost::gregorian::day_clock::local_day());
+		_baseQuery = app->dboSession().query<ResultType>(
+			"SELECT e.id e_id, e.name, ea.id ea_id, p.id p_id, ca.id ca_id FROM " + std::string(Entity::tableName()) + " e "
+			"INNER JOIN " + EmployeeAssignment::tableName() + " ea ON (ea.entity_id = e.id AND ea.startDate <= ? AND (ea.endDate IS NULL OR ea.endDate > ?)) "
+			"INNER JOIN " + EmployeePosition::tableName() + " p ON (p.id = ea.employeeposition_id AND p.type = ?) "
+			"LEFT JOIN " + ClientAssignment::tableName() + " ca ON (ca.entity_id = e.id AND ca.startDate <= ? AND (ca.endDate IS NULL OR ca.endDate > ?))"
+			).bind(currentDate).bind(currentDate).bind(EmployeePosition::PersonnelType).bind(currentDate).bind(currentDate).groupBy("e.id");
+		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "e.");
 
 		Wt::Dbo::Query<ResultType> query(_baseQuery); //must copy the query first
 		model->setQuery(query);
 
-		addColumn(Id, model->addColumn("id"), tr("ID"), IdColumnWidth);
-		addColumn(Name, model->addColumn("name"), tr("Name"), NameColumnWidth);
-		addColumn(SpecificTypeMask, model->addColumn("specificTypeMask"), tr("Roles"), RolesColumnWidth);
+		addColumn(ViewId, model->addColumn("e.id e_id"), tr("ID"), IdColumnWidth);
+		addColumn(ViewName, model->addColumn("e.name"), tr("Name"), NameColumnWidth);
+		addColumn(ViewRole, model->addColumn("ea.id ea_id"), tr("Roles"), RolesColumnWidth);
 
-		_proxyModel = new EntityListProxyModel<Id>(_model, _model);
+		_proxyModel = new EntityListProxyModel<PersonnelList>(_model, _model);
 	}
-
-	ClientList::ClientList()
-		: QueryModelFilteredList()
-	{ }
 
 	void ClientList::initFilters()
 	{
-		filtersTemplate()->addFilterModel(new WLineEditFilterModel(tr("ID"), "id", std::bind(&FiltersTemplate::initIdEdit, std::placeholders::_1)));
-		filtersTemplate()->addFilterModel(new NameFilterModel(tr("Name"), "name")); filtersTemplate()->addFilter(2);
-		filtersTemplate()->addFilterModel(new BitmaskFilterModel(tr("Role"), "specificTypeMask", std::bind(&FiltersTemplate::initRoleEdit, std::placeholders::_1)));
+		filtersTemplate()->addFilterModel(new WLineEditFilterModel(tr("ID"), "e.id", std::bind(&FiltersTemplate::initIdEdit, std::placeholders::_1)));
+		filtersTemplate()->addFilterModel(new NameFilterModel(tr("Name"), "e.name")); filtersTemplate()->addFilter(2);
+		filtersTemplate()->addFilterModel(new WComboBoxFilterModel(tr("Type"), "e.type", std::bind(&FiltersTemplate::initEntityTypeEdit, std::placeholders::_1)));
 	}
 
 	void ClientList::initModel()
@@ -184,18 +188,24 @@ namespace GS
 		_model = model = new QueryModelType(this);
 
 		WApplication *app = APP;
-		_baseQuery = app->dboSession().query<ResultType>("SELECT id, name, type, specificTypeMask FROM " + std::string(Entity::tableName())).where("specificTypeMask & ?").bind(Entity::ClientType);
-		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false);
+		Wt::WDate currentDate(boost::gregorian::day_clock::local_day());
+		_baseQuery = app->dboSession().query<ResultType>(
+			"SELECT e.id e_id, e.name, e.type e_type, ea.id ea_id, p.id p_id, ca.id ca_id FROM " + std::string(Entity::tableName()) + " e "
+			"LEFT JOIN " + EmployeeAssignment::tableName() + " ea ON (ea.entity_id = e.id AND ea.startDate <= ? AND (ea.endDate IS NULL OR ea.endDate > ?)) "
+			"LEFT JOIN " + EmployeePosition::tableName() + " p ON (p.id = ea.employeeposition_id AND p.type = ?) "
+			"INNER JOIN " + ClientAssignment::tableName() + " ca ON (ca.entity_id = e.id AND ca.startDate <= ? AND (ca.endDate IS NULL OR ca.endDate > ?))"
+			).bind(currentDate).bind(currentDate).bind(EmployeePosition::PersonnelType).bind(currentDate).bind(currentDate).groupBy("e.id");
+		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "e.");
 
 		Wt::Dbo::Query<ResultType> query(_baseQuery); //must copy the query first
 		model->setQuery(query);
 
-		addColumn(Id, model->addColumn("id"), tr("ID"), IdColumnWidth);
-		addColumn(Name, model->addColumn("name"), tr("Name"), NameColumnWidth);
-		addColumn(EntityType, model->addColumn("type"), tr("Type"), TypeColumnWidth);
-		addColumn(SpecificTypeMask, model->addColumn("specificTypeMask"), tr("Roles"), RolesColumnWidth);
+		addColumn(ViewId, model->addColumn("e.id e_id"), tr("ID"), IdColumnWidth);
+		addColumn(ViewName, model->addColumn("e.name"), tr("Name"), NameColumnWidth);
+		addColumn(ViewEntityType, model->addColumn("e.type e_type"), tr("Type"), TypeColumnWidth);
+		addColumn(ViewRole, model->addColumn("ea.id ea_id"), tr("Roles"), RolesColumnWidth);
 
-		_proxyModel = new EntityListProxyModel<Id>(_model, _model);
+		_proxyModel = new EntityListProxyModel<ClientList>(_model, _model);
 	}
 
 	//CRAAAAP
@@ -216,66 +226,5 @@ namespace GS
 		edit->insertItem(Entity::PersonType, tr("Person"));
 		edit->insertItem(Entity::BusinessType, tr("Business"));
 	}
-
-	template<int IdColumn>
-	EntityListProxyModel<IdColumn>::EntityListProxyModel(Wt::WAbstractItemModel *model, Wt::WObject *parent /*= nullptr*/)
-		: Wt::WBatchEditProxyModel(parent)
-	{
-		setSourceModel(model);
-		addAdditionalColumns();
-	}
-
-	template<int IdColumn>
-	boost::any EntityListProxyModel<IdColumn>::data(const Wt::WModelIndex &idx, int role /*= Wt::DisplayRole*/) const
-	{
-		if(_linkColumn != -1 && idx.column() == _linkColumn)
-		{
-			if(role == Wt::DisplayRole)
-				return Wt::WString::tr("GS.LinkIcon");
-
-			if(role == Wt::LinkRole)
-			{
-				boost::any idData = data(index(idx.row(), IdColumn));
-				return Wt::WLink(Wt::WLink::InternalPath, Entity::viewInternalPath(Wt::asString(idData).toUTF8()));
-			}
-		}
-
-		return Wt::WBatchEditProxyModel::data(idx, role);
-	}
-
-	template<int IdColumn>
-	Wt::WFlags<Wt::ItemFlag> EntityListProxyModel<IdColumn>::flags(const Wt::WModelIndex &index) const
-	{
-		if(index.column() == _linkColumn)
-			return Wt::ItemIsXHTMLText;
-		return Wt::WBatchEditProxyModel::flags(index);
-	}
-
-	template<int IdColumn>
-	boost::any EntityListProxyModel<IdColumn>::headerData(int section, Wt::Orientation orientation /* = Wt::Horizontal */, int role /* = Wt::DisplayRole */) const
-	{
-		if(section == _linkColumn)
-		{
-			if(role == Wt::WidthRole)
-				return 40;
-			return Wt::WAbstractItemModel::headerData(section, orientation, role);
-		}
-
-		return Wt::WBatchEditProxyModel::headerData(section, orientation, role);
-	}
-
-	template<int IdColumn>
-	void EntityListProxyModel<IdColumn>::addAdditionalColumns()
-	{
-		int lastColumn = columnCount();
-
-		if(insertColumn(lastColumn))
-			_linkColumn = lastColumn;
-		else
-			_linkColumn = -1;
-	}
-
-	//EXPLICIT SPECIALIZATIONS
-	template class EntityListProxyModel<0>;
 
 }

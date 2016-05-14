@@ -356,7 +356,26 @@ void WApplication::handleInternalPathChanged(std::string path)
 					{
 						if(authLogin().checkRecordViewPermission(ptr.get()) == AuthLogin::Permitted)
 						{
-							EmployeeExpenseView *view = new EmployeeExpenseView(ptr);
+							EmployeeAssignmentView *view = new EmployeeAssignmentView(ptr);
+							view->load();
+							auto menuItem = _entitiesAdminPage->createMenuItemWrapped(view->viewName(), view->viewInternalPath(), view);
+						}
+						else
+							_entitiesAdminPage->setDeniedPermissionWidget();
+					}
+				}
+
+				//client assignemnt view
+				id = getUsableIdFromPathPrefix(ClientAssignment::viewInternalPath(""), _entitiesAdminPage, CLIENTS_PATHC "/" CLIENTASSIGNMENTS_PREFIX);
+				if(id != -1)
+				{
+					Wt::Dbo::Transaction t(dboSession());
+					Wt::Dbo::ptr<ClientAssignment> ptr = dboSession().load<ClientAssignment>(id, true);
+					if(ptr)
+					{
+						if(authLogin().checkRecordViewPermission(ptr.get()) == AuthLogin::Permitted)
+						{
+							ClientAssignmentView *view = new ClientAssignmentView(ptr);
 							view->load();
 							auto menuItem = _entitiesAdminPage->createMenuItemWrapped(view->viewName(), view->viewInternalPath(), view);
 						}
@@ -432,7 +451,7 @@ void WApplication::handleInternalPathChanged(std::string path)
 					{
 						if(authLogin().checkRecordViewPermission(ptr.get()) == AuthLogin::Permitted)
 						{
-							EmployeeExpenseView *view = new EmployeeExpenseView(ptr);
+							ExpenseCycleView *view = new ExpenseCycleView(ptr);
 							view->load();
 							auto menuItem = _accountsAdminPage->createMenuItemWrapped(view->viewName(), view->viewInternalPath(), view);
 						}

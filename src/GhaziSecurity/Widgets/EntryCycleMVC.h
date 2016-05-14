@@ -16,85 +16,6 @@ namespace GS
 	class ExpenseCycleView;
 	class IncomeCycleView;
 	class EmployeeAssignmentFormModel;
-	class PositionView;
-	class ServiceView;
-
-	//PositionProxyModel
-	class PositionProxyModel : public QueryProxyModel<Wt::Dbo::ptr<EmployeePosition>>
-	{
-	public:
-		PositionProxyModel(Wt::Dbo::QueryModel<Wt::Dbo::ptr<EmployeePosition>> *sourceModel, Wt::WObject *parent = nullptr);
-
-	protected:
-		void addAdditionalRows();
-	};
-
-	//PositionView
-	class PositionFormModel : public RecordFormModel<EmployeePosition>
-	{
-	public:
-		static const Wt::WFormModel::Field titleField;
-
-		PositionFormModel(PositionView *view, Wt::Dbo::ptr<EmployeePosition> positionPtr = Wt::Dbo::ptr<EmployeePosition>());
-		virtual Wt::WWidget *createFormWidget(Field field) override;
-		virtual bool saveChanges() override;
-
-	protected:
-		PositionView *_view = nullptr;
-	};
-
-	class PositionView : public RecordFormView
-	{
-	public:
-		PositionView(Wt::Dbo::ptr<EmployeePosition> positionPtr);
-		PositionView();
-		virtual void init() override;
-
-		Wt::Dbo::ptr<EmployeePosition> positionPtr() const { return _model->recordPtr(); }
-		Wt::WFormModel *model() const { return _model; }
-
-	protected:
-		PositionFormModel *_model = nullptr;
-		Wt::Dbo::ptr<EmployeePosition> _tempPtr;
-	};
-
-	//ServiceProxyModel
-	class ServiceProxyModel : public QueryProxyModel<Wt::Dbo::ptr<ClientService>>
-	{
-	public:
-		ServiceProxyModel(Wt::Dbo::QueryModel<Wt::Dbo::ptr<ClientService>> *sourceModel, Wt::WObject *parent = nullptr);
-
-	protected:
-		void addAdditionalRows();
-	};
-
-	//ServiceView
-	class ServiceFormModel : public RecordFormModel<ClientService>
-	{
-	public:
-		static const Wt::WFormModel::Field titleField;
-
-		ServiceFormModel(ServiceView *view, Wt::Dbo::ptr<ClientService> servicePtr = Wt::Dbo::ptr<ClientService>());
-		virtual Wt::WWidget *createFormWidget(Field field) override;
-		virtual bool saveChanges() override;
-
-	protected:
-		ServiceView *_view = nullptr;
-	};
-	class ServiceView : public RecordFormView
-	{
-	public:
-		ServiceView(Wt::Dbo::ptr<ClientService> servicePtr);
-		ServiceView();
-		virtual void init() override;
-
-		Wt::Dbo::ptr<ClientService> servicePtr() const { return _model->recordPtr(); }
-		ServiceFormModel *model() const { return _model; }
-
-	protected:
-		ServiceFormModel *_model = nullptr;
-		Wt::Dbo::ptr<ClientService> _tempPtr;
-	};
 
 	class CycleEndDateValidator : public Wt::WDateValidator
 	{
@@ -148,9 +69,6 @@ namespace GS
 	class ExpenseCycleFormModel : public RecordFormModel<ExpenseCycle>
 	{
 	public:
-		static const Field purposeField;
-		static const Field positionField;
-
 		ExpenseCycleFormModel(ExpenseCycleView *view, Wt::Dbo::ptr<ExpenseCycle> cyclePtr = Wt::Dbo::ptr<ExpenseCycle>());
 		virtual Wt::WWidget *createFormWidget(Wt::WFormModel::Field field) override;
 		virtual bool saveChanges() override;
@@ -167,23 +85,14 @@ namespace GS
 		virtual void init() override;
 		virtual Wt::WWidget *createFormWidget(Wt::WFormModel::Field field) override;
 
-		void handlePurposeChanged();
-		void handlePositionChanged();
-		Wt::WDialog *createAddPositionDialog();
-
 		virtual Wt::WString viewName() const override;
 		virtual std::string viewInternalPath() const override { return cyclePtr() ? ExpenseCycle::viewInternalPath(cyclePtr().id()) : ""; }
 		virtual RecordFormView *createFormView() override { return new ExpenseCycleView(); }
-
-		Wt::WComboBox *purposeCombo() const { return _purposeCombo; }
-		QueryProxyModelCB<PositionProxyModel> *positionCombo() const { return _positionCombo; }
 
 		ExpenseCycleFormModel *model() const { return _model; }
 		Wt::Dbo::ptr<ExpenseCycle> cyclePtr() const { return _model->recordPtr(); }
 
 	protected:
-		Wt::WComboBox *_purposeCombo = nullptr;
-		QueryProxyModelCB<PositionProxyModel> *_positionCombo = nullptr;
 		ExpenseCycleFormModel *_model = nullptr;
 		Wt::Dbo::ptr<ExpenseCycle> _tempPtr;
 	};
@@ -192,9 +101,6 @@ namespace GS
 	class IncomeCycleFormModel : public RecordFormModel<IncomeCycle>
 	{
 	public:
-		static const Field purposeField;
-		static const Field serviceField;
-
 		IncomeCycleFormModel(IncomeCycleView *view, Wt::Dbo::ptr<IncomeCycle> cyclePtr = Wt::Dbo::ptr<IncomeCycle>());
 		virtual Wt::WWidget *createFormWidget(Wt::WFormModel::Field field) override;
 		virtual bool saveChanges() override;
@@ -211,32 +117,23 @@ namespace GS
 		virtual void init() override;
 		virtual Wt::WWidget *createFormWidget(Wt::WFormModel::Field field) override;
 
-		void handlePurposeChanged();
-		void handleServiceChanged();
-		Wt::WDialog *createAddServiceDialog();
-
 		virtual Wt::WString viewName() const override;
 		virtual std::string viewInternalPath() const override { return cyclePtr() ? IncomeCycle::viewInternalPath(cyclePtr().id()) : ""; }
 		virtual RecordFormView *createFormView() override { return new IncomeCycleView(); }
-
-		Wt::WComboBox *purposeCombo() const { return _purposeCombo; }
-		QueryProxyModelCB<ServiceProxyModel> *serviceCombo() const { return _serviceCombo; }
 
 		IncomeCycleFormModel *model() const { return _model; }
 		Wt::Dbo::ptr<IncomeCycle> cyclePtr() const { return _model->recordPtr(); }
 
 	protected:
-		Wt::WComboBox *_purposeCombo = nullptr;
-		QueryProxyModelCB<ServiceProxyModel> *_serviceCombo = nullptr;
 		IncomeCycleFormModel *_model = nullptr;
 		Wt::Dbo::ptr<IncomeCycle> _tempPtr;
 	};
 
 	//LISTS
-	class EntryCycleList : public QueryModelFilteredList<boost::tuple<long long, Wt::WDateTime, std::string, Wt::WDate, Wt::WDate, long long, std::string, CycleInterval, int, long long>>
+	class EntryCycleList : public QueryModelFilteredList<boost::tuple<long long, Wt::WDateTime, std::string, Wt::WDate, Wt::WDate, long long, long long, CycleInterval, int, long long>>
 	{
 	public:
-		enum ResultColumns { ResId, ResTimestamp, ResEntityName, ResStartDate, ResEndDate, ResAmount, ResExtraName, ResInterval, ResNIntervals, ResEntityId };
+		enum ResultColumns { ResId, ResTimestamp, ResEntityName, ResStartDate, ResEndDate, ResAmount, ResExtra, ResInterval, ResNIntervals, ResEntityId };
 		enum ViewColumns { ViewId, ViewCreatedOn, ViewEntity, ViewStartDate, ViewEndDate, ViewAmount, ViewExtra };
 
 		EntryCycleList();
@@ -245,10 +142,10 @@ namespace GS
 	protected:
 		virtual void initFilters() override;
 	};
-	class EntityEntryCycleList : public QueryModelFilteredList<boost::tuple<long long, Wt::WDateTime, Wt::WDate, Wt::WDate, long long, std::string, CycleInterval, int>>
+	class EntityEntryCycleList : public QueryModelFilteredList<boost::tuple<long long, Wt::WDateTime, Wt::WDate, Wt::WDate, long long, long long, CycleInterval, int>>
 	{
 	public:
-		enum ResultColumns { ResId, ResTimestamp, ResStartDate, ResEndDate, ResAmount, ResExtraName, ResInterval, ResNIntervals };
+		enum ResultColumns { ResId, ResTimestamp, ResStartDate, ResEndDate, ResAmount, ResExtra, ResInterval, ResNIntervals };
 
 		EntityEntryCycleList();
 		virtual void load() override;

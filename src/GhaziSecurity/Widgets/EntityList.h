@@ -23,7 +23,7 @@ namespace GS
 	class AbstractFilterWidgetModel;
 
 	//PROXY MODEL
-	template<int IdColumn>
+	template<class FilteredList>
 	class EntityListProxyModel : public Wt::WBatchEditProxyModel
 	{
 	public:
@@ -38,71 +38,149 @@ namespace GS
 	};
 
 	//ENTITY LISTS
-	class AllEntityList : public QueryModelFilteredList<boost::tuple<long long, std::string, Entity::Type, Wt::WFlags<Entity::SpecificType>>>
+	class AllEntityList : public QueryModelFilteredList<boost::tuple<long long, std::string, Entity::Type, boost::optional<long long>, boost::optional<long long>, boost::optional<long long>>>
 	{
 	public:
-		enum ResultColumns { Id, Name, EntityType, SpecificTypeMask };
-		AllEntityList();
+		enum ResultColumns { ResId, ResName, ResEntityType, ResEmployeeAssignment, ResPersonnelPosition, ResClientAssignment };
+		enum ViewColumns { ViewId, ViewName, ViewEntityType, ViewRole };
 
 	protected:
 		virtual void initFilters() override;
 		virtual void initModel() override;
 	};
 
-	class PersonList : public QueryModelFilteredList<boost::tuple<long long, std::string, Wt::WFlags<Entity::SpecificType>>>
+	class PersonList : public QueryModelFilteredList<boost::tuple<long long, std::string, boost::optional<long long>, boost::optional<long long>, boost::optional<long long>>>
 	{
 	public:
-		enum ResultColumns { Id, Name, SpecificTypeMask };
-		PersonList();
+		enum ResultColumns { ResId, ResName, ResEmployeeAssignment, ResPersonnelPosition, ResClientAssignment };
+		enum ViewColumns { ViewId, ViewName, ViewRole };
 
 	protected:
 		virtual void initFilters() override;
 		virtual void initModel() override;
 	};
 
-	class EmployeeList : public QueryModelFilteredList<boost::tuple<long long, std::string, Wt::WFlags<Entity::SpecificType>>>
+	class EmployeeList : public QueryModelFilteredList<boost::tuple<long long, std::string, boost::optional<long long>, boost::optional<long long>, boost::optional<long long>>>
 	{
 	public:
-		enum ResultColumns { Id, Name, SpecificTypeMask };
-		EmployeeList();
+		enum ResultColumns { ResId, ResName, ResEmployeeAssignment, ResPersonnelPosition, ResClientAssignment };
+		enum ViewColumns { ViewId, ViewName, ViewRole };
 
 	protected:
 		virtual void initFilters() override;
 		virtual void initModel() override;
 	};
 
-	class PersonnelList : public QueryModelFilteredList<boost::tuple<long long, std::string, Wt::WFlags<Entity::SpecificType>>>
+	class PersonnelList : public QueryModelFilteredList<boost::tuple<long long, std::string, boost::optional<long long>, boost::optional<long long>, boost::optional<long long>>>
 	{
 	public:
-		enum ResultColumns { Id, Name, SpecificTypeMask };
-		PersonnelList();
+		enum ResultColumns { ResId, ResName, ResEmployeeAssignment, ResPersonnelPosition, ResClientAssignment };
+		enum ViewColumns { ViewId, ViewName, ViewRole };
 
 	protected:
 		virtual void initFilters() override;
 		virtual void initModel() override;
 	};
 
-	class BusinessList : public QueryModelFilteredList<boost::tuple<long long, std::string, Wt::WFlags<Entity::SpecificType>>>
+	class BusinessList : public QueryModelFilteredList<boost::tuple<long long, std::string, boost::optional<long long>, boost::optional<long long>, boost::optional<long long>>>
 	{
 	public:
-		enum ResultColumns { Id, Name, SpecificTypeMask };
-		BusinessList();
+		enum ResultColumns { ResId, ResName, ResEmployeeAssignment, ResPersonnelPosition, ResClientAssignment };
+		enum ViewColumns { ViewId, ViewName, ViewRole };
 
 	protected:
 		virtual void initFilters() override;
 		virtual void initModel() override;
 	};
 
-	class ClientList : public QueryModelFilteredList<boost::tuple<long long, std::string, Entity::Type, Wt::WFlags<Entity::SpecificType>>>
+	class ClientList : public QueryModelFilteredList<boost::tuple<long long, std::string, Entity::Type, boost::optional<long long>, boost::optional<long long>, boost::optional<long long>>>
 	{
 	public:
-		enum ResultColumns { Id, Name, EntityType, SpecificTypeMask };
-		ClientList();
+		enum ResultColumns { ResId, ResName, ResEntityType, ResEmployeeAssignment, ResPersonnelPosition, ResClientAssignment };
+		enum ViewColumns { ViewId, ViewName, ViewEntityType, ViewRole };
 
 	protected:
 		virtual void initFilters() override;
 		virtual void initModel() override;
 	};
+
+	//TEMPLATE CLASS DEFINITIONS
+	template<class FilteredList>
+	EntityListProxyModel<FilteredList>::EntityListProxyModel(Wt::WAbstractItemModel *model, Wt::WObject *parent /*= nullptr*/)
+		: Wt::WBatchEditProxyModel(parent)
+	{
+		setSourceModel(model);
+		addAdditionalColumns();
+	}
+
+	template<class FilteredList>
+	boost::any EntityListProxyModel<FilteredList>::data(const Wt::WModelIndex &idx, int role /*= Wt::DisplayRole*/) const
+	{
+		if(_linkColumn != -1 && idx.column() == _linkColumn)
+		{
+			if(role == Wt::DisplayRole)
+				return Wt::WString::tr("GS.LinkIcon");
+			else if(role == Wt::LinkRole)
+			{
+				const FilteredList::ResultType &res = dynamic_cast<Wt::Dbo::QueryModel<FilteredList::ResultType>*>(sourceModel())->resultRow(idx.row());
+				long long id = boost::get<FilteredList::ResId>(res);
+				return Wt::WLink(Wt::WLink::InternalPath, Entity::viewInternalPath(id));
+			}
+		}
+
+		boost::any viewIndexData = headerData(idx.column(), Wt::Horizontal, Wt::ViewIndexRole);
+		if(viewIndexData.empty())
+			return Wt::WBatchEditProxyModel::data(idx, role);
+		int viewIndex = boost::any_cast<int>(viewIndexData);
+
+		if(viewIndex == FilteredList::ViewRole && role == Wt::DisplayRole)
+		{
+			const FilteredList::ResultType &res = dynamic_cast<Wt::Dbo::QueryModel<FilteredList::ResultType>*>(sourceModel())->resultRow(idx.row());
+			int typeMask = Entity::UnspecificType;
+			if(boost::get<FilteredList::ResEmployeeAssignment>(res).is_initialized())
+				typeMask |= Entity::EmployeeType;
+			if(boost::get<FilteredList::ResPersonnelPosition>(res).is_initialized())
+				typeMask |= Entity::PersonnelType;
+			if(boost::get<FilteredList::ResClientAssignment>(res).is_initialized())
+				typeMask |= Entity::ClientType;
+
+			return Wt::WFlags<Entity::SpecificType>((Entity::SpecificType)typeMask);
+		}
+
+		return Wt::WBatchEditProxyModel::data(idx, role);
+	}
+
+	template<class FilteredList>
+	Wt::WFlags<Wt::ItemFlag> EntityListProxyModel<FilteredList>::flags(const Wt::WModelIndex &index) const
+	{
+		if(index.column() == _linkColumn)
+			return Wt::ItemIsXHTMLText;
+		return Wt::WBatchEditProxyModel::flags(index);
+	}
+
+	template<class FilteredList>
+	boost::any EntityListProxyModel<FilteredList>::headerData(int section, Wt::Orientation orientation /* = Wt::Horizontal */, int role /* = Wt::DisplayRole */) const
+	{
+		if(section == _linkColumn)
+		{
+			if(role == Wt::WidthRole)
+				return 40;
+			return Wt::WAbstractItemModel::headerData(section, orientation, role);
+		}
+
+		return Wt::WBatchEditProxyModel::headerData(section, orientation, role);
+	}
+
+	template<class FilteredList>
+	void EntityListProxyModel<FilteredList>::addAdditionalColumns()
+	{
+		int lastColumn = columnCount();
+
+		if(insertColumn(lastColumn))
+			_linkColumn = lastColumn;
+		else
+			_linkColumn = -1;
+	}
 
 }
 

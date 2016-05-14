@@ -149,7 +149,7 @@ namespace GS
 		if(field == countryField)
 		{
 			auto country = new QueryProxyModelCB<CountryProxyModel>(APP->countryProxyModel());
-			auto countryValidator = new ProxyModelCBValidator<CountryProxyModel>(country);
+			auto countryValidator = new QueryProxyModelCBValidator<CountryProxyModel>(country);
 			countryValidator->setErrorString(Wt::WString::tr("MustSelectCountry"));
 			setValidator(countryField, countryValidator);
 			country->changed().connect(boost::bind(&Wt::WComboBox::validate, country));
@@ -369,7 +369,7 @@ namespace GS
 		app->initCityQueryModel();
 
 		_countryCombo = new QueryProxyModelCB<CountryProxyModel>(app->countryProxyModel());
-		_countryCombo->changed().connect(this, &LocationView::handleCountryChanged);
+		_countryCombo->changed().connect(boost::bind(&LocationView::handleCountryChanged, this, true));
 		setFormWidget(LocationFormModel::countryField, _countryCombo);
 
 		_cityProxyModel = new CityProxyModel(app->cityQueryModel(), this);
@@ -381,11 +381,11 @@ namespace GS
 	void LocationView::updateView(Wt::WFormModel *model)
 	{
 		RecordFormView::updateView(model);
-		handleCountryChanged();
+		handleCountryChanged(false);
 	}
 
-	void LocationView::handleCountryChanged()
-	{
+	void LocationView::handleCountryChanged(bool resetCity)
+{
 		boost::any v = _countryCombo->model()->index(_countryCombo->currentIndex(), 0).data(Wt::AdditionalRowRole);
 		if(!v.empty() && boost::any_cast<bool>(v) == true)
 		{
@@ -396,6 +396,12 @@ namespace GS
 		auto cityProxyModel = dynamic_cast<CityProxyModel*>(_cityCombo->model());
 		Wt::WString countryCode = Wt::asString(_countryCombo->model()->index(_countryCombo->currentIndex(), 1).data());
 		cityProxyModel->filterModel()->setCountryCode(countryCode.toUTF8());
+
+		if(resetCity)
+		{
+			model()->setValue(LocationFormModel::cityField, Wt::Dbo::ptr<City>());
+			updateViewField(model(), LocationFormModel::cityField);
+		}
 	}
 
 	void LocationView::handleCityChanged()
@@ -424,14 +430,14 @@ namespace GS
 			{
 				model()->setValue(LocationFormModel::countryField, Wt::Dbo::ptr<Country>());
 				updateViewField(model(), LocationFormModel::countryField);
-				handleCountryChanged();
+				handleCountryChanged(true);
 			}
 		}, std::placeholders::_1));
 
 		countryView->submitted().connect(std::bind([=]() {
 			model()->setValue(LocationFormModel::countryField, countryView->countryPtr());
 			updateViewField(model(), LocationFormModel::countryField);
-			handleCountryChanged();
+			handleCountryChanged(true);
 			dialog->accept();
 		}));
 
@@ -464,9 +470,9 @@ namespace GS
 		cityView->submitted().connect(std::bind([=]() {
 			TRANSACTION(APP);
 			model()->setValue(LocationFormModel::countryField, cityView->cityPtr()->countryPtr);
-			model()->setValue(LocationFormModel::cityField, cityView->cityPtr());
 			updateViewField(model(), LocationFormModel::countryField);
-			handleCountryChanged();
+			handleCountryChanged(false);
+			model()->setValue(LocationFormModel::cityField, cityView->cityPtr());
 			updateViewField(model(), LocationFormModel::cityField);
 			dialog->accept();
 		}));

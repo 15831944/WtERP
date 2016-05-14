@@ -38,6 +38,7 @@ namespace GS
 		RecordFormView(const Wt::WString &text) : Wt::WTemplateFormView(text), SubmittableRecordWidget(this) { addFunction("fwId", &Wt::WTemplate::Functions::fwId); }
 
 		virtual void load() override;
+		virtual void render(Wt::WFlags<Wt::RenderFlag> flags) override;
 		virtual bool updateViewValue(Wt::WFormModel *model, Wt::WFormModel::Field field, Wt::WWidget *edit) override;
 		virtual bool updateModelValue(Wt::WFormModel *model, Wt::WFormModel::Field field, Wt::WWidget *edit) override;
 		virtual Wt::WString templateText() const override;
@@ -54,7 +55,6 @@ namespace GS
 
 	protected:
 		virtual void init() { }
-		//virtual void initAfterUpdateView() { }
 		virtual void afterSubmitHandler() { }
 		virtual void submit();
 		virtual Wt::WWidget *createFormWidget(Wt::WFormModel::Field field) override;
@@ -122,6 +122,7 @@ namespace GS
 	protected:
 		AbstractRecordFormModel(RecordFormView *view) : Wt::WFormModel(view), _view(view) { }
 		virtual Wt::WWidget *createFormWidget(Wt::WFormModel::Field field) { return nullptr; }
+		virtual void persistedHandler() { }
 
 		RecordFormView *_view = nullptr;
 

@@ -78,6 +78,19 @@ namespace GS
 		return true;
 	}
 
+	void EntityFormModel::persistedHandler()
+	{
+		_view->_expenseCycles = new EntityExpenseCycleList(recordPtr());
+		_view->_expenseCycles->load();
+		_view->bindWidget("expenseCycles", _view->_expenseCycles);
+		_view->setCondition("show-expenseCycles", true);
+
+		_view->_incomeCycles = new EntityIncomeCycleList(recordPtr());
+		_view->_incomeCycles->load();
+		_view->bindWidget("incomeCycles", _view->_incomeCycles);
+		_view->setCondition("show-incomeCycles", true);
+	}
+
 	//PERSON MODEL
 	const Wt::WFormModel::Field PersonFormModel::dobField = "dob";
 	const Wt::WFormModel::Field PersonFormModel::cnicField = "cnic";
@@ -473,6 +486,15 @@ namespace GS
 		}
 	}
 
+	bool ContactNumbersManagerModel::saveChanges()
+	{
+		for(const auto &model : _modelVector)
+		{
+			model->setValue(ContactNumberFormModel::entityField, _view->entityPtr());
+		}
+		return MultipleRecordModel::saveChanges();
+	}
+
 	RecordViewsContainer *ContactNumbersManagerModel::createFormWidget(Field f)
 	{
 		auto w = MultipleRecordModel::createFormWidget(f);
@@ -510,6 +532,15 @@ namespace GS
 			newVec.push_back(Wt::Dbo::ptr<Dbo>());
 			setValue(field, newVec);
 		}
+	}
+
+	bool LocationsManagerModel::saveChanges()
+	{
+		for(const auto &model : _modelVector)
+		{
+			model->setValue(LocationFormModel::entityField, _view->entityPtr());
+		}
+		return MultipleRecordModel::saveChanges();
 	}
 
 	RecordViewsContainer *LocationsManagerModel::createFormWidget(Field f)
@@ -658,27 +689,10 @@ namespace GS
 		addFormModel("contactnumbers", _contactNumbersModel = new ContactNumbersManagerModel(this, entityPtr() ? entityPtr()->contactNumberCollection : ContactNumberCollection()));
 		addFormModel("locations", _locationsModel = new LocationsManagerModel(this, entityPtr() ? entityPtr()->locationCollection : LocationCollection()));
 		
-		if(entityPtr())
-		{
-			_expenseCycles = new EntityExpenseCycleList(entityPtr());
-			_expenseCycles->load();
-			bindWidget("expenseCycles", _expenseCycles);
-			setCondition("show-expenseCycles", _expenseCycles->queryModel()->rowCount() != 0);
-
-			_incomeCycles = new EntityIncomeCycleList(entityPtr());
-			_incomeCycles->load();
-			bindWidget("incomeCycles", _incomeCycles);
-			setCondition("show-incomeCycles", _incomeCycles->queryModel()->rowCount() != 0);
-		}
-		else
-		{
-			bindEmpty("expenseCycles");
-			setCondition("show-expenseCycles", false);
-			bindEmpty("incomeCycles");
-			setCondition("show-incomeCycles", false);
-		}
-
-		updateView();
+		bindEmpty("expenseCycles");
+		setCondition("show-expenseCycles", false);
+		bindEmpty("incomeCycles");
+		setCondition("show-incomeCycles", false);
 	}
 
 	void EntityView::selectEntityType(Entity::Type type)
@@ -820,6 +834,7 @@ namespace GS
 
 	float HeightEdit::valueInCm()
 	{
+		const Wt::WLocale& locale = Wt::WLocale::currentLocale();
 		if(_unit == ft)
 		{
 			Wt::WLineEdit *ftEdit = resolve<Wt::WLineEdit*>("ft-edit");
@@ -828,10 +843,10 @@ namespace GS
 			if(ftEdit->valueText().empty())
 				return -1;
 
-			float ftVal = boost::lexical_cast<float>(ftEdit->valueText());
+			float ftVal = locale.toFloat(ftEdit->valueText());
 			float inVal = 0;
 			if(!inEdit->valueText().empty())
-				inVal = boost::lexical_cast<float>(inEdit->valueText());
+				inVal = locale.toFloat(inEdit->valueText());
 
 			return ftVal * 30.48f + inVal * 2.54f;
 		}
@@ -841,7 +856,7 @@ namespace GS
 			if(cmEdit->valueText().empty())
 				return -1;
 
-			return boost::lexical_cast<float>(cmEdit->valueText());
+			return locale.toFloat(cmEdit->valueText());
 		}
 	}
 

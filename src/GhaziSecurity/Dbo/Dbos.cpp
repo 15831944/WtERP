@@ -32,6 +32,7 @@ namespace GS
 		dboSession.mapClass<Office>(Office::tableName());
 		dboSession.mapClass<RentHouse>(RentHouse::tableName());
 		dboSession.mapClass<EmployeeAssignment>(EmployeeAssignment::tableName());
+		dboSession.mapClass<ClientAssignment>(ClientAssignment::tableName());
 		dboSession.mapClass<PersonnelAbsence>(PersonnelAbsence::tableName());
 		dboSession.mapClass<PersonnelDischarge>(PersonnelDischarge::tableName());
 		dboSession.mapClass<Inquiry>(Inquiry::tableName());

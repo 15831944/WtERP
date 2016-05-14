@@ -23,6 +23,9 @@
 		#define PERSONNEL_PATHC "personnel"
 		#define BUSINESSES_PATHC "businesses"
 		#define CLIENTS_PATHC "clients"
+			#define NEW_CLIENTASSIGNMENT_PATHC "assign"
+			#define CLIENTASSIGNMENTS_PREFIX "assignment-"
+			#define CLIENTASSIGNMENTS_PATHC "assignments"
 
 	#define ACCOUNTS_PATHC "accounts"
 		#define ACCOUNT_PREFIX "account-"

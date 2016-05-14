@@ -244,10 +244,22 @@ namespace GS
 			bindWidget("submitBtn", _submitBtn);
 
 			init();
-			updateView();
+			for(const auto &val : _modelVector)
+			{
+				if(val.second->isRecordPersisted())
+					val.second->persistedHandler();
+			}
 		}
 
 		Wt::WTemplateFormView::load();
+	}
+
+	void RecordFormView::render(Wt::WFlags<Wt::RenderFlag> flags)
+	{
+		if(canOptimizeUpdates() && flags & Wt::RenderFull)
+		{
+			updateView();
+		}
 	}
 
 	void RecordFormView::handleSubmitted()
@@ -292,8 +304,13 @@ namespace GS
 				if(res.second->isAllReadOnly() || res.second->checkSubmitPermission() != AuthLogin::Permitted)
 					continue;
 
+				bool wasPersisted = res.second->isRecordPersisted();
 				if(res.second->saveChanges())
+				{
 					nothingSaved = false;
+					if(!wasPersisted && res.second->isRecordPersisted())
+						res.second->persistedHandler();
+				}
 			}
 
 			t.commit();

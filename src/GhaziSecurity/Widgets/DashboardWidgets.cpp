@@ -18,26 +18,56 @@ namespace GS
 		});
 		bindWidget("totalEntities", totalEntities);
 		bindWidget("persons", new RecordCountTemplate([]() -> long long {
-			return APP->dboSession().find<Person>().resultList().size();
-		}, totalEntities));
-		bindWidget("employees", new RecordCountTemplate([]() -> long long {
-			return APP->dboSession().find<Employee>().resultList().size();
-		}, totalEntities));
-		bindWidget("assignedEmployees", new RecordCountTemplate([]() -> long long {
-			Wt::WDate currentDate = Wt::WDate(boost::gregorian::day_clock::local_day());
-			return APP->dboSession().find<EmployeeAssignment>().where("startDate <= ? AND (endDate IS null OR endDate > ?)").bind(currentDate).bind(currentDate)
-				.groupBy("entity_id")
-				.resultList().size();
-		}, totalEntities));
-		bindWidget("personnel", new RecordCountTemplate([]() -> long long {
-			return APP->dboSession().find<Personnel>().resultList().size();
+			return APP->dboSession().find<Entity>().where("type = ?").bind(Entity::PersonType).resultList().size();
 		}, totalEntities));
 		bindWidget("businesses", new RecordCountTemplate([]() -> long long {
-			return APP->dboSession().find<Business>().resultList().size();
+			return APP->dboSession().find<Entity>().where("type = ?").bind(Entity::BusinessType).resultList().size();
+		}, totalEntities));
+		bindWidget("employees", new RecordCountTemplate([]() -> long long {
+			Wt::WDate currentDate = Wt::WDate(boost::gregorian::day_clock::local_day());
+			return APP->dboSession().query<long long>(
+				"SELECT COUNT(DISTINCT a.entity_id) FROM " + std::string(EmployeeAssignment::tableName()) + " a"
+				).where("? >= startDate AND (endDate IS null OR ? < endDate)").bind(currentDate).bind(currentDate);
+		}, totalEntities));
+		bindWidget("personnel", new RecordCountTemplate([]() -> long long {
+			Wt::WDate currentDate = Wt::WDate(boost::gregorian::day_clock::local_day());
+			return APP->dboSession().query<long long>(
+				"SELECT COUNT(DISTINCT a.entity_id) FROM " + std::string(EmployeeAssignment::tableName()) + " a "
+				"INNER JOIN " + EmployeePosition::tableName() + " p ON (p.id = a.employeeposition_id AND p.type = ?)"
+				).bind(EmployeePosition::PersonnelType).where("? >= startDate AND (endDate IS null OR ? < endDate)").bind(currentDate).bind(currentDate);
 		}, totalEntities));
 		bindWidget("clients", new RecordCountTemplate([]() -> long long {
-			return APP->dboSession().find<Client>().resultList().size();
+			Wt::WDate currentDate = Wt::WDate(boost::gregorian::day_clock::local_day());
+			return APP->dboSession().query<long long>(
+				"SELECT COUNT(DISTINCT a.entity_id) FROM " + std::string(ClientAssignment::tableName()) + " a"
+				).where("? >= startDate AND (endDate IS null OR ? < endDate)").bind(currentDate).bind(currentDate);
 		}, totalEntities));
+
+		auto clientAssignments = new RecordMultiCountTemplate([]() -> long long {
+			Wt::WDate currentDate = Wt::WDate(boost::gregorian::day_clock::local_day());
+			return APP->dboSession().find<ClientAssignment>().where("? >= startDate").bind(currentDate).resultList().size();
+		},
+			[]() -> long long {
+			Wt::WDate currentDate = Wt::WDate(boost::gregorian::day_clock::local_day());
+			return APP->dboSession().find<ClientAssignment>().where("? >= startDate AND (endDate IS null OR ? < endDate)").bind(currentDate).bind(currentDate)
+				.resultList().size();
+		});
+		clientAssignments->setLeftStr(tr("NActive"));
+		clientAssignments->setRightStr(tr("NNotStarted"));
+		bindWidget("clientAssignments", clientAssignments);
+
+		auto employeeAssignments = new RecordMultiCountTemplate([]() -> long long {
+			Wt::WDate currentDate = Wt::WDate(boost::gregorian::day_clock::local_day());
+			return APP->dboSession().find<EmployeeAssignment>().where("? >= startDate").bind(currentDate).resultList().size();
+		},
+			[]() -> long long {
+			Wt::WDate currentDate = Wt::WDate(boost::gregorian::day_clock::local_day());
+			return APP->dboSession().find<EmployeeAssignment>().where("? >= startDate AND (endDate IS null OR ? < endDate)").bind(currentDate).bind(currentDate)
+				.resultList().size();
+		});
+		employeeAssignments->setLeftStr(tr("NActive"));
+		employeeAssignments->setRightStr(tr("NNotStarted"));
+		bindWidget("employeeAssignments", employeeAssignments);
 
 		auto totalAccounts = new RecordCountTemplate([]() -> long long {
 			return APP->dboSession().find<Account>().resultList().size();
@@ -50,27 +80,29 @@ namespace GS
 		}, totalAccounts));
 
 		auto recurringIncomes = new RecordMultiCountTemplate([]() -> long long {
-			return APP->dboSession().find<IncomeCycle>().resultList().size();
+			Wt::WDate currentDate = Wt::WDate(boost::gregorian::day_clock::local_day());
+			return APP->dboSession().find<IncomeCycle>().where("? >= startDate").bind(currentDate).resultList().size();
 		},
 		[]() -> long long {
 			Wt::WDate currentDate = Wt::WDate(boost::gregorian::day_clock::local_day());
-			return APP->dboSession().find<IncomeCycle>().where("startDate <= ? AND (endDate IS null OR endDate > ?)").bind(currentDate).bind(currentDate)
+			return APP->dboSession().find<IncomeCycle>().where("? >= startDate AND (endDate IS null OR ? < endDate)").bind(currentDate).bind(currentDate)
 				.resultList().size();
 		});
 		recurringIncomes->setLeftStr(tr("NActive"));
-		recurringIncomes->setRightStr(tr("NInactive"));
+		recurringIncomes->setRightStr(tr("NNotStarted"));
 		bindWidget("recurringIncomes", recurringIncomes);
 
 		auto recurringExpenses = new RecordMultiCountTemplate([]() -> long long {
-			return APP->dboSession().find<ExpenseCycle>().resultList().size();
+			Wt::WDate currentDate = Wt::WDate(boost::gregorian::day_clock::local_day());
+			return APP->dboSession().find<ExpenseCycle>().where("? >= startDate").bind(currentDate).resultList().size();
 		},
 		[]() -> long long {
 			Wt::WDate currentDate = Wt::WDate(boost::gregorian::day_clock::local_day());
-			return APP->dboSession().find<ExpenseCycle>().where("startDate <= ? AND (endDate IS null OR endDate > ?)").bind(currentDate).bind(currentDate)
+			return APP->dboSession().find<ExpenseCycle>().where("? >= startDate AND (endDate IS null OR ? < endDate)").bind(currentDate).bind(currentDate)
 				.resultList().size();
 		});
 		recurringExpenses->setLeftStr(tr("NActive"));
-		recurringExpenses->setRightStr(tr("NInactive"));
+		recurringExpenses->setRightStr(tr("NNotStarted"));
 		bindWidget("recurringExpenses", recurringExpenses);
 
 		bindWidget("cashAccount", new CashAccountBalance());
@@ -87,12 +119,10 @@ namespace GS
 	void DashboardOverviewTemplate::reload()
 	{
 		TRANSACTION(APP);
-		setHidden(true);
 		for(auto w : children())
 		{
 			if(auto rW = dynamic_cast<Reloadable*>(w))
 			{
-				w->setHidden(false);
 				rW->reload();
 			}
 		}
