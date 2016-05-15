@@ -65,6 +65,12 @@ namespace GS
 		friend class EntryCycleFormModel;
 	};
 
+// 	class ExpenseCycleSummary : public ReloadOnVisibleWidget<Wt::WTemplate>
+// 	{
+// 	public:
+// 		ExpenseCycleSummary(long long employeeAssignmentId);
+// 	};
+
 	//ExpenseCycleFormModel
 	class ExpenseCycleFormModel : public RecordFormModel<ExpenseCycle>
 	{
@@ -82,7 +88,7 @@ namespace GS
 	{
 	public:
 		ExpenseCycleView(Wt::Dbo::ptr<ExpenseCycle> cyclePtr = Wt::Dbo::ptr<ExpenseCycle>());
-		virtual void init() override;
+		virtual void initView() override;
 		virtual Wt::WWidget *createFormWidget(Wt::WFormModel::Field field) override;
 
 		virtual Wt::WString viewName() const override;
@@ -114,7 +120,7 @@ namespace GS
 	{
 	public:
 		IncomeCycleView(Wt::Dbo::ptr<IncomeCycle> cyclePtr = Wt::Dbo::ptr<IncomeCycle>());
-		virtual void init() override;
+		virtual void initView() override;
 		virtual Wt::WWidget *createFormWidget(Wt::WFormModel::Field field) override;
 
 		virtual Wt::WString viewName() const override;
@@ -136,65 +142,37 @@ namespace GS
 		enum ResultColumns { ResId, ResTimestamp, ResEntityName, ResStartDate, ResEndDate, ResAmount, ResExtra, ResInterval, ResNIntervals, ResEntityId };
 		enum ViewColumns { ViewId, ViewCreatedOn, ViewEntity, ViewStartDate, ViewEndDate, ViewAmount, ViewExtra };
 
-		EntryCycleList();
+		EntryCycleList(Wt::Dbo::ptr<Entity> entityPtr) : _entityPtr(entityPtr) { }
 		virtual void load() override;
 
 	protected:
 		virtual void initFilters() override;
-	};
-	class EntityEntryCycleList : public QueryModelFilteredList<boost::tuple<long long, Wt::WDateTime, Wt::WDate, Wt::WDate, long long, long long, CycleInterval, int>>
-	{
-	public:
-		enum ResultColumns { ResId, ResTimestamp, ResStartDate, ResEndDate, ResAmount, ResExtra, ResInterval, ResNIntervals };
-
-		EntityEntryCycleList();
-		virtual void load() override;
-
-	protected:
-		virtual void initFilters() override;
+		Wt::Dbo::ptr<Entity> _entityPtr;
 	};
 
 	class IncomeCycleList : public EntryCycleList
 	{
 	public:
-		IncomeCycleList();
+		IncomeCycleList(Wt::Dbo::ptr<Entity> entityPtr = Wt::Dbo::ptr<Entity>()) : EntryCycleList(entityPtr) { }
 
 	protected:
 		virtual void initModel() override;
-	};
-	class EntityIncomeCycleList : public EntityEntryCycleList
-	{
-	public:
-		EntityIncomeCycleList(Wt::Dbo::ptr<Entity> entityPtr);
-
-	protected:
-		virtual void initModel() override;
-		Wt::Dbo::ptr<Entity> _entityPtr;
 	};
 
 	class ExpenseCycleList : public EntryCycleList
 	{
 	public:
-		ExpenseCycleList();
+		ExpenseCycleList(Wt::Dbo::ptr<Entity> entityPtr = Wt::Dbo::ptr<Entity>()) : EntryCycleList(entityPtr) { }
 
 	protected:
 		virtual void initModel() override;
-	};
-	class EntityExpenseCycleList : public EntityEntryCycleList
-	{
-	public:
-		EntityExpenseCycleList(Wt::Dbo::ptr<Entity> entityPtr);
-
-	protected:
-		virtual void initModel() override;
-		Wt::Dbo::ptr<Entity> _entityPtr;
 	};
 
 	template<class FilteredList>
-	class BaseEntryCycleListProxyModel : public Wt::WBatchEditProxyModel
+	class EntryCycleListProxyModel : public Wt::WBatchEditProxyModel
 	{
 	public:
-		BaseEntryCycleListProxyModel(const std::string &pathPrefix, Wt::WAbstractItemModel *model, Wt::WObject *parent = nullptr)
+		EntryCycleListProxyModel(const std::string &pathPrefix, Wt::WAbstractItemModel *model, Wt::WObject *parent = nullptr)
 			: Wt::WBatchEditProxyModel(parent), _pathPrefix(pathPrefix)
 		{
 			setSourceModel(model);
@@ -208,14 +186,6 @@ namespace GS
 		void addAdditionalColumns();
 		int _linkColumn = -1;
 		std::string _pathPrefix;
-	};
-
-	template<class FilteredList>
-	class EntryCycleListProxyModel : public BaseEntryCycleListProxyModel<FilteredList>
-	{
-	public:
-		EntryCycleListProxyModel(const std::string &pathPrefix, Wt::WAbstractItemModel *model, Wt::WObject *parent = nullptr) : BaseEntryCycleListProxyModel(pathPrefix, model, parent) { }
-		virtual boost::any data(const Wt::WModelIndex &idx, int role = Wt::DisplayRole) const override;
 	};
 
 	//TEMPLATE CLASS DEFITIONS

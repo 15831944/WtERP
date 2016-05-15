@@ -57,7 +57,7 @@ namespace GS
 	{
 	public:
 		AttendanceDeviceView(Wt::Dbo::ptr<AttendanceDevice> attendanceDevicePtr = Wt::Dbo::ptr<AttendanceDevice>());
-		virtual void init() override;
+		virtual void initView() override;
 
 		Wt::Dbo::ptr<AttendanceDevice> attendanceDevicePtr() const { return _model->recordPtr(); }
 		AttendanceDeviceFormModel *model() const { return _model; }
@@ -124,7 +124,7 @@ namespace GS
 	{
 	public:
 		AttendanceEntryView(Wt::Dbo::ptr<AttendanceEntry> attendanceEntryPtr = Wt::Dbo::ptr<AttendanceEntry>());
-		virtual void init() override;
+		virtual void initView() override;
 
 		Wt::Dbo::ptr<AttendanceEntry> attendanceEntryPtr() const { return _model->recordPtr(); }
 		AttendanceEntryFormModel *model() const { return _model; }

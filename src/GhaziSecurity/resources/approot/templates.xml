@@ -414,8 +414,20 @@ ${<type-chosen>}
 	${block:GS.Admin.Entities.ContactBlock}
 	${</is-business>}
 	
-	${block:GS.Admin.Entities.RecurringIncomesBlock}
-	${block:GS.Admin.Entities.RecurringExpensesBlock}
+	${<m:entity-persisted>}
+	<div class="panel panel-default">
+		<div class="panel-heading">${tr:RecurringExpenses}</div>
+		<div class="panel-body">
+			${expenseCycles}
+		</div>
+	</div>
+	<div class="panel panel-default">
+		<div class="panel-heading">${tr:RecurringIncomes}</div>
+		<div class="panel-body">
+			${incomeCycles}
+		</div>
+	</div>
+	${</m:entity-persisted>}
 	
 	${submitBtn class="btn-primary"}
 	${<is-person>}
@@ -432,28 +444,6 @@ ${</type-chosen>}
 		NYI
 	</div>
 </div>
-</message>
-
-<message id="GS.Admin.Entities.RecurringExpensesBlock">
-${<show-expenseCycles>}
-<div class="panel panel-default">
-	<div class="panel-heading">${tr:RecurringExpenses}</div>
-	<div class="panel-body">
-		${expenseCycles}
-	</div>
-</div>
-${</show-expenseCycles>}
-</message>
-
-<message id="GS.Admin.Entities.RecurringIncomesBlock">
-${<show-incomeCycles>}
-<div class="panel panel-default">
-	<div class="panel-heading">${tr:RecurringIncomes}</div>
-	<div class="panel-body">
-		${incomeCycles}
-	</div>
-</div>
-${</show-incomeCycles>}
 </message>
 
 <message id="GS.Admin.Entities.ContactBlock">

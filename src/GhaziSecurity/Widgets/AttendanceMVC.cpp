@@ -147,7 +147,7 @@ namespace GS
 		: RecordFormView(tr("GS.Admin.AttendanceDeviceView")), _tempPtr(attendanceDevicePtr)
 	{ }
 
-	void AttendanceDeviceView::init()
+	void AttendanceDeviceView::initView()
 	{
 		_model = new AttendanceDeviceFormModel(this, _tempPtr);
 		addFormModel("attendance-device", _model);
@@ -273,7 +273,7 @@ namespace GS
 		: RecordFormView(tr("GS.Admin.AttendanceEntryView")), _tempPtr(attendanceEntryPtr)
 	{ }
 
-	void AttendanceEntryView::init()
+	void AttendanceEntryView::initView()
 	{
 		_model = new AttendanceEntryFormModel(this, _tempPtr);
 		addFormModel("attendance-entry", _model);

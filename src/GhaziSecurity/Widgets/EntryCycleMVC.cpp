@@ -276,7 +276,7 @@ namespace GS
 		: EntryCycleView(tr("GS.Admin.ExpenseCycleView")), _tempPtr(cyclePtr)
 	{ }
 
-	void ExpenseCycleView::init()
+	void ExpenseCycleView::initView()
 	{
 		_model = new ExpenseCycleFormModel(this, _tempPtr);
 		addFormModel("expense", _model);
@@ -355,7 +355,7 @@ namespace GS
 		: EntryCycleView(tr("GS.Admin.IncomeCycleView")), _tempPtr(cyclePtr)
 	{ }
 
-	void IncomeCycleView::init()
+	void IncomeCycleView::initView()
 	{
 		_model = new IncomeCycleFormModel(this, _tempPtr);
 		addFormModel("income", _model);
@@ -386,14 +386,6 @@ namespace GS
 #define AmountColumnWidth 200
 #define ExtraColumnWidth 180
 
-	EntryCycleList::EntryCycleList()
-		: QueryModelFilteredList()
-	{ }
-
-	EntityEntryCycleList::EntityEntryCycleList()
-		: QueryModelFilteredList()
-	{ }
-
 	void EntryCycleList::load()
 	{
 		bool ld = !loaded();
@@ -407,38 +399,11 @@ namespace GS
 		}
 	}
 
-	void EntityEntryCycleList::load()
-	{
-		bool ld = !loaded();
-		QueryModelFilteredList::load();
-
-		if(ld)
-		{
-			int timestampColumn = viewIndexToColumn(EntryCycleList::ViewCreatedOn);
-			if(timestampColumn != -1)
-				_tableView->sortByColumn(timestampColumn, Wt::DescendingOrder);
-		}
-	}
-
 	void EntryCycleList::initFilters()
 	{
 		filtersTemplate()->addFilterModel(new WLineEditFilterModel(tr("ID"), "id"));
 		filtersTemplate()->addFilterModel(new RangeFilterModel(tr("Amount"), "amount")); filtersTemplate()->addFilter(2);
 	}
-
-	void EntityEntryCycleList::initFilters()
-	{
-		filtersTemplate()->addFilterModel(new WLineEditFilterModel(tr("ID"), "id"));
-		filtersTemplate()->addFilterModel(new RangeFilterModel(tr("Amount"), "amount")); filtersTemplate()->addFilter(2);
-	}
-
-	IncomeCycleList::IncomeCycleList()
-		: EntryCycleList()
-	{ }
-
-	EntityIncomeCycleList::EntityIncomeCycleList(Wt::Dbo::ptr<Entity> entityPtr)
-		: EntityEntryCycleList(), _entityPtr(entityPtr)
-	{ }
 
 	void IncomeCycleList::initModel()
 	{
@@ -453,12 +418,18 @@ namespace GS
 			"LEFT JOIN " + ClientAssignment::tableName() + " a ON (a.incomecycle_id = c.id)").groupBy("c.id");
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "c.");
 
+		if(_entityPtr.id() != -1)
+			_baseQuery.where("c.entity_id = ?").bind(_entityPtr.id());
+
 		Wt::Dbo::Query<ResultType> query(_baseQuery); //must copy the query first
 		model->setQuery(query);
 
 		addColumn(ViewId, model->addColumn("c.id"), tr("ID"), IdColumnWidth);
 		addColumn(ViewCreatedOn, model->addColumn("c.timestamp"), tr("CreatedOn"), DateTimeColumnWidth);
-		addColumn(ViewEntity, model->addColumn("e.name"), tr("Entity"), EntityColumnWidth);
+
+		if(_entityPtr.id() == -1)
+			addColumn(ViewEntity, model->addColumn("e.name"), tr("Entity"), EntityColumnWidth);
+
 		addColumn(ViewStartDate, model->addColumn("c.startDate"), tr("StartDate"), DateColumnWidth);
 		addColumn(ViewEndDate, model->addColumn("c.endDate"), tr("EndDate"), DateColumnWidth);
 		addColumn(ViewAmount, model->addColumn("c.amount"), tr("RecurringAmount"), AmountColumnWidth);
@@ -466,40 +437,6 @@ namespace GS
 
 		_proxyModel = new EntryCycleListProxyModel<IncomeCycleList>(IncomeCycle::viewInternalPath(""), _model, _model);
 	}
-
-	void EntityIncomeCycleList::initModel()
-	{
-		QueryModelType *model;
-		_model = model = new QueryModelType(this);
-
-		WApplication *app = APP;
-		_baseQuery = app->dboSession().query<ResultType>(
-			"SELECT c.id, c.timestamp, c.startDate, c.endDate, c.amount, COUNT(a.id), c.interval, c.nIntervals "
-			"FROM " + std::string(IncomeCycle::tableName()) + " c "
-			"LEFT JOIN " + ClientAssignment::tableName() + " a ON (a.incomecycle_id = c.id)").groupBy("c.id")
-			.where("c.entity_id = ?").bind(_entityPtr.id());
-		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "c.");
-
-		Wt::Dbo::Query<ResultType> query(_baseQuery); //must copy the query first
-		model->setQuery(query);
-
-		addColumn(EntryCycleList::ViewId, model->addColumn("c.id"), tr("ID"), IdColumnWidth);
-		addColumn(EntryCycleList::ViewCreatedOn, model->addColumn("c.timestamp"), tr("CreatedOn"), DateTimeColumnWidth);
-		addColumn(EntryCycleList::ViewStartDate, model->addColumn("c.startDate"), tr("StartDate"), DateColumnWidth);
-		addColumn(EntryCycleList::ViewEndDate, model->addColumn("c.endDate"), tr("EndDate"), DateColumnWidth);
-		addColumn(EntryCycleList::ViewAmount, model->addColumn("c.amount"), tr("RecurringAmount"), AmountColumnWidth);
-		addColumn(EntryCycleList::ViewExtra, model->addColumn("COUNT(a.id)"), tr("ClientAssignments"), ExtraColumnWidth);
-
-		_proxyModel = new BaseEntryCycleListProxyModel<EntityIncomeCycleList>(IncomeCycle::viewInternalPath(""), _model, _model);
-	}
-
-	ExpenseCycleList::ExpenseCycleList()
-		: EntryCycleList()
-	{ }
-
-	EntityExpenseCycleList::EntityExpenseCycleList(Wt::Dbo::ptr<Entity> entityPtr)
-		: EntityEntryCycleList(), _entityPtr(entityPtr)
-	{ }
 
 	void ExpenseCycleList::initModel()
 	{
@@ -514,44 +451,24 @@ namespace GS
 			"LEFT JOIN " + EmployeeAssignment::tableName() + " a ON (a.expensecycle_id = c.id)").groupBy("c.id");
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "c.");
 
+		if(_entityPtr.id() != -1)
+			_baseQuery.where("c.entity_id = ?").bind(_entityPtr.id());
+
 		Wt::Dbo::Query<ResultType> query(_baseQuery); //must copy the query first
 		model->setQuery(query);
 
 		addColumn(ViewId, model->addColumn("c.id"), tr("ID"), IdColumnWidth);
 		addColumn(ViewCreatedOn, model->addColumn("c.timestamp"), tr("CreatedOn"), DateTimeColumnWidth);
-		addColumn(ViewEntity, model->addColumn("e.name"), tr("Entity"), EntityColumnWidth);
+
+		if(_entityPtr.id() == -1)
+			addColumn(ViewEntity, model->addColumn("e.name"), tr("Entity"), EntityColumnWidth);
+
 		addColumn(ViewStartDate, model->addColumn("c.startDate"), tr("StartDate"), DateColumnWidth);
 		addColumn(ViewEndDate, model->addColumn("c.endDate"), tr("EndDate"), DateColumnWidth);
 		addColumn(ViewAmount, model->addColumn("c.amount"), tr("RecurringAmount"), AmountColumnWidth);
 		addColumn(ViewExtra, model->addColumn("COUNT(a.id)"), tr("EmployeeAssignments"), ExtraColumnWidth);
 
 		_proxyModel = new EntryCycleListProxyModel<ExpenseCycleList>(ExpenseCycle::viewInternalPath(""), _model, _model);
-	}
-
-	void EntityExpenseCycleList::initModel()
-	{
-		QueryModelType *model;
-		_model = model = new QueryModelType(this);
-
-		WApplication *app = APP;
-		_baseQuery = app->dboSession().query<ResultType>(
-			"SELECT c.id, c.timestamp, c.startDate, c.endDate, c.amount, COUNT(a.id), c.interval, c.nIntervals "
-			"FROM " + std::string(ExpenseCycle::tableName()) + " c "
-			"LEFT JOIN " + EmployeeAssignment::tableName() + " a ON (a.expensecycle_id = c.id)").groupBy("c.id")
-			.where("c.entity_id = ?").bind(_entityPtr.id());
-		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "c.");
-
-		Wt::Dbo::Query<ResultType> query(_baseQuery); //must copy the query first
-		model->setQuery(query);
-
-		addColumn(ExpenseCycleList::ViewId, model->addColumn("c.id"), tr("ID"), IdColumnWidth);
-		addColumn(ExpenseCycleList::ViewCreatedOn, model->addColumn("c.timestamp"), tr("CreatedOn"), DateTimeColumnWidth);
-		addColumn(ExpenseCycleList::ViewStartDate, model->addColumn("c.startDate"), tr("StartDate"), DateColumnWidth);
-		addColumn(ExpenseCycleList::ViewEndDate, model->addColumn("c.endDate"), tr("EndDate"), DateColumnWidth);
-		addColumn(ExpenseCycleList::ViewAmount, model->addColumn("c.amount"), tr("RecurringAmount"), AmountColumnWidth);
-		addColumn(ExpenseCycleList::ViewExtra, model->addColumn("COUNT(a.id)"), tr("EmployeeAssignments"), ExtraColumnWidth);
-
-		_proxyModel = new BaseEntryCycleListProxyModel<EntityExpenseCycleList>(ExpenseCycle::viewInternalPath(""), _model, _model);
 	}
 
 // 	boost::any IncomeCycleListProxyModel::data(const Wt::WModelIndex &idx, int role /*= Wt::DisplayRole*/) const
@@ -565,7 +482,7 @@ namespace GS
 // 	}
 
 	template<class FilteredList>
-	void BaseEntryCycleListProxyModel<FilteredList>::addAdditionalColumns()
+	void EntryCycleListProxyModel<FilteredList>::addAdditionalColumns()
 	{
 		int lastColumn = columnCount();
 
@@ -576,7 +493,7 @@ namespace GS
 	}
 
 	template<class FilteredList>
-	boost::any BaseEntryCycleListProxyModel<FilteredList>::headerData(int section, Wt::Orientation orientation /*= Wt::Horizontal*/, int role /*= Wt::DisplayRole*/) const
+	boost::any EntryCycleListProxyModel<FilteredList>::headerData(int section, Wt::Orientation orientation /*= Wt::Horizontal*/, int role /*= Wt::DisplayRole*/) const
 	{
 		if(section == _linkColumn)
 		{
@@ -589,7 +506,7 @@ namespace GS
 	}
 
 	template<class FilteredList>
-	Wt::WFlags<Wt::ItemFlag> BaseEntryCycleListProxyModel<FilteredList>::flags(const Wt::WModelIndex &index) const
+	Wt::WFlags<Wt::ItemFlag> EntryCycleListProxyModel<FilteredList>::flags(const Wt::WModelIndex &index) const
 	{
 		if(index.column() == _linkColumn)
 			return Wt::ItemIsXHTMLText;
@@ -597,7 +514,7 @@ namespace GS
 	}
 
 	template<class FilteredList>
-	boost::any BaseEntryCycleListProxyModel<FilteredList>::data(const Wt::WModelIndex &idx, int role /*= Wt::DisplayRole*/) const
+	boost::any EntryCycleListProxyModel<FilteredList>::data(const Wt::WModelIndex &idx, int role /*= Wt::DisplayRole*/) const
 	{
 		if(_linkColumn != -1 && idx.column() == _linkColumn)
 		{
@@ -648,6 +565,11 @@ namespace GS
 			if(date.isValid() && Wt::WDate(boost::gregorian::day_clock::local_day()) >= date)
 				return Wt::WString::tr("XEnded").arg(date.toString(Wt::WLocale::currentLocale().dateFormat()));
 		}
+		if(viewIndex == EntryCycleList::ViewEntity && role == Wt::LinkRole)
+		{
+			const typename FilteredList::ResultType &res = dynamic_cast<Wt::Dbo::QueryModel<typename FilteredList::ResultType>*>(sourceModel())->resultRow(idx.row());
+			return Wt::WLink(Wt::WLink::InternalPath, Entity::viewInternalPath(boost::get<FilteredList::ResEntityId>(res)));
+		}
 
 		if(role == Wt::StyleClassRole)
 		{
@@ -663,26 +585,8 @@ namespace GS
 		return Wt::WBatchEditProxyModel::data(idx, role);
 	}
 
-	template<class FilteredList>
-	boost::any EntryCycleListProxyModel<FilteredList>::data(const Wt::WModelIndex &idx, int role /*= Wt::DisplayRole*/) const
-	{
-		boost::any viewIndexData = headerData(idx.column(), Wt::Horizontal, Wt::ViewIndexRole);
-		if(viewIndexData.empty())
-			return BaseEntryCycleListProxyModel<FilteredList>::data(idx, role);
-		int viewIndex = boost::any_cast<int>(viewIndexData);
-
-		if(viewIndex == EntryCycleList::ViewEntity && role == Wt::LinkRole)
-		{
-			const typename FilteredList::ResultType &res = dynamic_cast<Wt::Dbo::QueryModel<typename FilteredList::ResultType>*>(sourceModel())->resultRow(idx.row());
-			return Wt::WLink(Wt::WLink::InternalPath, Entity::viewInternalPath(boost::get<FilteredList::ResEntityId>(res)));
-		}
-
-		return BaseEntryCycleListProxyModel<FilteredList>::data(idx, role);
-	}
 
 	//EXPLICIT SPECIALIZATIONS
-	template class BaseEntryCycleListProxyModel<EntityIncomeCycleList>;
-	template class BaseEntryCycleListProxyModel<EntityExpenseCycleList>;
 	template class EntryCycleListProxyModel<IncomeCycleList>;
 	template class EntryCycleListProxyModel<ExpenseCycleList>;
 

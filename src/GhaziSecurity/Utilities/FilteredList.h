@@ -174,6 +174,7 @@ namespace GS
 	class AbstractFilteredList : public ReloadOnVisibleWidget<Wt::WTemplate>
 	{
 	public:
+		virtual void load() override;
 		virtual void applyFilter(const std::string &sqlCondition) = 0;
 		void enableFilters();
 		void resetColumnWidths();
@@ -198,9 +199,6 @@ namespace GS
 		FiltersTemplate *_filtersTemplate = nullptr;
 		Wt::WAbstractItemModel *_model = nullptr;
 		Wt::WAbstractItemModel *_proxyModel = nullptr;
-
-	private:
-		virtual void init() override;
 	};
 
 	template<typename T>

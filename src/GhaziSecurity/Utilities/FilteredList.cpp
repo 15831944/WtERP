@@ -159,33 +159,35 @@ namespace GS
 		bindWidget("table-view", _tableView);
 	}
 
-	void AbstractFilteredList::init()
+	void AbstractFilteredList::load()
 	{
-		if(_model || _proxyModel)
-			return;
-
-		initModel();
-		_tableView->setModel(_proxyModel ? _proxyModel : _model);
-		resetColumnWidths();
-
-		if(_proxyModel)
+		if(!loaded())
 		{
-			int diff = _proxyModel->columnCount() - _model->columnCount();
-			if(diff > 0)
+			initModel();
+			_tableView->setModel(_proxyModel ? _proxyModel : _model);
+			resetColumnWidths();
+
+			if(_proxyModel)
 			{
-				//_tableView->setColumnWidth(_proxyModel->columnCount() - 1, 40);
-				_tableView->setColumnAlignment(_proxyModel->columnCount() - 1, Wt::AlignCenter);
+				int diff = _proxyModel->columnCount() - _model->columnCount();
+				if(diff > 0)
+				{
+					//_tableView->setColumnWidth(_proxyModel->columnCount() - 1, 40);
+					_tableView->setColumnAlignment(_proxyModel->columnCount() - 1, Wt::AlignCenter);
+				}
+
+				while(diff > 0)
+				{
+					_tableView->setSortingEnabled(_model->columnCount() + diff - 1, false);
+					--diff;
+				}
 			}
 
-			while(diff > 0)
-			{
-				_tableView->setSortingEnabled(_model->columnCount() + diff - 1, false);
-				--diff;
-			}
+			if(_filtersTemplate)
+				initFilters();
 		}
 
-		if(_filtersTemplate)
-			initFilters();
+		ReloadOnVisibleWidget::load();
 	}
 
 	void AbstractFilteredList::enableFilters()

@@ -20,9 +20,9 @@ namespace GS
 	class LocationFormModel;
 	class IncomeCycleSummaryContainer;
 	class ExpenseCycleSummaryContainer;
-	class EntityExpenseCycleList;
-	class EntityIncomeCycleList;
 	class ContactNumberView;
+	class ExpenseCycleList;
+	class IncomeCycleList;
 
 	//EntityFormModel
 	class EntityFormModel : public RecordFormModel<Entity>
@@ -134,7 +134,7 @@ namespace GS
 	public:
 		ContactNumberView(Wt::Dbo::ptr<ContactNumber> contactNumberPtr);
 		ContactNumberView();
-		virtual void init() override;
+		virtual void initView() override;
 
 		Wt::Dbo::ptr<ContactNumber> contactNumberPtr() const { return _model->recordPtr(); }
 		ContactNumberFormModel *model() const { return _model; }
@@ -178,7 +178,7 @@ namespace GS
 	public:
 		EntityView(Entity::Type type = Entity::InvalidType);
 		EntityView(Wt::Dbo::ptr<Entity> entityPtr);
-		virtual void init() override;
+		virtual void initView() override;
 
 		void selectEntityType(Entity::Type type);
 		void setSpecificType(Entity::SpecificType type);
@@ -198,8 +198,8 @@ namespace GS
 
 		Wt::WPushButton *_selectPerson = nullptr;
 		Wt::WPushButton *_selectBusiness = nullptr;
-		EntityExpenseCycleList *_expenseCycles = nullptr;
-		EntityIncomeCycleList *_incomeCycles = nullptr;
+		ExpenseCycleList *_expenseCycles = nullptr;
+		IncomeCycleList *_incomeCycles = nullptr;
 
 		EntityFormModel *_entityModel = nullptr;
 		PersonFormModel *_personModel = nullptr;

@@ -243,7 +243,7 @@ namespace GS
 			_submitBtn->clicked().connect(this, &RecordFormView::handleSubmitted);
 			bindWidget("submitBtn", _submitBtn);
 
-			init();
+			initView();
 			for(const auto &val : _modelVector)
 			{
 				if(val.second->isRecordPersisted())

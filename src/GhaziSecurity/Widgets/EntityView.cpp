@@ -80,15 +80,13 @@ namespace GS
 
 	void EntityFormModel::persistedHandler()
 	{
-		_view->_expenseCycles = new EntityExpenseCycleList(recordPtr());
+		_view->_expenseCycles = new ExpenseCycleList(recordPtr());
 		_view->_expenseCycles->load();
 		_view->bindWidget("expenseCycles", _view->_expenseCycles);
-		_view->setCondition("show-expenseCycles", true);
 
-		_view->_incomeCycles = new EntityIncomeCycleList(recordPtr());
+		_view->_incomeCycles = new IncomeCycleList(recordPtr());
 		_view->_incomeCycles->load();
 		_view->bindWidget("incomeCycles", _view->_incomeCycles);
-		_view->setCondition("show-incomeCycles", true);
 	}
 
 	//PERSON MODEL
@@ -606,7 +604,7 @@ namespace GS
 		: RecordFormView(tr("GS.Admin.Entities.New")), _tempPtr(entityPtr)
 	{ }
 
-	void EntityView::init()
+	void EntityView::initView()
 	{
 		_entityModel = new EntityFormModel(this, _tempPtr);
 		addFormModel("entity", _entityModel);
@@ -981,7 +979,7 @@ namespace GS
 		: RecordFormView(tr("GS.Admin.ContactNumberView"))
 	{ }
 
-	void ContactNumberView::init()
+	void ContactNumberView::initView()
 	{
 		_model = new ContactNumberFormModel(this, _tempPtr);
 		addFormModel("contactnumber", _model);

@@ -421,7 +421,7 @@ namespace GS
 		: RecordFormView(tr("GS.Admin.AccountView")), _tempPtr(accountPtr)
 	{ }
 
-	void AccountView::init()
+	void AccountView::initView()
 	{
 		_model = new AccountFormModel(this, _tempPtr);
 		addFormModel("account", _model);
@@ -708,7 +708,7 @@ namespace GS
 		: RecordFormView(tr("GS.Admin.AccountEntryView")), _tempPtr(accountEntryPtr)
 	{ }
 
-	void AccountEntryView::init()
+	void AccountEntryView::initView()
 	{
 		_model = new AccountEntryFormModel(this, _tempPtr);
 		addFormModel("account", _model);
@@ -738,7 +738,7 @@ namespace GS
 		setTemplateText(tr("GS.Admin.TransactionView"));
 	}
 
-	void TransactionView::init()
+	void TransactionView::initView()
 	{
 		_model = new TransactionFormModel(this, _tempPtr);
 		addFormModel("account", _model);

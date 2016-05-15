@@ -89,7 +89,7 @@ namespace GS
 		: RecordFormView(tr("GS.Admin.CountryView"))
 	{ }
 
-	void CountryView::init()
+	void CountryView::initView()
 	{
 		_model = new CountryFormModel(this, _tempPtr);
 		addFormModel("country", _model);
@@ -199,7 +199,7 @@ namespace GS
 		: RecordFormView(tr("GS.Admin.CityView"))
 	{ }
 
-	void CityView::init()
+	void CityView::initView()
 	{
 		_model = new CityFormModel(this, _tempPtr);
 		addFormModel("city", _model);
@@ -359,7 +359,7 @@ namespace GS
 		bindEmpty("index");
 	}
 
-	void LocationView::init()
+	void LocationView::initView()
 	{
 		_model = new LocationFormModel(this, _tempPtr);
 		addFormModel("location", _model);
@@ -466,7 +466,6 @@ namespace GS
 		}, std::placeholders::_1));
 
 		cityView->model()->setValue(CityFormModel::countryField, model()->value(LocationFormModel::countryField));
-		cityView->updateView();
 		cityView->submitted().connect(std::bind([=]() {
 			TRANSACTION(APP);
 			model()->setValue(LocationFormModel::countryField, cityView->cityPtr()->countryPtr);

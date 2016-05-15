@@ -17,18 +17,8 @@ namespace GS
 	{
 	public:
 		ReloadOnVisibleWidget() { }
-
-		virtual void load() override
-		{
-			if(!loaded())
-				init();
-
-			Base::load();
-		}
 		
 	protected:
-		virtual void init() { }
-
 		virtual void propagateSetVisible(bool visible) override
 		{
 			scheduleRender();

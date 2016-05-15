@@ -46,7 +46,7 @@ namespace GS
 	public:
 		PositionView(Wt::Dbo::ptr<EmployeePosition> positionPtr);
 		PositionView();
-		virtual void init() override;
+		virtual void initView() override;
 
 		Wt::Dbo::ptr<EmployeePosition> positionPtr() const { return _model->recordPtr(); }
 		Wt::WFormModel *model() const { return _model; }
@@ -84,7 +84,7 @@ namespace GS
 	public:
 		ServiceView(Wt::Dbo::ptr<ClientService> servicePtr);
 		ServiceView();
-		virtual void init() override;
+		virtual void initView() override;
 
 		Wt::Dbo::ptr<ClientService> servicePtr() const { return _model->recordPtr(); }
 		ServiceFormModel *model() const { return _model; }
@@ -111,6 +111,7 @@ namespace GS
 		virtual bool saveChanges() override;
 
 	protected:
+		virtual void persistedHandler() override;
 		void updateEndDateValidator(bool update);
 		EmployeeAssignmentView *_view = nullptr;
 
@@ -122,7 +123,7 @@ namespace GS
 	{
 	public:
 		EmployeeAssignmentView(Wt::Dbo::ptr<EmployeeAssignment> employeeAssignmentPtr = Wt::Dbo::ptr<EmployeeAssignment>());
-		virtual void init() override;
+		virtual void initView() override;
 
 		using RecordFormView::updateView;
 		using RecordFormView::updateModel;
@@ -177,7 +178,7 @@ namespace GS
 	{
 	public:
 		ClientAssignmentView(Wt::Dbo::ptr<ClientAssignment> clientAssignmentPtr = Wt::Dbo::ptr<ClientAssignment>());
-		virtual void init() override;
+		virtual void initView() override;
 
 		using RecordFormView::updateView;
 		using RecordFormView::updateModel;

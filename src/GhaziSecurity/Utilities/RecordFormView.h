@@ -54,7 +54,7 @@ namespace GS
 		Wt::WPushButton *submitBtn() { return _submitBtn; }
 
 	protected:
-		virtual void init() { }
+		virtual void initView() { }
 		virtual void afterSubmitHandler() { }
 		virtual void submit();
 		virtual Wt::WWidget *createFormWidget(Wt::WFormModel::Field field) override;

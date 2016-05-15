@@ -110,7 +110,7 @@ namespace GS
 	{
 	public:
 		AccountView(Wt::Dbo::ptr<Account> accountPtr = Wt::Dbo::ptr<Account>());
-		virtual void init() override;
+		virtual void initView() override;
 
 		Wt::Dbo::ptr<Account> accountPtr() const { return _model->recordPtr(); }
 		AccountFormModel *model() const { return _model; }
@@ -176,7 +176,7 @@ namespace GS
 	{
 	public:
 		AccountEntryView(Wt::Dbo::ptr<AccountEntry> accountEntryPtr = Wt::Dbo::ptr<AccountEntry>(), bool isTransactionView = false);
-		virtual void init() override;
+		virtual void initView() override;
 
 		Wt::Dbo::ptr<AccountEntry> accountEntryPtr() const { return _model->recordPtr(); }
 		BaseAccountEntryFormModel *model() const { return _model; }
@@ -195,7 +195,7 @@ namespace GS
 	{
 	public:
 		TransactionView();
-		virtual void init() override;
+		virtual void initView() override;
 
 		TransactionFormModel *model() const { return dynamic_cast<TransactionFormModel*>(_model); }
 		void selectDirection(bool isReceipt);

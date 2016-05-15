@@ -72,7 +72,7 @@ namespace GS
 	public:
 		CountryView(Wt::Dbo::ptr<Country> countryPtr);
 		CountryView();
-		virtual void init() override;
+		virtual void initView() override;
 
 		Wt::Dbo::ptr<Country> countryPtr() const { return _model->recordPtr(); }
 		CountryFormModel *model() const { return _model; }
@@ -116,7 +116,7 @@ namespace GS
 	public:
 		CityView();
 		CityView(Wt::Dbo::ptr<City> cityPtr);
-		virtual void init() override;
+		virtual void initView() override;
 
 		Wt::Dbo::ptr<City> cityPtr() const { return _model->recordPtr(); }
 		CityFormModel *model() const { return _model; }
@@ -146,7 +146,7 @@ namespace GS
 	{
 	public:
 		LocationView(Wt::Dbo::ptr<Location> locationPtr = Wt::Dbo::ptr<Location>());
-		virtual void init() override;
+		virtual void initView() override;
 
 		void handleCountryChanged(bool resetCity);
 		void handleCityChanged();

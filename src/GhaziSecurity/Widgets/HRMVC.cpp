@@ -90,7 +90,7 @@ namespace GS
 		: RecordFormView(tr("GS.Admin.PositionView")), _tempPtr(positionPtr)
 	{ }
 
-	void PositionView::init()
+	void PositionView::initView()
 	{
 		_model = new PositionFormModel(this, _tempPtr);
 		addFormModel("position", _model);
@@ -178,7 +178,7 @@ namespace GS
 		: RecordFormView(tr("GS.Admin.ServiceView")), _tempPtr(servicePtr)
 	{ }
 
-	void ServiceView::init()
+	void ServiceView::initView()
 	{
 		_model = new ServiceFormModel(this, _tempPtr);
 		addFormModel("service", _model);
@@ -330,7 +330,7 @@ namespace GS
 		: RecordFormView(tr("GS.Admin.EmployeeAssignmentView")), _tempPtr(assignmentPtr)
 	{ }
 
-	void EmployeeAssignmentView::init()
+	void EmployeeAssignmentView::initView()
 	{
 		_model = new EmployeeAssignmentFormModel(this, _tempPtr);
 		addFormModel("assignment", _model);
@@ -393,6 +393,13 @@ namespace GS
 			return tr("EmployeeAssignmentViewName").arg(employeeAssignmentPtr().id());
 
 		return RecordFormView::viewName();
+	}
+
+	void EmployeeAssignmentFormModel::persistedHandler()
+	{
+// 		auto expenseCycle = new ExpenseCycleList(recordPtr());
+// 		_view->_expenseCycles->load();
+// 		_view->bindWidget("expenseCycles", _view->_expenseCycles);
 	}
 
 	void EmployeeAssignmentFormModel::updateEndDateValidator(bool update)
@@ -653,7 +660,7 @@ namespace GS
 		: RecordFormView(tr("GS.Admin.ClientAssignmentView")), _tempPtr(assignmentPtr)
 	{ }
 
-	void ClientAssignmentView::init()
+	void ClientAssignmentView::initView()
 	{
 		_model = new ClientAssignmentFormModel(this, _tempPtr);
 		addFormModel("assignment", _model);
