@@ -1071,11 +1071,11 @@ void WWebWidget::setHidden(bool hidden, const WAnimation& animation)
   }
 
   bool shouldBeVisible = !hidden;
-  if(shouldBeVisible && parent())
-	  shouldBeVisible = parent()->isVisible();
+  if (shouldBeVisible && parent())
+    shouldBeVisible = parent()->isVisible();
 
-  if(shouldBeVisible != wasVisible)
-	  propagateSetVisible(shouldBeVisible);
+  if (!canOptimizeUpdates() || shouldBeVisible != wasVisible)
+    propagateSetVisible(shouldBeVisible);
 
   WApplication::instance()
     ->session()->renderer().updateFormObjects(this, true);
@@ -1205,9 +1205,6 @@ void WWebWidget::childAdded(WWidget *child)
   WWebWidget *ww = child->webWidget();
   if (ww)
     ww->gotParent();
-
-  if (flags_.test(BIT_LOADED))
-    doLoad(child);
 
   WApplication::instance()
     ->session()->renderer().updateFormObjects(this, false);
