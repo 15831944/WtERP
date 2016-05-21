@@ -522,6 +522,9 @@
 	<meta-headers user-agent=".*MSIE.*">
 	  <meta name="robots" content="noindex" />
 	</meta-headers>
+	<meta-headers>
+	  <meta name="viewport" content="width=device-width, initial-scale=1" />
+	</meta-headers>
 
 	<!-- Runtime Properties
      

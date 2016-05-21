@@ -10,8 +10,6 @@ namespace GS
 	DashboardOverviewTemplate::DashboardOverviewTemplate()
 	{
 		setTemplateText(tr("GS.Admin.Dashboard.Overview"));
-		addFunction("tr", &Wt::WTemplate::Functions::tr);
-		addFunction("block", &Wt::WTemplate::Functions::block);
 
 		auto totalEntities = new RecordCountTemplate([]() -> long long {
 			return APP->dboSession().find<Entity>().resultList().size();

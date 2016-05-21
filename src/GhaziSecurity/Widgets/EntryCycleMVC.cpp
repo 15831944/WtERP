@@ -1,9 +1,10 @@
+#include "Application/WApplication.h"
 #include "Widgets/EntryCycleMVC.h"
 #include "Widgets/EntityView.h"
 #include "Widgets/EntityList.h"
+#include "Widgets/AccountMVC.h"
 #include "Widgets/HRMVC.h"
 #include "Widgets/FindRecordEdit.h"
-#include "Application/WApplication.h"
 
 #include <Wt/WLineEdit>
 #include <Wt/WPushButton>
@@ -271,6 +272,12 @@ namespace GS
 		return true;
 	}
 
+	void ExpenseCycleFormModel::persistedHandler()
+	{
+		_view->bindWidget("entries", new AccountEntryList(recordPtr()));
+		_view->bindWidget("employeeAssignments", new EmployeeAssignmentList(recordPtr()));
+	}
+
 	//EXPENSE CYCLE VIEW
 	ExpenseCycleView::ExpenseCycleView(Wt::Dbo::ptr<ExpenseCycle> cyclePtr)
 		: EntryCycleView(tr("GS.Admin.ExpenseCycleView")), _tempPtr(cyclePtr)
@@ -348,6 +355,12 @@ namespace GS
 
 		t.commit();
 		return true;
+	}
+
+	void IncomeCycleFormModel::persistedHandler()
+	{
+		_view->bindWidget("entries", new AccountEntryList(recordPtr()));
+		_view->bindWidget("clientAssignments", new ClientAssignmentList(recordPtr()));
 	}
 
 	//INCOME CYCLE VIEW
@@ -537,19 +550,9 @@ namespace GS
 
 		if(viewIndex == EntryCycleList::ViewAmount && role == Wt::DisplayRole)
 		{
-			Wt::WString str;
-			switch(boost::get<FilteredList::ResInterval>(res))
-			{
-			case DailyInterval: str = Wt::WString::trn("RsEveryNDays", boost::get<FilteredList::ResNIntervals>(res)); break;
-			case WeeklyInterval: str = Wt::WString::trn("RsEveryNWeeks", boost::get<FilteredList::ResNIntervals>(res)); break;
-			case MonthlyInterval: str = Wt::WString::trn("RsEveryNMonths", boost::get<FilteredList::ResNIntervals>(res)); break;
-			case YearlyInterval: str = Wt::WString::trn("RsEveryNYears", boost::get<FilteredList::ResNIntervals>(res)); break;
-			default: return boost::any();
-			}
-
-			str.arg(Wt::WLocale::currentLocale().toString(Money(boost::get<FilteredList::ResAmount>(res), DEFAULT_CURRENCY)));
-			str.arg(boost::get<FilteredList::ResNIntervals>(res));
-			return str;
+			return rsEveryNIntervals(Money(boost::get<FilteredList::ResAmount>(res), DEFAULT_CURRENCY),
+				boost::get<FilteredList::ResInterval>(res),
+				boost::get<FilteredList::ResNIntervals>(res));
 		}
 
 		if(viewIndex == EntryCycleList::ViewStartDate && role == Wt::DisplayRole)

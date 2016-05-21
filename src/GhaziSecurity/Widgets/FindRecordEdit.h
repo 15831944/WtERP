@@ -31,9 +31,24 @@ namespace GS
 	class AbstractFindRecordEdit : public Wt::WCompositeWidget
 	{
 	public:
-		AbstractFindRecordEdit() : Wt::WCompositeWidget() { }
+		AbstractFindRecordEdit();
+		virtual void load() override;
 		virtual void setValuePtr(boost::any ptrData) = 0;
 		virtual boost::any valueAny() const = 0;
+
+		FindRecordEditTemplate *containerTemplate() const { return _containerTemplate; }
+		Wt::WLineEdit *lineEdit() const { return _lineEdit; }
+		Wt::Signal<void> &valueChanged() { return _valueChanged; }
+
+	protected:
+		virtual void propagateSetEnabled(bool enabled) override;
+		virtual void setTextFromValuePtr() = 0;
+		void handleLineEditChanged();
+
+		Wt::WLineEdit *_lineEdit = nullptr;
+		FindRecordEditTemplate *_containerTemplate = nullptr;
+		Wt::WSuggestionPopup *_suggestionPopup = nullptr;
+		Wt::Signal<void> _valueChanged;
 	};
 
 	//FindRecordEdit
@@ -41,28 +56,18 @@ namespace GS
 	class FindRecordEdit : public AbstractFindRecordEdit
 	{
 	public:
-		FindRecordEdit();
-		virtual void setValuePtr(Wt::Dbo::ptr<Value> ptr);
 		virtual void setValuePtr(boost::any ptrData) override { setValuePtr(ptrData.empty() ? Wt::Dbo::ptr<Value>() : boost::any_cast<Wt::Dbo::ptr<Value>>(ptrData)); }
-		void setIdColumn(int column) { _idColumn = column; }
-		virtual void load() override;
+		void setValuePtr(Wt::Dbo::ptr<Value> ptr);
 
 		Wt::Dbo::ptr<Value> valuePtr() const { return _valuePtr; }
 		virtual boost::any valueAny() const override { return valuePtr(); }
+		void setIdColumn(int column) { _idColumn = column; }
 		int idColumn() const { return _idColumn; }
-		FindRecordEditTemplate *containerTemplate() const { return _containerTemplate; }
-		Wt::WLineEdit *lineEdit() const { return _lineEdit; }
-		Wt::Signal<void> &valueChanged() { return _valueChanged; }
 
 	protected:
 		void handleActivated(int index, Wt::WFormWidget *lineEdit);
-		virtual void propagateSetEnabled(bool enabled) override;
 
-		Wt::WLineEdit *_lineEdit = nullptr;
-		FindRecordEditTemplate *_containerTemplate = nullptr;
-		Wt::WSuggestionPopup *_suggestionPopup = nullptr;
 		Wt::Dbo::ptr<Value> _valuePtr;
-		Wt::Signal<void> _valueChanged;
 		int _idColumn = 0;
 	};
 
@@ -85,7 +90,6 @@ namespace GS
 	{
 	public:
 		FindEntityEdit(Entity::Type entityType = Entity::InvalidType, Entity::SpecificType specificType = Entity::UnspecificType);
-		virtual void setValuePtr(Wt::Dbo::ptr<Entity> ptr) override;
 		Entity::Type entityType() const { return _entityType; }
 		Entity::SpecificType specificType() const { return _specificType; }
 
@@ -93,12 +97,12 @@ namespace GS
 		void showEntityListDialog();
 
 	protected:
+		virtual void setTextFromValuePtr() override;
 		void handleEntityViewSubmitted(EntityView *view);
-		void handleListSelectionChanged(AbstractFilteredList *listWidget);
+		void handleListSelectionChanged(long long id);
 
 		Entity::Type _entityType;
 		Entity::SpecificType _specificType;
-		Wt::WDialog *_listDialog = nullptr;
 		Wt::WDialog *_newDialog = nullptr;
 
 	private:
@@ -140,16 +144,15 @@ namespace GS
 	{
 	public:
 		FindAccountEdit();
-		virtual void setValuePtr(Wt::Dbo::ptr<Account> ptr) override;
 		void showNewAccountDialog();
 		void showAccountListDialog();
 
 	protected:
+		virtual void setTextFromValuePtr() override;
 		void handleAccountViewSubmitted(AccountView *view);
-		void handleListSelectionChanged(AbstractFilteredList *listWidget);
+		void handleListSelectionChanged(long long id);
 
 		Account::Type _accountType;
-		Wt::WDialog *_listDialog = nullptr;
 		Wt::WDialog *_newDialog = nullptr;
 
 	private:
@@ -192,15 +195,14 @@ namespace GS
 	{
 	public:
 		FindLocationEdit();
-		virtual void setValuePtr(Wt::Dbo::ptr<Location> ptr) override;
 		void showNewLocationDialog();
 		void showLocationListDialog();
 
 	protected:
+		virtual void setTextFromValuePtr() override;
 		void handleLocationViewSubmitted(LocationView *view);
-		void handleListSelectionChanged(AbstractFilteredList *listWidget);
+		void handleListSelectionChanged(long long id);
 
-		Wt::WDialog *_listDialog = nullptr;
 		Wt::WDialog *_newDialog = nullptr;
 
 	private:

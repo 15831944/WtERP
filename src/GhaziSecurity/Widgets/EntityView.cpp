@@ -81,11 +81,9 @@ namespace GS
 	void EntityFormModel::persistedHandler()
 	{
 		_view->_expenseCycles = new ExpenseCycleList(recordPtr());
-		_view->_expenseCycles->load();
 		_view->bindWidget("expenseCycles", _view->_expenseCycles);
 
 		_view->_incomeCycles = new IncomeCycleList(recordPtr());
-		_view->_incomeCycles->load();
 		_view->bindWidget("incomeCycles", _view->_incomeCycles);
 	}
 

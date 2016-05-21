@@ -109,10 +109,6 @@ namespace GS
 		void initFindAccountSuggestion();
 		Wt::WSuggestionPopup *findLocationSuggestion() const { return _findLocationSuggestion; }
 		void initFindLocationSuggestion();
-// 		Wt::WSuggestionPopup *findPersonSuggestion() const { return _findPersonSuggestion; }
-// 		void initFindPersonSuggestion();
-// 		Wt::WSuggestionPopup *findBusinessSuggestion() const { return _findBusinessSuggestion; }
-// 		void initFindBusinessSuggestion();
 
 		//QueryModels
 		CountryQueryModel *countryQueryModel() const { return _countryQueryModel; }
@@ -171,8 +167,6 @@ namespace GS
 		Wt::WSuggestionPopup *_findEntitySuggestion = nullptr;
 		Wt::WSuggestionPopup *_findAccountSuggestion = nullptr;
 		Wt::WSuggestionPopup *_findLocationSuggestion = nullptr;
-// 		Wt::WSuggestionPopup *_findPersonSuggestion = nullptr;
-// 		Wt::WSuggestionPopup *_findBusinessSuggestion = nullptr;
 
 		//Models
 		CountryQueryModel *_countryQueryModel = nullptr;

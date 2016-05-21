@@ -21,6 +21,8 @@
 #ifndef WT_CNOR
 namespace Wt {
 
+LOGGER("WString");
+
 std::vector<WString> WString::stArguments_;
 const WString WString::Empty;
 CharEncoding WString::defaultEncoding_ = Wt::LocalEncoding;
@@ -246,6 +248,7 @@ std::string WString::resolveKey() const
     }
   }
 
+  LOG_WARN("Could not resolve localized string key: " << impl_->key_);
   return "??" + impl_->key_ + "??";
 }
 

@@ -38,30 +38,17 @@ namespace GS
 		setReadOnly(false);
 	}
 
-	template<class Value>
-	void FindRecordEdit<Value>::load()
-	{
-		bool ld = !loaded();
-		AbstractFindRecordEdit::load();
-
-		if(ld)
-		{
-			if(isEnabled())
-				_suggestionPopup->forEdit(_lineEdit, Wt::WSuggestionPopup::Editing | Wt::WSuggestionPopup::DropDownIcon);
-		}
-	}
-
-	template<class Value>
-	FindRecordEdit<Value>::FindRecordEdit()
-		: AbstractFindRecordEdit(), _valueChanged(this)
+	AbstractFindRecordEdit::AbstractFindRecordEdit()
+		: _valueChanged(this)
 	{
 		setFormWidgetImpl(_lineEdit = new Wt::WLineEdit());
 		setImplementation(_containerTemplate = new FindRecordEditTemplate(_lineEdit));
+
+		_lineEdit->changed().connect(this, &AbstractFindRecordEdit::handleLineEditChanged);
 		valueChanged().connect(boost::bind(&Wt::WLineEdit::validate, _lineEdit));
 	}
 
-	template<class Value>
-	void FindRecordEdit<Value>::propagateSetEnabled(bool enabled)
+	void AbstractFindRecordEdit::propagateSetEnabled(bool enabled)
 	{
 		if(enabled)
 			_suggestionPopup->forEdit(_lineEdit, Wt::WSuggestionPopup::Editing | Wt::WSuggestionPopup::DropDownIcon);
@@ -72,6 +59,26 @@ namespace GS
 		}
 
 		Wt::WCompositeWidget::propagateSetEnabled(enabled);
+	}
+
+	void AbstractFindRecordEdit::load()
+	{
+		bool ld = !loaded();
+		Wt::WCompositeWidget::load();
+
+		if(ld)
+		{
+			if(isEnabled())
+				_suggestionPopup->forEdit(_lineEdit, Wt::WSuggestionPopup::Editing | Wt::WSuggestionPopup::DropDownIcon);
+		}
+	}
+
+	void AbstractFindRecordEdit::handleLineEditChanged()
+	{
+		if(_lineEdit->text().empty())
+			setValuePtr(boost::any());
+		else
+			setTextFromValuePtr();
 	}
 
 	template<class Value>
@@ -88,11 +95,12 @@ namespace GS
 			try
 			{
 				TRANSACTION(app);
-				FindRecordEdit::setValuePtr(app->dboSession().load<Value>(boost::any_cast<long long>(itemIndex.data(Wt::UserRole))));
+				setValuePtr(app->dboSession().load<Value>(boost::any_cast<long long>(itemIndex.data(Wt::UserRole))));
 			}
-			catch(Wt::Dbo::Exception &e)
+			catch(const Wt::Dbo::Exception &e)
 			{
 				Wt::log("error") << "FindRecordEdit::handleActivated(): Dbo error(" << e.code() << "): " << e.what();
+				setValuePtr(Wt::Dbo::ptr<Value>());
 				app->showDbBackendError(e.code());
 			}
 		}
@@ -103,15 +111,16 @@ namespace GS
 	template<class Value>
 	void FindRecordEdit<Value>::setValuePtr(Wt::Dbo::ptr<Value> ptr)
 	{
-		if(_valuePtr == ptr)
-			return;
-
-		_valuePtr = ptr;
-		_valueChanged.emit();
+		if(_valuePtr != ptr)
+		{
+			_valuePtr = ptr;
+			_valueChanged.emit();
+		}
+		setTextFromValuePtr();
 	}
 
 	FindEntityEdit::FindEntityEdit(Entity::Type entityType, Entity::SpecificType specificType /*= Entity::UnspecificType*/)
-		: FindRecordEdit(), _entityType(entityType), _specificType(specificType)
+		: _entityType(entityType), _specificType(specificType)
 	{
 		_lineEdit->setPlaceholderText(tr("FindEntityEditPlaceholder"));
 
@@ -160,61 +169,42 @@ namespace GS
 
 	void FindEntityEdit::showEntityListDialog()
 	{
-		if(!_listDialog)
+		Wt::WDialog *listDialog;
+		if(_entityType == Entity::PersonType)
 		{
-			_listDialog = new Wt::WDialog(this);
-			_listDialog->setClosable(true);
-			_listDialog->resize(900, Wt::WLength(95, Wt::WLength::Percentage));
-			_listDialog->setTransient(true);
-			_listDialog->rejectWhenEscapePressed(true);
-			_listDialog->contents()->setOverflow(Wt::WContainerWidget::OverflowAuto);
-
-			AbstractFilteredList *listWidget;
-			if(_entityType == Entity::PersonType)
-			{
-				listWidget = new PersonList();
-				_listDialog->setWindowTitle(tr("SelectXFromList").arg(tr("person")));
-			}
-			else if(_entityType == Entity::BusinessType)
-			{
-				listWidget = new BusinessList();
-				_listDialog->setWindowTitle(tr("SelectXFromList").arg(tr("business")));
-			}
-			else
-			{
-				listWidget = new AllEntityList();
-				_listDialog->setWindowTitle(tr("SelectXFromList").arg(tr("entity")));
-			}
-			_listDialog->contents()->addWidget(listWidget);
-
-			listWidget->enableFilters();
-			listWidget->tableView()->setSelectionMode(Wt::SingleSelection);
-			listWidget->tableView()->setSelectionBehavior(Wt::SelectRows);
-			listWidget->tableView()->selectionChanged().connect(boost::bind(&FindEntityEdit::handleListSelectionChanged, this, listWidget));
+			auto selectionDialog = new ListSelectionDialog<PersonList>(tr("SelectXFromList").arg(tr("person")), this);
+			selectionDialog->selected().connect(this, &FindEntityEdit::handleListSelectionChanged);
+			listDialog = selectionDialog;
+		}
+		else if(_entityType == Entity::BusinessType)
+		{
+			auto selectionDialog = new ListSelectionDialog<BusinessList>(tr("SelectXFromList").arg(tr("business")), this);
+			selectionDialog->selected().connect(this, &FindEntityEdit::handleListSelectionChanged);
+			listDialog = selectionDialog;
 		}
 		else
 		{
-			if(AbstractFilteredList *listWidget = dynamic_cast<AbstractFilteredList*>(_listDialog->contents()->widget(0)))
-				listWidget->reload();
+			auto selectionDialog = new ListSelectionDialog<AllEntityList>(tr("SelectXFromList").arg(tr("entity")), this);
+			selectionDialog->selected().connect(this, &FindEntityEdit::handleListSelectionChanged);
+			listDialog = selectionDialog;
 		}
-		_listDialog->show();
+		listDialog->show();
 	}
 
-	void FindEntityEdit::handleListSelectionChanged(AbstractFilteredList *listWidget)
+	void FindEntityEdit::handleListSelectionChanged(long long id)
 	{
-		auto indexSet = listWidget->tableView()->selectedIndexes();
-		if(indexSet.empty())
-			return;
-
-		const auto &index = *indexSet.begin();
-		if(!index.isValid())
-			return;
-
-		long long entityId = boost::any_cast<long long>(index.data());
-		TRANSACTION(APP);
-		Wt::Dbo::ptr<Entity> entityPtr = APP->dboSession().load<Entity>(entityId);
-		setValuePtr(entityPtr);
-		_listDialog->accept();
+		WApplication *app = APP;
+		try
+		{
+			TRANSACTION(app);
+			Wt::Dbo::ptr<Entity> entityPtr = app->dboSession().load<Entity>(id);
+			setValuePtr(entityPtr);
+		}
+		catch(const Wt::Dbo::Exception &e)
+		{
+			Wt::log("error") << "FindEntityEdit::handleListSelectionChanged(): Dbo error(" << e.code() << "): " << e.what();
+			app->showDbBackendError(e.code());
+		}
 	}
 
 	void FindEntityEdit::handleEntityViewSubmitted(EntityView *view)
@@ -223,15 +213,13 @@ namespace GS
 		_newDialog->accept();
 	}
 
-	void FindEntityEdit::setValuePtr(Wt::Dbo::ptr<Entity> ptr)
+	void FindEntityEdit::setTextFromValuePtr()
 	{
 		TRANSACTION(APP);
-		if(ptr)
-			_lineEdit->setText(tr("FindEntityEditValueTemplate").arg(ptr->name).arg(ptr.id()));
+		if(valuePtr())
+			_lineEdit->setText(tr("FindEntityEditValueTemplate").arg(valuePtr()->name).arg(valuePtr().id()));
 		else
 			_lineEdit->setText("");
-
-		FindRecordEdit::setValuePtr(ptr);
 	}
 
 	Wt::WValidator::Result FindEntityValidator::validate(const Wt::WString &) const
@@ -316,7 +304,6 @@ namespace GS
 	}
 
 	FindAccountEdit::FindAccountEdit()
-		: FindRecordEdit()
 	{
 		_lineEdit->setPlaceholderText(tr("FindAccountEditPlaceholder"));
 
@@ -356,57 +343,36 @@ namespace GS
 
 	void FindAccountEdit::showAccountListDialog()
 	{
-		if(!_listDialog)
-		{
-			_listDialog = new Wt::WDialog(tr("SelectXFromList").arg(tr("account")), this);
-			_listDialog->setClosable(true);
-			_listDialog->resize(900, Wt::WLength(95, Wt::WLength::Percentage));
-			_listDialog->setTransient(true);
-			_listDialog->rejectWhenEscapePressed(true);
-			_listDialog->contents()->setOverflow(Wt::WContainerWidget::OverflowAuto);
-
-			AbstractFilteredList *listWidget = new AccountList();
-			_listDialog->contents()->addWidget(listWidget);
-			listWidget->enableFilters();
-			listWidget->tableView()->setSelectionMode(Wt::SingleSelection);
-			listWidget->tableView()->setSelectionBehavior(Wt::SelectRows);
-			listWidget->tableView()->selectionChanged().connect(boost::bind(&FindAccountEdit::handleListSelectionChanged, this, listWidget));
-		}
-		else
-		{
-			if(AbstractFilteredList *listWidget = dynamic_cast<AbstractFilteredList*>(_listDialog->contents()->widget(0)))
-				listWidget->reload();
-		}
-		_listDialog->show();
+		auto selectionDialog = new ListSelectionDialog<AccountList>(tr("SelectXFromList").arg(tr("account")), this);
+		selectionDialog->selected().connect(this, &FindAccountEdit::handleListSelectionChanged);
+		selectionDialog->show();
 	}
 
-	void FindAccountEdit::handleListSelectionChanged(AbstractFilteredList *listWidget)
+	void FindAccountEdit::handleListSelectionChanged(long long id)
 	{
-		auto indexSet = listWidget->tableView()->selectedIndexes();
-		if(indexSet.empty())
-			return;
-
-		const auto &index = *indexSet.begin();
-		if(!index.isValid())
-			return;
-
-		long long accountId = boost::any_cast<long long>(index.data());
-		TRANSACTION(APP);
-		Wt::Dbo::ptr<Account> accountPtr = APP->dboSession().load<Account>(accountId);
-		setValuePtr(accountPtr);
-		_listDialog->accept();
+		WApplication *app = APP;
+		try
+		{
+			TRANSACTION(app);
+			Wt::Dbo::ptr<Account> accountPtr = APP->dboSession().load<Account>(id);
+			setValuePtr(accountPtr);
+		}
+		catch(const Wt::Dbo::Exception &e)
+		{
+			Wt::log("error") << "FindAccountEdit::handleListSelectionChanged(): Dbo error(" << e.code() << "): " << e.what();
+			app->showDbBackendError(e.code());
+		}
 	}
 
-	void FindAccountEdit::setValuePtr(Wt::Dbo::ptr<Account> ptr)
+	void FindAccountEdit::setTextFromValuePtr()
 	{
 		TRANSACTION(APP);
-		if(ptr)
+		if(valuePtr())
 			_lineEdit->setText(tr("FindAccountEditValueTemplate")
-				.arg(Wt::WString::tr("FindAccountEditValuePrefix").arg(ptr->name).arg(ptr.id())).arg(Wt::boost_any_traits<Account::Type>::asString(ptr->type, "")));
+				.arg(Wt::WString::tr("FindAccountEditValuePrefix").arg(valuePtr()->name).arg(valuePtr().id()))
+				.arg(Wt::boost_any_traits<Account::Type>::asString(valuePtr()->type, "")));
 		else
 			_lineEdit->setText("");
-
-		FindRecordEdit::setValuePtr(ptr);
 	}
 
 	Wt::WValidator::Result FindAccountValidator::validate(const Wt::WString &) const
@@ -424,18 +390,18 @@ namespace GS
 		if(!_findEdit->valuePtr())
 		{
 			if(isMandatory())
-				return Result(Invalid, Wt::WString::tr("InvalidAccountSelectionMandatory"));
+				return Result(Invalid, Wt::WString::tr("InvalidVSelectionMandatory").arg(Wt::WString::tr("account")));
 			else
-				return Result(Invalid, Wt::WString::tr("InvalidAccountSelection"));
+				return Result(Invalid, Wt::WString::tr("InvalidVSelection").arg(Wt::WString::tr("account")));
 		}
 
 		std::string requiredPrefixStr = Wt::WString::tr("FindAccountEditValuePrefix").arg(_findEdit->valuePtr()->name).arg(_findEdit->valuePtr().id()).toUTF8();
 		if(_findEdit->lineEdit()->valueText().toUTF8().compare(0, requiredPrefixStr.length(), requiredPrefixStr) != 0)
 		{
 			if(isMandatory())
-				return Result(Invalid, Wt::WString::tr("InvalidAccountSelectionMandatory"));
+				return Result(Invalid, Wt::WString::tr("InvalidVSelectionMandatory").arg(Wt::WString::tr("account")));
 			else
-				return Result(Invalid, Wt::WString::tr("InvalidAccountSelection"));
+				return Result(Invalid, Wt::WString::tr("InvalidVSelection").arg(Wt::WString::tr("account")));
 		}
 
 		if(_findEdit->valuePtr())
@@ -451,7 +417,6 @@ namespace GS
 	}
 
 	FindLocationEdit::FindLocationEdit()
-		: FindRecordEdit()
 	{
 		_lineEdit->setPlaceholderText(tr("FindLocationEditPlaceholder"));
 
@@ -468,15 +433,13 @@ namespace GS
 		_suggestionPopup->activated().connect(this, &FindLocationEdit::handleActivated);
 	}
 
-	void FindLocationEdit::setValuePtr(Wt::Dbo::ptr<Location> ptr)
+	void FindLocationEdit::setTextFromValuePtr()
 	{
 		TRANSACTION(APP);
-		if(ptr)
-			_lineEdit->setText(ptr->address);
+		if(valuePtr())
+			_lineEdit->setText(valuePtr()->address);
 		else
 			_lineEdit->setText("");
-
-		FindRecordEdit::setValuePtr(ptr);
 	}
 
 	void FindLocationEdit::showNewLocationDialog()
@@ -502,45 +465,25 @@ namespace GS
 
 	void FindLocationEdit::showLocationListDialog()
 	{
-		if(!_listDialog)
-		{
-			_listDialog = new Wt::WDialog(tr("SelectXFromList").arg(tr("location")), this);
-			_listDialog->setClosable(true);
-			_listDialog->resize(900, Wt::WLength(95, Wt::WLength::Percentage));
-			_listDialog->setTransient(true);
-			_listDialog->rejectWhenEscapePressed(true);
-			_listDialog->contents()->setOverflow(Wt::WContainerWidget::OverflowAuto);
-
-			AbstractFilteredList *listWidget = new LocationList();
-			_listDialog->contents()->addWidget(listWidget);
-			listWidget->enableFilters();
-			listWidget->tableView()->setSelectionMode(Wt::SingleSelection);
-			listWidget->tableView()->setSelectionBehavior(Wt::SelectRows);
-			listWidget->tableView()->selectionChanged().connect(boost::bind(&FindLocationEdit::handleListSelectionChanged, this, listWidget));
-		}
-		else
-		{
-			if(AbstractFilteredList *listWidget = dynamic_cast<AbstractFilteredList*>(_listDialog->contents()->widget(0)))
-				listWidget->reload();
-		}
-		_listDialog->show();
+		auto selectionDialog = new ListSelectionDialog<LocationList>(tr("SelectXFromList").arg(tr("location")), this);
+		selectionDialog->selected().connect(this, &FindLocationEdit::handleListSelectionChanged);
+		selectionDialog->show();
 	}
 
-	void FindLocationEdit::handleListSelectionChanged(AbstractFilteredList *listWidget)
+	void FindLocationEdit::handleListSelectionChanged(long long id)
 	{
-		auto indexSet = listWidget->tableView()->selectedIndexes();
-		if(indexSet.empty())
-			return;
-
-		const auto &index = *indexSet.begin();
-		if(!index.isValid())
-			return;
-
-		long long id = boost::any_cast<long long>(index.data());
-		TRANSACTION(APP);
-		Wt::Dbo::ptr<Location> ptr = APP->dboSession().load<Location>(id);
-		setValuePtr(ptr);
-		_listDialog->accept();
+		WApplication *app = APP;
+		try
+		{
+			TRANSACTION(app);
+			Wt::Dbo::ptr<Location> ptr = app->dboSession().load<Location>(id);
+			setValuePtr(ptr);
+		}
+		catch(const Wt::Dbo::Exception &e)
+		{
+			Wt::log("error") << "FindLocationEdit::handleListSelectionChanged(): Dbo error(" << e.code() << "): " << e.what();
+			app->showDbBackendError(e.code());
+		}
 	}
 
 	Wt::WValidator::Result FindLocationValidator::validate(const Wt::WString &input) const
@@ -559,9 +502,9 @@ namespace GS
 			_findEdit->lineEdit()->valueText().toUTF8().compare(0, _findEdit->valuePtr()->address.length(), _findEdit->valuePtr()->address) != 0)
 		{
 			if(isMandatory())
-				return Result(Invalid, Wt::WString::tr("InvalidLocationSelectionMandatory"));
+				return Result(Invalid, Wt::WString::tr("InvalidXSelectionMandatory").arg(Wt::WString::tr("location")));
 			else
-				return Result(Invalid, Wt::WString::tr("InvalidLocationSelection"));
+				return Result(Invalid, Wt::WString::tr("InvalidXSelection").arg(Wt::WString::tr("location")));
 		}
 
 		if(_findEdit->valuePtr())

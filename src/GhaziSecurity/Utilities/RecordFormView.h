@@ -34,8 +34,8 @@ namespace GS
 	public:
 		typedef const char *ModelKey;
 
-		RecordFormView() : Wt::WTemplateFormView(), SubmittableRecordWidget(this) { addFunction("fwId", &Wt::WTemplate::Functions::fwId); }
-		RecordFormView(const Wt::WString &text) : Wt::WTemplateFormView(text), SubmittableRecordWidget(this) { addFunction("fwId", &Wt::WTemplate::Functions::fwId); }
+		RecordFormView() : Wt::WTemplateFormView(), SubmittableRecordWidget(this) { }
+		RecordFormView(const Wt::WString &text) : Wt::WTemplateFormView(text), SubmittableRecordWidget(this) { }
 
 		virtual void load() override;
 		virtual void render(Wt::WFlags<Wt::RenderFlag> flags) override;

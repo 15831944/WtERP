@@ -194,8 +194,10 @@ WApplication::WApplication(const Wt::WEnvironment& env)
 	: Wt::WApplication(env),
 	_startTime(boost::posix_time::microsec_clock::local_time()), _entitiesDatabase(_dboSession), _accountsDatabase(_dboSession), _userDatabase(_dboSession), _login()
 {
-	WServer *server = SERVER;
+	messageResourceBundle().use(appRoot() + "templates", false); //CHECK_BEFORE_RELEASE
+	messageResourceBundle().use(appRoot() + "strings", false); //CHECK_BEFORE_RELEASE
 
+	WServer *server = SERVER;
 	_dboSession.setConnectionPool(*server->sqlPool());
 	mapDboTree(_dboSession);
 	WW::Dbo::mapConfigurationDboTree(_dboSession);
@@ -206,9 +208,6 @@ WApplication::WApplication(const Wt::WEnvironment& env)
 		"-webkit-box-shadow: -1px 1px 2px 0px #000;"
 		"-moz-box-shadow: -1px 1px 2px 0px #000;"
 		"box-shadow: -1px 1px 2px 0px #000;");
-
-	messageResourceBundle().use(appRoot() + "templates", false); //CHECK_BEFORE_RELEASE
-	messageResourceBundle().use(appRoot() + "strings", false); //CHECK_BEFORE_RELEASE
 
 	Wt::WLocale newLocale("en");
 	newLocale.setDateFormat(Wt::WString::tr("DateFormat"));
@@ -293,8 +292,10 @@ void WApplication::handleInternalPathChanged(std::string path)
 	std::string firstComponent = internalPathNextPart("/");
 	if(firstComponent != ADMIN_PATHC)
 	{
-		lazyLoadVisitorWidgets();
-		_mainStack->setCurrentWidget(_mainVisitorTemplate);
+		setInternalPath("/" ADMIN_PATHC, true);
+		return;
+// 		lazyLoadVisitorWidgets();
+// 		_mainStack->setCurrentWidget(_mainVisitorTemplate);
 	}
 	else
 	{

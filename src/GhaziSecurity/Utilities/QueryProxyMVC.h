@@ -19,70 +19,95 @@ namespace GS
 		QueryProxyModel(Wt::WObject *parent = nullptr) : Wt::WBatchEditProxyModel(parent) { }
 		int indexOf(const Result &result) const
 		{
-			auto thisModel = this;
-			auto srcModel = sourceModel();
-			auto qryModel = dynamic_cast<Wt::Dbo::QueryModel<Result>*>(srcModel);
-			Wt::WAbstractProxyModel *proxyModel = nullptr;
-			if(!qryModel)
-			{
-				proxyModel = dynamic_cast<Wt::WAbstractProxyModel*>(srcModel);
-				if(proxyModel)
-					qryModel = dynamic_cast<Wt::Dbo::QueryModel<Result>*>(proxyModel->sourceModel());
-			}
+			Wt::WAbstractItemModel *srcModel = sourceModel();
+			Wt::Dbo::QueryModel<Result> *qryModel = nullptr;
 
-			if(!qryModel)
+			std::vector<Wt::WAbstractProxyModel*> srcProxyModels;
+			do
 			{
-				Wt::log("error") << "QueryProxyModel::indexOf() called without a source QueryModel";
-				return -1;
+				if(!srcModel)
+				{
+					Wt::log("error") << "QueryProxyModel::indexOf() called without a source QueryModel";
+					return -1;
+				}
+
+				qryModel = dynamic_cast<Wt::Dbo::QueryModel<Result>*>(srcModel);
+				if(!qryModel)
+				{
+					if(Wt::WAbstractProxyModel *srcProxyModel = dynamic_cast<Wt::WAbstractProxyModel*>(srcModel))
+					{
+						srcProxyModels.push_back(srcProxyModel);
+						srcModel = srcProxyModel->sourceModel();
+					}
+					else
+						srcModel = nullptr;
+				}
 			}
+			while(!qryModel);
 
 			int sourceRow = qryModel->indexOf(result);
 			if(sourceRow == -1)
-				return sourceRow;
+				return -1;
 
-			Wt::WModelIndex idx;
-			if(proxyModel)
+			Wt::WModelIndex idx = qryModel->index(sourceRow, 0);
+			if(!idx.isValid())
+				return -1;
+
+			for(auto itr = srcProxyModels.rbegin(); itr != srcProxyModels.rend(); ++itr)
 			{
-				//When there is a WSortFilterProxyModel between proxyModel and queryModel
-				//srcModel should be WSortFilterProxyModel
-				idx = proxyModel->mapFromSource(qryModel->index(sourceRow, 0));
-				idx = thisModel->mapFromSource(idx);
+				idx = (*itr)->mapFromSource(idx);
+				if(!idx.isValid())
+					return -1;
 			}
-			else
-				idx = thisModel->mapFromSource(qryModel->index(sourceRow, 0));
+
+			idx = mapFromSource(idx);
+			if(!idx.isValid())
+				return -1;
 
 			return idx.row();
 		}
+
 		const Result *resultRow(int proxyRow) const
 		{
 			if(proxyRow == -1)
 				return nullptr;
 
-			auto thisModel = this;
-			auto qryModel = queryModel();
-			if(!qryModel)
-			{
-				Wt::log("error") << "QueryProxyModel::resultRow() called without a source QueryModel";
-				return nullptr;
-			}
-
-			auto sourceIndex = thisModel->mapToSource(thisModel->index(proxyRow, 0));
-			if(!sourceIndex.isValid())
+			Wt::WModelIndex idx = mapToSource(index(proxyRow, 0));
+			if(!idx.isValid())
 				return nullptr;
 
-			return &qryModel->resultRow(sourceIndex.row());
-		}
+			Wt::WAbstractItemModel *srcModel = sourceModel();
+			Wt::Dbo::QueryModel<Result> *qryModel = nullptr;
 
-		Wt::Dbo::QueryModel<Result> *queryModel() const
-		{
-			auto qryModel = dynamic_cast<Wt::Dbo::QueryModel<Result>*>(sourceModel());
-			if(!qryModel)
+			do
 			{
-				auto proxyModel = dynamic_cast<Wt::WAbstractProxyModel*>(sourceModel());
-				if(proxyModel)
-					qryModel = dynamic_cast<Wt::Dbo::QueryModel<Result>*>(proxyModel->sourceModel());
+				if(!srcModel)
+				{
+					Wt::log("error") << "QueryProxyModel::resultRow() called without a source QueryModel";
+					return nullptr;
+				}
+
+				qryModel = dynamic_cast<Wt::Dbo::QueryModel<Result>*>(srcModel);
+				if(!qryModel)
+				{
+					if(Wt::WAbstractProxyModel *srcProxyModel = dynamic_cast<Wt::WAbstractProxyModel*>(srcModel))
+					{
+						idx = srcProxyModel->mapToSource(idx);
+						if(!idx.isValid())
+							return nullptr;
+
+						srcModel = srcProxyModel->sourceModel();
+					}
+					else
+						srcModel = nullptr;
+				}
 			}
-			return qryModel;
+			while(!qryModel);
+
+			if(!idx.isValid())
+				return nullptr;
+
+			return &qryModel->resultRow(idx.row());
 		}
 	};
 

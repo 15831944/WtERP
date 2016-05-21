@@ -65,12 +65,6 @@ namespace GS
 		friend class EntryCycleFormModel;
 	};
 
-// 	class ExpenseCycleSummary : public ReloadOnVisibleWidget<Wt::WTemplate>
-// 	{
-// 	public:
-// 		ExpenseCycleSummary(long long employeeAssignmentId);
-// 	};
-
 	//ExpenseCycleFormModel
 	class ExpenseCycleFormModel : public RecordFormModel<ExpenseCycle>
 	{
@@ -80,6 +74,7 @@ namespace GS
 		virtual bool saveChanges() override;
 
 	protected:
+		virtual void persistedHandler() override;
 		ExpenseCycleView *_view = nullptr;
 	};
 
@@ -112,6 +107,7 @@ namespace GS
 		virtual bool saveChanges() override;
 
 	protected:
+		virtual void persistedHandler() override;
 		IncomeCycleView *_view = nullptr;
 	};
 

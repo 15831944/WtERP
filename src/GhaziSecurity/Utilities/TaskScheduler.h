@@ -29,7 +29,9 @@ namespace GS
 		void _createPendingCycleEntries(bool scheduleNext);
 		void checkAbnormalRecords(bool scheduleNext);
 
-		Wt::Dbo::Query<int> _accountCheckAbnormal;
+		Wt::Dbo::Query<long long> _accountCheckAbnormal;
+		Wt::Dbo::Query<long long> _locationCheckAbnormal;
+		Wt::Dbo::Query<Wt::Dbo::ptr<AttendanceEntry>> _attendanceCheckAbnormal;
 		Wt::Dbo::Query<Wt::Dbo::ptr<IncomeCycle>> _incomeCycleCheckAbnormal;
 		Wt::Dbo::Query<Wt::Dbo::ptr<ExpenseCycle>> _expenseCycleCheckAbnormal;
 		Wt::Dbo::Query<Wt::Dbo::ptr<AccountEntry>> _entryCheckAbnormal;

@@ -19,8 +19,6 @@ namespace GS
 		dboSession.mapClass<Entity>(Entity::tableName());
 		dboSession.mapClass<Person>(Person::tableName());
 		dboSession.mapClass<Business>(Business::tableName());
-		dboSession.mapClass<Client>(Client::tableName());
-		dboSession.mapClass<Supplier>(Supplier::tableName());
 		dboSession.mapClass<Employee>(Employee::tableName());
 		dboSession.mapClass<Personnel>(Personnel::tableName());
 		dboSession.mapClass<EmployeePosition>(EmployeePosition::tableName());
@@ -29,27 +27,10 @@ namespace GS
 		dboSession.mapClass<Country>(Country::tableName());
 		dboSession.mapClass<City>(City::tableName());
 		dboSession.mapClass<Location>(Location::tableName());
-		dboSession.mapClass<Office>(Office::tableName());
-		dboSession.mapClass<RentHouse>(RentHouse::tableName());
 		dboSession.mapClass<EmployeeAssignment>(EmployeeAssignment::tableName());
 		dboSession.mapClass<ClientAssignment>(ClientAssignment::tableName());
-		dboSession.mapClass<PersonnelAbsence>(PersonnelAbsence::tableName());
-		dboSession.mapClass<PersonnelDischarge>(PersonnelDischarge::tableName());
-		dboSession.mapClass<Inquiry>(Inquiry::tableName());
-		dboSession.mapClass<Asset>(Asset::tableName());
-		dboSession.mapClass<Inventory>(Inventory::tableName());
-		dboSession.mapClass<ClothingTemplate>(ClothingTemplate::tableName());
-		dboSession.mapClass<ClothingItem>(ClothingItem::tableName());
-		dboSession.mapClass<AlarmTemplate>(AlarmTemplate::tableName());
-		dboSession.mapClass<AlarmItem>(AlarmItem::tableName());
-		dboSession.mapClass<WeaponTemplate>(WeaponTemplate::tableName());
-		dboSession.mapClass<Weapon>(Weapon::tableName());
-		dboSession.mapClass<VehicleTemplate>(VehicleTemplate::tableName());
-		dboSession.mapClass<Vehicle>(Vehicle::tableName());
-		dboSession.mapClass<AssetRegistration>(AssetRegistration::tableName());
 		dboSession.mapClass<Account>(Account::tableName());
 		dboSession.mapClass<AccountEntry>(AccountEntry::tableName());
-		/*dboSession.mapClass<AccountEntryInfo>(AccountEntryInfo::tableName());*/
 		dboSession.mapClass<OvertimeInfo>(OvertimeInfo::tableName());
 		dboSession.mapClass<FineInfo>(FineInfo::tableName());
 		dboSession.mapClass<PettyExpenditureInfo>(PettyExpenditureInfo::tableName());
@@ -58,6 +39,21 @@ namespace GS
 		dboSession.mapClass<UploadedFile>(UploadedFile::tableName());
 		dboSession.mapClass<AttendanceDevice>(AttendanceDevice::tableName());
 		dboSession.mapClass<AttendanceEntry>(AttendanceEntry::tableName());
+
+// 		dboSession.mapClass<Inquiry>(Inquiry::tableName());
+// 		dboSession.mapClass<Asset>(Asset::tableName());
+// 		dboSession.mapClass<Inventory>(Inventory::tableName());
+// 		dboSession.mapClass<ClothingTemplate>(ClothingTemplate::tableName());
+// 		dboSession.mapClass<ClothingItem>(ClothingItem::tableName());
+// 		dboSession.mapClass<AlarmTemplate>(AlarmTemplate::tableName());
+// 		dboSession.mapClass<AlarmItem>(AlarmItem::tableName());
+// 		dboSession.mapClass<WeaponTemplate>(WeaponTemplate::tableName());
+// 		dboSession.mapClass<Weapon>(Weapon::tableName());
+// 		dboSession.mapClass<VehicleTemplate>(VehicleTemplate::tableName());
+// 		dboSession.mapClass<Vehicle>(Vehicle::tableName());
+// 		dboSession.mapClass<AssetRegistration>(AssetRegistration::tableName());
+// 		dboSession.mapClass<Office>(Office::tableName());
+// 		dboSession.mapClass<RentHouse>(RentHouse::tableName());
 	}
 	
 	std::string UploadedFile::pathToFile() const
@@ -90,6 +86,18 @@ namespace GS
 			pTime += boost::gregorian::years(nIntervals);
 
 		return pTime;
+	}
+
+	Wt::WString rsEveryNIntervals(const Money &amount, CycleInterval interval, int nIntervals)
+	{
+		switch(interval)
+		{
+		case DailyInterval: return Wt::WString::trn("RsEveryNDays", nIntervals).arg(Wt::WLocale::currentLocale().toString(amount)).arg(nIntervals);
+		case WeeklyInterval: return Wt::WString::trn("RsEveryNWeeks", nIntervals).arg(Wt::WLocale::currentLocale().toString(amount)).arg(nIntervals);
+		case MonthlyInterval: return Wt::WString::trn("RsEveryNMonths", nIntervals).arg(Wt::WLocale::currentLocale().toString(amount)).arg(nIntervals);
+		case YearlyInterval: return Wt::WString::trn("RsEveryNYears", nIntervals).arg(Wt::WLocale::currentLocale().toString(amount)).arg(nIntervals);
+		default: return Wt::WString::Empty;
+		}
 	}
 
 	void BaseAdminRecord::setCreatedByValues()

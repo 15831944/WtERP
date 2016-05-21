@@ -44,6 +44,19 @@ namespace GS
 	};
 
 	//ACCOUNT ENTRY list
+	class AccountChildrenEntryListProxyModel : public Wt::WBatchEditProxyModel
+	{
+	public:
+		AccountChildrenEntryListProxyModel(Wt::WAbstractItemModel *model, Wt::WObject *parent = nullptr);
+		virtual boost::any data(const Wt::WModelIndex &idx, int role = Wt::DisplayRole) const override;
+		virtual boost::any headerData(int section, Wt::Orientation orientation = Wt::Horizontal, int role = Wt::DisplayRole) const override;
+		virtual Wt::WFlags<Wt::ItemFlag> flags(const Wt::WModelIndex &index) const override;
+
+	protected:
+		void addAdditionalColumns();
+		int _linkColumn = -1;
+	};
+
 	class AccountEntryListProxyModel : public Wt::WBatchEditProxyModel
 	{
 	public:
@@ -57,13 +70,15 @@ namespace GS
 		int _linkColumn = -1;
 	};
 
-	class AccountEntryList : public QueryModelFilteredList<boost::tuple<Wt::WDateTime, std::string, long long, long long, long long, long long, std::string, long long>>
+	class AccountChildrenEntryList : public QueryModelFilteredList<boost::tuple<Wt::WDateTime, std::string, long long, long long, long long, long long, std::string, long long>>
 	{
 	public:
 		enum ResultColumns { ResTimestamp, ResDescription, ResAmount, ResDebitAccountId, ResCreditAccountId, ResOppositeAccountId, ResOppositeAccountName, ResId };
 		enum ViewColumns { ViewTimestamp, ViewDescription, ViewOppositeAccount, ViewDebitAmount, ViewCreditAmount };
 
-		AccountEntryList(Wt::Dbo::ptr<Account> accountPtr);
+		AccountChildrenEntryList(Wt::Dbo::ptr<Account> accountPtr) : _accountPtr(accountPtr) { }
+		AccountChildrenEntryList(Wt::Dbo::ptr<IncomeCycle> cyclePtr) : _incomeCyclePtr(cyclePtr) { }
+		AccountChildrenEntryList(Wt::Dbo::ptr<ExpenseCycle> cyclePtr) : _expenseCyclePtr(cyclePtr) { }
 		virtual void load() override;
 		Wt::Dbo::ptr<Account> accountPtr() const { return _accountPtr; }
 
@@ -72,6 +87,27 @@ namespace GS
 		virtual void initModel() override;
 
 		Wt::Dbo::ptr<Account> _accountPtr;
+		Wt::Dbo::ptr<IncomeCycle> _incomeCyclePtr;
+		Wt::Dbo::ptr<ExpenseCycle> _expenseCyclePtr;
+	};
+
+	class AccountEntryList : public QueryModelFilteredList<boost::tuple<Wt::WDateTime, std::string, long long, long long, long long, std::string, std::string, long long>>
+	{
+	public:
+		enum ResultColumns { ResTimestamp, ResDescription, ResAmount, ResDebitAccountId, ResCreditAccountId, ResDebitAccountName, ResCreditAccountName, ResId };
+		enum ViewColumns { ViewTimestamp, ViewDescription, ViewAmount, ViewDebitAccount, ViewCreditAccount };
+
+		AccountEntryList() = default;
+		AccountEntryList(Wt::Dbo::ptr<IncomeCycle> cyclePtr) : _incomeCyclePtr(cyclePtr) { }
+		AccountEntryList(Wt::Dbo::ptr<ExpenseCycle> cyclePtr) : _expenseCyclePtr(cyclePtr) { }
+		virtual void load() override;
+
+	protected:
+		virtual void initFilters() override;
+		virtual void initModel() override;
+
+		Wt::Dbo::ptr<IncomeCycle> _incomeCyclePtr;
+		Wt::Dbo::ptr<ExpenseCycle> _expenseCyclePtr;
 	};
 
 	//AccountNameValidator
@@ -102,6 +138,7 @@ namespace GS
 		virtual bool saveChanges() override;
 
 	protected:
+		virtual void persistedHandler() override;
 		virtual AuthLogin::PermissionResult checkModifyPermission() const override;
 		AccountView *_view = nullptr;
 	};
@@ -115,18 +152,17 @@ namespace GS
 		Wt::Dbo::ptr<Account> accountPtr() const { return _model->recordPtr(); }
 		AccountFormModel *model() const { return _model; }
 
-		void reloadList();
 		virtual Wt::WString viewName() const override;
 		virtual std::string viewInternalPath() const override { return accountPtr() ? Account::viewInternalPath(accountPtr().id()) : ""; }
 		virtual RecordFormView *createFormView() override { return new AccountView(); }
 
-	protected:
-		virtual void afterSubmitHandler() override;
-		void initEntryList();
+		static AccountView *createCashAccountView();
 
-		AccountEntryList *_entryList = nullptr;
+	protected:
+		AccountChildrenEntryList *_entryList = nullptr;
 		AccountFormModel *_model = nullptr;
 		Wt::Dbo::ptr<Account> _tempPtr;
+		bool _isCashAccountView = false;
 	};
 
 	//ACCOUNT ENTRY view

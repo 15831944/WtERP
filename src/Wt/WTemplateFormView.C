@@ -38,9 +38,7 @@ WTemplateFormView::WTemplateFormView(WContainerWidget *parent)
 
 void WTemplateFormView::init()
 {
-  addFunction("id", &Functions::id);
-  addFunction("tr", &Functions::tr);
-  addFunction("block", &Functions::block);
+
 }
 
 void WTemplateFormView::setFormWidget(WFormModel::Field field,

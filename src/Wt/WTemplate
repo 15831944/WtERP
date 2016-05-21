@@ -773,6 +773,8 @@ private:
 			       std::vector<WString>& result);
 
   EscapeOStream* plainTextNewLineEscStream_;
+
+  void _init();
 };
 
 template <typename T> T WTemplate::resolve(const std::string& varName)

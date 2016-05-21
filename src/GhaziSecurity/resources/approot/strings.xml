@@ -65,6 +65,8 @@
 <message id="LogoutButton">Logout</message>
 
 <!-- Date time related -->
+<message id="Date">Date</message>
+<message id="Time">Time</message>
 <message id="Timestamp">Time stamp</message>
 <message id="TimeIn">Time in</message>
 <message id="TimeOut">Time out</message>
@@ -320,6 +322,7 @@
 <!-- AccountEntryView, AccountEntryList -->
 <message id="AccountEntryViewName">Account Entry #{1}</message>
 
+<message id="AccountEntries">Account Entries</message>
 <message id="NewAccountEntry">New Account Entry</message>
 <message id="CreateAccountEntry">Create account entry</message>
 <message id="AccountEntryInfo">Account Entry Information</message>
@@ -341,6 +344,7 @@
 <message id="EmployeeAssignmentInfo">Employee Assignment Information</message>
 <message id="EmployeeAssignment">Employee assignment</message>
 <message id="EmployeeAssignments">Employee assignments</message>
+<message id="AssociatedEmployeeAssignments">Associated Employee Assignments</message>
 
 <!-- ClientAssignmentView -->
 <message id="AssignClient">Assign client</message>
@@ -351,6 +355,8 @@
 <message id="ClientAssignmentInfo">Client Assignment Information</message>
 <message id="ClientAssignment">Client assignment</message>
 <message id="ClientAssignments">Client assignments</message>
+<message id="AssociatedClientAssignment">Associated Client Assignment</message>
+<message id="AssociatedClientAssignmentSummary">Client: {1}, Service: {2}</message>
 <message id="EmployeesAssigned">Employees assigned</message>
 
 <!-- EntryCycles -->
@@ -361,10 +367,13 @@
 
 <message id="RecurringExpenses">Recurring expenses</message>
 <message id="RecurringExpense">Recurring expense</message>
+<message id="AssociatedRecurringExpense">Associated Recurring Expense</message>
+<message id="AssociatedEntryCycleSummary">Entity: {1}, Amount: {2}</message>
 <message id="recurringexpense">recurring expense</message>
 <message id="RecurringIncomes">Recurring incomes</message>
 <message id="RecurringIncome">Recurring income</message>
 <message id="recurringincome">recurring income</message>
+<message id="AssociatedRecurringIncome">Associated Recurring Income</message>
 <message id="NewRecurringExpense">New Recurring Expense</message>
 <message id="NewRecurringIncome">New Recurring Income</message>
 <message id="AddRecurringExpense">Add recurring expense</message>
@@ -404,8 +413,8 @@
 	<plural case="1">{1} days after starting date</plural>
 </message>
 <message id="RsEveryNDays">
-	<plural case="0">Rs. {1} every {2} day</plural>
-	<plural case="1">Rs. {1} every {2} days</plural>
+	<plural case="0">Rs. {1}/= every {2} day</plural>
+	<plural case="1">Rs. {1}/= every {2} days</plural>
 </message>
 
 <message id="AfterNWeeks">
@@ -413,8 +422,8 @@
 	<plural case="1">{1} weeks after starting date</plural>
 </message>
 <message id="RsEveryNWeeks">
-	<plural case="0">Rs. {1} every {2} week</plural>
-	<plural case="1">Rs. {1} every {2} weeks</plural>
+	<plural case="0">Rs. {1}/= every {2} week</plural>
+	<plural case="1">Rs. {1}/= every {2} weeks</plural>
 </message>
 
 <message id="AfterNMonths">
@@ -422,8 +431,8 @@
 	<plural case="1">{1} months after starting date</plural>
 </message>
 <message id="RsEveryNMonths">
-	<plural case="0">Rs. {1} every {2} month</plural>
-	<plural case="1">Rs. {1} every {2} months</plural>
+	<plural case="0">Rs. {1}/= every {2} month</plural>
+	<plural case="1">Rs. {1}/= every {2} months</plural>
 </message>
 
 <message id="AfterNYears">
@@ -431,8 +440,8 @@
 	<plural case="1">{1} years after starting date</plural>
 </message>
 <message id="RsEveryNYears">
-	<plural case="0">Rs. {1} every {2} year</plural>
-	<plural case="1">Rs. {1} every {2} years</plural>
+	<plural case="0">Rs. {1}/= every {2} year</plural>
+	<plural case="1">Rs. {1}/= every {2} years</plural>
 </message>
 
 </messages>

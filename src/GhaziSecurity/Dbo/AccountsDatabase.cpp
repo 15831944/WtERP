@@ -24,6 +24,7 @@ namespace GS
 		//Create account if not found
 		if(!accountPtr)
 		{
+			Wt::log("info") << "AccountsDatabase: Cash account was not found in database, creating cash account";
 			accountPtr = dboSession.add(new Account(Account::Asset));
 			accountPtr.modify()->name = Wt::WString::tr("CashAccountName").toUTF8();
 			accountPtr.flush();

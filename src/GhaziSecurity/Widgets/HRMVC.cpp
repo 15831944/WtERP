@@ -7,6 +7,8 @@
 #include <Wt/WDateEdit>
 #include <Wt/WTableView>
 #include <Wt/WLengthValidator>
+#include <Wt/WAnchor>
+#include <Wt/WSplitButton>
 
 namespace GS
 {
@@ -326,14 +328,127 @@ namespace GS
 		return true;
 	}
 
+// 	void EmployeeAssignmentFormModel::showExpenseCycleDialog()
+// 	{
+// 		if(recordPtr()->expenseCyclePtr)
+// 			return;
+// 
+// 		if(!_expenseCycleList)
+// 		{
+// 			_expenseCycleList = AbstractFilteredList::createListDialog(Wt::WString::tr("SelectXFromList").arg(Wt::WString::tr("account")), this);
+// 			AbstractFilteredList *listWidget = new EmployeeAssignmentList();
+// 			_expenseCycleList->contents()->addWidget(listWidget);
+// 			listWidget->enableFilters();
+// 			listWidget->tableView()->setSelectionMode(Wt::SingleSelection);
+// 			listWidget->tableView()->setSelectionBehavior(Wt::SelectRows);
+// 			listWidget->tableView()->selectionChanged().connect(boost::bind(&EmployeeAssignmentFormModel::selectExpenseCycleFromList, this, listWidget));
+// 		}
+// 		_expenseCycleList->show();
+// 	}
+// 
+// 	void EmployeeAssignmentFormModel::selectExpenseCycleFromList(AbstractFilteredList *listWidget)
+// 	{
+// 		if(recordPtr()->expenseCyclePtr)
+// 			return;
+// 
+// 		auto indexSet = listWidget->tableView()->selectedIndexes();
+// 		if(indexSet.empty())
+// 			return;
+// 
+// 		const auto &index = *indexSet.begin();
+// 		if(!index.isValid())
+// 			return;
+// 
+// 		WApplication *app = APP;
+// 		long long id = boost::any_cast<long long>(index.data());
+// 
+// 		try
+// 		{
+// 			TRANSACTION(app);
+// 			Wt::Dbo::ptr<ExpenseCycle> ptr = app->dboSession().loadLazy<ExpenseCycle>(id);
+// 			_recordPtr.modify()->expenseCyclePtr = ptr;
+// 			_expenseCycleList->accept();
+// 		}
+// 		catch(const Wt::Dbo::Exception &e)
+// 		{
+// 			Wt::log("error") << "EmployeeAssignmentFormModel::selectExpenseCycleFromList(): Dbo error(" << e.code() << "): " << e.what();
+// 			app->showDbBackendError(e.code());
+// 		}
+// 	}
+
 	EmployeeAssignmentView::EmployeeAssignmentView(Wt::Dbo::ptr<EmployeeAssignment> assignmentPtr /*= Wt::Dbo::ptr<EmployeeAssignment>()*/)
-		: RecordFormView(tr("GS.Admin.EmployeeAssignmentView")), _tempPtr(assignmentPtr)
-	{ }
+		: _tempPtr(assignmentPtr)
+	{
+		setTemplateText(tr("GS.Admin.EmployeeAssignmentView"));
+	}
 
 	void EmployeeAssignmentView::initView()
 	{
 		_model = new EmployeeAssignmentFormModel(this, _tempPtr);
 		addFormModel("assignment", _model);
+	}
+
+	void EmployeeAssignmentFormModel::persistedHandler()
+	{
+		_view->bindWidget("expenseCycle", new Wt::WAnchor());
+		_view->bindWidget("clientAssignment", new Wt::WAnchor());
+
+		Wt::WSplitButton *setExpenseCycle = new Wt::WSplitButton(Wt::WString::tr("AssignWithRecurringExpense"));
+		//setExpenseCycle->actionButton()->clicked().connect(this, &EmployeeAssignmentFormModel::showExpenseCycleDialog);
+		_view->bindWidget("setExpenseCycle", setExpenseCycle);
+
+		_view->reload();
+	}
+
+	void EmployeeAssignmentView::reload()
+	{
+		TRANSACTION(APP);
+		bool isPersisted = _model->isRecordPersisted();
+		if(isPersisted)
+		{
+			Wt::Dbo::ptr<EmployeeAssignment> assignmentPtr = _model->recordPtr();
+			assignmentPtr.reread();
+
+			try
+			{
+				if(assignmentPtr->expenseCyclePtr)
+				{
+					Wt::WString text = tr("AssociatedEntryCycleSummary").arg(assignmentPtr->expenseCyclePtr->entityPtr->name)
+						.arg(rsEveryNIntervals(assignmentPtr->expenseCyclePtr->amount(), assignmentPtr->expenseCyclePtr->interval, assignmentPtr->expenseCyclePtr->nIntervals));
+					Wt::WAnchor *a = resolve<Wt::WAnchor*>("expenseCycle");
+					a->setText(text);
+					a->setLink(Wt::WLink(Wt::WLink::InternalPath, ExpenseCycle::viewInternalPath(assignmentPtr->expenseCyclePtr.id())));
+				}
+				setCondition("show-expenseCycle", assignmentPtr->expenseCyclePtr);
+				setCondition("set-expenseCycle", !assignmentPtr->expenseCyclePtr);
+			}
+			catch(const Wt::Dbo::Exception &e)
+			{
+				Wt::log("error") << "EmployeeAssignmentView::reload(): Dbo error(" << e.code() << ") reloading expense cycle summary: " << e.what();
+				setCondition("show-expenseCycle", false);
+				setCondition("set-expenseCycle", false);
+			}
+
+			try
+			{
+				if(assignmentPtr->clientAssignmentPtr)
+				{
+					Wt::WString text = tr("AssociatedClientAssignmentSummary").arg(assignmentPtr->clientAssignmentPtr->entityPtr->name)
+						.arg(assignmentPtr->clientAssignmentPtr->servicePtr->title);
+					Wt::WAnchor *a = resolve<Wt::WAnchor*>("clientAssignment");
+					a->setText(text);
+					a->setLink(Wt::WLink(Wt::WLink::InternalPath, ClientAssignment::viewInternalPath(assignmentPtr->clientAssignmentPtr.id())));
+				}
+				setCondition("show-clientAssignment", assignmentPtr->clientAssignmentPtr);
+				setCondition("set-clientAssignment", !assignmentPtr->clientAssignmentPtr);
+			}
+			catch(const Wt::Dbo::Exception &e)
+			{
+				Wt::log("error") << "EmployeeAssignmentView::reload(): Dbo error(" << e.code() << ") reloading client assignment summary: " << e.what();
+				setCondition("show-clientAssignment", false);
+				setCondition("set-clientAssignment", false);
+			}
+		}
 	}
 
 	void EmployeeAssignmentView::handlePositionChanged()
@@ -393,13 +508,6 @@ namespace GS
 			return tr("EmployeeAssignmentViewName").arg(employeeAssignmentPtr().id());
 
 		return RecordFormView::viewName();
-	}
-
-	void EmployeeAssignmentFormModel::persistedHandler()
-	{
-// 		auto expenseCycle = new ExpenseCycleList(recordPtr());
-// 		_view->_expenseCycles->load();
-// 		_view->bindWidget("expenseCycles", _view->_expenseCycles);
 	}
 
 	void EmployeeAssignmentFormModel::updateEndDateValidator(bool update)
@@ -533,6 +641,15 @@ namespace GS
 			"LEFT JOIN " + Country::tableName() + " cnt ON (cnt.code = l.country_code) "
 			"LEFT JOIN " + City::tableName() + " city ON (city.id = l.city_id)");
 
+		if(_entityPtr.id() != -1)
+			_baseQuery.where("a.entity_id = ?").bind(_entityPtr.id());
+
+		if(_clientAssignmentPtr.id() != -1)
+			_baseQuery.where("a.clientassignment_id = ?").bind(_clientAssignmentPtr.id());
+
+		if(_cyclePtr.id() != -1)
+			_baseQuery.where("a.expensecycle_id = ?").bind(_cyclePtr.id());
+
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "a.");
 
 		Wt::Dbo::Query<ResultType> query(_baseQuery); //must copy the query first
@@ -540,7 +657,10 @@ namespace GS
 
 		addColumn(ViewId, model->addColumn("a.id a_id"), tr("ID"), IdColumnWidth);
 		addColumn(ViewCreatedOn, model->addColumn("a.timestamp"), tr("CreatedOn"), DateTimeColumnWidth);
-		addColumn(ViewEntity, model->addColumn("e.name e_name"), tr("Entity"), 200);
+
+		if(_entityPtr.id() == -1)
+			addColumn(ViewEntity, model->addColumn("e.name e_name"), tr("Entity"), 200);
+
 		addColumn(ViewStartDate, model->addColumn("a.startDate"), tr("StartDate"), DateColumnWidth);
 		addColumn(ViewEndDate, model->addColumn("a.endDate"), tr("EndDate"), DateColumnWidth);
 		addColumn(ViewCountry, model->addColumn("cnt.name cnt_name"), tr("Country"), 150);
@@ -657,13 +777,48 @@ namespace GS
 	}
 
 	ClientAssignmentView::ClientAssignmentView(Wt::Dbo::ptr<ClientAssignment> assignmentPtr /*= Wt::Dbo::ptr<ClientAssignment>()*/)
-		: RecordFormView(tr("GS.Admin.ClientAssignmentView")), _tempPtr(assignmentPtr)
-	{ }
+		: _tempPtr(assignmentPtr)
+	{
+		setTemplateText(tr("GS.Admin.ClientAssignmentView"));
+	}
 
 	void ClientAssignmentView::initView()
 	{
 		_model = new ClientAssignmentFormModel(this, _tempPtr);
 		addFormModel("assignment", _model);
+
+		bindWidget("incomeCycle", new Wt::WAnchor());
+	}
+
+	void ClientAssignmentView::reload()
+	{
+		TRANSACTION(APP);
+		bool isPersisted = _model->isRecordPersisted();
+		if(isPersisted)
+		{
+			Wt::Dbo::ptr<ClientAssignment> assignmentPtr = _model->recordPtr();
+			assignmentPtr.reread();
+
+			try
+			{
+				if(assignmentPtr->incomeCyclePtr)
+				{
+					Wt::WString text = tr("AssociatedEntryCycleSummary").arg(assignmentPtr->incomeCyclePtr->entityPtr->name)
+						.arg(rsEveryNIntervals(assignmentPtr->incomeCyclePtr->amount(), assignmentPtr->incomeCyclePtr->interval, assignmentPtr->incomeCyclePtr->nIntervals));
+					Wt::WAnchor *a = resolve<Wt::WAnchor*>("incomeCycle");
+					a->setText(text);
+					a->setLink(Wt::WLink(Wt::WLink::InternalPath, IncomeCycle::viewInternalPath(assignmentPtr->incomeCyclePtr.id())));
+				}
+				setCondition("show-incomeCycle", assignmentPtr->incomeCyclePtr);
+				setCondition("set-incomeCycle", !assignmentPtr->incomeCyclePtr);
+			}
+			catch(const Wt::Dbo::Exception &e)
+			{
+				Wt::log("error") << "ClientAssignmentView::reload(): Dbo error(" << e.code() << ") reloading income cycle summary: " << e.what();
+				setCondition("show-incomeCycle", false);
+				setCondition("set-incomeCycle", false);
+			}
+		}
 	}
 
 	void ClientAssignmentView::handleServiceChanged()
@@ -725,6 +880,12 @@ namespace GS
 		return RecordFormView::viewName();
 	}
 
+	void ClientAssignmentFormModel::persistedHandler()
+	{
+		_view->bindWidget("employeeAssignments", new EmployeeAssignmentList(recordPtr()));
+		_view->reload();
+	}
+
 	void ClientAssignmentFormModel::updateEndDateValidator(bool update)
 	{
 		if(update)
@@ -738,7 +899,7 @@ namespace GS
 		Wt::WDateValidator *endDateValidator = dynamic_cast<Wt::WDateValidator*>(validator(ClientAssignmentFormModel::endDateField));
 		endDateValidator->setBottom(startDate.isValid() ? startDate.addDays(1) : Wt::WDate());
 	}
-	
+
 	void ClientAssignmentList::load()
 	{
 		bool ld = !loaded();
@@ -770,6 +931,12 @@ namespace GS
 			"LEFT JOIN " + EmployeeAssignment::tableName() + " ea ON ea.clientassignment_id = ca.id"
 			).groupBy("ca.id");
 
+		if(_entityPtr.id() != -1)
+			_baseQuery.where("ca.entity_id = ?").bind(_entityPtr.id());
+
+		if(_cyclePtr.id() != -1)
+			_baseQuery.where("ca.incomecycle_id = ?").bind(_cyclePtr.id());
+
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "ca.");
 
 		Wt::Dbo::Query<ResultType> query(_baseQuery); //must copy the query first
@@ -777,7 +944,10 @@ namespace GS
 
 		addColumn(ViewId, model->addColumn("ca.id ca_id"), tr("ID"), IdColumnWidth);
 		addColumn(ViewCreatedOn, model->addColumn("ca.timestamp"), tr("CreatedOn"), DateTimeColumnWidth);
-		addColumn(ViewEntity, model->addColumn("e.name e_name"), tr("Entity"), 200);
+
+		if(_entityPtr.id() == -1)
+			addColumn(ViewEntity, model->addColumn("e.name e_name"), tr("Entity"), 200);
+
 		addColumn(ViewStartDate, model->addColumn("ca.startDate"), tr("StartDate"), DateColumnWidth);
 		addColumn(ViewEndDate, model->addColumn("ca.endDate"), tr("EndDate"), DateColumnWidth);
 		addColumn(ViewEmployeesAssigned, model->addColumn("COUNT(ea.id)"), tr("EmployeesAssigned"), 80);
@@ -870,13 +1040,6 @@ namespace GS
 		return Wt::WBatchEditProxyModel::data(idx, role);
 	}
 
-// 	void MultipleViewTemplate::init()
-// 	{
-// 		addFunction("tr", &Wt::WTemplate::Functions::tr);
-// 		addFunction("block", &Wt::WTemplate::Functions::block);
-// 		addFunction("id", &Wt::WTemplate::Functions::id);
-// 		addFunction("fwId", &Wt::WTemplate::Functions::fwId);
-// 	}
 // 
 // 	Wt::WString MultipleViewTemplate::viewName() const
 // 	{

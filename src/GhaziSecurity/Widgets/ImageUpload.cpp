@@ -25,8 +25,6 @@ namespace GS
 	ImageUpload::ImageUpload(Wt::WString actionUpload, Wt::WString actionChange, Wt::WContainerWidget *parent /*= nullptr*/)
 		: Wt::WTemplate(tr("GS.ImageUpload"), parent), _actionUpload(actionUpload), _actionChange(actionChange)
 	{
-		addFunction("id", &Functions::id);
-
 		setStyleClass("image-upload");
 		bindWidget("input", _fileUpload = new Wt::WFileUpload());
 		bindEmpty("image");

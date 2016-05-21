@@ -102,7 +102,7 @@ ${<if:{1}>}
 <div class="form-group">
 	<label class="control-label" for="${id:{1}}">${tr:{2}}</label>
 	<div class="input-group">
-		<div class="input-group-addon">Rs</div>
+		<label class="input-group-addon" for="${id:{1}}">Rs</label>
 		${{1}}
 		<div class="input-group-addon">/=</div>
 	</div>
@@ -208,7 +208,7 @@ ${content}
 
 <message id="GS.ListRangeFilterView">
 <div class="input-group">
-	<span class="input-group-addon">${title}</span>
+	<label class="input-group-addon" for="${id:widget}">${title}</label>
 	${operatorCombo}
 	<span class="input-group-addon"></span>
 	${widget}
@@ -224,7 +224,7 @@ ${content}
 			<div class="col-sm-8">${filters-container}</div>
 			<div class="col-sm-4">
 				<div class="input-group">
-					<span class="input-group-addon">${tr:AddFilter}</span>
+					<label class="input-group-addon" for="${id:filters-combo}">${tr:AddFilter}</label>
 					${filters-combo}
 					<span class="input-group-btn">${add-filter}</span>
 				</div>
@@ -307,9 +307,9 @@ ${block:GS.RecordCountTemplate.Block PayablesBalance payables}
 		<div class="form-group">
 			<label class="control-label" for="${id:dateIn}">${tr:TimeIn}</label>
 			<div class="input-group">
-				<div class="input-group-addon">Date</div>
+				<label class="input-group-addon" for="${id:dateIn}">${tr:Date}</label>
 				${dateIn}
-				<div class="input-group-addon">Time</div>
+				<label class="input-group-addon" for="${id:timeIn}">${tr:Time}</label>
 				${timeIn}
 			</div>
 			<div class="help-block">${dateIn-info}</div>
@@ -318,9 +318,9 @@ ${block:GS.RecordCountTemplate.Block PayablesBalance payables}
 		<div class="form-group">
 			<label class="control-label" for="${id:dateOut}">${tr:TimeOut}</label>
 			<div class="input-group">
-				<div class="input-group-addon">Date</div>
+				<label class="input-group-addon" for="${id:dateOut}">${tr:Date}</label>
 				${dateOut}
-				<div class="input-group-addon">Time</div>
+				<label class="input-group-addon" for="${id:timeOut}">${tr:Time}</label>
 				${timeOut}
 			</div>
 			<div class="help-block">${dateOut-info}</div>
@@ -451,10 +451,10 @@ ${</type-chosen>}
 	<div class="panel-heading">${tr:ContactInfo}</div>
 	<div class="panel-body form-horizontal">
 		${contactNumbers}
-		<div class="form-group"><div class="col-sm-12">${add-contact-number class="pull-right"}</div></div>
+		<div class="form-group hidden-print"><div class="col-sm-12">${add-contact-number class="pull-right"}</div></div>
 		
 		${locations}
-		<div class="form-group"><div class="col-sm-12">${add-location class="pull-right"}</div></div>
+		<div class="form-group hidden-print"><div class="col-sm-12">${add-location class="pull-right"}</div></div>
 	</div>
 </div>
 </message>
@@ -490,6 +490,16 @@ ${submitBtn class="btn-primary"}
 		${block:GS.Admin.EntryCycleBlock2}
 	</div>
 </div>
+${<m:income-persisted>}
+<div class="panel panel-default">
+	<div class="panel-heading">${tr:AccountEntries}</div>
+	<div class="panel-body">${entries}</div>
+</div>
+<div class="panel panel-default">
+	<div class="panel-heading">${tr:AssociatedClientAssignments}</div>
+	<div class="panel-body">${clientAssignments}</div>
+</div>
+${</m:income-persisted>}
 </message>
 
 <message id="GS.Admin.ExpenseCycleView">
@@ -509,10 +519,30 @@ ${submitBtn class="btn-primary"}
 		${block:GS.Admin.EntryCycleBlock2}
 	</div>
 </div>
+${<m:expense-persisted>}
+<div class="panel panel-default">
+	<div class="panel-heading">${tr:AccountEntries}</div>
+	<div class="panel-body">${entries}</div>
+</div>
+<div class="panel panel-default">
+	<div class="panel-heading">${tr:AssociatedEmployeeAssignments}</div>
+	<div class="panel-body">${employeeAssignments}</div>
+</div>
+${</m:expense-persisted>}
 </message>
 
 <!-- ClientAssignmentView -->
 <message id="GS.Admin.ClientAssignmentView">
+${<m:assignment-persisted>}
+${<show-incomeCycle>}
+<div class="panel panel-default">
+	<div class="panel-heading">${tr:AssociatedRecurringIncome}</div>
+	<div class="panel-body">
+		${incomeCycle}
+	</div>
+</div>
+${</show-incomeCycle>}
+${</m:assignment-persisted>}
 <div class="panel panel-default">
 	<div class="panel-heading">${tr:ClientAssignmentInfo}</div>
 	<div class="panel-body">
@@ -524,10 +554,34 @@ ${submitBtn class="btn-primary"}
 		${submitBtn class="btn-primary"}
 	</div>
 </div>
+${<m:assignment-persisted>}
+<div class="panel panel-default">
+	<div class="panel-heading">${tr:AssociatedEmployeeAssignments}</div>
+	<div class="panel-body">${employeeAssignments}</div>
+</div>
+${</m:assignment-persisted>}
 </message>
 
 <!-- EmployeeAssignmentView -->
 <message id="GS.Admin.EmployeeAssignmentView">
+${<m:assignment-persisted>}
+${<show-expenseCycle>}
+<div class="panel panel-default">
+	<div class="panel-heading">${tr:AssociatedRecurringExpense}</div>
+	<div class="panel-body">
+		${expenseCycle}
+	</div>
+</div>
+${</show-expenseCycle>}
+${<show-clientAssignment>}
+<div class="panel panel-default">
+	<div class="panel-heading">${tr:AssociatedClientAssignment}</div>
+	<div class="panel-body">
+		${clientAssignment}
+	</div>
+</div>
+${</show-clientAssignment>}
+${</m:assignment-persisted>}
 <div class="panel panel-default">
 	<div class="panel-heading">${tr:EmployeeAssignmentInfo}</div>
 	<div class="panel-body">
@@ -624,7 +678,7 @@ ${block:GS.FieldH.CW entity Entity}
 		${submitBtn class="btn-primary"}
 	</div>
 </div>
-${entry-list}
+${<m:account-persisted>}${entry-list}${</m:account-persisted>}
 </message>
 
 <!-- AccountEntryView -->

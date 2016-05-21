@@ -6,6 +6,7 @@
 #include <Wt/WPushButton>
 #include <Wt/WIntValidator>
 #include <Wt/WDoubleValidator>
+#include <Wt/WAbstractProxyModel>
 
 #include <boost/tokenizer.hpp>
 
@@ -126,8 +127,6 @@ namespace GS
 	FiltersTemplate::FiltersTemplate(AbstractFilteredList *filteredList, Wt::WContainerWidget *parent /*= nullptr*/)
 		: Wt::WTemplate(tr("GS.FiltersTemplate"), parent), _filteredList(filteredList)
 	{
-		addFunction("tr", &Wt::WTemplate::Functions::tr);
-
 		_filtersComboBox = new Wt::WComboBox();
 		_filtersComboBox->addItem(tr("SelectFilter"));
 
@@ -148,7 +147,6 @@ namespace GS
 	AbstractFilteredList::AbstractFilteredList()
 	{
 		setTemplateText(tr("GS.FilteredListView"));
-		addFunction("tr", Wt::WTemplate::Functions::tr);
 
 		_tableView = new Wt::WTableView();
 		_tableView->setSelectable(true);
@@ -164,7 +162,12 @@ namespace GS
 		if(!loaded())
 		{
 			initModel();
-			_tableView->setModel(_proxyModel ? _proxyModel : _model);
+
+			if(_proxyModel)
+				_tableView->setModel(_proxyModel);
+			else
+				_tableView->setModel(_model);
+
 			resetColumnWidths();
 
 			if(_proxyModel)
@@ -253,7 +256,6 @@ namespace GS
 			return;
 
 		Wt::WTemplate *filterTemplate = new Wt::WTemplate();
-		filterTemplate->addFunction("id", &Wt::WTemplate::Functions::id);
 		if(auto rangeEdit = dynamic_cast<RangeEdit*>(newWidget))
 		{
 			filterTemplate->setTemplateText(tr("GS.ListRangeFilterView"));

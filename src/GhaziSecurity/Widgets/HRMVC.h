@@ -110,20 +110,27 @@ namespace GS
 		virtual Wt::WWidget *createFormWidget(Wt::WFormModel::Field field) override;
 		virtual bool saveChanges() override;
 
+// 		void showExpenseCycleDialog();
+// 		void showClientAssignmentDialog();
+
 	protected:
 		virtual void persistedHandler() override;
 		void updateEndDateValidator(bool update);
+
+// 		void selectExpenseCycleFromList(AbstractFilteredList *listWidget);
+// 		void selectClientAssignmentFromList(AbstractFilteredList *listWidget);
+
 		EmployeeAssignmentView *_view = nullptr;
 
 	private:
 		friend class EmployeeAssignmentView;
 	};
 
-	class EmployeeAssignmentView : public RecordFormView
+	class EmployeeAssignmentView : public ReloadOnVisibleWidget<RecordFormView>
 	{
 	public:
 		EmployeeAssignmentView(Wt::Dbo::ptr<EmployeeAssignment> employeeAssignmentPtr = Wt::Dbo::ptr<EmployeeAssignment>());
-		virtual void initView() override;
+		virtual void reload() override;
 
 		using RecordFormView::updateView;
 		using RecordFormView::updateModel;
@@ -140,6 +147,7 @@ namespace GS
 		EmployeeAssignmentFormModel *model() const { return _model; }
 
 	protected:
+		virtual void initView() override;
 		virtual void updateView(Wt::WFormModel *model) override;
 		virtual void updateModel(Wt::WFormModel *model) override;
 
@@ -167,6 +175,7 @@ namespace GS
 		virtual bool saveChanges() override;
 
 	protected:
+		virtual void persistedHandler() override;
 		void updateEndDateValidator(bool update);
 		ClientAssignmentView *_view = nullptr;
 
@@ -174,10 +183,11 @@ namespace GS
 		friend class ClientAssignmentView;
 	};
 
-	class ClientAssignmentView : public RecordFormView
+	class ClientAssignmentView : public ReloadOnVisibleWidget<RecordFormView>
 	{
 	public:
 		ClientAssignmentView(Wt::Dbo::ptr<ClientAssignment> clientAssignmentPtr = Wt::Dbo::ptr<ClientAssignment>());
+		virtual void reload() override;
 		virtual void initView() override;
 
 		using RecordFormView::updateView;
@@ -210,6 +220,9 @@ namespace GS
 	class EmployeeAssignmentList : public QueryModelFilteredList<boost::tuple<long long, Wt::WDateTime, std::string, Wt::WDate, Wt::WDate, std::string, std::string, std::string>>
 	{
 	public:
+		EmployeeAssignmentList(Wt::Dbo::ptr<Entity> entityPtr = Wt::Dbo::ptr<Entity>()) : _entityPtr(entityPtr) { }
+		EmployeeAssignmentList(Wt::Dbo::ptr<ClientAssignment> clientAssignmentPtr) : _clientAssignmentPtr(clientAssignmentPtr) { }
+		EmployeeAssignmentList(Wt::Dbo::ptr<ExpenseCycle> cyclePtr) : _cyclePtr(cyclePtr) { }
 		enum ResultColumns { ResId, ResTimestamp, ResEntityName, ResStartDate, ResEndDate, ResCountryName, ResCityName, ResAddress };
 		enum ViewColumns { ViewId, ViewCreatedOn, ViewEntity, ViewStartDate, ViewEndDate, ViewCountry, ViewCity, ViewAddress };
 		virtual void load() override;
@@ -217,6 +230,10 @@ namespace GS
 	protected:
 		virtual void initFilters() override;
 		virtual void initModel() override;
+
+		Wt::Dbo::ptr<ClientAssignment> _clientAssignmentPtr;
+		Wt::Dbo::ptr<Entity> _entityPtr;
+		Wt::Dbo::ptr<ExpenseCycle> _cyclePtr;
 	};
 
 	class EmployeeAssignmentListProxyModel : public Wt::WBatchEditProxyModel
@@ -238,11 +255,15 @@ namespace GS
 	public:
 		enum ResultColumns { ResId, ResTimestamp, ResEntityName, ResStartDate, ResEndDate, ResEmployeesAssigned };
 		enum ViewColumns { ViewId, ViewCreatedOn, ViewEntity, ViewStartDate, ViewEndDate, ViewEmployeesAssigned };
+		ClientAssignmentList(Wt::Dbo::ptr<Entity> entityPtr = Wt::Dbo::ptr<Entity>()) : _entityPtr(entityPtr) { }
+		ClientAssignmentList(Wt::Dbo::ptr<IncomeCycle> cyclePtr) : _cyclePtr(cyclePtr) { }
 		virtual void load() override;
 
 	protected:
 		virtual void initFilters() override;
 		virtual void initModel() override;
+		Wt::Dbo::ptr<Entity> _entityPtr;
+		Wt::Dbo::ptr<IncomeCycle> _cyclePtr;
 	};
 
 	class ClientAssignmentListProxyModel : public Wt::WBatchEditProxyModel

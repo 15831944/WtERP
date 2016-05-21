@@ -183,7 +183,7 @@ namespace GS
 		Wt::WTableView *tableView() const { return _tableView; }
 		FiltersTemplate *filtersTemplate() const { return _filtersTemplate; }
 		Wt::WAbstractItemModel *model() const { return _model; }
-		Wt::WAbstractItemModel *proxyModel() const { return _proxyModel; }
+		Wt::WAbstractProxyModel *proxyModel() const { return _proxyModel; }
 
 	protected:
 		AbstractFilteredList();
@@ -198,7 +198,7 @@ namespace GS
 		Wt::WTableView *_tableView = nullptr;
 		FiltersTemplate *_filtersTemplate = nullptr;
 		Wt::WAbstractItemModel *_model = nullptr;
-		Wt::WAbstractItemModel *_proxyModel = nullptr;
+		Wt::WAbstractProxyModel *_proxyModel = nullptr;
 	};
 
 	template<typename T>
@@ -208,7 +208,6 @@ namespace GS
 		typedef typename T ResultType;
 		typedef Wt::Dbo::QueryModel<ResultType> QueryModelType;
 
-		QueryModelFilteredList() : AbstractFilteredList() { }
 		QueryModelType *queryModel() const { return dynamic_cast<QueryModelType*>(_model); }
 		virtual void reload() override;
 
@@ -217,6 +216,72 @@ namespace GS
 
 		Wt::Dbo::Query<ResultType> _baseQuery;
 	};
+
+	template<class FilteredList, typename IdType = long long>
+	class ListSelectionDialog : public Wt::WDialog
+	{
+	public:
+		ListSelectionDialog(const Wt::WString &title, Wt::WObject *parent = nullptr);
+		FilteredList *listWidget() const { return _listWidget; }
+		Wt::Signal<IdType> &selected() { return _selected; }
+
+	protected:
+		void handleSelected();
+
+		FilteredList *_listWidget;
+		Wt::Signal<IdType> _selected;
+	};
+
+	template<class FilteredList, typename IdType>
+	ListSelectionDialog<FilteredList, IdType>::ListSelectionDialog(const Wt::WString &title, Wt::WObject *parent)
+		: Wt::WDialog(title, parent), _selected(this)
+	{
+		setClosable(true);
+		resize(900, Wt::WLength(95, Wt::WLength::Percentage));
+		setTransient(true);
+		rejectWhenEscapePressed(true);
+		setDeleteWhenHidden(true);
+		contents()->setOverflow(Wt::WContainerWidget::OverflowAuto);
+
+		_listWidget = new FilteredList();
+		_listWidget->enableFilters();
+		_listWidget->tableView()->setSelectionMode(Wt::SingleSelection);
+		_listWidget->tableView()->setSelectionBehavior(Wt::SelectRows);
+		_listWidget->tableView()->selectionChanged().connect(boost::bind(&ListSelectionDialog::handleSelected, this));
+		contents()->addWidget(_listWidget);
+	}
+
+	template<class FilteredList, typename IdType>
+	void ListSelectionDialog<FilteredList, IdType>::handleSelected()
+	{
+		auto indexSet = _listWidget->tableView()->selectedIndexes();
+		if(indexSet.empty())
+			return;
+
+		Wt::WModelIndex index = *indexSet.begin();
+		if(!index.isValid())
+			return;
+
+		if(_listWidget->proxyModel())
+		{
+			index = _listWidget->proxyModel()->mapToSource(index);
+			if(!index.isValid())
+			{
+				Wt::log("error") << "ListSelectionDialog::handleSelected(): could not make index to source";
+				return;
+			}
+		}
+
+		auto queryModel = dynamic_cast<Wt::Dbo::QueryModel<FilteredList::ResultType>*>(_listWidget->model());
+		if(index.model() != queryModel)
+		{
+			Wt::log("error") << "ListSelectionDialog::handleSelected(): index.model() != queryModel";
+			return;
+		}
+
+		_selected.emit(boost::get<FilteredList::ResId>(queryModel->resultRow(index.row())));
+		accept();
+	}
 
 	//TEMPLATE CLASS DEFINITIONS
 	template<typename T>

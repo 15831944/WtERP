@@ -26,7 +26,7 @@ namespace GS
 
 		//Abnormal account check query
 		{
-			_accountCheckAbnormal = dboSession.query<int>("SELECT count(*) FROM " + std::string(Account::tableName()) + " acc "
+			_accountCheckAbnormal = dboSession.query<long long>("SELECT COUNT(*) FROM " + std::string(Account::tableName()) + " acc "
 				"INNER JOIN " + Entity::tableName() + " balE ON (balE.bal_account_id = acc.id) "
 				"INNER JOIN " + Entity::tableName() + " pnlE ON (pnlE.pnl_account_id = acc.id)");
 		}
@@ -41,6 +41,19 @@ namespace GS
 			std::string condition = "timestamp IS null OR startDate IS null OR \"interval\" < 0 OR \"interval\" > ? OR nIntervals < 1 OR (endDate IS NOT null AND endDate <= startDate)";
 			_incomeCycleCheckAbnormal = dboSession.find<IncomeCycle>().where(condition).bind(YearlyInterval);
 			_expenseCycleCheckAbnormal = dboSession.find<ExpenseCycle>().where(condition).bind(YearlyInterval);
+		}
+
+		//Abnormal location query
+		{
+			_locationCheckAbnormal = dboSession.query<long long>(
+				"SELECT COUNT(*) FROM " + std::string(Location::tableName()) + " l "
+				"INNER JOIN " + City::tableName() + " city ON (city.id = l.city_id)"
+				).where("city.country_code <> l.country_code");
+		}
+
+		//Abnormal attendance query
+		{
+			_attendanceCheckAbnormal = dboSession.find<AttendanceEntry>().where("timestampOut IS NOT null AND timestampOut < timestampIn");
 		}
 
 		//Entry cycle queries
@@ -76,6 +89,7 @@ namespace GS
 
 	void TaskScheduler::createDefaultAccounts(bool scheduleNext)
 	{
+		Wt::log("info") << "TaskScheduler: Checking default accounts in database";
 		try
 		{
 			_accountsDatabase.findOrCreateCashAccount();
@@ -95,6 +109,7 @@ namespace GS
 
 	void TaskScheduler::recalculateAccountBalances(bool scheduleNext)
 	{
+		Wt::log("info") << "TaskScheduler: Recalculating account balances";
 		Wt::Dbo::Transaction t(dboSession);
 		try
 		{
@@ -116,6 +131,7 @@ namespace GS
 
 	void TaskScheduler::createPendingCycleEntries(bool scheduleNext)
 	{
+		Wt::log("info") << "TaskScheduler: Checking for pending EntryCycle entries";
 		_createPendingCycleEntries(scheduleNext);
 	}
 
@@ -174,11 +190,12 @@ namespace GS
 
 	void TaskScheduler::checkAbnormalRecords(bool scheduleNext)
 	{
+		Wt::log("info") << "TaskScheduler: Checking for abnormal database entries";
 		Wt::Dbo::Transaction t(dboSession);
 		try
 		{
 			{
-				int abnormalRecords = _accountCheckAbnormal;
+				long long abnormalRecords = _accountCheckAbnormal;
 				if(abnormalRecords > 0)
 					Wt::log("warn") << abnormalRecords << " abnormal Account records were found";
 			}
@@ -199,6 +216,17 @@ namespace GS
 				size_t abnormalRecords = collection.size();
 				if(abnormalRecords > 0)
 					Wt::log("warn") << abnormalRecords << " abnormal ExpenseCycle records were found";
+			}
+			{
+				long long abnormalRecords = _locationCheckAbnormal;
+				if(abnormalRecords > 0)
+					Wt::log("warn") << abnormalRecords << " abnormal Location records were found";
+			}
+			{
+				AttendanceEntryCollection collection = _attendanceCheckAbnormal;
+				size_t abnormalRecords = collection.size();
+				if(abnormalRecords > 0)
+					Wt::log("warn") << abnormalRecords << " abnormal AttendanceEntry records were found";
 			}
 			t.commit();
 		}

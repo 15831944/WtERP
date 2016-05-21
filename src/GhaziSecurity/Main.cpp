@@ -7,8 +7,8 @@ int main(int argc, char *argv[])
 	/* *************************************************************************
 	* *************************  Start Web Server *****************************
 	* *************************************************************************/
-// 	try
-// 	{
+	try
+	{
 		//Initialize Server
 		GS::WServer Server(argc, argv, "D:/Programming/GhaziSecurity/src/GhaziSecurity/resources/approot/wt_config.xml");
 
@@ -23,15 +23,15 @@ int main(int argc, char *argv[])
 			Server.stop();
 			Wt::log("info") << "Shutdown (Signal = " << sig << ")";
 		}
-// 	}
-// 	catch(Wt::WServer::Exception &e)
-// 	{
-// 		Wt::log("fatal") << "Error starting the server: " << e.what();
-// 		exit(EXIT_FAILURE);
-// 	}
-// 	catch(std::exception &e)
-// 	{
-// 		Wt::log("fatal") << "Server exception error: " << e.what();
-// 		exit(EXIT_FAILURE);
-// 	}
+	}
+	catch(Wt::WServer::Exception &e)
+	{
+		Wt::log("fatal") << "Error starting the server: " << e.what();
+		exit(EXIT_FAILURE);
+	}
+	catch(std::exception &e)
+	{
+		Wt::log("fatal") << "Server exception error: " << e.what();
+		exit(EXIT_FAILURE);
+	}
 }
