@@ -147,10 +147,7 @@ namespace GS
 	void FindEntityEdit::showNewEntityDialog()
 	{
 		_newDialog = new Wt::WDialog(this);
-		_newDialog->setClosable(true);
-		_newDialog->resize(900, Wt::WLength(95, Wt::WLength::Percentage));
-		_newDialog->contents()->setOverflow(Wt::WContainerWidget::OverflowAuto);
-		_newDialog->setDeleteWhenHidden(true);
+		SET_TRANSIENT_VIEW_DIALOG(_newDialog);
 
 		if(_entityType == Entity::PersonType)
 			_newDialog->setWindowTitle(tr("AddNewX").arg(tr("person")));
@@ -323,10 +320,7 @@ namespace GS
 	void FindAccountEdit::showNewAccountDialog()
 	{
 		_newDialog = new Wt::WDialog(tr("AddNewX").arg(tr("account")), this);
-		_newDialog->setClosable(true);
-		_newDialog->resize(900, Wt::WLength(95, Wt::WLength::Percentage));
-		_newDialog->contents()->setOverflow(Wt::WContainerWidget::OverflowAuto);
-		_newDialog->setDeleteWhenHidden(true);
+		SET_TRANSIENT_VIEW_DIALOG(_newDialog);
 
 		AccountView *view = new AccountView(Wt::Dbo::ptr<Account>());
 		_newDialog->contents()->addWidget(view);
@@ -445,10 +439,7 @@ namespace GS
 	void FindLocationEdit::showNewLocationDialog()
 	{
 		_newDialog = new Wt::WDialog(tr("AddNewX").arg(tr("location")), this);
-		_newDialog->setClosable(true);
-		_newDialog->resize(900, Wt::WLength(95, Wt::WLength::Percentage));
-		_newDialog->contents()->setOverflow(Wt::WContainerWidget::OverflowAuto);
-		_newDialog->setDeleteWhenHidden(true);
+		SET_TRANSIENT_VIEW_DIALOG(_newDialog);
 
 		LocationView *view = new LocationView();
 		_newDialog->contents()->addWidget(view);

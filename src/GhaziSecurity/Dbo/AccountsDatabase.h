@@ -16,7 +16,7 @@ namespace GS
 		void createPendingCycleEntry(Wt::Dbo::ptr<IncomeCycle> cyclePtr, Wt::Dbo::ptr<AccountEntry> lastEntryPtr, boost::posix_time::ptime currentPTime, boost::posix_time::time_duration *nextEntryDuration = nullptr);
 		void createPendingCycleEntry(Wt::Dbo::ptr<ExpenseCycle> cyclePtr, Wt::Dbo::ptr<AccountEntry> lastEntryPtr, boost::posix_time::ptime currentPTime, boost::posix_time::time_duration *nextEntryDuration = nullptr);
 		
-		Wt::Dbo::ptr<Account> findOrCreateCashAccount();
+		Wt::Dbo::ptr<Account> findOrCreateCashAccount(bool loadLazy = false);
 
 // 		Wt::Dbo::ptr<Account> findOrCreateSelfAccount();
 // 		Wt::Dbo::ptr<Account> findOrCreateEntityAccount(Wt::Dbo::ptr<Entity> entityPtr);

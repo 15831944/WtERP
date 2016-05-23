@@ -31,8 +31,8 @@ namespace GS
 			Wt::WDate currentDate = Wt::WDate(boost::gregorian::day_clock::local_day());
 			return APP->dboSession().query<long long>(
 				"SELECT COUNT(DISTINCT a.entity_id) FROM " + std::string(EmployeeAssignment::tableName()) + " a "
-				"INNER JOIN " + EmployeePosition::tableName() + " p ON (p.id = a.employeeposition_id AND p.type = ?)"
-				).bind(EmployeePosition::PersonnelType).where("? >= startDate AND (endDate IS null OR ? < endDate)").bind(currentDate).bind(currentDate);
+				"INNER JOIN " + EmployeePosition::tableName() + " p ON (p.id = a.employeeposition_id AND p.type = " + boost::lexical_cast<std::string>(EmployeePosition::PersonnelType) + ")"
+				).where("? >= startDate AND (endDate IS null OR ? < endDate)").bind(currentDate).bind(currentDate);
 		}, totalEntities));
 		bindWidget("clients", new RecordCountTemplate([]() -> long long {
 			Wt::WDate currentDate = Wt::WDate(boost::gregorian::day_clock::local_day());

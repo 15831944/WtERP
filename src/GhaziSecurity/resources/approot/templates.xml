@@ -551,7 +551,9 @@ ${</m:assignment-persisted>}
 		${block:GS.Field service Service}
 		${block:GS.Field startDate StartingDate}
 		${block:GS.Field endDate EndDate}
+		
 		${submitBtn class="btn-primary"}
+		${<m:assignment-persisted>}${setIncomeCycle}${</m:assignment-persisted>}
 	</div>
 </div>
 ${<m:assignment-persisted>}
@@ -591,7 +593,12 @@ ${</m:assignment-persisted>}
 		${block:GS.Field.CW location Location}
 		${block:GS.Field startDate StartingDate}
 		${block:GS.Field endDate EndDate}
+		
 		${submitBtn class="btn-primary"}
+		${<m:assignment-persisted>}
+			${setExpenseCycle}
+			${setClientAssignment}
+		${</m:assignment-persisted>}
 	</div>
 </div>
 </message>

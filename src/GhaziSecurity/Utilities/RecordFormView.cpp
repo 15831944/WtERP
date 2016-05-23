@@ -322,7 +322,7 @@ namespace GS
 		catch(const Wt::Dbo::StaleObjectException &)
 		{
 			app->dboSession().rereadAll();
-			app->showStaleObjectError(recordName());
+			app->showStaleObjectError();
 			nothingSaved = true;
 		}
 		catch(const Wt::Dbo::Exception &e)

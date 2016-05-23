@@ -489,6 +489,8 @@ namespace GS
 
 	void AccountFormModel::persistedHandler()
 	{
+		setReadOnly(typeField, true);
+
 		auto entryList = new AccountChildrenEntryList(recordPtr());
 		entryList->enableFilters();
 		_view->bindWidget("entry-list", entryList);
@@ -562,7 +564,7 @@ namespace GS
 
 	void AccountView::initView()
 	{
-		_model = new AccountFormModel(this, _isCashAccountView ? APP->accountsDatabase().findOrCreateCashAccount() : _tempPtr);
+		_model = new AccountFormModel(this, _tempPtr);
 		addFormModel("account", _model);
 	}
 
@@ -576,18 +578,18 @@ namespace GS
 		return RecordFormView::viewName();
 	}
 
-	AccountView * AccountView::createCashAccountView()
-	{
-		auto res = new AccountView();
-		res->_isCashAccountView = true;
-		return res;
-	}
-
 	const Wt::WFormModel::Field BaseAccountEntryFormModel::descriptionField = "description";
 	const Wt::WFormModel::Field BaseAccountEntryFormModel::debitAccountField = "debitAccount";
 	const Wt::WFormModel::Field BaseAccountEntryFormModel::creditAccountField = "creditAccount";
 	const Wt::WFormModel::Field BaseAccountEntryFormModel::amountField = "amount";
 	const Wt::WFormModel::Field BaseAccountEntryFormModel::entityField = "entity";
+
+	void BaseAccountEntryFormModel::persistedHandler()
+	{
+		setReadOnly(amountField, true);
+		setReadOnly(debitAccountField, true);
+		setReadOnly(creditAccountField, true);
+	}
 
 	BaseAccountEntryFormModel::BaseAccountEntryFormModel(AccountEntryView *view, Wt::Dbo::ptr<AccountEntry> accountEntryPtr /*= Wt::Dbo::ptr<AccountEntry>()*/)
 		: RecordFormModel(view, accountEntryPtr), _view(view)

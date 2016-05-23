@@ -31,7 +31,10 @@ namespace GS
 			{
 				bool visible = isVisible();
 				if(visible && !_wasVisible)
+				{
+					isNotStateless();
 					reload();
+				}
 
 				_wasVisible = visible;
 			}

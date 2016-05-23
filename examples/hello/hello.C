@@ -52,6 +52,7 @@ class ReloadableContainer : public ReloadOnVisibleWidget<Wt::WContainerWidget>
 public:
 	virtual void reload() override
 	{
+		//isNotStateless(); doesnt work either; already called previously on the call stack in ReloadOnVisibleWidget::render
 		for(auto w : children())
 		{
 			if(auto rW = dynamic_cast<Reloadable*>(w))
@@ -114,7 +115,10 @@ void ReloadOnVisibleWidget<Base>::render(Wt::WFlags<Wt::RenderFlag> flags)
 	{
 		bool visible = isVisible();
 		if(visible && !_wasVisible)
+		{
+			isNotStateless();
 			reload();
+		}
 
 		_wasVisible = visible;
 	}

@@ -258,7 +258,7 @@ namespace GS
 		accountsMenuItem->setContents(new AdminPageContentWidget(accountsMenuItem->text(), accountList));
 		menu()->addItem(accountsMenuItem);
 
-		Wt::Dbo::ptr<Account> cashAccountPtr = app->accountsDatabase().findOrCreateCashAccount();
+		Wt::Dbo::ptr<Account> cashAccountPtr = app->accountsDatabase().findOrCreateCashAccount(true);
 		auto transactionsMenuItem = new Wt::WMenuItem(tr("Transactions"));
 		transactionsMenuItem->setPathComponent(ACCOUNT_PREFIX + boost::lexical_cast<std::string>(cashAccountPtr.id()));
 		AccountView *cashAccountView = new AccountView(cashAccountPtr);

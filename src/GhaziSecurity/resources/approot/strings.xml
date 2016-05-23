@@ -120,7 +120,7 @@
 
 <!-- Errors -->
 <message id="AnErrorOccurred">An error occurred</message>
-<message id="StaleObjectError">The {1} was modified in another session. Submit the form again to save your changes. Note: Changes made by the other session may be overridden.</message>
+<message id="StaleObjectError">Changes were made in another session. Submit the form again to save your changes. Note: Changes made by the other session may be overridden.</message>
 <message id="DbConnectionError">The system could not connect to the database backend. If this problem persists, please contact an administrator.</message>
 <message id="DbInternalError">An internal database error occurred, please contact an administrator.</message>
 <message id="GMThumbnailError">An incompatible file was uploaded.</message>
@@ -339,7 +339,8 @@
 <message id="AssignEmployee">Assign employee</message>
 <message id="AddEmployeeAssignment">Add employee assignment</message>
 <message id="AssignEmployeeBtnLabel">Add employee assignment to recurring expense</message>
-<message id="AssignRecurringExpenseBtnLabel">Add recurring expense for employee assignment</message>
+<message id="AssociateWithRecurringExpense">Associate with recurring expense</message>
+<message id="AssociateWithClientAssignment">Associate with client assignment</message>
 <message id="EmployeeAssignmentViewName">Employee Assignment #{1}</message>
 <message id="EmployeeAssignmentInfo">Employee Assignment Information</message>
 <message id="EmployeeAssignment">Employee assignment</message>
@@ -350,7 +351,7 @@
 <message id="AssignClient">Assign client</message>
 <message id="AddClientAssignment">Add client assignment</message>
 <message id="AssignClientBtnLabel">Add client assignment to recurring income</message>
-<message id="AssignRecurringIncomeBtnLabel">Add recurring income for client assignment</message>
+<message id="AssociateWithRecurringIncome">Associate with recurring income</message>
 <message id="ClientAssignmentViewName">Client Assignment #{1}</message>
 <message id="ClientAssignmentInfo">Client Assignment Information</message>
 <message id="ClientAssignment">Client assignment</message>

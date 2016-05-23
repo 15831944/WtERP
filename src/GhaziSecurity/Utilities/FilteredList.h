@@ -237,7 +237,7 @@ namespace GS
 		: Wt::WDialog(title, parent), _selected(this)
 	{
 		setClosable(true);
-		resize(900, Wt::WLength(95, Wt::WLength::Percentage));
+		resize(Wt::WLength(85, Wt::WLength::Percentage), Wt::WLength(95, Wt::WLength::Percentage));
 		setTransient(true);
 		rejectWhenEscapePressed(true);
 		setDeleteWhenHidden(true);

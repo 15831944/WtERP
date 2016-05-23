@@ -6,8 +6,8 @@
 namespace GS
 {
 
-	Wt::Dbo::ptr<Account> AccountsDatabase::findOrCreateCashAccount()
-	{
+	Wt::Dbo::ptr<Account> AccountsDatabase::findOrCreateCashAccount(bool loadLazy /*= false*/)
+{
 		WServer *server = SERVER;
 
 		Wt::Dbo::Transaction t(dboSession);
@@ -18,7 +18,12 @@ namespace GS
 		{
 			long long accountId = server->configs()->getLongInt("CashAccountId", -1);
 			if(accountId != -1)
-				accountPtr = dboSession.load<Account>(accountId, true);
+			{
+				if(loadLazy)
+					accountPtr = dboSession.loadLazy<Account>(accountId);
+				else
+					accountPtr = dboSession.load<Account>(accountId, true);
+			}
 		}
 
 		//Create account if not found

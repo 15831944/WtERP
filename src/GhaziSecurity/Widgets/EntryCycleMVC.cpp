@@ -77,7 +77,6 @@ namespace GS
 		{
 			auto startDateEdit = new Wt::WDateEdit();
 			startDateEdit->validator()->setMandatory(true);
-			startDateEdit->validator()->setBottom(Wt::WDate(boost::gregorian::day_clock::local_day()));
 			model->setValidator(EntryCycleFormModel::startDateField, startDateEdit->validator());
 			startDateEdit->changed().connect(boost::bind(&EntryCycleFormModel::updateEndDateValidator, model, view, true));
 			return startDateEdit;
@@ -274,6 +273,8 @@ namespace GS
 
 	void ExpenseCycleFormModel::persistedHandler()
 	{
+		setReadOnly(EntryCycleFormModel::startDateField, true);
+
 		_view->bindWidget("entries", new AccountEntryList(recordPtr()));
 		_view->bindWidget("employeeAssignments", new EmployeeAssignmentList(recordPtr()));
 	}
@@ -359,6 +360,8 @@ namespace GS
 
 	void IncomeCycleFormModel::persistedHandler()
 	{
+		setReadOnly(EntryCycleFormModel::startDateField, true);
+
 		_view->bindWidget("entries", new AccountEntryList(recordPtr()));
 		_view->bindWidget("clientAssignments", new ClientAssignmentList(recordPtr()));
 	}

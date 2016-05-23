@@ -43,6 +43,7 @@ namespace GS
 	public:
 		enum ResultColumns { ResId, ResName, ResEntityType, ResEmployeeAssignment, ResPersonnelPosition, ResClientAssignment };
 		enum ViewColumns { ViewId, ViewName, ViewEntityType, ViewRole };
+		virtual void reload() override;
 
 	protected:
 		virtual void initFilters() override;
@@ -54,6 +55,7 @@ namespace GS
 	public:
 		enum ResultColumns { ResId, ResName, ResEmployeeAssignment, ResPersonnelPosition, ResClientAssignment };
 		enum ViewColumns { ViewId, ViewName, ViewRole };
+		virtual void reload() override;
 
 	protected:
 		virtual void initFilters() override;
@@ -65,6 +67,7 @@ namespace GS
 	public:
 		enum ResultColumns { ResId, ResName, ResEmployeeAssignment, ResPersonnelPosition, ResClientAssignment };
 		enum ViewColumns { ViewId, ViewName, ViewRole };
+		virtual void reload() override;
 
 	protected:
 		virtual void initFilters() override;
@@ -76,6 +79,7 @@ namespace GS
 	public:
 		enum ResultColumns { ResId, ResName, ResEmployeeAssignment, ResPersonnelPosition, ResClientAssignment };
 		enum ViewColumns { ViewId, ViewName, ViewRole };
+		virtual void reload() override;
 
 	protected:
 		virtual void initFilters() override;
@@ -87,6 +91,7 @@ namespace GS
 	public:
 		enum ResultColumns { ResId, ResName, ResEmployeeAssignment, ResPersonnelPosition, ResClientAssignment };
 		enum ViewColumns { ViewId, ViewName, ViewRole };
+		virtual void reload() override;
 
 	protected:
 		virtual void initFilters() override;
@@ -98,6 +103,7 @@ namespace GS
 	public:
 		enum ResultColumns { ResId, ResName, ResEntityType, ResEmployeeAssignment, ResPersonnelPosition, ResClientAssignment };
 		enum ViewColumns { ViewId, ViewName, ViewEntityType, ViewRole };
+		virtual void reload() override;
 
 	protected:
 		virtual void initFilters() override;

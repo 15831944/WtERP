@@ -99,7 +99,7 @@ namespace GS
 		//Error handling
 		Wt::WDialog *errorDialog() const { return _errorDialog; }
 		void showErrorDialog(const Wt::WString &message);
-		void showStaleObjectError(const Wt::WString &recordName) { showErrorDialog(Wt::WString::tr("StaleObjectError").arg(recordName)); }
+		void showStaleObjectError() { showErrorDialog(Wt::WString::tr("StaleObjectError")); }
 		void showDbBackendError(const std::string &code);
 
 		//SuggestionPopups

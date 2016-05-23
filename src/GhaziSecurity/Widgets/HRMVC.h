@@ -110,15 +110,15 @@ namespace GS
 		virtual Wt::WWidget *createFormWidget(Wt::WFormModel::Field field) override;
 		virtual bool saveChanges() override;
 
-// 		void showExpenseCycleDialog();
-// 		void showClientAssignmentDialog();
+		void showExpenseCycleDialog();
+		void showClientAssignmentDialog();
 
 	protected:
 		virtual void persistedHandler() override;
 		void updateEndDateValidator(bool update);
 
-// 		void selectExpenseCycleFromList(AbstractFilteredList *listWidget);
-// 		void selectClientAssignmentFromList(AbstractFilteredList *listWidget);
+		void handleExpenseCycleSelected(long long id);
+		void handleClientAssignmentSelected(long long id);
 
 		EmployeeAssignmentView *_view = nullptr;
 
@@ -174,9 +174,14 @@ namespace GS
 		virtual Wt::WWidget *createFormWidget(Wt::WFormModel::Field field) override;
 		virtual bool saveChanges() override;
 
+		void showIncomeCycleDialog();
+
 	protected:
 		virtual void persistedHandler() override;
 		void updateEndDateValidator(bool update);
+
+		void handleIncomeCycleSelected(long long id);
+
 		ClientAssignmentView *_view = nullptr;
 
 	private:

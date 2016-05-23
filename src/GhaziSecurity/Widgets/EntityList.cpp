@@ -29,16 +29,17 @@ namespace GS
 		_model = model = new QueryModelType(this);
 
 		WApplication *app = APP;
-		Wt::WDate currentDate(boost::gregorian::day_clock::local_day());
 		_baseQuery = app->dboSession().query<ResultType>(
 			"SELECT e.id e_id, e.name, e.type e_type, ea.id ea_id, p.id p_id, ca.id ca_id FROM " + std::string(Entity::tableName()) + " e "
 			"LEFT JOIN " + EmployeeAssignment::tableName() + " ea ON (ea.entity_id = e.id AND ea.startDate <= ? AND (ea.endDate IS NULL OR ea.endDate > ?)) "
-			"LEFT JOIN " + EmployeePosition::tableName() + " p ON (p.id = ea.employeeposition_id AND p.type = ?) "
+			"LEFT JOIN " + EmployeePosition::tableName() + " p ON (p.id = ea.employeeposition_id AND p.type = " + boost::lexical_cast<std::string>(EmployeePosition::PersonnelType) + ") "
 			"LEFT JOIN " + ClientAssignment::tableName() + " ca ON (ca.entity_id = e.id AND ca.startDate <= ? AND (ca.endDate IS NULL OR ca.endDate > ?))"
-			).bind(currentDate).bind(currentDate).bind(EmployeePosition::PersonnelType).bind(currentDate).bind(currentDate).groupBy("e.id");
+			).groupBy("e.id");
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "e.");
 
 		Wt::Dbo::Query<ResultType> query(_baseQuery); //must copy the query first
+		Wt::WDate currentDate(boost::gregorian::day_clock::local_day());
+		query.bind(currentDate).bind(currentDate).bind(currentDate).bind(currentDate);
 		model->setQuery(query);
 
 		addColumn(ViewId, model->addColumn("e.id e_id"), tr("ID"), IdColumnWidth);
@@ -47,6 +48,18 @@ namespace GS
 		addColumn(ViewRole, model->addColumn("ea.id ea_id"), tr("Roles"), RolesColumnWidth);
 
 		_proxyModel = new EntityListProxyModel<AllEntityList>(_model, _model);
+	}
+
+	void AllEntityList::reload()
+	{
+		if(loaded())
+		{
+			Wt::Dbo::Query<ResultType> query(_baseQuery);
+			Wt::WDate currentDate(boost::gregorian::day_clock::local_day());
+			query.bind(currentDate).bind(currentDate).bind(currentDate).bind(currentDate);
+			static_cast<QueryModelType*>(_model)->setQuery(query, true);
+		}
+		QueryModelFilteredList::reload();
 	}
 
 	void PersonList::initFilters()
@@ -61,17 +74,17 @@ namespace GS
 		_model = model = new QueryModelType(this);
 
 		WApplication *app = APP;
-		Wt::WDate currentDate(boost::gregorian::day_clock::local_day());
 		_baseQuery = app->dboSession().query<ResultType>(
 			"SELECT e.id e_id, e.name, ea.id ea_id, p.id p_id, ca.id ca_id FROM " + std::string(Entity::tableName()) + " e "
 			"LEFT JOIN " + EmployeeAssignment::tableName() + " ea ON (ea.entity_id = e.id AND ea.startDate <= ? AND (ea.endDate IS NULL OR ea.endDate > ?)) "
-			"LEFT JOIN " + EmployeePosition::tableName() + " p ON (p.id = ea.employeeposition_id AND p.type = ?) "
+			"LEFT JOIN " + EmployeePosition::tableName() + " p ON (p.id = ea.employeeposition_id AND p.type = " + boost::lexical_cast<std::string>(EmployeePosition::PersonnelType) + ") "
 			"LEFT JOIN " + ClientAssignment::tableName() + " ca ON (ca.entity_id = e.id AND ca.startDate <= ? AND (ca.endDate IS NULL OR ca.endDate > ?))"
-			).bind(currentDate).bind(currentDate).bind(EmployeePosition::PersonnelType).bind(currentDate).bind(currentDate)
-			.where("e.type = ?").bind(Entity::PersonType).groupBy("e.id");
+			).where("e.type = " + boost::lexical_cast<std::string>(Entity::PersonType)).groupBy("e.id");
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "e.");
 
 		Wt::Dbo::Query<ResultType> query(_baseQuery); //must copy the query first
+		Wt::WDate currentDate(boost::gregorian::day_clock::local_day());
+		query.bind(currentDate).bind(currentDate).bind(currentDate).bind(currentDate);
 		model->setQuery(query);
 
 		addColumn(ViewId, model->addColumn("e.id e_id"), tr("ID"), IdColumnWidth);
@@ -79,6 +92,18 @@ namespace GS
 		addColumn(ViewRole, model->addColumn("ea.id ea_id"), tr("Roles"), RolesColumnWidth);
 
 		_proxyModel = new EntityListProxyModel<PersonList>(_model, _model);
+	}
+
+	void PersonList::reload()
+	{
+		if(loaded())
+		{
+			Wt::Dbo::Query<ResultType> query(_baseQuery);
+			Wt::WDate currentDate(boost::gregorian::day_clock::local_day());
+			query.bind(currentDate).bind(currentDate).bind(currentDate).bind(currentDate);
+			static_cast<QueryModelType*>(_model)->setQuery(query, true);
+		}
+		QueryModelFilteredList::reload();
 	}
 
 	void BusinessList::initFilters()
@@ -93,17 +118,17 @@ namespace GS
 		_model = model = new QueryModelType(this);
 
 		WApplication *app = APP;
-		Wt::WDate currentDate(boost::gregorian::day_clock::local_day());
 		_baseQuery = app->dboSession().query<ResultType>(
 			"SELECT e.id e_id, e.name, ea.id ea_id, p.id p_id, ca.id ca_id FROM " + std::string(Entity::tableName()) + " e "
 			"LEFT JOIN " + EmployeeAssignment::tableName() + " ea ON (ea.entity_id = e.id AND ea.startDate <= ? AND (ea.endDate IS NULL OR ea.endDate > ?)) "
-			"LEFT JOIN " + EmployeePosition::tableName() + " p ON (p.id = ea.employeeposition_id AND p.type = ?) "
+			"LEFT JOIN " + EmployeePosition::tableName() + " p ON (p.id = ea.employeeposition_id AND p.type = " + boost::lexical_cast<std::string>(EmployeePosition::PersonnelType) + ") "
 			"LEFT JOIN " + ClientAssignment::tableName() + " ca ON (ca.entity_id = e.id AND ca.startDate <= ? AND (ca.endDate IS NULL OR ca.endDate > ?))"
-			).bind(currentDate).bind(currentDate).bind(EmployeePosition::PersonnelType).bind(currentDate).bind(currentDate)
-			.where("e.type = ?").bind(Entity::BusinessType).groupBy("e.id");
+			).where("e.type = " + boost::lexical_cast<std::string>(Entity::BusinessType)).groupBy("e.id");
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "e.");
 
 		Wt::Dbo::Query<ResultType> query(_baseQuery); //must copy the query first
+		Wt::WDate currentDate(boost::gregorian::day_clock::local_day());
+		query.bind(currentDate).bind(currentDate).bind(currentDate).bind(currentDate);
 		model->setQuery(query);
 
 		addColumn(ViewId, model->addColumn("e.id e_id"), tr("ID"), IdColumnWidth);
@@ -111,6 +136,18 @@ namespace GS
 		addColumn(ViewRole, model->addColumn("ea.id ea_id"), tr("Roles"), RolesColumnWidth);
 
 		_proxyModel = new EntityListProxyModel<BusinessList>(_model, _model);
+	}
+
+	void BusinessList::reload()
+	{
+		if(loaded())
+		{
+			Wt::Dbo::Query<ResultType> query(_baseQuery);
+			Wt::WDate currentDate(boost::gregorian::day_clock::local_day());
+			query.bind(currentDate).bind(currentDate).bind(currentDate).bind(currentDate);
+			static_cast<QueryModelType*>(_model)->setQuery(query, true);
+		}
+		QueryModelFilteredList::reload();
 	}
 
 	void EmployeeList::initFilters()
@@ -125,16 +162,17 @@ namespace GS
 		_model = model = new QueryModelType(this);
 
 		WApplication *app = APP;
-		Wt::WDate currentDate(boost::gregorian::day_clock::local_day());
 		_baseQuery = app->dboSession().query<ResultType>(
 			"SELECT e.id e_id, e.name, ea.id ea_id, p.id p_id, ca.id ca_id FROM " + std::string(Entity::tableName()) + " e "
 			"INNER JOIN " + EmployeeAssignment::tableName() + " ea ON (ea.entity_id = e.id AND ea.startDate <= ? AND (ea.endDate IS NULL OR ea.endDate > ?)) "
-			"LEFT JOIN " + EmployeePosition::tableName() + " p ON (p.id = ea.employeeposition_id AND p.type = ?) "
+			"LEFT JOIN " + EmployeePosition::tableName() + " p ON (p.id = ea.employeeposition_id AND p.type = " + boost::lexical_cast<std::string>(EmployeePosition::PersonnelType) + ") "
 			"LEFT JOIN " + ClientAssignment::tableName() + " ca ON (ca.entity_id = e.id AND ca.startDate <= ? AND (ca.endDate IS NULL OR ca.endDate > ?))"
-			).bind(currentDate).bind(currentDate).bind(EmployeePosition::PersonnelType).bind(currentDate).bind(currentDate).groupBy("e.id");
+			).groupBy("e.id");
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "e.");
 
 		Wt::Dbo::Query<ResultType> query(_baseQuery); //must copy the query first
+		Wt::WDate currentDate(boost::gregorian::day_clock::local_day());
+		query.bind(currentDate).bind(currentDate).bind(currentDate).bind(currentDate);
 		model->setQuery(query);
 
 		addColumn(ViewId, model->addColumn("e.id e_id"), tr("ID"), IdColumnWidth);
@@ -142,6 +180,18 @@ namespace GS
 		addColumn(ViewRole, model->addColumn("ea.id ea_id"), tr("Roles"), RolesColumnWidth);
 
 		_proxyModel = new EntityListProxyModel<EmployeeList>(_model, _model);
+	}
+
+	void EmployeeList::reload()
+	{
+		if(loaded())
+		{
+			Wt::Dbo::Query<ResultType> query(_baseQuery);
+			Wt::WDate currentDate(boost::gregorian::day_clock::local_day());
+			query.bind(currentDate).bind(currentDate).bind(currentDate).bind(currentDate);
+			static_cast<QueryModelType*>(_model)->setQuery(query, true);
+		}
+		QueryModelFilteredList::reload();
 	}
 
 	void PersonnelList::initFilters()
@@ -156,16 +206,17 @@ namespace GS
 		_model = model = new QueryModelType(this);
 
 		WApplication *app = APP;
-		Wt::WDate currentDate(boost::gregorian::day_clock::local_day());
 		_baseQuery = app->dboSession().query<ResultType>(
 			"SELECT e.id e_id, e.name, ea.id ea_id, p.id p_id, ca.id ca_id FROM " + std::string(Entity::tableName()) + " e "
 			"INNER JOIN " + EmployeeAssignment::tableName() + " ea ON (ea.entity_id = e.id AND ea.startDate <= ? AND (ea.endDate IS NULL OR ea.endDate > ?)) "
-			"INNER JOIN " + EmployeePosition::tableName() + " p ON (p.id = ea.employeeposition_id AND p.type = ?) "
+			"INNER JOIN " + EmployeePosition::tableName() + " p ON (p.id = ea.employeeposition_id AND p.type = " + boost::lexical_cast<std::string>(EmployeePosition::PersonnelType) + ") "
 			"LEFT JOIN " + ClientAssignment::tableName() + " ca ON (ca.entity_id = e.id AND ca.startDate <= ? AND (ca.endDate IS NULL OR ca.endDate > ?))"
-			).bind(currentDate).bind(currentDate).bind(EmployeePosition::PersonnelType).bind(currentDate).bind(currentDate).groupBy("e.id");
+			).groupBy("e.id");
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "e.");
 
 		Wt::Dbo::Query<ResultType> query(_baseQuery); //must copy the query first
+		Wt::WDate currentDate(boost::gregorian::day_clock::local_day());
+		query.bind(currentDate).bind(currentDate).bind(currentDate).bind(currentDate);
 		model->setQuery(query);
 
 		addColumn(ViewId, model->addColumn("e.id e_id"), tr("ID"), IdColumnWidth);
@@ -173,6 +224,18 @@ namespace GS
 		addColumn(ViewRole, model->addColumn("ea.id ea_id"), tr("Roles"), RolesColumnWidth);
 
 		_proxyModel = new EntityListProxyModel<PersonnelList>(_model, _model);
+	}
+
+	void PersonnelList::reload()
+	{
+		if(loaded())
+		{
+			Wt::Dbo::Query<ResultType> query(_baseQuery);
+			Wt::WDate currentDate(boost::gregorian::day_clock::local_day());
+			query.bind(currentDate).bind(currentDate).bind(currentDate).bind(currentDate);
+			static_cast<QueryModelType*>(_model)->setQuery(query, true);
+		}
+		QueryModelFilteredList::reload();
 	}
 
 	void ClientList::initFilters()
@@ -188,16 +251,17 @@ namespace GS
 		_model = model = new QueryModelType(this);
 
 		WApplication *app = APP;
-		Wt::WDate currentDate(boost::gregorian::day_clock::local_day());
 		_baseQuery = app->dboSession().query<ResultType>(
 			"SELECT e.id e_id, e.name, e.type e_type, ea.id ea_id, p.id p_id, ca.id ca_id FROM " + std::string(Entity::tableName()) + " e "
 			"LEFT JOIN " + EmployeeAssignment::tableName() + " ea ON (ea.entity_id = e.id AND ea.startDate <= ? AND (ea.endDate IS NULL OR ea.endDate > ?)) "
-			"LEFT JOIN " + EmployeePosition::tableName() + " p ON (p.id = ea.employeeposition_id AND p.type = ?) "
+			"LEFT JOIN " + EmployeePosition::tableName() + " p ON (p.id = ea.employeeposition_id AND p.type = " + boost::lexical_cast<std::string>(EmployeePosition::PersonnelType) + ") "
 			"INNER JOIN " + ClientAssignment::tableName() + " ca ON (ca.entity_id = e.id AND ca.startDate <= ? AND (ca.endDate IS NULL OR ca.endDate > ?))"
-			).bind(currentDate).bind(currentDate).bind(EmployeePosition::PersonnelType).bind(currentDate).bind(currentDate).groupBy("e.id");
+			).groupBy("e.id");
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "e.");
 
 		Wt::Dbo::Query<ResultType> query(_baseQuery); //must copy the query first
+		Wt::WDate currentDate(boost::gregorian::day_clock::local_day());
+		query.bind(currentDate).bind(currentDate).bind(currentDate).bind(currentDate);
 		model->setQuery(query);
 
 		addColumn(ViewId, model->addColumn("e.id e_id"), tr("ID"), IdColumnWidth);
@@ -206,6 +270,18 @@ namespace GS
 		addColumn(ViewRole, model->addColumn("ea.id ea_id"), tr("Roles"), RolesColumnWidth);
 
 		_proxyModel = new EntityListProxyModel<ClientList>(_model, _model);
+	}
+
+	void ClientList::reload()
+	{
+		if(loaded())
+		{
+			Wt::Dbo::Query<ResultType> query(_baseQuery);
+			Wt::WDate currentDate(boost::gregorian::day_clock::local_day());
+			query.bind(currentDate).bind(currentDate).bind(currentDate).bind(currentDate);
+			static_cast<QueryModelType*>(_model)->setQuery(query, true);
+		}
+		QueryModelFilteredList::reload();
 	}
 
 	//CRAAAAP

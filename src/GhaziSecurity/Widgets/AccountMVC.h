@@ -156,13 +156,10 @@ namespace GS
 		virtual std::string viewInternalPath() const override { return accountPtr() ? Account::viewInternalPath(accountPtr().id()) : ""; }
 		virtual RecordFormView *createFormView() override { return new AccountView(); }
 
-		static AccountView *createCashAccountView();
-
 	protected:
 		AccountChildrenEntryList *_entryList = nullptr;
 		AccountFormModel *_model = nullptr;
 		Wt::Dbo::ptr<Account> _tempPtr;
-		bool _isCashAccountView = false;
 	};
 
 	//ACCOUNT ENTRY view
@@ -182,6 +179,7 @@ namespace GS
 		void handleAccountChanged(bool update = true);
 
 	protected:
+		virtual void persistedHandler() override;
 		BaseAccountEntryFormModel(AccountEntryView *view, Wt::Dbo::ptr<AccountEntry> accountEntryPtr = Wt::Dbo::ptr<AccountEntry>());
 		AccountEntryView *_view = nullptr;
 	};

@@ -328,53 +328,81 @@ namespace GS
 		return true;
 	}
 
-// 	void EmployeeAssignmentFormModel::showExpenseCycleDialog()
-// 	{
-// 		if(recordPtr()->expenseCyclePtr)
-// 			return;
-// 
-// 		if(!_expenseCycleList)
-// 		{
-// 			_expenseCycleList = AbstractFilteredList::createListDialog(Wt::WString::tr("SelectXFromList").arg(Wt::WString::tr("account")), this);
-// 			AbstractFilteredList *listWidget = new EmployeeAssignmentList();
-// 			_expenseCycleList->contents()->addWidget(listWidget);
-// 			listWidget->enableFilters();
-// 			listWidget->tableView()->setSelectionMode(Wt::SingleSelection);
-// 			listWidget->tableView()->setSelectionBehavior(Wt::SelectRows);
-// 			listWidget->tableView()->selectionChanged().connect(boost::bind(&EmployeeAssignmentFormModel::selectExpenseCycleFromList, this, listWidget));
-// 		}
-// 		_expenseCycleList->show();
-// 	}
-// 
-// 	void EmployeeAssignmentFormModel::selectExpenseCycleFromList(AbstractFilteredList *listWidget)
-// 	{
-// 		if(recordPtr()->expenseCyclePtr)
-// 			return;
-// 
-// 		auto indexSet = listWidget->tableView()->selectedIndexes();
-// 		if(indexSet.empty())
-// 			return;
-// 
-// 		const auto &index = *indexSet.begin();
-// 		if(!index.isValid())
-// 			return;
-// 
-// 		WApplication *app = APP;
-// 		long long id = boost::any_cast<long long>(index.data());
-// 
-// 		try
-// 		{
-// 			TRANSACTION(app);
-// 			Wt::Dbo::ptr<ExpenseCycle> ptr = app->dboSession().loadLazy<ExpenseCycle>(id);
-// 			_recordPtr.modify()->expenseCyclePtr = ptr;
-// 			_expenseCycleList->accept();
-// 		}
-// 		catch(const Wt::Dbo::Exception &e)
-// 		{
-// 			Wt::log("error") << "EmployeeAssignmentFormModel::selectExpenseCycleFromList(): Dbo error(" << e.code() << "): " << e.what();
-// 			app->showDbBackendError(e.code());
-// 		}
-// 	}
+	void EmployeeAssignmentFormModel::showExpenseCycleDialog()
+	{
+		TRANSACTION(APP);
+		if(_recordPtr->expenseCyclePtr)
+			return;
+
+		auto selectionDialog = new ListSelectionDialog<ExpenseCycleList>(Wt::WString::tr("SelectXFromList").arg(Wt::WString::tr("recurringExpense")), this);
+		selectionDialog->selected().connect(this, &EmployeeAssignmentFormModel::handleExpenseCycleSelected);
+		selectionDialog->show();
+	}
+
+	void EmployeeAssignmentFormModel::showClientAssignmentDialog()
+	{
+		TRANSACTION(APP);
+		if(_recordPtr->clientAssignmentPtr)
+			return;
+
+		auto selectionDialog = new ListSelectionDialog<ClientAssignmentList>(Wt::WString::tr("SelectXFromList").arg(Wt::WString::tr("recurringExpense")), this);
+		selectionDialog->selected().connect(this, &EmployeeAssignmentFormModel::handleClientAssignmentSelected);
+		selectionDialog->show();
+	}
+
+	void EmployeeAssignmentFormModel::handleExpenseCycleSelected(long long id)
+	{
+		WApplication *app = APP;
+		TRANSACTION(app);
+
+		if(_recordPtr->expenseCyclePtr)
+			return;
+
+		try
+		{
+			Wt::Dbo::ptr<ExpenseCycle> ptr = app->dboSession().loadLazy<ExpenseCycle>(id);
+			_recordPtr.modify()->expenseCyclePtr = ptr;
+			t.commit();
+		}
+		catch(const Wt::Dbo::StaleObjectException &)
+		{
+			app->dboSession().rereadAll();
+			app->showStaleObjectError();
+		}
+		catch(const Wt::Dbo::Exception &e)
+		{
+			Wt::log("error") << "EmployeeAssignmentFormModel::handleExpenseCycleSelected(): Dbo error(" << e.code() << "): " << e.what();
+			app->showDbBackendError(e.code());
+		}
+		_view->reload();
+	}
+
+	void EmployeeAssignmentFormModel::handleClientAssignmentSelected(long long id)
+	{
+		WApplication *app = APP;
+		TRANSACTION(app);
+
+		if(_recordPtr->clientAssignmentPtr)
+			return;
+
+		try
+		{
+			Wt::Dbo::ptr<ClientAssignment> ptr = app->dboSession().loadLazy<ClientAssignment>(id);
+			_recordPtr.modify()->clientAssignmentPtr = ptr;
+			t.commit();
+		}
+		catch(const Wt::Dbo::StaleObjectException &)
+		{
+			app->dboSession().rereadAll();
+			app->showStaleObjectError();
+		}
+		catch(const Wt::Dbo::Exception &e)
+		{
+			Wt::log("error") << "EmployeeAssignmentFormModel::handleClientAssignmentSelected(): Dbo error(" << e.code() << "): " << e.what();
+			app->showDbBackendError(e.code());
+		}
+		_view->reload();
+	}
 
 	EmployeeAssignmentView::EmployeeAssignmentView(Wt::Dbo::ptr<EmployeeAssignment> assignmentPtr /*= Wt::Dbo::ptr<EmployeeAssignment>()*/)
 		: _tempPtr(assignmentPtr)
@@ -390,12 +418,18 @@ namespace GS
 
 	void EmployeeAssignmentFormModel::persistedHandler()
 	{
+		setReadOnly(startDateField, true);
+
 		_view->bindWidget("expenseCycle", new Wt::WAnchor());
 		_view->bindWidget("clientAssignment", new Wt::WAnchor());
 
-		Wt::WSplitButton *setExpenseCycle = new Wt::WSplitButton(Wt::WString::tr("AssignWithRecurringExpense"));
-		//setExpenseCycle->actionButton()->clicked().connect(this, &EmployeeAssignmentFormModel::showExpenseCycleDialog);
+		Wt::WPushButton *setExpenseCycle = new Wt::WPushButton(Wt::WString::tr("AssociateWithRecurringExpense"));
+		setExpenseCycle->clicked().connect(this, &EmployeeAssignmentFormModel::showExpenseCycleDialog);
 		_view->bindWidget("setExpenseCycle", setExpenseCycle);
+
+		Wt::WPushButton *setClientAssignment = new Wt::WPushButton(Wt::WString::tr("AssociateWithClientAssignment"));
+		setClientAssignment->clicked().connect(this, &EmployeeAssignmentFormModel::showClientAssignmentDialog);
+		_view->bindWidget("setClientAssignment", setClientAssignment);
 
 		_view->reload();
 	}
@@ -420,13 +454,13 @@ namespace GS
 					a->setLink(Wt::WLink(Wt::WLink::InternalPath, ExpenseCycle::viewInternalPath(assignmentPtr->expenseCyclePtr.id())));
 				}
 				setCondition("show-expenseCycle", assignmentPtr->expenseCyclePtr);
-				setCondition("set-expenseCycle", !assignmentPtr->expenseCyclePtr);
+				resolveWidget("setExpenseCycle")->setHidden(assignmentPtr->expenseCyclePtr);
 			}
 			catch(const Wt::Dbo::Exception &e)
 			{
 				Wt::log("error") << "EmployeeAssignmentView::reload(): Dbo error(" << e.code() << ") reloading expense cycle summary: " << e.what();
 				setCondition("show-expenseCycle", false);
-				setCondition("set-expenseCycle", false);
+				resolveWidget("setExpenseCycle")->setHidden(true);
 			}
 
 			try
@@ -440,13 +474,13 @@ namespace GS
 					a->setLink(Wt::WLink(Wt::WLink::InternalPath, ClientAssignment::viewInternalPath(assignmentPtr->clientAssignmentPtr.id())));
 				}
 				setCondition("show-clientAssignment", assignmentPtr->clientAssignmentPtr);
-				setCondition("set-clientAssignment", !assignmentPtr->clientAssignmentPtr);
+				resolveWidget("setClientAssignment")->setHidden(assignmentPtr->clientAssignmentPtr);
 			}
 			catch(const Wt::Dbo::Exception &e)
 			{
 				Wt::log("error") << "EmployeeAssignmentView::reload(): Dbo error(" << e.code() << ") reloading client assignment summary: " << e.what();
 				setCondition("show-clientAssignment", false);
-				setCondition("set-clientAssignment", false);
+				resolveWidget("setClientAssignment")->setHidden(true);
 			}
 		}
 	}
@@ -776,6 +810,44 @@ namespace GS
 		return true;
 	}
 
+	void ClientAssignmentFormModel::showIncomeCycleDialog()
+	{
+		TRANSACTION(APP);
+		if(_recordPtr->incomeCyclePtr)
+			return;
+
+		auto selectionDialog = new ListSelectionDialog<IncomeCycleList>(Wt::WString::tr("SelectXFromList").arg(Wt::WString::tr("recurringIncome")), this);
+		selectionDialog->selected().connect(this, &ClientAssignmentFormModel::handleIncomeCycleSelected);
+		selectionDialog->show();
+	}
+
+	void ClientAssignmentFormModel::handleIncomeCycleSelected(long long id)
+	{
+		WApplication *app = APP;
+		TRANSACTION(app);
+
+		if(_recordPtr->incomeCyclePtr)
+			return;
+
+		try
+		{
+			Wt::Dbo::ptr<IncomeCycle> ptr = app->dboSession().loadLazy<IncomeCycle>(id);
+			_recordPtr.modify()->incomeCyclePtr = ptr;
+			t.commit();
+		}
+		catch(const Wt::Dbo::StaleObjectException &)
+		{
+			app->dboSession().rereadAll();
+			app->showStaleObjectError();
+		}
+		catch(const Wt::Dbo::Exception &e)
+		{
+			Wt::log("error") << "EmployeeAssignmentFormModel::handleClientAssignmentSelected(): Dbo error(" << e.code() << "): " << e.what();
+			app->showDbBackendError(e.code());
+		}
+		_view->reload();
+	}
+
 	ClientAssignmentView::ClientAssignmentView(Wt::Dbo::ptr<ClientAssignment> assignmentPtr /*= Wt::Dbo::ptr<ClientAssignment>()*/)
 		: _tempPtr(assignmentPtr)
 	{
@@ -882,7 +954,14 @@ namespace GS
 
 	void ClientAssignmentFormModel::persistedHandler()
 	{
+		setReadOnly(startDateField, true);
+
 		_view->bindWidget("employeeAssignments", new EmployeeAssignmentList(recordPtr()));
+
+		Wt::WPushButton *setIncomeCycle = new Wt::WPushButton(Wt::WString::tr("AssociateWithRecurringIncome"));
+		setIncomeCycle->clicked().connect(this, &ClientAssignmentFormModel::showIncomeCycleDialog);
+		_view->bindWidget("setIncomeCycle", setIncomeCycle);
+
 		_view->reload();
 	}
 
