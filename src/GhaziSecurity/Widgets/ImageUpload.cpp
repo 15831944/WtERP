@@ -89,7 +89,7 @@ namespace GS
 		}
 		catch(const Magick::Exception &e)
 		{
-			Wt::log("warn") << "ImageUpload::handleUploaded(): Error in Magick block:" << e.what();
+			Wt::log("warning") << "ImageUpload::handleUploaded(): Error in Magick block:" << e.what();
 			WApplication::instance()->showErrorDialog(tr("GMThumbnailError"));
 		}
 	}

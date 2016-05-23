@@ -39,7 +39,7 @@ void WServer::initialize()
 	* *************************************************************************/
 	try
 	{
-		log("info") << "Connecting to database backend";
+		log("gs-info") << "Connecting to database backend";
 
 		std::string dbBackend;
 		if(!readConfigurationProperty("DbBackend", dbBackend))
@@ -77,12 +77,12 @@ void WServer::initialize()
 
 		log("success") << "Successfully connected to database";
 	}
-	catch(Wt::Dbo::Exception &e)
+	catch(const Wt::Dbo::Exception &e)
 	{
 		log("fatal") << "Database error connecting to database: " << e.what();
 		throw;
 	}
-	catch(std::exception &e)
+	catch(const std::exception &e)
 	{
 		log("fatal") << "Error connecting to database: " << e.what();
 		throw;
@@ -126,12 +126,12 @@ void WServer::initialize()
 			_dboSession.execute("CREATE UNIQUE INDEX unique_configuration ON " + std::string(WW::Dbo::Configuration::tableName()) + " (name, type)");
 			t.commit();
 		}
-		catch(Wt::Dbo::Exception &e)
+		catch(const Wt::Dbo::Exception &e)
 		{
 			log("fatal") << "Database error creating tables: " << e.what();
 			throw;
 		}
-		catch(std::exception &e)
+		catch(const std::exception &e)
 		{
 			log("fatal") << "Error creating tables: " << e.what();
 			throw;
@@ -290,12 +290,12 @@ void WServer::initialize()
 
 			tr.commit();
 		}
-		catch(Wt::Dbo::Exception &e)
+		catch(const Wt::Dbo::Exception &e)
 		{
 			log("fatal") << "Database error inserting default values: " << e.what();
 			throw;
 		}
-		catch(std::exception &e)
+		catch(const std::exception &e)
 		{
 			log("fatal") << "Error inserting default values: " << e.what();
 			throw;
@@ -307,12 +307,12 @@ void WServer::initialize()
 	{
 		_configs = new WW::ConfigurationsDatabase(_dboSession);
 	}
-	catch(Wt::Dbo::Exception &e)
+	catch(const Wt::Dbo::Exception &e)
 	{
 		log("fatal") << "Database error loading configurations: " << e.what();
 		throw;
 	}
-	catch(std::exception &e)
+	catch(const std::exception &e)
 	{
 		log("fatal") << "Error loading configurations: " << e.what();
 		throw;
@@ -323,12 +323,12 @@ void WServer::initialize()
 	{
 		_permissionsDatabase = new PermissionsDatabase(_dboSession);
 	}
-	catch(Wt::Dbo::Exception &e)
+	catch(const Wt::Dbo::Exception &e)
 	{
 		log("fatal") << "Database error loading permissions: " << e.what();
 		throw;
 	}
-	catch(std::exception &e)
+	catch(const std::exception &e)
 	{
 		log("fatal") << "Error loading permissions: " << e.what();
 		throw;

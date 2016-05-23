@@ -204,7 +204,7 @@ namespace GS
 			auto proxyModel = dynamic_cast<Wt::WAbstractProxyModel*>(_cb->model());
 			if(!proxyModel)
 			{
-				Wt::log("warn") << "ProxyModelCBValidator::validator(): null proxyModel";
+				Wt::log("warning") << "ProxyModelCBValidator::validator(): null proxyModel";
 				return Result(Invalid, Wt::WString::tr("Error"));
 			}
 

@@ -23,7 +23,7 @@ namespace GS
 		//Create entity if entity not found
 		if(!entityPtr)
 		{
-			Wt::log("warn") << "Self entity was not found, creating self entity";
+			Wt::log("warning") << "Self entity was not found, creating self entity";
 			entityPtr = dboSession.add(new Entity(Entity::InvalidType));
 			entityPtr.modify()->name = "Self entity (Modify this entity)";
 			entityPtr.flush();

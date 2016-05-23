@@ -112,7 +112,7 @@ namespace WW
 		boost::posix_time::ptime ptEnd = boost::posix_time::microsec_clock::local_time();
 		_loadDuration = ptEnd - ptStart;
 
-		Wt::log("info") << "ConfigurationsDatabase: " << _count << " entries successfully loaded in " << _loadDuration.total_milliseconds() << " ms";
+		Wt::log("gs-info") << "ConfigurationsDatabase: " << _count << " entries successfully loaded in " << _loadDuration.total_milliseconds() << " ms";
 	}
 
 	Ddo::cPtr<Ddo::ConfigurationBool> ConfigurationsDatabase::getBoolPtr(const std::string &name) const
@@ -191,7 +191,7 @@ namespace WW
 		Ddo::cPtr<Ddo::ConfigurationBool> boolPtr = getBoolPtr(name);
 		if(!boolPtr)
 		{
-			Wt::log("warn") << "BoolPtr not found in ConfigurationsDatabase in GetBool(...). Name: " << name << ", Default Value: " << defaultValue;
+			Wt::log("warning") << "BoolPtr not found in ConfigurationsDatabase in GetBool(...). Name: " << name << ", Default Value: " << defaultValue;
 			return defaultValue;
 		}
 		return boolPtr->value;
@@ -203,7 +203,7 @@ namespace WW
 		Ddo::cPtr<Ddo::ConfigurationDouble> doublePtr = getDoublePtr(name);
 		if(!doublePtr)
 		{
-			Wt::log("warn") << "DoublePtr not found in ConfigurationsDatabase in GetDouble(...). Name: " << name << ", Default Value: " << defaultValue;
+			Wt::log("warning") << "DoublePtr not found in ConfigurationsDatabase in GetDouble(...). Name: " << name << ", Default Value: " << defaultValue;
 			return defaultValue;
 		}
 		return doublePtr->value;
@@ -215,7 +215,7 @@ namespace WW
 		Ddo::cPtr<Ddo::ConfigurationEnum> enumPtr = getEnumPtr(name);
 		if(!enumPtr)
 		{
-			Wt::log("warn") << "EnumPtr not found in ConfigurationsDatabase in GetEnum(...). Name: " << name << ", Default Value: " << defaultValue;
+			Wt::log("warning") << "EnumPtr not found in ConfigurationsDatabase in GetEnum(...). Name: " << name << ", Default Value: " << defaultValue;
 			return defaultValue;
 		}
 		return enumPtr->value;
@@ -227,7 +227,7 @@ namespace WW
 		Ddo::cPtr<Ddo::ConfigurationFloat> floatPtr = getFloatPtr(name);
 		if(!floatPtr)
 		{
-			Wt::log("warn") << "FloatPtr not found in ConfigurationsDatabase in GetFloat(...). Name: " << name << ", Default Value: " << defaultValue;
+			Wt::log("warning") << "FloatPtr not found in ConfigurationsDatabase in GetFloat(...). Name: " << name << ", Default Value: " << defaultValue;
 			return defaultValue;
 		}
 		return floatPtr->value;
@@ -239,7 +239,7 @@ namespace WW
 		Ddo::cPtr<Ddo::ConfigurationInt> intPtr = getIntPtr(name);
 		if(!intPtr)
 		{
-			Wt::log("warn") << "IntPtr not found in ConfigurationsDatabase in GetInt(...). Name: " << name << ", Default Value: " << defaultValue;
+			Wt::log("warning") << "IntPtr not found in ConfigurationsDatabase in GetInt(...). Name: " << name << ", Default Value: " << defaultValue;
 			return defaultValue;
 		}
 		return intPtr->value;
@@ -251,7 +251,7 @@ namespace WW
 		Ddo::cPtr<Ddo::ConfigurationLongInt> longIntPtr = getLongIntPtr(name);
 		if(!longIntPtr)
 		{
-			Wt::log("warn") << "LongIntPtr not found in ConfigurationsDatabase in GetLongInt(...). Name: " << name << ", Default Value: " << defaultValue;
+			Wt::log("warning") << "LongIntPtr not found in ConfigurationsDatabase in GetLongInt(...). Name: " << name << ", Default Value: " << defaultValue;
 			return defaultValue;
 		}
 		return longIntPtr->value;
@@ -263,7 +263,7 @@ namespace WW
 		Ddo::cPtr<Ddo::ConfigurationString> stringPtr = getStringPtr(name);
 		if(!stringPtr)
 		{
-			Wt::log("warn") << "StringPtr not found in ConfigurationsDatabase in GetString(...). Name: " << name << ", Default Value: " << defaultValue;
+			Wt::log("warning") << "StringPtr not found in ConfigurationsDatabase in GetString(...). Name: " << name << ", Default Value: " << defaultValue;
 			return defaultValue;
 		}
 		return stringPtr->value;

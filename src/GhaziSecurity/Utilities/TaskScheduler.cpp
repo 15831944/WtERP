@@ -89,7 +89,7 @@ namespace GS
 
 	void TaskScheduler::createDefaultAccounts(bool scheduleNext)
 	{
-		Wt::log("info") << "TaskScheduler: Checking default accounts in database";
+		Wt::log("gs-info") << "TaskScheduler: Checking default accounts in database";
 		try
 		{
 			_accountsDatabase.findOrCreateCashAccount();
@@ -109,7 +109,7 @@ namespace GS
 
 	void TaskScheduler::recalculateAccountBalances(bool scheduleNext)
 	{
-		Wt::log("info") << "TaskScheduler: Recalculating account balances";
+		Wt::log("gs-info") << "TaskScheduler: Recalculating account balances";
 		Wt::Dbo::Transaction t(dboSession);
 		try
 		{
@@ -190,7 +190,7 @@ namespace GS
 
 	void TaskScheduler::checkAbnormalRecords(bool scheduleNext)
 	{
-		Wt::log("info") << "TaskScheduler: Checking for abnormal database entries";
+		Wt::log("gs-info") << "TaskScheduler: Checking for abnormal database entries";
 		Wt::Dbo::Transaction t(dboSession);
 		try
 		{

@@ -10,7 +10,7 @@ int main(int argc, char *argv[])
 	try
 	{
 		//Initialize Server
-		GS::WServer Server(argc, argv, "D:/Programming/GhaziSecurity/src/GhaziSecurity/resources/approot/wt_config.xml");
+		GS::WServer Server(argc, argv, "../../../../src/GhaziSecurity/resources/approot/wt_config.xml");
 
 		//Configuration
 		Server.addEntryPoint(Wt::Application, GS::WApplication::createApplication);
@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
 			//And wait till a shutdown signal is given
 			int sig = GS::WServer::waitForShutdown(argv[0]);
 			Server.stop();
-			Wt::log("info") << "Shutdown (Signal = " << sig << ")";
+			Wt::log("gs-info") << "Shutdown (Signal = " << sig << ")";
 		}
 	}
 	catch(Wt::WServer::Exception &e)
