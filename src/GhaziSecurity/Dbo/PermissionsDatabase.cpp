@@ -82,7 +82,7 @@ namespace GS
 		boost::posix_time::ptime ptEnd = boost::posix_time::microsec_clock::local_time();
 		_loadDuration = ptEnd - ptStart;
 
-		Wt::log("info") << "PermissionsDatabase: " << _permissionItemMap.size() << " permissions successfully loaded in " << _loadDuration.total_milliseconds() << " ms";
+		Wt::log("gs-info") << "PermissionsDatabase: " << _permissionItemMap.size() << " permissions successfully loaded in " << _loadDuration.total_milliseconds() << " ms";
 	}
 
 	void PermissionsDatabase::linkAllDescendants(long long parentPermissionId, const _PermissionItemMap &sourceMap, PermissionMap &linkedPermissionMap)

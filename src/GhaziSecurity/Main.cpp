@@ -10,7 +10,7 @@ int main(int argc, char *argv[])
 	try
 	{
 		//Initialize Server
-		GS::WServer Server(argc, argv, "../../../../src/GhaziSecurity/resources/approot/wt_config.xml");
+		GS::WServer Server(argc, argv);
 
 		//Configuration
 		Server.addEntryPoint(Wt::Application, GS::WApplication::createApplication);

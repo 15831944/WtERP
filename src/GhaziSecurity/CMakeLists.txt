@@ -42,6 +42,7 @@ TARGET_LINK_LIBRARIES(${WT_PROJECT_TARGET}
 	wtdbo
 	wtdbosqlite3
 	wtdbomysql
+	${GM_LIBRARIES}
 #	wtdbofirebird
 #	wtdbopostgres
 )

@@ -131,7 +131,7 @@ namespace GS
 
 	void TaskScheduler::createPendingCycleEntries(bool scheduleNext)
 	{
-		Wt::log("info") << "TaskScheduler: Checking for pending EntryCycle entries";
+		Wt::log("gs-info") << "TaskScheduler: Checking for pending EntryCycle entries";
 		_createPendingCycleEntries(scheduleNext);
 	}
 
