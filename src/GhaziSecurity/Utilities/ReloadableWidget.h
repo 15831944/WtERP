@@ -27,12 +27,12 @@ namespace GS
 
 		virtual void render(Wt::WFlags<Wt::RenderFlag> flags) override
 		{
+			isNotStateless();
 			if(canOptimizeUpdates() && (flags & Wt::RenderFull) == 0)
 			{
 				bool visible = isVisible();
 				if(visible && !_wasVisible)
 				{
-					isNotStateless();
 					reload();
 				}
 

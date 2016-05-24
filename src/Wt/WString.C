@@ -248,7 +248,7 @@ std::string WString::resolveKey() const
     }
   }
 
-  LOG_WARN("Could not resolve localized string key: " << impl_->key_);
+  //LOG_WARN("Could not resolve localized string key: " << impl_->key_);
   return "??" + impl_->key_ + "??";
 }
 
