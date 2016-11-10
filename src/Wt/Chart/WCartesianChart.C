@@ -17,8 +17,10 @@
 #include "Wt/WAbstractArea"
 #include "Wt/WAbstractItemModel"
 #include "Wt/WApplication"
+#include "Wt/WCanvasPaintDevice"
 #include "Wt/WCircleArea"
 #include "Wt/WException"
+#include "Wt/WEnvironment"
 #include "Wt/WJavaScriptHandle"
 #include "Wt/WJavaScriptObjectStorage"
 #include "Wt/WMeasurePaintDevice"
@@ -277,8 +279,6 @@ void SeriesIterator::setBrushColor(WBrush& brush, const WDataSeries &series,
 
   if (color)
     brush.setColor(*color);
-
-  delete color;
 }
 
 class SeriesRenderer;
@@ -353,7 +353,8 @@ public:
 		     const WDataSeries& series,
 		     SeriesRenderIterator& it)
     : SeriesRenderer(chart, painter, series, it),
-      curveLength_(0)
+      curveLength_(0),
+      curveFragmentLength_(0)
   {
     curve_.setOpenSubPathsEnabled(true);
   }
@@ -363,7 +364,7 @@ public:
     WPointF p = chart_.map(x, y, series_.axis(),
 			   it_.currentXSegment(), it_.currentYSegment());
 
-    if (curveLength_ == 0) {
+    if (curveFragmentLength_ == 0) {
       curve_.moveTo(hv(p));
 
       if (series_.fillRange() != NoFill
@@ -376,7 +377,7 @@ public:
 	curve_.lineTo(hv(p));
 	fill_.lineTo(hv(p));
       } else {
-	if (curveLength_ == 1) {
+	if (curveFragmentLength_ == 1) {
 	  computeC(p0, p, c_);
 	} else {
 	  WPointF c1, c2;
@@ -392,11 +393,12 @@ public:
     p0 = p;
     lastX_ = x;
     ++curveLength_;
+    ++curveFragmentLength_;
   }
 
   virtual void addBreak()
   {
-    if (curveLength_ > 1) {
+    if (curveFragmentLength_ > 1) {
       if (series_.type() == CurveSeries) {
 	WPointF c1;
 	computeC(p0, p_1, c1);
@@ -410,14 +412,14 @@ public:
 	fill_.closeSubPath();
       }
     }
-    curveLength_ = 0;
+    curveFragmentLength_ = 0;
   }
 
   virtual void paint() {
     WCartesianChart::PainterPathMap::iterator curveHandle = const_cast<WCartesianChart&>(chart_).curvePaths_.find(&series_);
     WCartesianChart::TransformMap::iterator transformHandle = const_cast<WCartesianChart&>(chart_).curveTransforms_.find(&series_);
 
-    WTransform transform = chart_.combinedTransform();
+    WTransform transform = chart_.zoomRangeTransform();
 
     if (curveLength_ > 1) {
       if (series_.type() == CurveSeries) {
@@ -479,12 +481,14 @@ public:
     }
 
     curveLength_ = 0;
+    curveFragmentLength_ = 0;
     curve_ = WPainterPath();
     fill_ = WPainterPath();
   }
 
 private:
   int curveLength_;
+  int curveFragmentLength_;
   WPainterPath curve_;
   WPainterPath fill_;
 
@@ -610,7 +614,7 @@ public:
 
     painter_.setShadow(series_.shadow());
 
-    WTransform transform = chart_.combinedTransform();
+    WTransform transform = chart_.zoomRangeTransform();
 
     if (nonZeroWidth) {
       WBrush brush = WBrush(series_.brush());
@@ -900,7 +904,7 @@ public:
       WCartesianChart &chart = const_cast<WCartesianChart &>(chart_);
       WPen oldPen = WPen(chart.textPen_);
       chart.textPen_.setColor(series.labelColor());
-      WTransform t = chart_.combinedTransform();
+      WTransform t = chart_.zoomRangeTransform();
       WTransform ct;
       WCartesianChart::TransformMap::const_iterator transformHandle = chart_.curveTransforms_.find(&series);
       if (transformHandle != chart_.curveTransforms_.end()) {
@@ -931,7 +935,9 @@ class MarkerRenderIterator : public SeriesIterator
 public:
   MarkerRenderIterator(const WCartesianChart& chart, WPainter& painter)
     : chart_(chart),
-      painter_(painter)
+      painter_(painter),
+      currentScale_(0),
+      series_(0)
   { }
 
   virtual bool startSeries(const WDataSeries& series, double groupWidth,
@@ -951,6 +957,9 @@ public:
 
   virtual void endSeries()
   {
+    finishPathFragment(*series_);
+    series_ = 0;
+
     if (needRestore_)
       painter_.restore();
   }
@@ -965,8 +974,6 @@ public:
 			     currentXSegment(), currentYSegment());
 
       if (!marker_.isEmpty()) {
-	painter_.save();
-
 	WPen pen = WPen(series.markerPen());
 	SeriesIterator::setPenColor(pen, series, xRow, xColumn, yRow, yColumn, MarkerPenColorRole);
 	if (chart_.seriesSelectionEnabled() &&
@@ -977,27 +984,28 @@ public:
 
 	WBrush brush = WBrush(series.markerBrush());
 	SeriesIterator::setBrushColor(brush, series, xRow, xColumn, yRow, yColumn, MarkerBrushColorRole);
-	setMarkerSize(painter_, series, xRow, xColumn, yRow, yColumn, series.markerSize());
+	double scale = calculateMarkerScale(series, xRow, xColumn, yRow, yColumn, series.markerSize());
 	if (chart_.seriesSelectionEnabled() &&
 	    chart_.selectedSeries() != 0 &&
 	    chart_.selectedSeries() != &series) {
 	  brush.setColor(WCartesianChart::lightenColor(brush.color()));
 	}
 
-	WTransform currentTransform = ((WTransform()).translate(chart_.combinedTransform().map(hv(p)))) * scale_;
-	painter_.setWorldTransform(currentTransform, false);
+	if (!series_ ||
+	    brush != currentBrush_ ||
+	    pen != currentPen_ ||
+	    scale != currentScale_) {
+	  if (series_) {
+	    finishPathFragment(*series_);
+	  }
 
-	painter_.setShadow(series.shadow());
-	if (series.marker() != CrossMarker &&
-	    series.marker() != XCrossMarker &&
-	    series.marker() != AsteriskMarker &&
-	    series.marker() != StarMarker) {
-	  painter_.fillPath(marker_, brush);
-	  painter_.setShadow(WShadow());
+	  series_ = &series;
+	  currentBrush_ = brush;
+	  currentPen_ = pen;
+	  currentScale_ = scale;
 	}
-	painter_.strokePath(marker_, pen);
 
-	painter_.restore();
+	pathFragment_.moveTo(hv(p));
       }
 
       if (series.type() != BarSeries) {
@@ -1038,9 +1046,14 @@ private:
   WPainter& painter_;
   WPainterPath marker_;
   bool needRestore_;
-  WTransform scale_;
 
-  void setMarkerSize(WPainter& painter, const WDataSeries &series,
+  WPainterPath pathFragment_;
+  WPen currentPen_;
+  WBrush currentBrush_;
+  double currentScale_;
+  const WDataSeries *series_;
+
+  double calculateMarkerScale(const WDataSeries &series,
 		     int xRow, int xColumn,
 		     int yRow, int yColumn,
 		     double markerSize)
@@ -1056,13 +1069,46 @@ private:
     if (scale)
       dScale = *scale;
 
-  dScale = markerSize / 6 * dScale;
+    dScale = markerSize / 6 * dScale;
 
-  scale_ = WTransform(dScale, 0, 0, dScale, 0, 0);
+    return dScale;
+  }
 
-  delete scale;
-}
+  void finishPathFragment(const WDataSeries &series)
+  {
+    if (pathFragment_.segments().empty())
+      return;
 
+    painter_.save();
+
+    painter_.setWorldTransform(WTransform(currentScale_, 0, 0, currentScale_, 0, 0));
+
+    WTransform currentTransform = WTransform(1.0 / currentScale_, 0, 0, 1.0 / currentScale_, 0, 0) * chart_.zoomRangeTransform();
+
+    painter_.setPen(NoPen);
+    painter_.setBrush(NoBrush);
+    painter_.setShadow(series.shadow());
+    if (series.marker() != CrossMarker &&
+	series.marker() != XCrossMarker &&
+	series.marker() != AsteriskMarker &&
+	series.marker() != StarMarker) {
+      painter_.setBrush(currentBrush_);
+
+      if (!series.shadow().none())
+	painter_.drawStencilAlongPath(marker_, currentTransform.map(pathFragment_), false);
+
+      painter_.setShadow(WShadow());
+    }
+    painter_.setPen(currentPen_);
+    if (!series.shadow().none())
+      painter_.setBrush(NoBrush);
+
+    painter_.drawStencilAlongPath(marker_, currentTransform.map(pathFragment_), false);
+
+    painter_.restore();
+
+    pathFragment_ = WPainterPath();
+  }
 };
 
 // Used to find if a given point matches a marker, for tooltips
@@ -1085,7 +1131,7 @@ public:
 
   bool startSeries(const WDataSeries &series, double groupWidth, int numBarGroups, int currentBarGroup)
   {
-    return matchedSeries_ == 0 && series.type() == PointSeries;
+    return matchedSeries_ == 0 && (series.type() == PointSeries || series.type() == LineSeries || series.type() == CurveSeries);
   }
 
   void newValue(const WDataSeries &series, double x, double y, double stackY, int xRow, int xColumn, int yRow, int yColumn)
@@ -1223,7 +1269,7 @@ void WCartesianChart::init()
   xTransform_ = WTransform();
   yTransform_ = WTransform();
 
-  if (WApplication::instance() != 0) {
+  if (WApplication::instance() != 0 && WApplication::instance()->environment().ajax()) {
     mouseWentDown().connect("function(o, e){var o=" + this->cObjJsRef() + ";if(o){o.mouseDown(o, e);}}");
     mouseWentUp().connect("function(o, e){var o=" + this->cObjJsRef() + ";if(o){o.mouseUp(o, e);}}");
     mouseDragged().connect("function(o, e){var o=" + this->cObjJsRef() + ";if(o){o.mouseDrag(o, e);}}");
@@ -1557,7 +1603,7 @@ void WCartesianChart::addDataPointArea(const WDataSeries& series,
 WPointF WCartesianChart::mapFromDevice(const WPointF &point, Axis ordinateAxis) const
 {
   if (isInteractive()) {
-    return mapFromDeviceWithoutTransform(combinedTransform(xTransformHandle_.value(), yTransformHandle_.value()).inverted().map(point), ordinateAxis);
+    return mapFromDeviceWithoutTransform(zoomRangeTransform(xTransformHandle_.value(), yTransformHandle_.value()).inverted().map(point), ordinateAxis);
   } else {
     return mapFromDeviceWithoutTransform(point, ordinateAxis);
   }
@@ -1580,7 +1626,7 @@ WPointF WCartesianChart::mapToDevice(const boost::any &xValue,
 				     Axis axis, int xSegment, int ySegment) const
 {
   if (isInteractive()) {
-    return combinedTransform(xTransformHandle_.value(), yTransformHandle_.value()).map(mapToDeviceWithoutTransform(xValue, yValue, axis, xSegment, ySegment));
+    return zoomRangeTransform(xTransformHandle_.value(), yTransformHandle_.value()).map(mapToDeviceWithoutTransform(xValue, yValue, axis, xSegment, ySegment));
   } else {
     return mapToDeviceWithoutTransform(xValue, yValue, axis, xSegment, ySegment);
   }
@@ -1751,7 +1797,7 @@ void WCartesianChart::IconWidget::paintEvent(Wt::WPaintDevice *paintDevice)
 void WCartesianChart::setAxisPadding(int padding)
 {
   axisPadding_ = padding;
-  for (int i = 0; i < 2; ++i) {
+  for (int i = 0; i < 3; ++i) {
     axes_[i]->setPadding(padding);
   }
 }
@@ -2195,14 +2241,14 @@ void WCartesianChart::setZoomAndPan()
 
   // Enforce limits
   WRectF chartArea = hv(insideChartArea());
-  WRectF transformedArea = combinedTransform(xTransform, yTransform).map(chartArea);
+  WRectF transformedArea = zoomRangeTransform(xTransform, yTransform).map(chartArea);
   if (transformedArea.left() > chartArea.left()) {
     double diff = chartArea.left() - transformedArea.left();
     if (orientation() == Vertical)
       xTransform = WTransform(1, 0, 0, 1, diff, 0) * xTransform;
     else
       yTransform = WTransform(1, 0, 0, 1, 0, diff) * yTransform;
-    transformedArea = combinedTransform(xTransform, yTransform).map(chartArea);
+    transformedArea = zoomRangeTransform(xTransform, yTransform).map(chartArea);
   }
   if (transformedArea.right() < chartArea.right()) {
     double diff = chartArea.right() - transformedArea.right();
@@ -2210,7 +2256,7 @@ void WCartesianChart::setZoomAndPan()
       xTransform = WTransform(1, 0, 0, 1, diff, 0) * xTransform;
     else
       yTransform = WTransform(1, 0, 0, 1, 0, diff) * yTransform;
-    transformedArea = combinedTransform(xTransform, yTransform).map(chartArea);
+    transformedArea = zoomRangeTransform(xTransform, yTransform).map(chartArea);
   }
   if (transformedArea.top() > chartArea.top()) {
     double diff = chartArea.top() - transformedArea.top();
@@ -2218,7 +2264,7 @@ void WCartesianChart::setZoomAndPan()
       yTransform = WTransform(1, 0, 0, 1, 0, -diff) * yTransform;
     else
       xTransform = WTransform(1, 0, 0, 1, diff, 0) * xTransform;
-    transformedArea = combinedTransform(xTransform, yTransform).map(chartArea);
+    transformedArea = zoomRangeTransform(xTransform, yTransform).map(chartArea);
   }
   if (transformedArea.bottom() < chartArea.bottom()) {
     double diff = chartArea.bottom() - transformedArea.bottom();
@@ -2226,7 +2272,7 @@ void WCartesianChart::setZoomAndPan()
       yTransform = WTransform(1, 0, 0, 1, 0, -diff) * yTransform;
     else
       xTransform = WTransform(1, 0, 0, 1, diff, 0) * xTransform;
-    transformedArea = combinedTransform(xTransform, yTransform).map(chartArea);
+    transformedArea = zoomRangeTransform(xTransform, yTransform).map(chartArea);
   }
 
   xTransformHandle_.setValue(xTransform);
@@ -2378,6 +2424,7 @@ void WCartesianChart::render(WPainter& painter, const WRectF& rectangle) const
     renderBorder(painter);
     renderCurveLabels(painter);
     renderLegend(painter);
+    renderOther(painter);
   }
 
   painter.restore();
@@ -2402,8 +2449,8 @@ bool WCartesianChart::initLayout(const WRectF& rectangle, WPaintDevice *device)
     location_[i] = MinimumValue;
 
   bool autoLayout = isAutoLayoutEnabled();
-  if (autoLayout && 
-      ((device->features() & WPaintDevice::HasFontMetrics) == 0)) {
+  if (autoLayout &&
+      (!device || (device->features() & WPaintDevice::HasFontMetrics) == 0)) {
     LOG_ERROR("setAutoLayout(): device does not have font metrics "
       "(not even server-side font metrics).");
     autoLayout = false;
@@ -2855,7 +2902,7 @@ void WCartesianChart::renderGrid(WPainter& painter, const WAxis& ax) const
       }
     }
 
-    painter.strokePath(combinedTransform().map(gridPath).crisp(), pens[level - 1]);
+    painter.strokePath(zoomRangeTransform().map(gridPath).crisp(), pens[level - 1]);
   }
 
   if (isInteractive()) {
@@ -2871,7 +2918,7 @@ void WCartesianChart::renderAxis(WPainter& painter, const WAxis& axis,
 
   bool vertical = axis.id() != XAxis;
 
-  if (isInteractive()) {
+  if (isInteractive() && dynamic_cast<WCanvasPaintDevice*>(painter.device())) {
     WRectF clipRect;
     WRectF area = hv(chartArea_);
     if (axis.location() == ZeroValue && location_[axis.id()] == ZeroValue) {
@@ -3264,8 +3311,11 @@ void WCartesianChart::renderCurveLabels(WPainter &painter) const
     const CurveLabel &label = curveLabels_[i];
     for (std::size_t j = 0; j < series_.size(); ++j) {
       const WDataSeries &series = *series_[j];
+      // Don't draw curve labels for hidden series
+      if (series.isHidden())
+	continue;
       if (&series == &label.series()) {
-	WTransform t = combinedTransform();
+	WTransform t = zoomRangeTransform();
 	if (series.type() == LineSeries || series.type() == CurveSeries) {
 	  t = t * curveTransform(series);
 	}
@@ -3565,6 +3615,13 @@ void WCartesianChart::renderLegend(WPainter& painter) const
 		     1000, titleHeight, AlignCenter | AlignTop, title());
     painter.restore();
   }
+}
+
+void WCartesianChart::renderOther(WPainter &painter) const
+{
+  WPainterPath clipPath;
+  clipPath.addRect(chartArea_);
+  painter.setClipPath(clipPath);
 }
 
 void WCartesianChart::renderLabel(WPainter& painter, const WString& text,
@@ -3875,12 +3932,12 @@ void WCartesianChart::createPensForAxis(Axis ax)
   pens_[ax] = assignments;
 }
 
-WTransform WCartesianChart::combinedTransform() const
+WTransform WCartesianChart::zoomRangeTransform() const
 {
-  return combinedTransform(xTransform_, yTransform_);
+  return zoomRangeTransform(xTransform_, yTransform_);
 }
 
-WTransform WCartesianChart::combinedTransform(WTransform xTransform, WTransform yTransform) const
+WTransform WCartesianChart::zoomRangeTransform(WTransform xTransform, WTransform yTransform) const
 {
   if (orientation() == Vertical) {
     return WTransform(1,0,0,-1,chartArea_.left(),chartArea_.bottom()) *
@@ -3998,7 +4055,7 @@ void WCartesianChart::yTransformChanged()
 void WCartesianChart::jsSeriesSelected(double x, double y)
 {
   if (!seriesSelectionEnabled()) return;
-  WPointF p = combinedTransform(xTransformHandle_.value(), yTransformHandle_.value()).inverted().map(WPointF(x,y));
+  WPointF p = zoomRangeTransform(xTransformHandle_.value(), yTransformHandle_.value()).inverted().map(WPointF(x,y));
   double smallestSqDistance = std::numeric_limits<double>::infinity();
   const WDataSeries *closestSeries = 0;
   WPointF closestPoint;
@@ -4036,7 +4093,7 @@ void WCartesianChart::jsSeriesSelected(double x, double y)
 
 void WCartesianChart::loadTooltip(double x, double y)
 {
-  WPointF p = combinedTransform(xTransformHandle_.value(), yTransformHandle_.value()).inverted().map(WPointF(x,y));
+  WPointF p = zoomRangeTransform(xTransformHandle_.value(), yTransformHandle_.value()).inverted().map(WPointF(x,y));
   MarkerMatchIterator iterator(*this, p.x(), p.y(), MarkerMatchIterator::MATCH_RADIUS / xTransformHandle_.value().m11(), MarkerMatchIterator::MATCH_RADIUS / yTransformHandle_.value().m22());
   iterateSeries(&iterator, 0);
 

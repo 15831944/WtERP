@@ -864,8 +864,12 @@ void DomElement::asHTML(EscapeOStream& out,
       out << '"';
 
       std::string wrapStyle = cssStyle();
-      if (!isDefaultInline())
-	wrapStyle += "display: block;";
+      if (!isDefaultInline()) {
+	// Put display: block; first, because it might
+	// still be overridden if a widget is set to be inlined,
+	// but isn't inline by default.
+	wrapStyle = "display: block;" + wrapStyle;
+      }
 
       if (!wrapStyle.empty()) {
 	out << " style=";
@@ -995,8 +999,10 @@ void DomElement::asHTML(EscapeOStream& out,
       if (type_ != DomElement_TEXTAREA) {
 	out << " value=";
 	fastHtmlAttributeValue(out, attributeValues, i->second);
-      } else
-	innerHTML += i->second;
+      } else {
+	std::string v = i->second;
+  innerHTML += WWebWidget::escapeText(v, false);
+      }
       break;
     case PropertySrc:
       out << " src=";
@@ -1016,6 +1022,10 @@ void DomElement::asHTML(EscapeOStream& out,
       break;
     case PropertyLabel:
       out << " label=";
+      fastHtmlAttributeValue(out, attributeValues, i->second);
+      break;
+    case PropertyPlaceholder:
+      out << " placeholder=";
       fastHtmlAttributeValue(out, attributeValues, i->second);
       break;
     default:
@@ -1386,7 +1396,7 @@ std::string DomElement::asJavaScript(EscapeOStream& out,
     renderInnerHtmlJS(out, app);
 
     for (unsigned i = 0; i < childrenToSave_.size(); ++i)
-      out << "$('#" << childrenToSave_[i] << "').replaceWith(c"
+      out << WT_CLASS ".replaceWith('" << childrenToSave_[i] << "',c"
 	  << var_ << (int)i << ");";
 
     // Fix for http://redmine.emweb.be/issues/1847: custom JS
@@ -1596,6 +1606,15 @@ void DomElement::setJavaScriptProperties(EscapeOStream& out,
       break;
     case PropertyLabel:
       out << var_ << ".label=";
+      if (!pushed) {
+	escaped.pushEscape(EscapeOStream::JsStringLiteralSQuote);
+	pushed = true;
+      }
+      fastJsStringLiteral(out, escaped, i->second);
+      out << ';';
+      break;
+    case PropertyPlaceholder:
+      out << var_ << ".placeholder=";
       if (!pushed) {
 	escaped.pushEscape(EscapeOStream::JsStringLiteralSQuote);
 	pushed = true;

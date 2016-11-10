@@ -30,6 +30,8 @@ public:
      */
     WTimeEdit(WContainerWidget *parent = 0);
 
+    virtual ~WTimeEdit();
+
     /*! \brief Sets the time
      *
      *  Does nothing if the current time is \p Null.
@@ -81,6 +83,21 @@ public:
     /*! \brief Returns the upper limit of the valid time range
      */
     WTime top() const;
+
+    void setHourStep(int step);
+    int hourStep() const;
+
+    void setMinuteStep(int step);
+    int minuteStep() const;
+
+    void setSecondStep(int step);
+    int secondStep() const;
+
+    void setMillisecondStep(int step);
+    int millisecondStep() const;
+
+    void setWrapAroundEnabled(bool rollover);
+    bool wrapAroundEnabled() const;
 
     virtual void load();
 

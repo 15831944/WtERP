@@ -106,6 +106,7 @@ WebRenderer::WebRenderer(WebSession& session)
     pageId_(0),
     expectedAckId_(0),
     scriptId_(0),
+    ackErrs_(0),
     linkedCssCount_(-1),
     currentStatelessSlotIsActuallyStateless_(true),
     formObjectsChanged_(true),
@@ -156,7 +157,8 @@ bool WebRenderer::isDirty() const
     || session_.app()->internalPathIsChanged_
     || !collectedJS1_.empty()
     || !collectedJS2_.empty()
-    || !invisibleJS_.empty();
+    || !invisibleJS_.empty()
+    || !wsRequestsToHandle_.empty();
 }
 
 const WebRenderer::FormObjectsMap& WebRenderer::formObjects() const
@@ -210,11 +212,12 @@ bool WebRenderer::ackUpdate(int updateId)
   if (updateId == expectedAckId_) {
     LOG_DEBUG("jsSynced(false) after ackUpdate okay");
     setJSSynced(false);
-    ++expectedAckId_;
+    ackErrs_ = 0;
     return true;
   } else if ((updateId < expectedAckId_ && expectedAckId_ - updateId < 5)
 	     || (expectedAckId_ - 5 < updateId)) {
-    return true; // That's still acceptible but no longer plausible
+    ++ackErrs_;
+    return ackErrs_ < 3; // That's still acceptible but no longer plausible
   } else
     return false;
 }
@@ -342,6 +345,7 @@ void WebRenderer::streamBootContent(WebResponse& response,
   bootJs.setVar("SESSION_ID", session_.sessionId());
 
   expectedAckId_ = scriptId_ = WRandom::get();
+  ackErrs_ = 0;
 
   bootJs.setVar("SCRIPT_ID", scriptId_);
   bootJs.setVar("RANDOMSEED", WRandom::get());
@@ -351,7 +355,7 @@ void WebRenderer::streamBootContent(WebResponse& response,
   bootJs.setVar("AJAX_CANONICAL_URL",
 		safeJsStringLiteral(session_.ajaxCanonicalUrl(response)));
   bootJs.setVar("APP_CLASS", "Wt");
-  bootJs.setVar("PATH_INFO", WWebWidget::jsStringLiteral
+  bootJs.setVar("PATH_INFO", safeJsStringLiteral
 		(session_.pagePathInfo_));
 
   bootJs.setCondition("COOKIE_CHECKS", conf.cookieChecks());
@@ -607,12 +611,29 @@ void WebRenderer::serveJavaScriptUpdate(WebResponse& response)
     out << collectedJS1_.str() << collectedJS2_.str();
 
     if (response.isWebSocketMessage()) {
+      renderWsRequestsDone(out);
+
       LOG_DEBUG("jsSynced(false) after rendering websocket message");
       setJSSynced(false);
     }
   }
 
   out.spool(response.out());
+}
+
+void WebRenderer::renderWsRequestsDone(WStringStream &out)
+{
+  if (!wsRequestsToHandle_.empty()) {
+    out << session_.app()->javaScriptClass()
+	<< "._p_.wsRqsDone(";
+    for (std::size_t i = 0; i < wsRequestsToHandle_.size(); ++i) {
+      if (i != 0)
+	out << ',';
+      out << wsRequestsToHandle_[i];
+    }
+    out << ");";
+    wsRequestsToHandle_.clear();
+  }
 }
 
 void WebRenderer::addContainerWidgets(WWebWidget *w,
@@ -687,7 +708,7 @@ void WebRenderer::addResponseAckPuzzle(WStringStream& out)
    * continue. TO BE DONE.
    */
   out << session_.app()->javaScriptClass()
-      << "._p_.response(" << expectedAckId_;
+      << "._p_.response(" << ++expectedAckId_;
   if (!puzzle.empty())
     out << "," << puzzle;
   out << ");";
@@ -884,6 +905,7 @@ void WebRenderer::serveMainscript(WebResponse& response)
     }
   } else {
     expectedAckId_ = scriptId_ = WRandom::get();
+    ackErrs_ = 0;
   }
 
   WApplication *app = session_.app();
@@ -968,10 +990,16 @@ void WebRenderer::serveMainscript(WebResponse& response)
      */
     std::string params;
     if (session_.type() == WidgetSet) {
-      const Http::ParameterMap& m = session_.env().getParameterMap();
-
-      for (Http::ParameterMap::const_iterator i = m.begin();
-	   i != m.end(); ++i) {
+      const Http::ParameterMap *m = &session_.env().getParameterMap();
+      Http::ParameterMap::const_iterator it = m->find("Wt-params");
+      Http::ParameterMap wtParams;
+      if (it != m->end()) {
+	// Parse and reencode Wt-params, so it's definitely safe
+	Http::Request::parseFormUrlEncoded(it->second[0], wtParams);
+	m = &wtParams;
+      }
+      for (Http::ParameterMap::const_iterator i = m->begin();
+	   i != m->end(); ++i) {
 	if (!params.empty())
 	  params += '&';
 	params
@@ -1968,6 +1996,11 @@ std::string WebRenderer::headDeclarations() const
   }
 
   return result.str();
+}
+
+void WebRenderer::addWsRequestId(int wsRqId)
+{
+  wsRequestsToHandle_.push_back(wsRqId);
 }
 
 }

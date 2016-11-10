@@ -70,7 +70,7 @@ WPdfImage::WPdfImage(const WLength& width, const WLength& height,
   HPDF_Page_SetHeight(page_, height_.toPixels());
   HPDF_Page_GSave(page_);
 
-  trueTypeFonts_ = new FontSupport(this);
+  trueTypeFonts_ = new FontSupport(this, FontSupport::TrueTypeOnly);
 
 #if HPDF_VERSION_ID>=20300
   HPDF_UseUTFEncodings(pdf_);
@@ -92,15 +92,22 @@ WPdfImage::WPdfImage(HPDF_Doc pdf, HPDF_Page page, HPDF_REAL x, HPDF_REAL y,
 
   font_ = 0;
 
-  trueTypeFonts_ = new FontSupport(this);
+  trueTypeFonts_ = new FontSupport(this, FontSupport::TrueTypeOnly);
 }
 
 WPdfImage::~WPdfImage()
 {
   beingDeleted();
 
-  if (myPdf_)
+  if (myPdf_) {
+    // clear graphics state stack to avoid leaking memory in libharu
+    // see bug #3979
+    HPDF_Page page = HPDF_GetCurrentPage(pdf_);
+    if (page)
+      while (HPDF_Page_GetGStateDepth(page) > 1)
+        HPDF_Page_GRestore(page);
     HPDF_Free(pdf_);
+  }
 
   delete trueTypeFonts_;
 }
@@ -524,7 +531,7 @@ void WPdfImage::drawText(const WRectF& rect,
 {
   // FIXME: textFlag
   
-  if (clipPoint && painter()) {
+  if (clipPoint && painter() && !painter()->clipPath().isEmpty()) {
     if (!painter()->clipPathTransform().map(painter()->clipPath())
 	  .isPointInPath(painter()->worldTransform().map(*clipPoint)))
       return;

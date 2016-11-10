@@ -8,7 +8,8 @@
 
 WT_DECLARE_WT_MEMBER
 (1, JavaScriptConstructor, "WDialog",
- function(APP, el, titlebar, centerX, centerY, movedSignal, resizedSignal) {
+ function(APP, el, titlebar, movable, centerX, centerY, movedSignal, resizedSignal)
+ {
    jQuery.data(el, 'obj', this);
 
    var self = this;
@@ -78,7 +79,7 @@ WT_DECLARE_WT_MEMBER
      }
    };
 
-   if (titlebar) {
+   if (titlebar && movable) {
      titlebar.onmousedown = function(event) {
        var e = event||window.event;
        WT.capture(titlebar);
@@ -99,6 +100,19 @@ WT_DECLARE_WT_MEMBER
    }
 
    this.centerDialog = function() {
+     var pctMaxWidth = WT.parsePct(WT.css(el, 'max-width'), 0);
+     var pctMaxHeight = WT.parsePct(WT.css(el, 'max-height'), 0);
+
+     if (pctMaxWidth !== 0) {
+       var ws = WT.windowSize();
+       
+       var layout = jQuery.data(layoutContainer.firstChild, 'layout');
+       if (layout) {
+	 layout.setMaxSize(ws.x * pctMaxWidth / 100,
+			   ws.y * pctMaxHeight / 100);
+       }
+     }
+
      if (el.parentNode == null) {
        el = titlebar = null;
        return;
@@ -154,7 +168,6 @@ WT_DECLARE_WT_MEMBER
      el.style.width = Math.max(0, w) + 'px';
 
      newSize(w, h);
-
 
      self.centerDialog();
 
