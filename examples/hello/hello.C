@@ -111,12 +111,12 @@ void ReloadOnVisibleWidget<Base>::propagateSetVisible(bool visible)
 template<class Base>
 void ReloadOnVisibleWidget<Base>::render(Wt::WFlags<Wt::RenderFlag> flags)
 {
+	isNotStateless();
 	if(canOptimizeUpdates() && (flags & Wt::RenderFull) == 0)
 	{
 		bool visible = isVisible();
 		if(visible && !_wasVisible)
 		{
-			isNotStateless();
 			reload();
 		}
 
