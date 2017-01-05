@@ -26,8 +26,9 @@ namespace GS
 		void createDefaultAccounts(bool scheduleNext);
 		void recalculateAccountBalances(bool scheduleNext);
 		void createPendingCycleEntries(bool scheduleNext);
-		void _createPendingCycleEntries(bool scheduleNext);
 		void checkAbnormalRecords(bool scheduleNext);
+		
+		boost::posix_time::time_duration _createPendingCycleEntries(bool scheduleNext);
 
 		Wt::Dbo::Query<long long> _accountCheckAbnormal;
 		Wt::Dbo::Query<long long> _locationCheckAbnormal;

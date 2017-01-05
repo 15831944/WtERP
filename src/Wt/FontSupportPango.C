@@ -42,6 +42,16 @@ int pangoUnitsFromDouble(const double u)
   return (int) (u * PANGO_SCALE);
 }
 
+static Wt::FontSupport::EnabledFontFormats enabledFontFormats = Wt::FontSupport::AnyFont;
+
+void addTrueTypePattern(FcPattern *pattern, gpointer data)
+{
+  if (enabledFontFormats == Wt::FontSupport::TrueTypeOnly) {
+    FcChar8 font_format[] = "TrueType";
+    FcPatternAddString(pattern, "fontformat", font_format);
+  }
+}
+
 /*
  * A global font map, since this one leaks as hell, and it cannot stand
  * being used in thread local storage since cleanup (with thread exit)
@@ -77,8 +87,8 @@ FontSupport::Bitmap::~Bitmap()
   delete[] buffer_;
 }
 
-FontSupport::FontMatch::FontMatch(PangoFont *font)
-  : font_(font)
+FontSupport::FontMatch::FontMatch(PangoFont *font, PangoFontDescription *desc)
+  : font_(font), desc_(desc)
 { }
 
 std::string FontSupport::FontMatch::fileName() const
@@ -86,14 +96,19 @@ std::string FontSupport::FontMatch::fileName() const
   return FontSupport::fontPath(font_);
 }
 
-FontSupport::FontSupport(WPaintDevice *paintDevice)
+FontSupport::FontSupport(WPaintDevice *paintDevice, EnabledFontFormats enabledFontFormats)
   : device_(paintDevice),
+    enabledFontFormats_(enabledFontFormats),
     cache_(10)
 {
   PANGO_LOCK;
 
-  if (!pangoFontMap)
+  if (!pangoFontMap) {
     pangoFontMap = pango_ft2_font_map_new();
+
+    pango_ft2_font_map_set_default_substitute(PANGO_FT2_FONT_MAP(pangoFontMap),
+	addTrueTypePattern, NULL, NULL);
+  }
 
 #if PANGO_VERSION_MAJOR > 1 || PANGO_VERSION_MINOR > 21
   context_ = pango_font_map_create_context(pangoFontMap);
@@ -182,25 +197,28 @@ FontSupport::FontMatch FontSupport::matchFont(const WFont& f) const
   for (MatchCache::iterator i = cache_.begin(); i != cache_.end(); ++i) {
     if (i->font == f) {
       cache_.splice(cache_.begin(), cache_, i); // implement LRU
-      return FontMatch(i->match);
+      return FontMatch(i->match, i->desc);
     }
   }
 
   PANGO_LOCK;
 
+  enabledFontFormats = enabledFontFormats_;
+
   PangoFontDescription *desc = createFontDescription(f);
 
   PangoFont *match = pango_font_map_load_font(pangoFontMap, context_, desc);
   pango_context_set_font_description(context_, desc); // for layoutText()
-  pango_font_description_free(desc);
 
-  if (cache_.back().match)
+  if (cache_.back().match) {
     g_object_unref(cache_.back().match);
+    pango_font_description_free(cache_.back().desc);
+  }
 
   cache_.pop_back();
-  cache_.push_front(Matched(f, match));
+  cache_.push_front(Matched(f, match, desc));
 
-  return FontMatch(match);
+  return FontMatch(match, desc);
 }
 
 void FontSupport::addFontCollection(const std::string& directory,
@@ -241,9 +259,12 @@ GList *FontSupport::layoutText(const WFont& font,
 {
   PANGO_LOCK;
 
-  matchFont(font);
+  enabledFontFormats = enabledFontFormats_;
+
+  FontMatch match = matchFont(font);
   PangoAttrList *attrs = pango_attr_list_new();
 
+  pango_context_set_font_description(context_, match.pangoFontDescription());
   GList *items
     = pango_itemize(context_, utf8.c_str(), 0, utf8.length(), attrs, NULL);
 
@@ -283,6 +304,8 @@ void FontSupport::drawText(const WFont& font, const WRectF& rect,
 			   WFlags<AlignmentFlag> flags, const WString& text)
 {
   PANGO_LOCK;
+
+  enabledFontFormats = enabledFontFormats_;
 
   std::string utf8 = text.toUTF8();
 
@@ -326,7 +349,7 @@ void FontSupport::drawText(const WFont& font, const WRectF& rect,
      * same selection !
      */
     WString s = WString::fromUTF8(utf8.substr(item->offset,
-					      item->length));
+                                              item->length));
 
     device_->drawText(WRectF(x, rect.y(),
 			     1000, rect.height()),
@@ -349,6 +372,8 @@ void FontSupport::drawText(const WFont& font, const WRectF& rect,
 WFontMetrics FontSupport::fontMetrics(const WFont& font)
 {
   PANGO_LOCK;
+
+  enabledFontFormats = enabledFontFormats_;
 
   PangoFont *pangoFont = matchFont(font).pangoFont();
   PangoFontMetrics *metrics = pango_font_get_metrics(pangoFont, NULL);
@@ -378,6 +403,8 @@ WTextItem FontSupport::measureText(const WFont& font, const WString& text,
 				   double maxWidth, bool wordWrap)
 {
   PANGO_LOCK;
+
+  enabledFontFormats = enabledFontFormats_;
 
   /*
    * Note: accurate measuring on a bitmap requires that the transformation
@@ -469,6 +496,8 @@ void FontSupport::drawText(const WFont& font, const WRectF& rect,
 			   const WString& text)
 {
   PANGO_LOCK;
+
+  enabledFontFormats = enabledFontFormats_;
 
   PangoMatrix matrix;
   matrix.xx = transform.m11();

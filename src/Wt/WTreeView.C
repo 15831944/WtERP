@@ -938,18 +938,22 @@ WTreeView::WTreeView(WContainerWidget *parent)
     rowHeightRule_(0),
     rowWidthRule_(0),
     rowContentsWidthRule_(0),
-    borderColorRule_(0),
     c0StyleRule_(0),
     rootIsDecorated_(true),
     collapsed_(this),
     expanded_(this),
     viewportTop_(0),
     viewportHeight_(UNKNOWN_VIEWPORT_HEIGHT),
+    firstRenderedRow_(0),
+    validRowCount_(0),
     nodeLoad_(0),
     headerContainer_(0),
     contentsContainer_(0),
     scrollBarC_(0),
-    itemEvent_(impl_, "itemEvent")
+    firstRemovedRow_(0),
+    removedHeight_(0),
+    itemEvent_(impl_, "itemEvent"),
+    itemTouchEvent_(impl_, "itemTouchEvent")
 {
   setSelectable(false);
 
@@ -969,8 +973,6 @@ WTreeView::WTreeView(WContainerWidget *parent)
       /* bottom scrollbar */
       addCssRule
 	(".Wt-treeview .Wt-tv-rowc", "position: relative;", CSS_RULES_NAME);
-
-  setColumnBorder(white);
 
   if (parent)
     parent->addWidget(this);
@@ -1143,6 +1145,9 @@ WTreeView::~WTreeView()
 { 
   delete expandConfig_;
   delete rowHeightRule_;
+  delete rowWidthRule_;
+  delete rowContentsWidthRule_;
+  delete c0StyleRule_;
 
   impl_->clear();
 }
@@ -1214,19 +1219,6 @@ void WTreeView::setColumnHidden(int column, bool hidden)
 
     setColumnWidth(column, columnWidth(column));
   }
-}
-
-void WTreeView::setColumnBorder(const WColor& color)
-{
-  delete borderColorRule_;
-  borderColorRule_
-    = new WCssTextRule
-    (".Wt-treeview .Wt-tv-br, "          // header columns 1-n
-     ".Wt-treeview .header .Wt-tv-row, " // header column 0
-     ".Wt-treeview li .Wt-tv-c",         // data columns 0-n
-     "border-color: " + color.cssText(),
-     this);
-  WApplication::instance()->styleSheet().addRule(borderColorRule_);
 }
 
 void WTreeView::setHeaderHeight(const WLength& height)
@@ -1392,6 +1384,9 @@ void WTreeView::render(WFlags<RenderFlag> flags)
 
   if (flags & RenderFull) {
     defineJavaScript();
+
+    if (!itemTouchEvent_.isConnected()) 
+      itemTouchEvent_.connect(this, &WTreeView::onItemTouchEvent);
 
     if (!itemEvent_.isConnected()) {
       itemEvent_.connect(this, &WTreeView::onItemEvent);
@@ -1565,6 +1560,16 @@ void WTreeView::rerenderTree()
       if (firstTime)
 	connectObjJS(contentsContainer_->mouseWentUp(), "rootMouseUp");
     }
+
+#ifdef WT_CNOR
+    // workaround because cnor is a bit dumb and does not understand that it
+    // can convert EventSignal<TouchEvent>& to EventSignalBase&
+    EventSignalBase& a = rootNode_->touchStarted();
+#endif
+   
+    connectObjJS(rootNode_->touchStarted(), "touchStart");
+    connectObjJS(rootNode_->touchMoved(), "touchMove");
+    connectObjJS(rootNode_->touchEnded(), "touchEnd");
   }
 
   setRootNodeStyle();
@@ -1598,51 +1603,13 @@ void WTreeView::onItemEvent(std::string nodeAndColumnId, std::string type,
 {
   // nodeId and columnId are combined because WSignal needed to be changed
   // since MSVS 2012 does not support >5 arguments in std::bind()
-  std::vector<std::string> nodeAndColumnSplit;
-  boost::split(nodeAndColumnSplit, nodeAndColumnId, boost::is_any_of(":"));
-
-  WModelIndex index;
-
-  if (nodeAndColumnSplit.size() == 2) {
-    std::string nodeId = nodeAndColumnSplit[0];
-    int columnId = -1;
-    try {
-      columnId = boost::lexical_cast<int>(nodeAndColumnSplit[1]);
-    } catch (boost::bad_lexical_cast &e) {
-      LOG_ERROR("WTreeview::onEventItem: bad value for format 1: "
-		<< nodeAndColumnSplit[1]);
-    }
-
-    int column = (columnId == 0 ? 0 : -1);
-    for (unsigned i = 0; i < columns_.size(); ++i)
-      if (columns_[i].id == columnId) {
-	column = i;
-      break;
-    }
-
-    if (column != -1) {
-      WModelIndex c0index;
-      for (NodeMap::const_iterator i = renderedNodes_.begin();
-	   i != renderedNodes_.end(); ++i) {
-	if (i->second->id() == nodeId) {
-	  c0index = i->second->modelIndex();
-	  break;
-	}
-      }
-
-      if (c0index.isValid()) {
-	index = model()->index(c0index.row(), column, c0index.parent());
-      } else
-	LOG_ERROR("WTreeView::onEventItem: illegal node id: " << nodeId);
-    }
-  }
+  WModelIndex index = calculateModelIndex(nodeAndColumnId);
 
   /*
    * Every mouse event is emitted twice (because we don't prevent
    * the propagation because it will block the mouseWentUp event
    * and therefore result in mouseDragged being emitted (See #3879)
    */
-
   if (nodeAndColumnId.empty() && skipNextMouseEvent_) {
     skipNextMouseEvent_ = false; 
     return;
@@ -1664,8 +1631,63 @@ void WTreeView::onItemEvent(std::string nodeAndColumnId, std::string type,
   }
 }
 
+void WTreeView::onItemTouchEvent(std::string nodeAndColumnId, std::string type,
+				 std::string extra1, std::string extra2, WTouchEvent event)
+{
+  // nodeId and columnId are combined because WSignal needed to be changed
+  // since MSVS 2012 does not support >5 arguments in std::bind()
+  std::vector<WModelIndex> index;
+  index.push_back(calculateModelIndex(nodeAndColumnId));
+
+  if (type == "touchstart")
+    handleTouchStart(index, event);
+}
+
+WModelIndex WTreeView::calculateModelIndex(std::string nodeAndColumnId)
+{
+  std::vector<std::string> nodeAndColumnSplit;
+  boost::split(nodeAndColumnSplit, nodeAndColumnId, boost::is_any_of(":"));
+
+  WModelIndex index;
+
+  if (nodeAndColumnSplit.size() == 2) {
+    std::string nodeId = nodeAndColumnSplit[0];
+    int columnId = -1;
+    try {
+      columnId = boost::lexical_cast<int>(nodeAndColumnSplit[1]);
+    } catch (boost::bad_lexical_cast &e) {
+      LOG_ERROR("WTreeView::calculateModelIndex: bad value for format 1: "
+	<< nodeAndColumnSplit[1]);
+    }
+
+    int column = (columnId == 0 ? 0 : -1);
+    for (unsigned i = 0; i < columns_.size(); ++i)
+      if (columns_[i].id == columnId) {
+	column = i;
+	break;
+      }
+
+    if (column != -1) {
+      WModelIndex c0index;
+      for (NodeMap::const_iterator i = renderedNodes_.begin();
+	    i != renderedNodes_.end(); ++i) {
+	if (i->second->id() == nodeId) {
+          c0index = i->second->modelIndex();
+ 	  break;
+	}
+      }
+
+      if (c0index.isValid())
+	index = model()->index(c0index.row(), column, c0index.parent());
+      else
+        LOG_ERROR("WTreeView::calculateModelIndex: illegal node id: " << nodeId);
+    }
+  }
+  return index;
+}
+
 int WTreeView::subTreeHeight(const WModelIndex& index,
-			     int lowerBound, int upperBound)
+			     int lowerBound, int upperBound) const
 {
   int result = 0;
 
@@ -1847,9 +1869,11 @@ WWidget *WTreeView::widgetForIndex(const WModelIndex& index) const
     WWidget *parent = widgetForIndex(index.parent());
     WTreeViewNode *parentNode = dynamic_cast<WTreeViewNode *>(parent);
 
-    if (parentNode)
-      return parentNode->widgetForModelRow(index.row());
-    else
+    if (parentNode) {
+      int row = getIndexRow(index, parentNode->modelIndex(), 0,
+			    std::numeric_limits<int>::max());
+      return parentNode->widgetForModelRow(row);
+    } else
       return parent;
   }
 }
@@ -2138,30 +2162,9 @@ void WTreeView::modelRowsAboutToBeRemoved(const WModelIndex& parent,
 	      delete node;
 	    }
 	  }
-
-	  parentNode->normalizeSpacers();
-
-	  parentNode->adjustChildrenHeight(-removedHeight_);
-	  parentNode->shiftModelIndexes(start, -count);
-
-	  // Update graphics for last node in parent, if we are removing rows
-	  // at the back. This is not affected by widgetForModelRow() returning
-	  // accurate information of rows just deleted and indexes not yet
-	  // shifted
-	  if (end == model()->rowCount(parent) - 1 && start >= 1) {
-	    WTreeViewNode *n = dynamic_cast<WTreeViewNode *>
-	      (parentNode->widgetForModelRow(start - 1));
-
-	    if (n)
-	      n->updateGraphics(true, !model()->hasChildren(n->modelIndex()));
-	  }
 	} /* else:
 	     children not loaded -- so we do not need to bother
 	  */
-
-	// Update graphics for parent when all rows have been removed
-	if (model()->rowCount(parent) == count)
-	  parentNode->updateGraphics(parentNode->isLast(), true);
       } else {
 	/*
 	 * Only if the parent is in fact expanded, the spacer reduces
@@ -2181,10 +2184,6 @@ void WTreeView::modelRowsAboutToBeRemoved(const WModelIndex& parent,
 		firstRemovedRow_ = renderedRow(childIndex, s);
 	    }
 	  }
-
-	  WTreeViewNode *node = s->node();
-	  s->setRows(s->rows() - removedHeight_); // could delete s!
-	  node->adjustChildrenHeight(-removedHeight_);
         }
       }
     } else {
@@ -2200,6 +2199,57 @@ void WTreeView::modelRowsAboutToBeRemoved(const WModelIndex& parent,
 void WTreeView::modelRowsRemoved(const WModelIndex& parent,
 				 int start, int end)
 {
+  int count = end - start + 1;
+
+  if (renderState_ != NeedRerender && renderState_ != NeedRerenderData) {
+    WWidget *parentWidget = widgetForIndex(parent);
+
+    if (parentWidget) {
+      WTreeViewNode *parentNode = dynamic_cast<WTreeViewNode *>(parentWidget);
+
+      if (parentNode) {
+	if (parentNode->childrenLoaded()) {
+	  parentNode->normalizeSpacers();
+	  parentNode->adjustChildrenHeight(-removedHeight_);
+	  parentNode->shiftModelIndexes(start, -count);
+
+	  // Update graphics for last node in parent, if we are removing rows
+	  // at the back. This is not affected by widgetForModelRow() returning
+	  // accurate information of rows just deleted and indexes not yet
+	  // shifted
+	  if (end >= model()->rowCount(parent) && start >= 1) {
+	    WTreeViewNode *n = dynamic_cast<WTreeViewNode *>
+	      (parentNode->widgetForModelRow(start - 1));
+
+	    if (n)
+	      n->updateGraphics(true, !model()->hasChildren(n->modelIndex()));
+	  }
+	} /* else:
+	     children not loaded -- so we do not need to bother
+	  */
+
+	// Update graphics for parent when all rows have been removed
+        if (model()->rowCount(parent) == 0 && count != 0)
+	  parentNode->updateGraphics(parentNode->isLast(), true);
+      } else {
+	/*
+	 * Only if the parent is in fact expanded, the spacer reduces
+	 * in size
+	 */
+	if (isExpanded(parent)) {
+	  RowSpacer *s = dynamic_cast<RowSpacer *>(parentWidget);
+	  WTreeViewNode *node = s->node();
+	  s->setRows(s->rows() - removedHeight_); // could delete s!
+	  node->adjustChildrenHeight(-removedHeight_);
+        }
+      }
+    } else {
+      /*
+	parentWidget is 0: it means it is not even part of any spacer.
+      */
+    }
+  }
+
   if (renderState_ != NeedRerender && renderState_ != NeedRerenderData)
     renderedRowsChanged(firstRemovedRow_, -removedHeight_);
 }
@@ -2291,7 +2341,7 @@ int WTreeView::renderedRow(const WModelIndex& index, WWidget *w,
 
 int WTreeView::getIndexRow(const WModelIndex& child,
 			   const WModelIndex& ancestor,
-			   int lowerBound, int upperBound)
+			   int lowerBound, int upperBound) const
 {
   if (!child.isValid() || child == ancestor)
     return 0;

@@ -665,6 +665,10 @@ public:
    * the absolute URL at which the application is deployed, up to the
    * last '/'.
    *
+   * The default implementation is not complete: it does not handle relative
+   * URL path segments with '..'. It just handles the cases that are necessary for
+   * Wt.
+   *
    * This is not used in the library, except when a public URL is
    * needed, e.g. for inclusion in an email.
    *
@@ -1699,7 +1703,7 @@ public:
    */
   void removeMetaLink(const std::string &href);
 
-  /*! \brief Adds an HTML meta header.
+  /*! \brief Adds a "name" HTML meta header.
    *
    * \sa addMetaHeader(MetaHeaderType, const std::string&, const WString&, const std::string&)
    */
@@ -1736,6 +1740,12 @@ public:
    */
   void addMetaHeader(MetaHeaderType type, const std::string& name,
 		     const WString& content, const std::string& lang = "");
+
+  /*! \brief Returns a meta header value.
+   *
+   * \sa addMetaHeader()
+   */
+  WString metaHeader(MetaHeaderType type, const std::string& name) const;
 
   /*! \brief Removes one or all meta headers.
    *
@@ -1861,11 +1871,6 @@ public:
    * The integer parameter is the request size that was received in bytes.
    */
   Signal< ::int64_t >& requestTooLarge() { return requestTooLarge_; }
-
-  /*
-   * For persistent sessions only: redirect to another session.
-   */
-  void redirectToSession(const std::string& sessionId);
 
   /*
    * For persistent sessions only: return whether the persistent session

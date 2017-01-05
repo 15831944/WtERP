@@ -50,15 +50,22 @@ public:
   };
 #endif
 
+  /*  For limiting font formats in FontMatch constructor
+   */
+  enum EnabledFontFormats { AnyFont,      // Any available font format
+                            TrueTypeOnly  // Only .ttf or .ttc fonts
+  };
+
   class FontMatch {
   public:
 #ifdef HAVE_PANGO
 
-    FontMatch(PangoFont *font);
+    FontMatch(PangoFont *font, PangoFontDescription *desc);
 
     bool matched() const { return true; }
     std::string fileName() const;
     PangoFont *pangoFont() const { return font_; }
+    PangoFontDescription *pangoFontDescription() const { return desc_; }
 
 #else
 
@@ -78,13 +85,14 @@ public:
 
 #ifdef HAVE_PANGO
     mutable PangoFont *font_;
+    PangoFontDescription *desc_;
 #else
     std::string file_;
     double quality_;
 #endif
   };
 
-  FontSupport(WPaintDevice *device);
+  FontSupport(WPaintDevice *device, EnabledFontFormats enabledFontFormats=AnyFont);
   ~FontSupport();
 
   void setDevice(WPaintDevice *device);
@@ -159,13 +167,15 @@ private:
 
   PangoContext *context_;
   PangoFont *currentFont_;
+  EnabledFontFormats enabledFontFormats_;
 
   struct Matched {
     WFont font;
     PangoFont *match;
+    PangoFontDescription *desc;
 
-    Matched() : font(), match(0) { }
-    Matched(const WFont& f, PangoFont *m) : font(f), match(m) { }
+    Matched() : font(), match(0), desc(0) { }
+    Matched(const WFont& f, PangoFont *m, PangoFontDescription *d) : font(f), match(m), desc(d) { }
   };
 
   typedef std::list<Matched> MatchCache;

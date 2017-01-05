@@ -164,7 +164,8 @@ WAxis::WAxis()
     padding_(0),
     tickDirection_(Outwards),
     partialLabelClipping_(true),
-    inverted_(false)
+    inverted_(false),
+    renderingMirror_(false)
 {
   titleFont_.setFamily(WFont::SansSerif, "Arial");
   titleFont_.setSize(WFont::FixedSize, WLength(12, WLength::Point));
@@ -517,7 +518,8 @@ bool WAxis::prepareRender(Orientation orientation, double length) const
    * Iterate twice, since we adjust the render extrema based on the size
    * and vice-versa
    */
-  for (unsigned it = 0; it < 2; ++it) {
+  unsigned numIterations = 2;
+  for (unsigned it = 0; it < numIterations; ++it) {
     double rs = totalRenderStart; 
     double TRR = totalRenderRange;
     totalRenderRange = 0;
@@ -532,7 +534,8 @@ bool WAxis::prepareRender(Orientation orientation, double length) const
       s.renderStart = rs;
       s.renderLength = diff / TRR * totalRenderLength;
 
-      if (i == 0) {
+      if (i == 0 && it != 2) {
+	double oldRenderInterval = renderInterval_;
 	renderInterval_ = labelInterval_;
 	if (renderInterval_ == 0) {
 	  if (scale_ == CategoryScale) {
@@ -545,6 +548,12 @@ bool WAxis::prepareRender(Orientation orientation, double length) const
 	    double numLabels = calcAutoNumLabels(orientation, s);
 
 	    renderInterval_ = round125(diff / numLabels);
+
+	    if (it == 1 && renderInterval_ != oldRenderInterval) {
+	      // If render interval changes in the second iteration,
+	      // iterate once more
+	      numIterations = 3;
+	    }
 	  }
 	}
       }
@@ -555,7 +564,7 @@ bool WAxis::prepareRender(Orientation orientation, double length) const
       }
 
       if (scale_ == LinearScale) {
-	if (it == 0) {
+	if (it < numIterations - 1) {
 	  if (roundMinimumLimit) {
 	    s.renderMinimum
 	      = roundDown125(s.renderMinimum, renderInterval_);
@@ -1011,7 +1020,7 @@ double WAxis::mapToDevice(double value) const
   if (Utils::isNaN(value))
       return value;
 
-  for (int i = 0; i < segments_.size(); ++i) {
+  for (std::size_t i = 0; i < segments_.size(); ++i) {
     if (value <= segments_[i].renderMaximum ||
 	i == segments_.size() - 1) {
       return mapToDevice(value, i);
@@ -1052,7 +1061,7 @@ double WAxis::mapToDevice(double u, int segment) const
 
 bool WAxis::isOnAxis(double d) const
 {
-  for (int i = 0; i < segments_.size(); ++i) {
+  for (std::size_t i = 0; i < segments_.size(); ++i) {
     if (d >= segments_[i].renderMinimum &&
 	d <= segments_[i].renderMaximum) {
       return true;
@@ -1227,10 +1236,11 @@ void WAxis::setZoomRangeFromClient(double minimum, double maximum)
   }
   double min = drawnMinimum();
   double max = drawnMaximum();
-  if (minimum <= min) {
+  double zoom = (max - min) / (maximum - minimum);
+  if (minimum <= min || !(zoom > 1.01)) {
     minimum = AUTO_MINIMUM;
   }
-  if (maximum >= max) {
+  if (maximum >= max || !(zoom > 1.01)) {
     maximum = AUTO_MAXIMUM;
   }
   zoomMin_ = minimum;
@@ -1301,7 +1311,8 @@ void WAxis::getLabelTicks(std::vector<TickLabel>& ticks, int segment, AxisConfig
 
   switch (scale_) {
   case CategoryScale: {
-    int renderInterval = std::max(1, static_cast<int>(renderInterval_));
+    int renderInterval = std::max(1, 
+				  static_cast<int>(renderInterval_ / divisor));
     if (renderInterval == 1) {
       ticks.push_back(TickLabel(s.renderMinimum, TickLabel::Long));
       for (int i = (int)(s.renderMinimum + 0.5); i < s.renderMaximum; ++i) {
@@ -1323,15 +1334,29 @@ void WAxis::getLabelTicks(std::vector<TickLabel>& ticks, int segment, AxisConfig
   }
   case LinearScale: {
     double interval = renderInterval_ / divisor;
+    // Start labels at a round minimum
+    double minimum = roundUp125(s.renderMinimum, interval);
+    bool firstTickIsLong = true;
+    if (labelBasePoint_ >= minimum &&
+	labelBasePoint_ <= s.renderMaximum) {
+      // Make sure the base point label is included as a long tick
+      int n = (int)((minimum - labelBasePoint_) / (- 2.0 * interval));
+      minimum = labelBasePoint_ - n * 2.0 * interval;
+      if (minimum - interval >= s.renderMinimum) {
+	// We can still put a short tick before the first long tick
+	minimum -= interval;
+	firstTickIsLong = false;
+      }
+    }
     for (int i = 0;; ++i) {
-      double v = s.renderMinimum + interval * i;
+      double v = minimum + interval * i;
 
       if (v - s.renderMaximum > EPSILON * interval)
 	break;
 
       WString t;
 
-      if (i % 2 == 0) {
+      if (i % 2 == (firstTickIsLong ? 0 : 1)) {
 	if (hasLabelTransformOnSide(config.side)) {
 #ifndef WT_TARGET_JAVA
 	  t = label(labelTransform(config.side)(v));
@@ -1344,7 +1369,7 @@ void WAxis::getLabelTicks(std::vector<TickLabel>& ticks, int segment, AxisConfig
       }
  
       ticks.push_back
-	(TickLabel(v, i % 2 == 0 ? TickLabel::Long : TickLabel::Short, t));
+	(TickLabel(v, i % 2 == (firstTickIsLong ? 0 : 1) ? TickLabel::Long : TickLabel::Short, t));
     }
 
     break;
@@ -1662,36 +1687,6 @@ double WAxis::calcAutoNumLabels(Orientation orientation, const Segment& s) const
     return s.renderLength / AUTO_V_LABEL_PIXELS;
 }
 
-namespace {
-  static std::vector<WString> splitLabel(WString text)
-  {
-    std::string s = text.toUTF8();
-    std::vector<std::string> splitText;
-    boost::split(splitText, s, boost::is_any_of("\n"));
-    std::vector<WString> result;
-    for (std::size_t i = 0; i < splitText.size(); ++i) {
-      result.push_back(splitText[i]);
-    }
-    return result;
-  }
-
-  static double calcYOffset(int lineNb,
-			    int nbLines,
-			    double lineHeight,
-			    WFlags<AlignmentFlag> verticalAlign)
-  {
-    if (verticalAlign == AlignMiddle) {
-      return - ((nbLines - 1) * lineHeight / 2.0) + lineNb * lineHeight;
-    } else if (verticalAlign == AlignTop) {
-      return lineNb * lineHeight;
-    } else if (verticalAlign == AlignBottom) {
-      return - (nbLines - 1 - lineNb) * lineHeight;
-    } else {
-      return 0;
-    }
-  }
-}
-
 void WAxis::render(WPainter& painter,
 		   WFlags<AxisProperty> properties,
 		   const WPointF& axisStart,
@@ -1764,7 +1759,8 @@ void WAxis::render(WPainter& painter,
       textPens.push_back(textPen());
     }
     for (unsigned level = 1; level <= pens.size(); ++level) {
-      WPainterPath ticksPath;
+      WPainterPath shortTicksPath;
+      WPainterPath longTicksPath;
 
       std::vector<WAxis::TickLabel> ticks;
       AxisConfig cfg;
@@ -1772,67 +1768,79 @@ void WAxis::render(WPainter& painter,
       cfg.side = side;
       getLabelTicks(ticks, segment, cfg);
 
+      std::vector<WString> labels;
+      WPainterPath path;
       for (unsigned i = 0; i < ticks.size(); ++i) {
 	double u = mapToDevice(ticks[i].u, segment);
 	WPointF p = interpolate(axisStart, axisEnd, u);
 
 	if ((properties & Line) &&
 	    ticks[i].tickLength != WAxis::TickLabel::Zero) {
-	  double ts = tickStart;
-	  double te = tickEnd;
-
 	  if (ticks[i].tickLength == WAxis::TickLabel::Short) {
-	    ts = tickStart / 2;
-	    te = tickEnd / 2;
-	  }
-
-	  if (vertical) {
-	    ticksPath.moveTo(WPointF(p.x() + ts, p.y()));
-	    ticksPath.lineTo(WPointF(p.x() + te, p.y()));
-	  } else {
-	    ticksPath.moveTo(WPointF(p.x(), p.y() + ts));
-	    ticksPath.lineTo(WPointF(p.x(), p.y() + te));
+	    shortTicksPath.moveTo(p);
+	  } else { // Long
+	    longTicksPath.moveTo(p);
 	  }
 	}
 
 	if ((properties & Labels) && !ticks[i].label.empty()) {
-	  WPointF labelP;
-
-	  if (vertical)
-	    labelP = WPointF(p.x() + labelPos, p.y());
-	  else
-	    labelP = WPointF(p.x(), p.y() + labelPos);
-
-	  renderLabel(painter, ticks[i].label, labelP,
-		      labelFlags, labelAngle(), 3, transform, textPens[level-1]);
+	  path.moveTo(p);
+	  labels.push_back(ticks[i].label);
 	}
       }
+      WTransform t = vertical ? WTransform(1,0,0,1, labelPos, 0) : WTransform(1,0,0,1,0, labelPos);
+      renderLabels(painter, labels, path, labelFlags, labelAngle(), 3,
+		   t * transform, textPens[level-1]);
 
-      if (!ticksPath.isEmpty())
-	painter.strokePath(transform.map(ticksPath).crisp(), pens[level-1]);
+      WPen oldPen = painter.pen();
+      painter.setPen(pens[level-1]);
+      if (shortTicksPath.segments().size() != 0) {
+	WPainterPath stencil;
+	if (vertical) {
+	  stencil.moveTo(tickStart / 2, 0);
+	  stencil.lineTo(tickEnd / 2, 0);
+	} else {
+	  stencil.moveTo(0, tickStart / 2);
+	  stencil.lineTo(0, tickEnd / 2);
+	}
+	painter.drawStencilAlongPath(stencil, transform.map(shortTicksPath).crisp(), false);
+      }
+      if (longTicksPath.segments().size() != 0) {
+	WPainterPath stencil;
+	if (vertical) {
+	  stencil.moveTo(tickStart, 0);
+	  stencil.lineTo(tickEnd, 0);
+	} else {
+	  stencil.moveTo(0, tickStart);
+	  stencil.lineTo(0, tickEnd);
+	}
+	painter.drawStencilAlongPath(stencil, transform.map(longTicksPath).crisp(), false);
+      }
+      painter.setPen(oldPen);
     }
   }
 
   painter.setFont(oldFont1);
 }
 
-void WAxis::renderLabel(WPainter& painter,
-			const WString& text, const WPointF& p,
+void WAxis::renderLabels(WPainter &painter,
+			const std::vector<WString> &labels,
+			const WPainterPath &path,
 			WFlags<AlignmentFlag> flags,
 			double angle, int margin,
-			WTransform transform,
-			const WPen& pen) const
+			const WTransform &transform,
+			const WPen &pen) const
 {
+  if (path.segments().size() == 0)
+    return;
   AlignmentFlag horizontalAlign = flags & AlignHorizontalMask;
   AlignmentFlag verticalAlign = flags & AlignVerticalMask;
 
   double width = 1000;
   double height = 14;
 
-  WPointF pos = p;
-
-  double left = pos.x();
-  double top = pos.y();
+  double left = 0.0;
+  double top = 0.0;
 
   switch (horizontalAlign) {
   case AlignLeft:
@@ -1864,13 +1872,11 @@ void WAxis::renderLabel(WPainter& painter,
   painter.setPen(pen);
 #endif
 
-  std::vector<WString> splitText = splitLabel(text);
-
   double lineHeight = height;
-  if (splitText.size() > 1 && painter.device()->features() & WPaintDevice::HasFontMetrics) {
+  if (painter.device()->features() & WPaintDevice::HasFontMetrics) {
     WMeasurePaintDevice device(painter.device());
     WPainter measPainter(&device);
-    measPainter.drawText(WRectF(0,0,100,100), AlignMiddle | AlignCenter, TextSingleLine, splitText[0], 0);
+    measPainter.drawText(WRectF(0,0,100,100), AlignMiddle | AlignCenter, TextSingleLine, "Sfjh", 0);
     lineHeight = device.boundingRect().height();
   }
 
@@ -1878,28 +1884,14 @@ void WAxis::renderLabel(WPainter& painter,
   if (!partialLabelClipping_ && clipping && tickDirection() == Outwards && location() != ZeroValue) {
     painter.setClipping(false);
   }
-  WPointF transformedPoint = transform.map(pos);
-  if (angle == 0) {
-    for (int i = 0; i < splitText.size(); ++i) {
-      double yOffset = calcYOffset(i, splitText.size(), lineHeight, verticalAlign);
-      WTransform offsetTransform = WTransform(1, 0, 0, 1, 0, yOffset);
-      painter.drawText((offsetTransform * transform).map(WRectF(left, top, width, height)),
-			horizontalAlign | verticalAlign, TextSingleLine, splitText[i],
-			clipping && !partialLabelClipping_ ? &transformedPoint : 0);
-    }
-  } else {
-    painter.save();
-    painter.translate(transform.map(pos));
-    painter.rotate(-angle);
-    transformedPoint = painter.worldTransform().inverted().map(transformedPoint);
-    for (int i = 0; i < splitText.size(); ++i) {
-      double yOffset = calcYOffset(i, splitText.size(), lineHeight, verticalAlign);
-      painter.drawText(WRectF(left - pos.x(), top - pos.y() + yOffset, width, height),
-		       horizontalAlign | verticalAlign, TextSingleLine, splitText[i],
-		       clipping && !partialLabelClipping_ ? &transformedPoint : 0);
-    }
-    painter.restore();
-  }
+
+  painter.drawTextOnPath(WRectF(left, top, width, height),
+			 horizontalAlign | verticalAlign,
+			 labels, transform,
+			 path,
+			 angle, lineHeight,
+			 clipping && !partialLabelClipping_);
+
   painter.setClipping(clipping);
 
   painter.setPen(oldPen);

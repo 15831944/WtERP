@@ -465,6 +465,7 @@ namespace GS
 			}
 		}, std::placeholders::_1));
 
+		cityView->load();
 		cityView->model()->setValue(CityFormModel::countryField, model()->value(LocationFormModel::countryField));
 		cityView->submitted().connect(std::bind([=]() {
 			TRANSACTION(APP);

@@ -100,13 +100,15 @@ namespace GS
 		}
 	}
 
-	void BaseAdminRecord::setCreatedByValues()
+	void BaseAdminRecord::setCreatedByValues(bool setRegion)
 	{
-		Wt::Dbo::ptr<User> userPtr = APP->authLogin().userPtr();
-		if(userPtr)
+		WApplication *app = APP;
+		if(app->authLogin().userPtr())
 		{
-			creatorUserPtr = userPtr;
-			regionPtr = userPtr->regionPtr;
+			creatorUserPtr = app->authLogin().userPtr();
+
+			if(setRegion)
+				regionPtr = app->authLogin().userPtr()->regionPtr;
 		}
 	}
 

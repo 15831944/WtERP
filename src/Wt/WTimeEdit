@@ -17,7 +17,6 @@ namespace Wt {
 /*! \class WTimeEdit Wt/WTimeEdit Wt/WTimeEdit
  *  \brief A Time field editor
  *
- *  \sa WTimePicker
  *  \sa WTime
  *  \sa WTimeValidator
  *
@@ -29,6 +28,8 @@ public:
     /*! \brief Creates a new time edit.
      */
     WTimeEdit(WContainerWidget *parent = 0);
+
+    virtual ~WTimeEdit();
 
     /*! \brief Sets the time
      *
@@ -82,21 +83,30 @@ public:
      */
     WTime top() const;
 
+    void setHourStep(int step);
+    int hourStep() const;
+
+    void setMinuteStep(int step);
+    int minuteStep() const;
+
+    void setSecondStep(int step);
+    int secondStep() const;
+
+    void setMillisecondStep(int step);
+    int millisecondStep() const;
+
+    void setWrapAroundEnabled(bool rollover);
+    bool wrapAroundEnabled() const;
+
     virtual void load();
 
 protected:
     virtual void render(WFlags<RenderFlag> flags);
     virtual void propagateSetEnabled(bool enabled);
 
-    /*! \brief Sets the value from the time scroller to the line edit.
-     */
-    virtual void setFromTimePicker();
-
-    /*! \brief Sets the value from the line edit to the time scroller.
-     */
-    virtual void setFromLineEdit();
-
 private:
+    void setFromTimePicker();
+    void setFromLineEdit();
     WPopupWidget *popup_;
     WTimePicker *timePicker_;
 

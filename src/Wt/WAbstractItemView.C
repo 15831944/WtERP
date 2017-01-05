@@ -23,6 +23,8 @@
 
 namespace Wt {
 
+LOGGER("WAbstractItemView");
+
 class DefaultPagingBar : public WContainerWidget
 {
 public:
@@ -243,10 +245,12 @@ WAbstractItemView::WAbstractItemView(WContainerWidget *parent)
     doubleClicked_(this),
     mouseWentDown_(this),
     mouseWentUp_(this),
+    touchStart_(this),
     selectionChanged_(this),
     pageChanged_(this),
     editTriggers_(DoubleClicked),
-    editOptions_(SingleEditor)
+    editOptions_(SingleEditor),
+    touchRegistered_(false)
 {
   setImplementation(impl_);
 
@@ -902,8 +906,9 @@ void WAbstractItemView::extendSelection(const WModelIndex& index)
       extendSelection(model_->index(index.row(), 0, index.parent()));
       return;
     }
+  }
 
-    /*
+  /*
      * Expand current selection. If index is within or below the
      * current selection, we select from the top item to index. If index
      * is above the current selection, select everything from the
@@ -912,15 +917,28 @@ void WAbstractItemView::extendSelection(const WModelIndex& index)
      * For a WTreeView, only indexes with expanded ancestors can be
      * part of the selection: this is asserted when collapsing a index.
      */
-    WModelIndex top = Utils::first(selectionModel_->selection_);
-    if (top < index) {
-      clearSelection();
-      selectRange(top, index);
-    } else {
-      WModelIndex bottom = Utils::last(selectionModel_->selection_);
-      clearSelection();
-      selectRange(index, bottom);
-    }
+  WModelIndex top = Utils::first(selectionModel_->selection_);
+  if (top < index) {
+    clearSelection();
+    selectRange(top, index);
+  } else {
+    WModelIndex bottom = Utils::last(selectionModel_->selection_);
+    clearSelection();
+    selectRange(index, bottom);
+  }
+  selectionChanged_.emit();
+}
+
+
+void WAbstractItemView::extendSelection(const std::vector<WModelIndex>& indices)
+{
+  const WModelIndex &firstIndex = indices[0];
+  const WModelIndex &secondIndex = indices[indices.size()-1];
+  if (indices.size() > 1) {
+    if(firstIndex.row() > secondIndex.row())
+      selectRange(secondIndex, firstIndex);
+    else
+      selectRange(firstIndex, secondIndex);
   }
 
   selectionChanged_.emit();
@@ -966,6 +984,29 @@ void WAbstractItemView::selectionHandleClick(const WModelIndex& index,
       selectionChanged_.emit();
     } else
       select(index, Select);
+  }
+}
+
+void WAbstractItemView::selectionHandleTouch(const std::vector<WModelIndex>& indices,
+					     const WTouchEvent& event)
+{
+  if (selectionMode_ == NoSelection)
+    return;
+
+  const WModelIndex &index = indices[0];
+
+  if (selectionMode_ == ExtendedSelection) {
+    if (event.touches().size() > 1)
+      extendSelection(indices);
+    else {
+      select(index, ToggleSelect);
+    }
+  } else {
+    if (isSelected(index)) {
+      clearSelection();
+      selectionChanged_.emit();
+    } else
+      select(index, ClearAndSelect);
   }
 }
 
@@ -1343,11 +1384,14 @@ void WAbstractItemView::handleDoubleClick(const WModelIndex& index,
 void WAbstractItemView::handleMouseDown(const WModelIndex& index,
 					const WMouseEvent& event)
 {
+  // Needed because mousedown signal is emitted after a touchstart signal
+  if (touchRegistered_)
+    return;
+
   bool doEdit = index.isValid() &&
     (editTriggers() & SelectedClicked) && isSelected(index);
 
   delayedClearAndSelectIndex_ = WModelIndex();
-
   if (index.isValid() && event.button() == WMouseEvent::LeftButton)
     selectionHandleClick(index, event.modifiers());
 
@@ -1355,12 +1399,34 @@ void WAbstractItemView::handleMouseDown(const WModelIndex& index,
     edit(index);
 
   mouseWentDown_.emit(index, event);
+  touchRegistered_ = false;
 }
 
 void WAbstractItemView::handleMouseUp(const WModelIndex& index,
 				      const WMouseEvent& event)
 {
   mouseWentUp_.emit(index, event);
+}
+
+void WAbstractItemView::handleTouchStart(const std::vector<WModelIndex>& indices,
+					   const WTouchEvent& event)
+{
+  const WModelIndex& index = indices[0];
+  touchRegistered_ = true;
+  delayedClearAndSelectIndex_ = WModelIndex();
+  if (indices.size() == 1) {
+
+    bool doEdit = index.isValid() &&
+        (editTriggers() & SelectedClicked) && isSelected(index);
+
+    if (doEdit)
+      edit(index);
+  }
+  if (indices[0].isValid() && indices[indices.size()-1].isValid()){
+    selectionHandleTouch(indices, event);
+  }
+
+  touchStart_.emit(index, event);
 }
 
 void WAbstractItemView::setEditTriggers(WFlags<EditTrigger> editTriggers)
@@ -1698,6 +1764,11 @@ EventSignal<WKeyEvent>& WAbstractItemView::keyWentUp()
 {
   impl_->setCanReceiveFocus(true);
   return impl_->keyWentUp();
+}
+
+void WAbstractItemView::setColumnBorder(const WColor &)
+{
+  LOG_WARN("setColumnBorder has no effect and has been deprecated. Use CSS instead!");
 }
 
 }

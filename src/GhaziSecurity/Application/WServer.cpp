@@ -109,11 +109,11 @@ void WServer::initialize()
 		{
 			_dboSession.dropTables();
 		}
-		catch(Wt::Dbo::Exception &e)
+		catch(const Wt::Dbo::Exception &e)
 		{
 			log("error") << "Database error dropping tables: " << e.what();
 		}
-		catch(std::exception &e)
+		catch(const std::exception &e)
 		{
 			log("error") << "Error dropping tables: " << e.what();
 		}
@@ -189,6 +189,7 @@ void WServer::initialize()
 			auto modifyRecord = _dboSession.add(new Permission(Permissions::ModifyRecord, "Modify records"));
 			auto removeRecord = _dboSession.add(new Permission(Permissions::RemoveRecord, "Remove records"));
 
+			auto viewUser = _dboSession.add(new Permission(Permissions::ViewUser, "View users"));
 			auto createUser = _dboSession.add(new Permission(Permissions::CreateUser, "Create users"));
 			auto modifyUser = _dboSession.add(new Permission(Permissions::ModifyUser, "Modify users"));
 			auto modifyUserPermission = _dboSession.add(new Permission(Permissions::ModifyUserPermission, "Modify user permissions"));
@@ -204,11 +205,16 @@ void WServer::initialize()
 			auto modifyOtherRegionRecord = _dboSession.add(new Permission(Permissions::ModifyOtherRegionRecord, "Modify records created by other regions"));
 			auto removeOtherRegionRecord = _dboSession.add(new Permission(Permissions::RemoveOtherRegionRecord, "Remove records created by other regions"));
 
+			auto viewRegion = _dboSession.add(new Permission(Permissions::ViewRegion, "View regions"));
+			auto createRegion = _dboSession.add(new Permission(Permissions::CreateRegion, "Create regions"));
+			auto modifyRegion = _dboSession.add(new Permission(Permissions::ModifyRegion, "Modify regions"));
+
 			auto globalAdministrator = _dboSession.add(new Permission(Permissions::GlobalAdministrator, "Global administrator permissions"));
 			globalAdministrator.modify()->linkedToCollection.insert(accessAdminPanel);
 			globalAdministrator.modify()->linkedToCollection.insert(createRecord);
 			globalAdministrator.modify()->linkedToCollection.insert(modifyRecord);
 			globalAdministrator.modify()->linkedToCollection.insert(removeRecord);
+			globalAdministrator.modify()->linkedToCollection.insert(viewUser);
 			globalAdministrator.modify()->linkedToCollection.insert(createUser);
 			globalAdministrator.modify()->linkedToCollection.insert(modifyUser);
 			globalAdministrator.modify()->linkedToCollection.insert(modifyUserPermission);
@@ -221,12 +227,16 @@ void WServer::initialize()
 			globalAdministrator.modify()->linkedToCollection.insert(viewOtherRegionRecord);
 			globalAdministrator.modify()->linkedToCollection.insert(modifyOtherRegionRecord);
 			globalAdministrator.modify()->linkedToCollection.insert(removeOtherRegionRecord);
+			globalAdministrator.modify()->linkedToCollection.insert(viewRegion);
+			globalAdministrator.modify()->linkedToCollection.insert(createRegion);
+			globalAdministrator.modify()->linkedToCollection.insert(modifyRegion);
 
 			auto regionalAdministrator = _dboSession.add(new Permission(Permissions::RegionalAdministrator, "Regional administrator permissions"));
 			regionalAdministrator.modify()->linkedToCollection.insert(accessAdminPanel);
 			regionalAdministrator.modify()->linkedToCollection.insert(createRecord);
 			regionalAdministrator.modify()->linkedToCollection.insert(modifyRecord);
 			regionalAdministrator.modify()->linkedToCollection.insert(removeRecord);
+			regionalAdministrator.modify()->linkedToCollection.insert(viewUser);
 			regionalAdministrator.modify()->linkedToCollection.insert(createUser);
 			regionalAdministrator.modify()->linkedToCollection.insert(modifyUser);
 			regionalAdministrator.modify()->linkedToCollection.insert(modifyUserPermission);
@@ -264,28 +274,28 @@ void WServer::initialize()
 				authInfoPtr.modify()->setUser(userPtr);
 				_dboSession.add(new UserPermission(userPtr, globalAdministrator));
 
-				authUser = userDatabase.registerNew();
-				authUser.setIdentity(Wt::Auth::Identity::LoginName, "regionaladmin");
-				server->getPasswordService().updatePassword(authUser, "changeme");
-				authInfoPtr = userDatabase.find(authUser);
-				userPtr = _dboSession.add(new User());
-				authInfoPtr.modify()->setUser(userPtr);
-				_dboSession.add(new UserPermission(userPtr, regionalAdministrator));
-
-				authUser = userDatabase.registerNew();
-				authUser.setIdentity(Wt::Auth::Identity::LoginName, "regionaluser");
-				server->getPasswordService().updatePassword(authUser, "changeme");
-				authInfoPtr = userDatabase.find(authUser);
-				userPtr = _dboSession.add(new User());
-				authInfoPtr.modify()->setUser(userPtr);
-				_dboSession.add(new UserPermission(userPtr, regionalUser));
-
-				authUser = userDatabase.registerNew();
-				authUser.setIdentity(Wt::Auth::Identity::LoginName, "test");
-				server->getPasswordService().updatePassword(authUser, "changeme");
-				authInfoPtr = userDatabase.find(authUser);
-				userPtr = _dboSession.add(new User());
-				authInfoPtr.modify()->setUser(userPtr);
+// 				authUser = userDatabase.registerNew();
+// 				authUser.setIdentity(Wt::Auth::Identity::LoginName, "regionaladmin");
+// 				server->getPasswordService().updatePassword(authUser, "changeme");
+// 				authInfoPtr = userDatabase.find(authUser);
+// 				userPtr = _dboSession.add(new User());
+// 				authInfoPtr.modify()->setUser(userPtr);
+// 				_dboSession.add(new UserPermission(userPtr, regionalAdministrator));
+// 
+// 				authUser = userDatabase.registerNew();
+// 				authUser.setIdentity(Wt::Auth::Identity::LoginName, "regionaluser");
+// 				server->getPasswordService().updatePassword(authUser, "changeme");
+// 				authInfoPtr = userDatabase.find(authUser);
+// 				userPtr = _dboSession.add(new User());
+// 				authInfoPtr.modify()->setUser(userPtr);
+// 				_dboSession.add(new UserPermission(userPtr, regionalUser));
+// 
+// 				authUser = userDatabase.registerNew();
+// 				authUser.setIdentity(Wt::Auth::Identity::LoginName, "test");
+// 				server->getPasswordService().updatePassword(authUser, "changeme");
+// 				authInfoPtr = userDatabase.find(authUser);
+// 				userPtr = _dboSession.add(new User());
+// 				authInfoPtr.modify()->setUser(userPtr);
 			}
 
 			tr.commit();

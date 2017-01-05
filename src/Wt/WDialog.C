@@ -309,6 +309,8 @@ void WDialog::create()
   } else
     setPositionScheme(app->environment().agent() == WEnvironment::IE6
 		      ? Absolute : Fixed);
+
+  setMovable(true);
 }
 
 WDialog::~WDialog()
@@ -354,6 +356,13 @@ void WDialog::setResizable(bool resizable)
   }
 }
 
+void WDialog::setMovable(bool movable)
+{
+  movable_ = movable;
+
+  layoutContainer_->toggleStyleClass("movable", movable_);
+}
+
 void WDialog::setMaximumSize(const WLength& width, const WLength& height)
 {
   WPopupWidget::setMaximumSize(width, height);
@@ -393,6 +402,7 @@ void WDialog::render(WFlags<RenderFlag> flags)
     doJavaScript("new " WT_CLASS ".WDialog("
 		 + app->javaScriptClass() + "," + jsRef()
 		 + "," + titleBar_->jsRef()
+		 + "," + (movable_ ? "1" : "0")
 		 + "," + (centerX ? "1" : "0")
 		 + "," + (centerY ? "1" : "0") 
 		 + "," + (moved_.isConnected()
@@ -408,15 +418,16 @@ void WDialog::render(WFlags<RenderFlag> flags)
      * logic comes too late and causes a glitch. Thus we include directly in
      * the HTML a JavaScript block to mitigate that
      */
-    if (!app->environment().agentIsIElt(9)) {
+    if (!app->environment().agentIsIElt(9) &&
+        !app->environment().ajax()) {
       std::string js = WString::tr("Wt.WDialog.CenterJS").toUTF8();
       Utils::replace(js, "$el", "'" + id() + "'");
       Utils::replace(js, "$centerX", centerX ? "1" : "0");
       Utils::replace(js, "$centerY", centerY ? "1" : "0");
 
       impl_->bindString
-	("center-script", "<script>" + Utils::htmlEncode(js)
-	 + "</script>", XHTMLUnsafeText);
+        ("center-script", "<script>" + Utils::htmlEncode(js)
+         + "</script>", XHTMLUnsafeText);
     } else
       impl_->bindEmpty("center-script");
   }
@@ -573,14 +584,12 @@ void WDialog::setHidden(bool hidden, const WAnimation& animation)
   /* For JWt: setHidden() is called from WPopupWidget constructor. */
   if (contents_ && isHidden() != hidden) {
     if (!hidden) {
-      WApplication *app = WApplication::instance();
-
       if (footer_) {
 	for (int i = 0; i < footer()->count(); ++i) {
 	  WPushButton *b = dynamic_cast<WPushButton *>(footer()->widget(i));
 	  if (b && b->isDefault()) {
-	    enterConnection1_ = app->globalEnterPressed()
-	      .connect(this, &WDialog::onDefaultPressed);
+            enterConnection1_ = enterPressed()
+              .connect(this, &WDialog::onDefaultPressed);
 
 	    enterConnection2_ = impl_->enterPressed()
 	      .connect(this, &WDialog::onDefaultPressed);
@@ -590,8 +599,13 @@ void WDialog::setHidden(bool hidden, const WAnimation& animation)
       }
 
       if (escapeIsReject_) {
-	escapeConnection1_ = escapePressed()
-	  .connect(this, &WDialog::onEscapePressed);
+        if (isModal()) {
+          escapeConnection1_ = escapePressed()
+            .connect(this, &WDialog::onEscapePressed);
+        } else {
+          escapeConnection1_ = WApplication::instance()->globalEscapePressed()
+            .connect(this, &WDialog::onEscapePressed);
+        }
 
 	escapeConnection2_ = impl_->escapePressed()
 	  .connect(this, &WDialog::onEscapePressed);
@@ -699,6 +713,21 @@ EventSignal<>& WDialog::enterPressed()
 EventSignal<>& WDialog::escapePressed()
 {
   return layoutContainer_->escapePressed();
+}
+
+EventSignal<WTouchEvent>& WDialog::touchStarted()
+{
+  return layoutContainer_->touchStarted();
+}
+
+EventSignal<WTouchEvent>& WDialog::touchEnded()
+{
+  return layoutContainer_->touchEnded();
+}
+
+EventSignal<WTouchEvent>& WDialog::touchMoved()
+{
+  return layoutContainer_->touchMoved();
 }
 
 }

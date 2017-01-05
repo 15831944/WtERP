@@ -26,6 +26,7 @@ WT_DECLARE_WT_MEMBER
  //	zoom (bool)
  //	pan (bool)
  //	crosshair (bool)
+ //	crosshairColor (css text)
  //	followCurve (int, -1 for disabled)
  //	notifyTransform {x: bool, y: bool} // Whether we should emit a signal on X or Y transform change
  //	series {modelColumn: {curve: curve ref, transform: transform ref},...}
@@ -488,6 +489,7 @@ WT_DECLARE_WT_MEMBER
       p = [modelArea()[0] + u[X] * modelArea()[2],
 	   modelArea()[1] + u[Y] * modelArea()[3]];
 
+      ctx.fillStyle = ctx.strokeStyle = config.crosshairColor;
       ctx.font = '16px sans-serif';
       ctx.textAlign = 'right';
       ctx.textBaseline = 'top';
@@ -661,20 +663,18 @@ WT_DECLARE_WT_MEMBER
       var c = WT.widgetCoordinates(target.canvas, event);
       if (!isPointInRect(c, configArea())) return;
       if (WT.buttons === 1) {
-	 if (curveManipulation()) {
+	 if (curveManipulation() && configSeries(configSelectedCurve())) {
 	    var curve = configSelectedCurve();
-	    if (configSeries(curve)) {
-	       var dy;
-	       if (isHorizontal()) {
-		  dy = c.x - dragPreviousXY.x;
-	       } else {
-		  dy = c.y - dragPreviousXY.y;
-	       }
-           assign(seriesTransform(curve),
-		     mult([1,0,0,1,0,dy / transform(Y)[3]],
-			  seriesTransform(curve)));
-	       repaint();
+	    var dy;
+	    if (isHorizontal()) {
+	       dy = c.x - dragPreviousXY.x;
+	    } else {
+	       dy = c.y - dragPreviousXY.y;
 	    }
+	    assign(seriesTransform(curve),
+		  mult([1,0,0,1,0,dy / transform(Y)[3]],
+		       seriesTransform(curve)));
+	    repaint();
 	 } else if (config.pan) {
 	    translate({
 	       x: c.x - dragPreviousXY.x,
@@ -750,8 +750,8 @@ WT_DECLARE_WT_MEMBER
 	       mult([1,0,0,s_y,0,middle-s_y*middle],
 	       seriesTransform(curve)));
 	    repaint();
+	    return;
 	 }
-	 return;
       }
       if ((action === WHEEL_PAN_X || action === WHEEL_PAN_Y || action === WHEEL_PAN_MATCHING) && config.pan) {
 	 var xBefore = transform(X)[4];
@@ -794,6 +794,13 @@ WT_DECLARE_WT_MEMBER
       APP.emit(target.widget, 'seriesSelected', dragPreviousXY.x, dragPreviousXY.y);
    }
 
+   function topElement() {
+      if (overlay)
+	 return overlay;
+      else
+	 return target.canvas;
+   }
+
    // fromDoubleTouch: indicates that this start of a touch comes from releasing of a double touch,
    //                  so should not be interpreted for series selection
    touchHandlers.start = function(o, event, fromDoubleTouch) {
@@ -818,7 +825,7 @@ WT_DECLARE_WT_MEMBER
 	    addEventListener('contextmenu', eobj2.contextmenuListener);
 	 }
 	 WT.capture(null);
-	 WT.capture(target.canvas);
+	 WT.capture(topElement());
       } else if (doubleTouch && (config.zoom || curveManipulation())) {
 	 if (seriesSelectionTimeout) {
 	    window.clearTimeout(seriesSelectionTimeout);
@@ -834,7 +841,7 @@ WT_DECLARE_WT_MEMBER
 	   return;
 	}
 	WT.capture(null);
-	WT.capture(target.canvas);
+	WT.capture(topElement());
 	zoomAngle = Math.atan2(touches[1][1] - touches[0][1], touches[1][0] - touches[0][0]);
 	zoomMiddle = [
 	   (touches[0][0] + touches[1][0]) / 2,
@@ -1057,7 +1064,7 @@ WT_DECLARE_WT_MEMBER
       // setTimeout prevents high animation velocity due to looking
       // at events that are further apart.
       if (!moveTimeout) moveTimeout = setTimeout(function(){
-        if (singleTouch && curveManipulation()) {
+        if (singleTouch && curveManipulation() && configSeries(configSelectedCurve())) {
 	   var curve = configSelectedCurve();
 	   if (configSeries(curve)) {
 	      var c = c1;
@@ -1092,7 +1099,7 @@ WT_DECLARE_WT_MEMBER
 	      translate(d, config.rubberBand ? DAMPEN : 0);
 	   }
 	   dragPreviousXY = c;
-	} else if (doubleTouch && curveManipulation()) {
+	} else if (doubleTouch && curveManipulation() && configSeries(configSelectedCurve())) {
 	   var yAxis = isHorizontal() ? X : Y;
 	   var newTouches = [ c1, c2 ].map(function(t){
 	      if (isHorizontal()) {
@@ -1334,7 +1341,7 @@ WT_DECLARE_WT_MEMBER
       notifyAreaChanged();
    }
 
-   this.setXRange = function(seriesNb, lowerBound, upperBound) {
+   this.setXRange = function(seriesNb, lowerBound, upperBound, updateYAxis) {
       lowerBound = modelArea()[0] + modelArea()[2] * lowerBound;
       upperBound = modelArea()[0] + modelArea()[2] * upperBound;
       //Constrain given range
@@ -1360,10 +1367,10 @@ WT_DECLARE_WT_MEMBER
       var crosshairBefore = toModelCoord(crosshair);
 
       transform(X)[0] = xZoom;
-      if (yZoom)
+      if (yZoom && updateYAxis)
           transform(Y)[3] = yZoom;
       transform(X)[4] = -panPoint[X] * xZoom;
-      if (yZoom)
+      if (yZoom && updateYAxis)
           transform(Y)[5] = -panPoint[Y] * yZoom;
       setTransformChangedTimeout();
 

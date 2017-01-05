@@ -85,6 +85,7 @@ WCartesian3DChart::WCartesian3DChart(WContainerWidget* parent)
 
 WCartesian3DChart::WCartesian3DChart(ChartType type, WContainerWidget *parent)
   : WGLWidget(parent),
+    isViewSet_(false),
     chartType_(type),
     background_(white),
     chartPalette_(new WStandardPalette(WStandardPalette::Muted)),
@@ -1631,20 +1632,34 @@ void WCartesian3DChart::resizeOffscreenBuffer()
 
 void WCartesian3DChart::deleteOffscreenBuffer()
 {
-  if (!offscreenDepthbuffer_.isNull())
-    deleteRenderbuffer(offscreenDepthbuffer_); offscreenDepthbuffer_.clear();
-  if (!intersectionLinesFramebuffer_.isNull())
-    deleteFramebuffer(intersectionLinesFramebuffer_); intersectionLinesFramebuffer_.clear();
-  if (!positionFramebuffer_.isNull())
-    deleteFramebuffer(positionFramebuffer_); positionFramebuffer_.clear();
-  if (!meshIndexFramebuffer_.isNull())
-    deleteFramebuffer(meshIndexFramebuffer_); meshIndexFramebuffer_.clear();
-  if (!intersectionLinesTexture_.isNull())
-    deleteTexture(intersectionLinesTexture_); intersectionLinesTexture_.clear();
-  if (!meshIndexTexture_.isNull())
-    deleteTexture(meshIndexTexture_); meshIndexTexture_.clear();
-  if (!positionTexture_.isNull())
-    deleteTexture(positionTexture_); positionTexture_.clear();
+  if (!offscreenDepthbuffer_.isNull()) {
+    deleteRenderbuffer(offscreenDepthbuffer_);
+    offscreenDepthbuffer_.clear();
+  }
+  if (!intersectionLinesFramebuffer_.isNull()) {
+    deleteFramebuffer(intersectionLinesFramebuffer_);
+    intersectionLinesFramebuffer_.clear();
+  }
+  if (!positionFramebuffer_.isNull()) {
+    deleteFramebuffer(positionFramebuffer_);
+    positionFramebuffer_.clear();
+  }
+  if (!meshIndexFramebuffer_.isNull()) {
+    deleteFramebuffer(meshIndexFramebuffer_);
+    meshIndexFramebuffer_.clear();
+  }
+  if (!intersectionLinesTexture_.isNull()) {
+    deleteTexture(intersectionLinesTexture_);
+    intersectionLinesTexture_.clear();
+  }
+  if (!meshIndexTexture_.isNull()) {
+    deleteTexture(meshIndexTexture_);
+    meshIndexTexture_.clear();
+  }
+  if (!positionTexture_.isNull()) {
+    deleteTexture(positionTexture_);
+    positionTexture_.clear();
+  }
 }
 
 void WCartesian3DChart::renderIntersectionLines()

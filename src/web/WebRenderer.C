@@ -106,10 +106,12 @@ WebRenderer::WebRenderer(WebSession& session)
     pageId_(0),
     expectedAckId_(0),
     scriptId_(0),
+    ackErrs_(0),
     linkedCssCount_(-1),
     currentStatelessSlotIsActuallyStateless_(true),
     formObjectsChanged_(true),
     updateLayout_(false),
+    multiSessionCookieUpdateNeeded_(false),
     learning_(false)
 { }
 
@@ -156,7 +158,9 @@ bool WebRenderer::isDirty() const
     || session_.app()->internalPathIsChanged_
     || !collectedJS1_.empty()
     || !collectedJS2_.empty()
-    || !invisibleJS_.empty();
+    || !invisibleJS_.empty()
+    || !wsRequestsToHandle_.empty()
+    || multiSessionCookieUpdateNeeded_;
 }
 
 const WebRenderer::FormObjectsMap& WebRenderer::formObjects() const
@@ -207,14 +211,16 @@ bool WebRenderer::ackUpdate(int updateId)
    * If web socket request -> we assume last AJAX request got
    * delivered ?
    */
+  LOG_DEBUG("ackUpdate: expecting " << expectedAckId_ << ", received " << updateId);
   if (updateId == expectedAckId_) {
     LOG_DEBUG("jsSynced(false) after ackUpdate okay");
     setJSSynced(false);
-    ++expectedAckId_;
+    ackErrs_ = 0;
     return true;
   } else if ((updateId < expectedAckId_ && expectedAckId_ - updateId < 5)
 	     || (expectedAckId_ - 5 < updateId)) {
-    return true; // That's still acceptible but no longer plausible
+    ++ackErrs_;
+    return ackErrs_ < 3; // That's still acceptible but no longer plausible
   } else
     return false;
 }
@@ -342,6 +348,7 @@ void WebRenderer::streamBootContent(WebResponse& response,
   bootJs.setVar("SESSION_ID", session_.sessionId());
 
   expectedAckId_ = scriptId_ = WRandom::get();
+  ackErrs_ = 0;
 
   bootJs.setVar("SCRIPT_ID", scriptId_);
   bootJs.setVar("RANDOMSEED", WRandom::get());
@@ -351,7 +358,7 @@ void WebRenderer::streamBootContent(WebResponse& response,
   bootJs.setVar("AJAX_CANONICAL_URL",
 		safeJsStringLiteral(session_.ajaxCanonicalUrl(response)));
   bootJs.setVar("APP_CLASS", "Wt");
-  bootJs.setVar("PATH_INFO", WWebWidget::jsStringLiteral
+  bootJs.setVar("PATH_INFO", safeJsStringLiteral
 		(session_.pagePathInfo_));
 
   bootJs.setCondition("COOKIE_CHECKS", conf.cookieChecks());
@@ -518,7 +525,7 @@ void WebRenderer::setHeaders(WebResponse& response, const std::string mimeType)
 #ifndef WT_TARGET_JAVA
       std::string formatString = "ddd, dd-MMM-yyyy hh:mm:ss 'GMT'";
 #else
-      std::string formatString = "EEE, dd-MMM-yyyy hh:mm:ss 'GMT'";
+      std::string formatString = "EEE, dd-MMM-yyyy HH:mm:ss 'GMT'";
 #endif
 
       std::string d
@@ -607,12 +614,50 @@ void WebRenderer::serveJavaScriptUpdate(WebResponse& response)
     out << collectedJS1_.str() << collectedJS2_.str();
 
     if (response.isWebSocketMessage()) {
+      renderMultiSessionCookieUpdate(out);
+      renderWsRequestsDone(out);
+
       LOG_DEBUG("jsSynced(false) after rendering websocket message");
       setJSSynced(false);
     }
   }
 
   out.spool(response.out());
+}
+
+void WebRenderer::renderWsRequestsDone(WStringStream &out)
+{
+  if (!wsRequestsToHandle_.empty()) {
+    out << session_.app()->javaScriptClass()
+	<< "._p_.wsRqsDone(";
+    for (std::size_t i = 0; i < wsRequestsToHandle_.size(); ++i) {
+      if (i != 0)
+	out << ',';
+      out << wsRequestsToHandle_[i];
+    }
+    out << ");";
+    wsRequestsToHandle_.clear();
+  }
+
+}
+
+void WebRenderer::updateMultiSessionCookie(const WebRequest &request)
+{
+  Configuration &conf = session_.controller()->configuration();
+  setCookie("ms" + request.scriptName(),
+            session_.multiSessionId(),
+            WDateTime::currentDateTime().addSecs(conf.sessionTimeout()),
+            "", session_.env().deploymentPath(),
+            session_.env().urlScheme() == "https");
+}
+
+void WebRenderer::renderMultiSessionCookieUpdate(WStringStream &out)
+{
+  if (multiSessionCookieUpdateNeeded_) {
+    out << session_.app()->javaScriptClass()
+	<< "._p_.refreshCookie();";
+    multiSessionCookieUpdateNeeded_ = false;
+  }
 }
 
 void WebRenderer::addContainerWidgets(WWebWidget *w,
@@ -686,6 +731,10 @@ void WebRenderer::addResponseAckPuzzle(WStringStream& out)
    * client-side: only when libraries have been loaded, the application can
    * continue. TO BE DONE.
    */
+
+  ++expectedAckId_;
+  LOG_DEBUG("addResponseAckPuzzle: incremented expectedAckId to " << expectedAckId_);
+
   out << session_.app()->javaScriptClass()
       << "._p_.response(" << expectedAckId_;
   if (!puzzle.empty())
@@ -884,6 +933,7 @@ void WebRenderer::serveMainscript(WebResponse& response)
     }
   } else {
     expectedAckId_ = scriptId_ = WRandom::get();
+    ackErrs_ = 0;
   }
 
   WApplication *app = session_.app();
@@ -947,12 +997,17 @@ void WebRenderer::serveMainscript(WebResponse& response)
 
     script.setVar("DEPLOY_PATH", WWebWidget::jsStringLiteral(deployPath));
 
-    int keepAlive;
-    if (conf.sessionTimeout() == -1)
-      keepAlive = 1000000;
-    else
-      keepAlive = conf.sessionTimeout() / 2;
-    script.setVar("KEEP_ALIVE", boost::lexical_cast<std::string>(keepAlive));
+    // WS_PATH = DEPLOY_PATH for C++, = CONTEXT_PATH for Java = request.contextPath()
+    // WS_ID = empty for C++, servlet ID for Java
+#ifdef WT_TARGET_JAVA
+    script.setVar("WS_PATH", WWebWidget::jsStringLiteral(session_.controller()->getContextPath() + "/ws"));
+    script.setVar("WS_ID", WWebWidget::jsStringLiteral(boost::lexical_cast<std::string>(session_.controller()->getIdForWebSocket())));
+#else
+    script.setVar("WS_PATH", WWebWidget::jsStringLiteral(deployPath));
+    script.setVar("WS_ID", WWebWidget::jsStringLiteral(std::string("")));
+#endif
+
+    script.setVar("KEEP_ALIVE", boost::lexical_cast<std::string>(conf.keepAlive()));
 
     script.setVar("INDICATOR_TIMEOUT", conf.indicatorTimeout());
     script.setVar("SERVER_PUSH_TIMEOUT", conf.serverPushTimeout() * 1000);
@@ -968,10 +1023,16 @@ void WebRenderer::serveMainscript(WebResponse& response)
      */
     std::string params;
     if (session_.type() == WidgetSet) {
-      const Http::ParameterMap& m = session_.env().getParameterMap();
-
-      for (Http::ParameterMap::const_iterator i = m.begin();
-	   i != m.end(); ++i) {
+      const Http::ParameterMap *m = &session_.env().getParameterMap();
+      Http::ParameterMap::const_iterator it = m->find("Wt-params");
+      Http::ParameterMap wtParams;
+      if (it != m->end()) {
+	// Parse and reencode Wt-params, so it's definitely safe
+	Http::Request::parseFormUrlEncoded(it->second[0], wtParams);
+	m = &wtParams;
+      }
+      for (Http::ParameterMap::const_iterator i = m->begin();
+	   i != m->end(); ++i) {
 	if (!params.empty())
 	  params += '&';
 	params
@@ -1968,6 +2029,11 @@ std::string WebRenderer::headDeclarations() const
   }
 
   return result.str();
+}
+
+void WebRenderer::addWsRequestId(int wsRqId)
+{
+  wsRequestsToHandle_.push_back(wsRqId);
 }
 
 }

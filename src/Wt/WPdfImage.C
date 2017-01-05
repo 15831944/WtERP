@@ -70,7 +70,7 @@ WPdfImage::WPdfImage(const WLength& width, const WLength& height,
   HPDF_Page_SetHeight(page_, height_.toPixels());
   HPDF_Page_GSave(page_);
 
-  trueTypeFonts_ = new FontSupport(this);
+  trueTypeFonts_ = new FontSupport(this, FontSupport::TrueTypeOnly);
 
 #if HPDF_VERSION_ID>=20300
   HPDF_UseUTFEncodings(pdf_);
@@ -92,15 +92,22 @@ WPdfImage::WPdfImage(HPDF_Doc pdf, HPDF_Page page, HPDF_REAL x, HPDF_REAL y,
 
   font_ = 0;
 
-  trueTypeFonts_ = new FontSupport(this);
+  trueTypeFonts_ = new FontSupport(this, FontSupport::TrueTypeOnly);
 }
 
 WPdfImage::~WPdfImage()
 {
   beingDeleted();
 
-  if (myPdf_)
+  if (myPdf_) {
+    // clear graphics state stack to avoid leaking memory in libharu
+    // see bug #3979
+    HPDF_Page page = HPDF_GetCurrentPage(pdf_);
+    if (page)
+      while (HPDF_Page_GetGStateDepth(page) > 1)
+        HPDF_Page_GRestore(page);
     HPDF_Free(pdf_);
+  }
 
   delete trueTypeFonts_;
 }
@@ -247,25 +254,19 @@ void WPdfImage::setChanged(WFlags<ChangeFlag> flags)
   if (flags & Font) {
     const WFont& font = painter()->font();
 
-    if (font == currentFont_)
+    if (font == currentFont_ && !trueTypeFonts_->busy())
       return;
-
-    currentFont_ = font;
-
-    const char *font_name = 0;
-
-    font_ = 0;
 
     /*
      * First, try a true type font.
      */
     std::string ttfFont;
-    if (trueTypeFonts_->busy())
+    if (trueTypeFonts_->busy()) {
       /*
        * We have a resolved true type font.
        */
       ttfFont = trueTypeFonts_->drawingFontPath();
-    else {
+    } else {
       FontSupport::FontMatch match = trueTypeFonts_->matchFont(font);
 
       if (match.matched())
@@ -274,7 +275,18 @@ void WPdfImage::setChanged(WFlags<ChangeFlag> flags)
 
     LOG_DEBUG("font: " << ttfFont);
 
+    if (font == currentFont_ &&
+        !ttfFont.empty() &&
+        currentTtfFont_ == ttfFont)
+      return;
+
+    currentFont_ = font;
+
+    const char *font_name = 0;
+    font_ = 0;
+
     if (!ttfFont.empty()) {
+
       bool fontOk = false;
 
       std::map<std::string, const char *>::const_iterator i
@@ -314,12 +326,15 @@ void WPdfImage::setChanged(WFlags<ChangeFlag> flags)
 
       if (!font_)
 	HPDF_ResetError (pdf_);
-      else
+      else {
 	trueTypeFont_ = true;
+        currentTtfFont_ = ttfFont;
+      }
     }
 
     if (!font_) {
       trueTypeFont_ = false;
+      currentTtfFont_.clear();
 
       std::string name = Pdf::toBase14Font(font);
       font_ = HPDF_GetFont(pdf_, name.c_str(), 0);
@@ -524,7 +539,7 @@ void WPdfImage::drawText(const WRectF& rect,
 {
   // FIXME: textFlag
   
-  if (clipPoint && painter()) {
+  if (clipPoint && painter() && !painter()->clipPath().isEmpty()) {
     if (!painter()->clipPathTransform().map(painter()->clipPath())
 	  .isPointInPath(painter()->worldTransform().map(*clipPoint)))
       return;

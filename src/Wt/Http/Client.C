@@ -36,6 +36,14 @@
 
 using boost::asio::ip::tcp;
 
+#if BOOST_VERSION >= 104900 && defined(BOOST_ASIO_HAS_STD_CHRONO)
+typedef boost::asio::steady_timer asio_timer;
+typedef std::chrono::seconds asio_timer_seconds;
+#else
+typedef boost::asio::deadline_timer asio_timer;
+typedef boost::posix_time::seconds asio_timer_seconds;
+#endif
+
 namespace Wt {
 
 LOGGER("Http.Client");
@@ -166,7 +174,7 @@ private:
 
   void startTimer()
   {
-    timer_.expires_from_now(boost::posix_time::seconds(timeout_));
+    timer_.expires_from_now(asio_timer_seconds(timeout_));
     timer_.async_wait
       (strand_.wrap(boost::bind(&Impl::timeout, shared_from_this(),
 				boost::asio::placeholders::error)));
@@ -422,14 +430,16 @@ private:
 
       addBodyText(ss.str());
 
-      // Continue reading remaining data until EOF.
-      startTimer();
-      asyncRead
-	(strand_.wrap
-	 (boost::bind(&Impl::handleReadContent,
-		      shared_from_this(),
-		      boost::asio::placeholders::error,
-		      boost::asio::placeholders::bytes_transferred)));
+      if (!aborted_) {
+	// Continue reading remaining data until EOF.
+	startTimer();
+	asyncRead
+	  (strand_.wrap
+	   (boost::bind(&Impl::handleReadContent,
+			shared_from_this(),
+			boost::asio::placeholders::error,
+			boost::asio::placeholders::bytes_transferred)));
+      }
     } else if (err != boost::asio::error::eof
 	       && err != boost::asio::error::shut_down
 	       && err != boost::asio::error::bad_descriptor
@@ -598,7 +608,7 @@ protected:
   boost::asio::streambuf responseBuf_;
 
 private:
-  boost::asio::deadline_timer timer_;
+  asio_timer timer_;
   WServer *server_;
   std::string sessionId_;
   int timeout_;
@@ -671,7 +681,13 @@ public:
       socket_(ioService_, context),
       verifyEnabled_(verifyEnabled),
       hostName_(hostName)
-  { }
+  {
+#ifndef OPENSSL_NO_TLSEXT
+    if (!SSL_set_tlsext_host_name(socket_.native_handle(), hostName.c_str())) {
+      LOG_ERROR("could not set tlsext host.");
+    }
+#endif
+  }
 
 protected:
   virtual tcp::socket& socket()
@@ -695,7 +711,6 @@ protected:
 	(boost::asio::ssl::rfc2818_verification(hostName_));
     }
 #endif // VERIFY_CERTIFICATE
-
     socket_.async_handshake(boost::asio::ssl::stream_base::client, handler);
   }
 
@@ -842,7 +857,7 @@ bool Client::request(Http::Method method, const std::string& url,
     return false;
   }
 
-  if (app) {
+  if (app && !ioService) {
     sessionId = app->sessionId();
     server = app->environment().server();
     ioService = &server->ioService();
@@ -871,6 +886,9 @@ bool Client::request(Http::Method method, const std::string& url,
   } else if (parsedUrl.protocol == "https") {
     boost::asio::ssl::context context
       (*ioService, boost::asio::ssl::context::sslv23);
+    long sslOptions = boost::asio::ssl::context::no_sslv2 | boost::asio::ssl::context::no_sslv3;
+    context.set_options(sslOptions);
+
 
 #ifdef VERIFY_CERTIFICATE
     if (verifyEnabled_)

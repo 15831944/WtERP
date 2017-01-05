@@ -232,8 +232,11 @@ span.Wt-disabled, fieldset.Wt-disabled legend {
 
 .Wt-dialog .titlebar {
     background: #888888; color: #FFFFFF;
-    cursor: move;
     padding: 2px 6px 3px;
+}
+
+.Wt-dialog .movable .titlebar {
+    cursor: move;
 }
 
 .Wt-dialog .titlebar h4 {
@@ -1153,4 +1156,19 @@ body.Wt-rtl .Wt-treeview .Wt-ctrl.noexpand {
 
 table.x-grid3-row-table {
     table-layout: fixed;
+}
+
+.Wt-filedropzone {
+    width: 200px;
+    height: 200px;
+    border: thick dashed grey;
+    background-color: lightgrey;
+}
+
+.Wt-filedropzone-hover {
+    border-color: green;
+}
+
+.Wt-filedropzone-hover * {
+    pointer-events: none;
 }

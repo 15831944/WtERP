@@ -5,6 +5,7 @@
 #include "Widgets/EntryCycleMVC.h"
 #include "Widgets/HRMVC.h"
 #include "Widgets/AttendanceMVC.h"
+#include "Widgets/UserMVC.h"
 #include "Widgets/DashboardWidgets.h"
 
 #include <Wt/WNavigationBar>
@@ -354,6 +355,57 @@ namespace GS
 			newAttendanceDeviceMenuItem->setContents(new AdminPageContentWidget(newAttendanceDeviceMenuItem->text(), new AttendanceDeviceView()));
 			connectFormSubmitted(newAttendanceDeviceMenuItem);
 			menu()->addItem(newAttendanceDeviceMenuItem);
+
+			menu()->addSeparator();
+		}
+	}
+
+	UsersAdminPage::UsersAdminPage(Wt::WContainerWidget *parent /*= nullptr*/)
+		: AdminPageWidget(USERS_PATHC, parent)
+	{
+		WApplication *app = APP;
+
+		if(app->authLogin().hasPermission(Permissions::ViewUser))
+		{
+			auto usersMenuItem = new Wt::WMenuItem(Wt::WString::tr("Users"));
+			usersMenuItem->setPathComponent("");
+			UserList *userList = new UserList();
+			userList->enableFilters();
+			usersMenuItem->setContents(new AdminPageContentWidget(usersMenuItem->text(), userList));
+			menu()->addItem(usersMenuItem);
+		}
+
+		if(app->authLogin().hasPermission(Permissions::ViewRegion))
+		{
+			auto regionsMenuItem = new Wt::WMenuItem(Wt::WString::tr("Regions"));
+			regionsMenuItem->setPathComponent(REGIONS_PATHC);
+			RegionList *regionList = new RegionList();
+			regionList->enableFilters();
+			regionsMenuItem->setContents(new AdminPageContentWidget(regionsMenuItem->text(), regionList));
+			menu()->addItem(regionsMenuItem);
+		}
+
+		menu()->addSeparator();
+
+		if(app->authLogin().hasPermission(Permissions::CreateRecord))
+		{
+			if(app->authLogin().hasPermission(Permissions::CreateUser))
+			{
+				auto newUserMenuItem = new Wt::WMenuItem(Wt::WString::tr("CreateNewUser"));
+				newUserMenuItem->setPathComponent(NEW_USER_PATHC);
+				newUserMenuItem->setContents(new AdminPageContentWidget(newUserMenuItem->text(), new UserView()));
+				connectFormSubmitted(newUserMenuItem);
+				menu()->addItem(newUserMenuItem);
+			}
+
+			if(app->authLogin().hasPermission(Permissions::CreateRegion))
+			{
+				auto newRegionMenuItem = new Wt::WMenuItem(Wt::WString::tr("AddRegion"));
+				newRegionMenuItem->setPathComponent(REGIONS_PATHC "/" NEW_REGION_PATHC);
+				newRegionMenuItem->setContents(new AdminPageContentWidget(newRegionMenuItem->text(), new RegionView()));
+				connectFormSubmitted(newRegionMenuItem);
+				menu()->addItem(newRegionMenuItem);
+			}
 
 			menu()->addSeparator();
 		}

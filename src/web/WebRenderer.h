@@ -104,7 +104,7 @@ private:
   WebSession& session_;
 
   bool visibleOnly_, rendered_, initialStyleRendered_;
-  int twoPhaseThreshold_, pageId_, expectedAckId_, scriptId_;
+  int twoPhaseThreshold_, pageId_, expectedAckId_, scriptId_, ackErrs_;
   int linkedCssCount_;
   std::string solution_;
 
@@ -116,6 +116,9 @@ private:
   std::string currentFormObjectsList_;
   bool formObjectsChanged_;
   bool updateLayout_;
+
+  std::vector<int> wsRequestsToHandle_;
+  bool multiSessionCookieUpdateNeeded_;
 
   void setHeaders(WebResponse& request, const std::string mimeType);
   void setCaching(WebResponse& response, bool allowCache);
@@ -166,6 +169,11 @@ private:
 
   std::string safeJsStringLiteral(const std::string& value);
 
+  void addWsRequestId(int wsRqId);
+  void renderWsRequestsDone(WStringStream &out);
+
+  void updateMultiSessionCookie(const WebRequest &request);
+  void renderMultiSessionCookieUpdate(WStringStream &out);
 public:
   std::string       learn(WStatelessSlot* slot);
 

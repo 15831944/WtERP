@@ -41,6 +41,13 @@
 			#define EXPENSECYCLE_PREFIX "expense-"
 			#define NEW_EXPENSECYCLE_PATHC "new"
 
+	#define USERS_PATHC "users"
+		#define USER_PREFIX "user-"
+		#define NEW_USER_PATHC "new"
+		#define REGIONS_PATHC "regions"
+			#define REGION_PREFIX "region-"
+			#define NEW_REGION_PATHC "new"
+
 #define SET_TRANSIENT_VIEW_DIALOG(dialog) dialog->setClosable(true);\
 	dialog->resize(Wt::WLength(85, Wt::WLength::Percentage), Wt::WLength(95, Wt::WLength::Percentage));\
 	dialog->setTransient(true);\
@@ -59,10 +66,11 @@ namespace GS
 			ModifyRecord = 11,
 			RemoveRecord = 12,
 
-			CreateUser = 20,
-			ModifyUser = 21,
-			ModifyUserPermission = 22,
-			RemoveUser = 23,
+			ViewUser = 20,
+			CreateUser = 21,
+			ModifyUser = 22,
+			ModifyUserPermission = 23,
+			RemoveUser = 24,
 
 			ViewUnassignedUserRecord = 30,
 			ViewOtherUserRecord = 31,
@@ -73,6 +81,10 @@ namespace GS
 			ViewOtherRegionRecord = 41,
 			ModifyOtherRegionRecord = 42,
 			RemoveOtherRegionRecord = 43,
+
+			ViewRegion = 50,
+			CreateRegion = 51,
+			ModifyRegion = 52,
 
 			GlobalAdministrator = 1000,
 			RegionalAdministrator = 1001,

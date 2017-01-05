@@ -66,10 +66,10 @@ namespace {
 
   void WColorToPixelPacket(const Wt::WColor& color, PixelPacket *pp)
   {
-    pp->red = static_cast<unsigned char>(color.red());
-    pp->green = static_cast<unsigned char>(color.green());
-    pp->blue = static_cast<unsigned char>(color.blue());
-    pp->opacity = 255 - static_cast<unsigned char>(color.alpha());
+    pp->red = ScaleCharToQuantum(color.red());
+    pp->green = ScaleCharToQuantum(color.green());
+    pp->blue = ScaleCharToQuantum(color.blue());
+    pp->opacity = ScaleCharToQuantum(255 - color.alpha());
   }
 
   bool isTranslation(const Wt::WTransform& t) 
@@ -152,6 +152,7 @@ WRasterImage::WRasterImage(const std::string& type,
   GetExceptionInfo(&exception);
   impl_->image_ = ConstituteImage(impl_->w_, impl_->h_, "RGBA", CharPixel,
     impl_->pixels_, &exception);
+  DestroyExceptionInfo(&exception);
 
   SetImageType(impl_->image_, TrueColorMatteType);
   SetImageOpacity(impl_->image_, 254); // 255 seems a special value...
@@ -615,6 +616,7 @@ void WRasterImage::drawImage(const WRectF& rect, const std::string& imgUri,
 		  "(unknown reason)") << ", "
 	      << (exception.description ? exception.description :
 		  "(unknown description)") );
+    DestroyExceptionInfo(&exception);
     return;
   }
 
@@ -624,6 +626,7 @@ void WRasterImage::drawImage(const WRectF& rect, const std::string& imgUri,
   tocrop.x = srect.x();
   tocrop.y = srect.y();
   Image *croppedImage = CropImage(cImage, &tocrop, &exception);
+  DestroyExceptionInfo(&exception);
 
   const WTransform& t = painter()->combinedTransform();
 
@@ -696,9 +699,11 @@ void WRasterImage::getPixels(void *data)
 	pixel++;
       }
   } else {
-    throw WException(std::string("WRasterImage::getPixels(): error: ") +
-      ei.description);
+    std::string desc = std::string("WRasterImage::getPixels(): error: ") + ei.description;
+    DestroyExceptionInfo(&ei);
+    throw WException(desc);
   }
+  DestroyExceptionInfo(&ei);
 }
 
 WColor WRasterImage::getPixel(int x, int y) 
@@ -804,7 +809,7 @@ void WRasterImage::drawText(const WRectF& rect,
   if (textFlag == TextWordWrap)
     throw WException("WRasterImage::drawText() TextWordWrap is not supported");
 
-  if (clipPoint && painter()) {
+  if (clipPoint && painter() && !painter()->clipPath().isEmpty()) {
     if (!painter()->clipPathTransform().map(painter()->clipPath())
 	  .isPointInPath(painter()->worldTransform().map(*clipPoint)))
       return;
@@ -970,7 +975,7 @@ void WRasterImage::drawText(const WRectF& rect,
 	unsigned char bit = bitmap.value(x, y);
 
 	if (bit > 0) {
-	  double alpha = (255 - bit) * (255.0 - pc.opacity) / 255.0;
+	  double alpha = ScaleCharToQuantum(255 - bit) * (MaxRGBDouble - pc.opacity) / MaxRGBDouble;
 	  AlphaCompositePixel(pixel, &pc, alpha,
 			      pixel, pixel->opacity);
 	}
@@ -1014,14 +1019,17 @@ void WRasterImage::handleRequest(const Http::Request& request,
     std::size_t size;
     void *data = ImageToBlob(&info, impl_->image_, &size, &exception);
 
-    if(!data)
+    if(!data) {
+      DestroyExceptionInfo(&exception);
       throw WException("WRasterImage::handleRequest() image could not be "
                        "converted to blob - is your image type supported "
 		       "by graphicsmagick?");
+    }
 
     response.out().write((const char *)data, size);
  
     free(data);
+    DestroyExceptionInfo(&exception);
   }
 }
 

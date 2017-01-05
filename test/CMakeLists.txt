@@ -6,6 +6,7 @@ IF(ENABLE_LIBWTTEST)
     chart/WChartTest.C
     json/JsonParserTest.C
     json/JsonSerializerTest.C
+    json/JsonValueTest.C
     http/HttpClientTest.C
     mail/MailClientTest.C
     models/WBatchEditProxyModelTest.C
@@ -52,6 +53,7 @@ IF(ENABLE_LIBWTTEST)
       dbo/DboTest.C
       dbo/DboTest2.C
       dbo/DboTest3.C
+      dbo/DboTest4.C
       dbo/Benchmark.C
       dbo/Benchmark2.C
       dbo/JsonTest.C

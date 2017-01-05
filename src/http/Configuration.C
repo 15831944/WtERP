@@ -111,7 +111,8 @@ void Configuration::createOptions(po::options_description& options,
 
     ("accesslog",
      po::value<std::string>(&accessLog_),
-     "access log file (defaults to stdout)")
+     "access log file (defaults to stdout), "
+     "to disable access logging completely, use --accesslog=-")
 
     ("no-compression",
      "do not use compression")
@@ -255,19 +256,15 @@ void Configuration::setOptions(int argc, char **argv,
     throw Wt::WServer::Exception("Exception of unknown type!\n");
   }
 
-#ifndef WT_WIN32
   for (int i = 0; i < argc; ++i) {
     options_.push_back(argv[i]);
   }
-#endif // !WT_WIN32
 }
 
-#ifndef WT_WIN32
 std::vector<std::string> Configuration::options() const
 {
   return options_;
 }
-#endif // !WT_WIN32
 
 void Configuration::readOptions(const po::variables_map& vm)
 {

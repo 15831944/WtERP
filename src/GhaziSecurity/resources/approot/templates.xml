@@ -724,6 +724,35 @@ ${<select-direction>}<hr />${</select-direction>}
 ${</direction-selected>}
 </message>
 
+<!-- UserView -->
+<message id="GS.Admin.UserView">
+<div class="panel panel-default">
+	<div class="panel-heading">${tr:UserInfo}</div>
+	<div class="panel-body">
+		${block:GS.Field loginName LoginName}
+		${block:GS.Field password Password}
+		${block:GS.Field password2 ConfirmPassword}
+		${block:GS.Field email EmailAddress}
+		${block:GS.Field region Region}
+		${block:GS.Field permissions Permissions}
+		
+		${submitBtn class="btn-primary"}
+		${<m:user-modify>}${<m:user-persisted>}${changePassword}${</m:user-persisted>}${</m:user-modify>}
+	</div>
+</div>
+</message>
+
+<!-- RegionView -->
+<message id="GS.Admin.RegionView">
+<div class="panel panel-default">
+	<div class="panel-heading">${tr:RegionInfo}</div>
+	<div class="panel-body">
+		${block:GS.Field name Name}
+		${submitBtn class="btn-primary"}
+	</div>
+</div>
+</message>
+
 <!-- ImageUpload -->
 <message id="GS.ImageUpload">
 <label for="${label-for}" class="thumbnail">

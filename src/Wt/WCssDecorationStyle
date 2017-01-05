@@ -75,6 +75,10 @@ public:
    */
   WCssDecorationStyle();
 
+  /*! \brief Copy constructor
+   */
+  WCssDecorationStyle(const WCssDecorationStyle& other);
+
   /*! \brief Destructor.
    */
   ~WCssDecorationStyle();
@@ -234,6 +238,8 @@ private:
   void changed(WFlags<RepaintFlag> flags = 0);
   void backgroundImageResourceChanged();
   WBorder borderI(unsigned i) const;
+
+  void copy(const WCssDecorationStyle& other);
 
   void setWebWidget(WWebWidget *widget);
   friend class WWebWidget;

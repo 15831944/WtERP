@@ -29,6 +29,15 @@ WTimeEdit::WTimeEdit(WContainerWidget *parent)
 
   timePicker_ = new WTimePicker(this);
   timePicker_->selectionChanged().connect(this, &WTimeEdit::setFromTimePicker);
+  timePicker_->setWrapAroundEnabled(true);
+}
+
+WTimeEdit::~WTimeEdit()
+{
+  if (!popup_) {
+    // timePicker_ is not owned by popup_, because it doesn't exist
+    delete timePicker_;
+  }
 }
 
 void WTimeEdit::load()
@@ -198,5 +207,56 @@ void WTimeEdit::connectJavaScript(Wt::EventSignalBase& s,
     "}";
   s.connect(jsFunction);
 }
+
+void WTimeEdit::setHourStep(int step)
+{
+  timePicker_->setHourStep(step);
+}
+
+int WTimeEdit::hourStep() const
+{
+  return timePicker_->hourStep();
+}
+
+void WTimeEdit::setMinuteStep(int step)
+{
+  timePicker_->setMinuteStep(step);
+}
+
+int WTimeEdit::minuteStep() const
+{
+  return timePicker_->minuteStep();
+}
+
+void WTimeEdit::setSecondStep(int step)
+{
+  timePicker_->setSecondStep(step);
+}
+
+int WTimeEdit::secondStep() const
+{
+  return timePicker_->secondStep();
+}
+
+void WTimeEdit::setMillisecondStep(int step)
+{
+  timePicker_->setMillisecondStep(step);
+}
+
+int WTimeEdit::millisecondStep() const
+{
+  return timePicker_->millisecondStep();
+}
+
+void WTimeEdit::setWrapAroundEnabled(bool enabled)
+{
+  timePicker_->setWrapAroundEnabled(enabled);
+}
+
+bool WTimeEdit::wrapAroundEnabled() const
+{
+  return timePicker_->wrapAroundEnabled();
+}
+  
 
 }

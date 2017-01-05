@@ -219,6 +219,8 @@ void WFileUpload::enableAjax()
 void WFileUpload::setFilters(const std::string& acceptAttributes)
 {
   acceptAttributes_ = acceptAttributes;
+  flags_.set(BIT_ACCEPT_ATTRIBUTE_CHANGED, true);
+  repaint();
 }
 
 void WFileUpload::setProgressBar(WProgressBar *bar)
@@ -356,11 +358,17 @@ void WFileUpload::updateDom(DomElement& element, bool all)
       inputE->callMethod("disabled=false");
     else
       inputE->callMethod("disabled=true");
+  }
+
+  if (flags_.test(BIT_ACCEPT_ATTRIBUTE_CHANGED) || flags_.test(BIT_ENABLED_CHANGED)){
+    if (!inputE)
+      inputE = DomElement::getForUpdate("in" + id(), DomElement_INPUT);
 
     inputE->setAttribute("accept", acceptAttributes_);
-
-    flags_.reset(BIT_ENABLED_CHANGED);
   }
+
+  flags_.reset(BIT_ENABLED_CHANGED);
+  flags_.reset(BIT_ACCEPT_ATTRIBUTE_CHANGED);
 
   EventSignal<> *change = voidEventSignal(CHANGE_SIGNAL, false);
   if (change && change->needsUpdate(all)) {
@@ -466,8 +474,9 @@ DomElement *WFileUpload::createDomElement(WApplication *app)
      ""    "if (data.fu == '" + id() + "')"
      +        app->javaScriptClass()
      +        "._p_.update(null, data.signal, null, true);"
-     ""  "} else if (data.type === 'file_too_large')"
+     ""  "} else if (data.type === 'file_too_large') {"
      ""    + fileTooLarge().createCall("data.fileTooLargeSize") +
+		 "  ""}"
 		 """}"
 		 "};"
 		 "if (window.addEventListener) "
@@ -545,6 +554,20 @@ void WFileUpload::propagateSetEnabled(bool enabled)
   repaint();
 
   WWebWidget::propagateSetEnabled(enabled);
+}
+
+
+std::string WFileUpload::renderRemoveJs(bool recursive)
+{
+  bool isIE =
+      WApplication::instance()->environment().agentIsIE();
+  if (isRendered() && isIE) {
+    std::string result = WT_CLASS ".$('if" +  id() + "').innerHTML = \"\";";
+    if (!recursive)
+      result += WT_CLASS ".remove('" + id() + "');";
+    return result;
+  } else
+    return WWebWidget::renderRemoveJs(recursive);
 }
 
 }

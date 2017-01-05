@@ -558,7 +558,10 @@ std::string WebSession::makeAbsoluteUrl(const std::string& url) const
   if (isAbsoluteUrl(url))
     return url;
   else {
-    if (url.empty() || url[0] != '/')
+    if (!url.empty() && url[0] == '.' &&
+	(url.length() == 1 || url[1] != '.'))
+      return absoluteBaseUrl_ + (url.c_str() + 1);
+    else if (url.empty() || url[0] != '/')
       return absoluteBaseUrl_ + url;
     else
       return host(absoluteBaseUrl_) + url;
@@ -627,7 +630,7 @@ std::string WebSession::appendInternalPath(const std::string& baseUrl,
 {
   if (internalPath.empty() || internalPath == "/")
     if (baseUrl.empty())
-      return "?";
+      return ".";
     else
       return baseUrl;
   else {
@@ -1277,7 +1280,7 @@ void WebSession::handleRequest(Handler& handler)
 	response->setStatus(200);
 	response->addHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
 	response->addHeader("Access-Control-Max-Age", "1728000");
-	response->flush();
+	handler.flushResponse();
 
 	return;
       }
@@ -1298,6 +1301,9 @@ void WebSession::handleRequest(Handler& handler)
 
   const std::string *requestE = request.getParameter("request");
 
+  Configuration& conf = controller_->configuration();
+
+
   if (requestE && *requestE == "ws" && !request.isWebSocketRequest()) {
     LOG_ERROR("invalid WebSocket request, ignoring");
 
@@ -1311,6 +1317,13 @@ void WebSession::handleRequest(Handler& handler)
   }
 
   if (request.isWebSocketRequest()) {
+#ifdef WT_TARGET_JAVA
+    if (conf.webSockets()) {
+      handler.response()->setStatus(500); // Internal Server Error
+      handler.flushResponse();
+      throw new WException("Server does not implement JSR-356 for WebSockets");
+    }
+#else
     if (state_ != JustCreated) {
       handleWebSocketRequest(handler);
       return;
@@ -1319,9 +1332,9 @@ void WebSession::handleRequest(Handler& handler)
       kill();
       return;
     }
+#endif // WT_TARGET_JAVA
   }
 
-  Configuration& conf = controller_->configuration();
 
   handler.response()->setResponseType(WebResponse::Page);
 
@@ -1371,6 +1384,10 @@ void WebSession::handleRequest(Handler& handler)
        */
       switch (state_) {
       case JustCreated: {
+	if (conf.sessionTracking() == Configuration::Combined) {
+          renderer().updateMultiSessionCookie(request);
+	}
+
 	switch (type_) {
 	case Application: {
 	  init(request); // env, url/internalpath
@@ -1486,6 +1503,19 @@ void WebSession::handleRequest(Handler& handler)
       }
       case ExpectLoad:
       case Loaded: {
+        if (conf.sessionTracking() == Configuration::Combined) {
+          const std::string *signalE
+            = handler.request()->getParameter("signal");
+          bool isKeepAlive = requestE && signalE && *signalE == "keepAlive";
+          if (isKeepAlive || !env_->ajax()) {
+            if (request.isWebSocketMessage()) {
+              renderer().multiSessionCookieUpdateNeeded_ = true;
+            } else {
+              renderer().updateMultiSessionCookie(request);
+            }
+          }
+        }
+
 	if (requestE) {
 	  if (*requestE == "jsupdate" ||
 	      *requestE == "jserror")
@@ -1704,16 +1734,16 @@ void WebSession::flushBootStyleResponse()
   }
 }
 
+#ifndef WT_TARGET_JAVA
 void WebSession::handleWebSocketRequest(Handler& handler)
 {
-#ifndef WT_TARGET_JAVA
   if (state_ != Loaded && state_ != ExpectLoad) {
     handler.flushResponse();
     return;
   }
 
   /*
-   * This triggers an orderly switch from Ajax to WebSocetk:
+   * This triggers an orderly switch from Ajax to WebSocket:
    *
    *  First we ask for a 'connect', and in the mean time we do not yet
    *  use the socket. On the JS side, the connect disables any pending
@@ -1735,15 +1765,15 @@ void WebSession::handleWebSocketRequest(Handler& handler)
 		 boost::weak_ptr<WebSession>(shared_from_this()), _1));
 
   handler.setRequest(0, 0);
-#endif // WT_TARGET_JAVA
 }
+#endif // WT_TARGET_JAVA
 
+#ifndef WT_TARGET_JAVA
 void WebSession::webSocketConnect(boost::weak_ptr<WebSession> session,
 				  WebWriteEvent event)
 {
   LOG_DEBUG("webSocketConnect()");
 
-#ifndef WT_TARGET_JAVA
   boost::shared_ptr<WebSession> lock = session.lock();
   if (lock) {
     Handler handler(lock, Handler::TakeLock);
@@ -1772,15 +1802,59 @@ void WebSession::webSocketConnect(boost::weak_ptr<WebSession> session,
       break;
     }
   }
-#endif // WT_TARGET_JAVA
   
 }
+#endif // WT_TARGET_JAVA
 
+#ifdef WT_TARGET_JAVA
+void WebSession::handleWebSocketMessage(Handler& handler)
+{
+  WebRequest *message = handler.request();
+  bool closing = message->contentLength() == 0;
+
+  if (!closing) {
+    const std::string *connectedE = message->getParameter("connected");
+    if (connectedE) {
+      renderer_.ackUpdate(boost::lexical_cast<int>(connectedE));
+      webSocketConnected_ = true;
+      canWriteWebSocket_ = true;
+    }
+
+    const std::string *wsRqIdE = message->getParameter("wsRqId");
+    if (wsRqIdE) {
+      int wsRqId = boost::lexical_cast<int>(*wsRqIdE);
+      renderer_.addWsRequestId(wsRqId);
+    }
+
+    const std::string *signalE = message->getParameter("signal");
+
+    if (signalE && *signalE == "ping") {
+      LOG_DEBUG("ws: handle ping");
+      if (canWriteWebSocket_) {
+        webSocket_->out() << "{}";
+        webSocket_->flushBuffer();
+        return;
+      }
+    }
+
+    const std::string *pageIdE = message->getParameter("pageId");
+
+    if (pageIdE && *pageIdE != boost::lexical_cast<std::string>(renderer_.pageId())) {
+      closing = true;
+    }
+
+    if (!closing) {
+      handleRequest(handler);
+    } else
+      webSocket_->flush();
+    }
+}
+#endif // WT_TARGET_JAVA
+
+#ifndef WT_TARGET_JAVA
 void WebSession::handleWebSocketMessage(boost::weak_ptr<WebSession> session,
 					WebReadEvent event)
 {
-
-#ifndef WT_TARGET_JAVA
   LOG_DEBUG("handleWebSocketMessage: " << (int)event);
   boost::shared_ptr<WebSession> lock = session.lock();
   if (lock) {
@@ -1847,6 +1921,12 @@ void WebSession::handleWebSocketMessage(boost::weak_ptr<WebSession> session,
 	    lock->webSocketConnected_ = true;
 	  }
 
+	  const std::string *wsRqIdE = message->getParameter("wsRqId");
+	  if (wsRqIdE) {
+	    int wsRqId = boost::lexical_cast<int>(*wsRqIdE);
+	    lock->renderer_.addWsRequestId(wsRqId);
+	  }
+
 	  const std::string *signalE = message->getParameter("signal");
 
 	  if (signalE && *signalE == "ping") {
@@ -1896,8 +1976,8 @@ void WebSession::handleWebSocketMessage(boost::weak_ptr<WebSession> session,
       }
     }
   }
-#endif // WT_TARGET_JAVA
 }
+#endif // WT_TARGET_JAVA
 
 std::string WebSession::ajaxCanonicalUrl(const WebResponse& request) const
 {
@@ -1972,6 +2052,11 @@ void WebSession::pushUpdates()
 	 boost::bind(&WebSession::webSocketReady,
 		     boost::weak_ptr<WebSession>(shared_from_this()),
 		     _1));
+#else
+      webSocket_->setResponseType(WebResponse::Update);
+      app_->notify(WEvent(WEvent::Impl(webSocket_)));
+      updatesPending_ = false;
+      webSocket_->flushBuffer();
 #endif
     }
   }
@@ -1984,12 +2069,12 @@ void WebSession::pushUpdates()
   }
 }
 
+#ifndef WT_TARGET_JAVA
 void WebSession::webSocketReady(boost::weak_ptr<WebSession> session,
 				WebWriteEvent event)
 {
   LOG_DEBUG("webSocketReady()");
 
-#ifndef WT_TARGET_JAVA
   boost::shared_ptr<WebSession> lock = session.lock();
   if (lock) {
     Handler handler(lock, Handler::TakeLock);
@@ -2018,8 +2103,8 @@ void WebSession::webSocketReady(boost::weak_ptr<WebSession> session,
       break;
     }
   }
-#endif // WT_TARGET_JAVA
 }
+#endif // WT_TARGET_JAVA
 
 const std::string *WebSession::getSignal(const WebRequest& request,
 					 const std::string& se) const
@@ -2055,7 +2140,8 @@ const std::string *WebSession::getSignal(const WebRequest& request,
 
 void WebSession::externalNotify(const WEvent::Impl& event)
 {
-  if (recursiveEventHandler_) {
+  if (recursiveEventHandler_ &&
+      !newRecursiveEvent_) {
 #ifdef WT_BOOST_THREADS
     newRecursiveEvent_ = new WEvent::Impl(event);
     recursiveEvent_.notify_one();
@@ -2295,7 +2381,7 @@ void WebSession::notify(const WEvent& event)
 	  }
 	}
       } else {
-		env_->updateUrlScheme(request);
+	env_->updateUrlScheme(request);
 
 	if (signalE) {
 	  /*
@@ -2405,6 +2491,7 @@ void WebSession::notify(const WEvent& event)
 	     * 'poll' : long poll
 	     * 'none' : no event, but perhaps a synchronization
 	     * 'load' : load invisible content
+	     * 'keepAlive' : no event, keep alive
 	     */
 
 	    try {
@@ -2543,7 +2630,8 @@ EventType WebSession::getEventType(const WEvent& event) const
 	return ResourceEvent;
       else if (signalE) {
 	if (*signalE == "none" || *signalE == "load" || 
-	    *signalE == "hash" || *signalE == "poll")
+	    *signalE == "hash" || *signalE == "poll" ||
+	    *signalE == "keepAlive")
 	  return OtherEvent;
 	else {
 	  std::vector<unsigned int> signalOrder
@@ -2751,7 +2839,8 @@ WebSession::getSignalProcessingOrder(const WEvent& e) const
         *signalE != "hash" &&
         *signalE != "none" &&
         *signalE != "poll" &&
-        *signalE != "load") {
+	*signalE != "load" &&
+	*signalE != "keepAlive") {
       EventSignalBase *signal = decodeSignal(*signalE, true);
       if (!signal) {
         // Signal was not exposed, do nothing
@@ -2811,6 +2900,8 @@ void WebSession::notifySignal(const WEvent& e)
 
       // We will want invisible changes now too.
       renderer_.setVisibleOnly(false);
+    } else if (*signalE == "keepAlive") {
+      // Do nothing
     } else if (*signalE != "poll") {
       propagateFormValues(e, se);
 
@@ -2900,6 +2991,11 @@ bool WebSession::useUrlRewriting()
 	   env_->supportsCookies());
 }
 
+void WebSession::setMultiSessionId(const std::string &multiSessionId)
+{
+  multiSessionId_ = multiSessionId;
+}
+
 #ifndef WT_TARGET_JAVA
 void WebSession::generateNewSessionId()
 {
@@ -2923,6 +3019,13 @@ void WebSession::generateNewSessionId()
     renderer().setCookie("Wt" + sessionIdCookie_, "1", WDateTime(), "", "",
 			 env_->urlScheme() == "https");
   }
+}
+#endif // WT_TARGET_JAVA
+
+#ifndef WT_TARGET_JAVA
+void WebSession::setDocRoot(const std::string &docRoot)
+{
+  docRoot_ = docRoot;
 }
 #endif // WT_TARGET_JAVA
 

@@ -517,7 +517,10 @@ namespace GS
 			name->setMaxLength(70);
 			AccountNameValidator *nameValidator = new AccountNameValidator(true);
 			if(isRecordPersisted())
+			{
+				TRANSACTION(APP);
 				nameValidator->setAllowedName(_recordPtr->name);
+			}
 			setValidator(nameField, nameValidator);
 			name->changed().connect(boost::bind(&AbstractRecordFormModel::validateUpdateField, this, nameField));
 			return name;

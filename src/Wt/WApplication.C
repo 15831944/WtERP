@@ -16,6 +16,7 @@
 #include "Wt/WException"
 #include "Wt/WMemoryResource"
 #include "Wt/WServer"
+#include "Wt/WTimer"
 
 #include "WebSession.h"
 #include "DomElement.h"
@@ -377,6 +378,12 @@ std::string WApplication::onePixelGifUrl()
 
 WApplication::~WApplication()
 {
+  // Fix issue #5331: if WTimer is a child of WApplication,
+  // it will outlive timerRoot_. Delete it now already.
+  std::vector<WObject *> children = this->children();
+  for (std::size_t i = 0; i < children.size(); ++i) {
+    delete dynamic_cast<WTimer*>(children[i]);
+  }
   timerRoot_ = 0; // marker for being deleted
 
   WContainerWidget *r = domRoot_;
@@ -788,7 +795,7 @@ WApplication::decodeExposedSignal(const std::string& signalName) const
 std::string WApplication::encodeSignal(const std::string& objectId,
 				       const std::string& name) const
 {
-  return (objectId == "app" ? id() : objectId) + '.' + name;
+  return objectId + '.' + name;
 }
 
 std::string WApplication::resourceMapKey(WResource *resource)
@@ -996,18 +1003,6 @@ void WApplication::redirect(const std::string& url)
   session_->redirect(url);
 }
 
-void WApplication::redirectToSession(const std::string& newSessionId)
-{
-  std::string redirectUrl = bookmarkUrl();
-  if (!session_->useUrlRewriting()) {
-    std::string cookieName = environment().deploymentPath();
-    setCookie(cookieName, newSessionId, -1, "", "", environment().urlScheme() == "https");
-  } else
-    redirectUrl += "?wtd=" + DomElement::urlEncodeS(newSessionId);
-
-  redirect(redirectUrl);
-}
-
 std::string WApplication::encodeUntrustedUrl(const std::string& url) const
 {
   /*
@@ -1115,6 +1110,18 @@ void WApplication::addMetaHeader(const std::string& name,
 				 const std::string& lang)
 {
   addMetaHeader(MetaName, name, content, lang);
+}
+
+WString WApplication::metaHeader(MetaHeaderType type, const std::string& name) const
+{
+  for (unsigned i = 0; i < metaHeaders_.size(); ++i) {
+    const MetaHeader& m = metaHeaders_[i];
+
+    if (m.type == type && m.name == name)
+      return m.content;
+  }
+
+  return WString::Empty;
 }
 
 void WApplication::addMetaHeader(MetaHeaderType type,

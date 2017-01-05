@@ -32,6 +32,8 @@ public:
    */
   WDateEdit(WContainerWidget *parent = 0);
 
+  virtual ~WDateEdit();
+
   /*! \brief Sets the date.
    *
    * Does nothing if the current date is \p Null.
@@ -70,7 +72,7 @@ public:
    *
    * This sets the format in the validator.
    *
-   * The default format is <tt>'dd/MM/yyyy'</tt>.
+   * The default format is based on the current WLocale.
    *
    * \sa WDateValidator::setFormat()
    */
@@ -125,6 +127,7 @@ public:
 			 const WAnimation& animation = WAnimation());
 
   virtual void load();
+  virtual void refresh();
 
 protected:
   virtual void render(WFlags<RenderFlag> flags);
@@ -141,6 +144,7 @@ protected:
 private:
   WPopupWidget *popup_;
   WCalendar *calendar_;
+  bool customFormat_;
 
   void defineJavaScript();
   void connectJavaScript(Wt::EventSignalBase& s, const std::string& methodName);

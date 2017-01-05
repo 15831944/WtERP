@@ -33,6 +33,7 @@ WPopupMenu::WPopupMenu(WStackedWidget *contentsStack)
     triggered_(this),
     cancel_(this, "cancel"),
     recursiveEventLoop_(false),
+    willPopup_(false),
     autoHideDelay_(-1)
 {
   const char *CSS_RULES_NAME = "Wt::WPopupMenu";
@@ -132,6 +133,9 @@ void WPopupMenu::done(WMenuItem *result)
 
 void WPopupMenu::cancel()
 {
+  if (willPopup_)
+    return;
+
   if (!isHidden())
     done(0);
 }
@@ -161,6 +165,9 @@ void WPopupMenu::popupImpl()
   prepareRender(app);
 
   show();
+
+  willPopup_ = true;
+  scheduleRender();
 }
 
 void WPopupMenu::popup(const WPoint& p)
@@ -294,5 +301,11 @@ void WPopupMenu::setAutoHide(bool enabled, int autoHideDelay)
 
 void WPopupMenu::renderSelected(WMenuItem *item, bool selected)
 { }
+
+void WPopupMenu::getSDomChanges(std::vector<DomElement *> &result, WApplication *app)
+{
+  WMenu::getSDomChanges(result, app);
+  willPopup_ = false;
+}
 
 }

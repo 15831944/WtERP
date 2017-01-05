@@ -18,46 +18,33 @@ namespace Wt {
 
 class WTimeEdit;
 
-/*! \class WTimePicker Wt/WTimePicker Wt/WTimePicker
- *  \brief A Time Picker
- *
- *  \sa WTimeEdit
- *  \sa WTime
- *  \sa WTimeValidator
- *
- * Styling through CSS is not applicable.
- *
- */
 class WT_API WTimePicker : public WCompositeWidget
 {
 public:
-    /*! \brief Creates a new time picker.
-     */
-    WTimePicker(WContainerWidget *parent = 0);
-    
-	/*! \brief Creates a new time picker.
-     */
-    WTimePicker(const WTime &time, WContainerWidget *parent = 0);
+    WTimePicker(WTimeEdit *timeEdit);
 
-    /*! \brief Creates a new time picker.
-     */
-    WTimePicker(WTimeEdit *timeEdit, WContainerWidget *parent = 0);
+    virtual ~WTimePicker();
 
-    /*! \brief Creates a new time picker.
-     */
-    WTimePicker(const WTime &time, WTimeEdit *timeEdit, WContainerWidget *parent = 0);
-
-    /*! \brief Returns the time
-     */
     WTime time() const;
 
-    /*! \brief Sets the time
-     */
     void setTime(const WTime& time);
 
-    /*! \brief Signal emitted when the value is changed
-     */
     Signal<>& selectionChanged() { return selectionChanged_; }
+
+    void setHourStep(int step);
+    int hourStep() const;
+
+    void setMinuteStep(int step);
+    int minuteStep() const;
+
+    void setSecondStep(int step);
+    int secondStep() const;
+
+    void setMillisecondStep(int step);
+    int millisecondStep() const;
+
+    void setWrapAroundEnabled(bool enabled);
+    bool wrapAroundEnabled() const;
 
     void configure();
 
@@ -83,8 +70,10 @@ private:
     void ampmValueChanged();
     bool formatAp() const;
     bool formatMs() const;
+    bool formatS() const;
 
     Signal<> selectionChanged_;
+    JSlot toggleAmPm_;
 };
 
 

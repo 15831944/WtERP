@@ -95,14 +95,14 @@ std::string narrow(const std::wstring& s, const std::locale &loc)
 
   int size = s.length() + 1;
 
-  char *pstr = new char [size];
+  char *pstr = (char*)std::malloc(size);
   char *pc = pstr;
 
   std::mbstate_t mystate = std::mbstate_t();
   bool error = false;
 
   for (;;) {
-    myresult = myfacet.out(mystate, pwc, pwend, pwc, pc, pc + size, pc);
+    myresult = myfacet.out(mystate, pwc, pwend, pwc, pc, pstr + size, pc);
 
     if (myresult == Cvt::ok) {
       break;
@@ -127,7 +127,7 @@ std::string narrow(const std::wstring& s, const std::locale &loc)
   if (error)
     LOG_WARN("narrow(): loss of detail: " << result);
 
-  delete[] pstr;
+  std::free(pstr);
 
   return result;
 }
@@ -289,8 +289,11 @@ std::string fromUTF8(const std::string& s, CharEncoding encoding)
 {
   switch(encoding) {
 #ifndef WT_NO_STD_WSTRING
-    case LocalEncoding: return narrow(fromUTF8(s));
+    case DefaultEncoding:
+    case LocalEncoding:
+      return narrow(fromUTF8(s));
 #else
+    case DefaultEncoding:
     case LocalEncoding:
       {
         // You may want to rewrite this for your system
