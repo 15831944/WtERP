@@ -16,7 +16,8 @@ examples/widgetgallery/docroot/resources
 resources/tiny_mce
 test/interactive
 debug/
-
+src/GhaziSecurity/resources/approot/uploads/*
+src/GhaziSecurity/resources/approot/log.txt
 
 
 

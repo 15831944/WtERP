@@ -31,7 +31,7 @@ WServer::WServer(int argc, char *argv[], const std::string &wtConfigurationFile)
 void WServer::initialize()
 {
 	auto resolver = new Wt::WMessageResourceBundle();
-	resolver->use(appRoot() + "strings", false); //CHECK_BEFORE_RELEASE
+	resolver->use(appRoot() + "strings");
 	setLocalizedStrings(resolver);
 
 	/* *************************************************************************
@@ -72,7 +72,7 @@ void WServer::initialize()
 			throw std::runtime_error("Invalid 'DbBackend' configuration: \"" + dbBackend + "\"");
 		}
 
-		sqlConnection->setProperty("show-queries", "true");
+		//sqlConnection->setProperty("show-queries", "true");
 		_sqlPool = new Wt::Dbo::FixedSqlConnectionPool(sqlConnection, 1);
 
 		log("success") << "Successfully connected to database";

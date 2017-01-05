@@ -194,8 +194,8 @@ WApplication::WApplication(const Wt::WEnvironment& env)
 	: Wt::WApplication(env),
 	_startTime(boost::posix_time::microsec_clock::local_time()), _entitiesDatabase(_dboSession), _accountsDatabase(_dboSession), _userDatabase(_dboSession), _login()
 {
-	messageResourceBundle().use(appRoot() + "templates", false); //CHECK_BEFORE_RELEASE
-	messageResourceBundle().use(appRoot() + "strings", false); //CHECK_BEFORE_RELEASE
+	messageResourceBundle().use(appRoot() + "templates");
+	messageResourceBundle().use(appRoot() + "strings");
 
 	WServer *server = SERVER;
 	_dboSession.setConnectionPool(*server->sqlPool());
