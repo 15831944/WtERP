@@ -256,6 +256,9 @@ void WApplication::handleAuthChanged()
 
 long long WApplication::getUsableIdFromPathPrefix(const std::string &pathPrefix, AdminPageWidget *adminPageWidget, const std::string &pathComponentPrefix)
 {
+	if (!adminPageWidget)
+		return -1;
+
 	std::string path = internalPath();
 	Wt::Utils::append(path, '/');
 
@@ -269,7 +272,7 @@ long long WApplication::getUsableIdFromPathPrefix(const std::string &pathPrefix,
 				long long id = boost::lexical_cast<long long>(idStr);
 				return id;
 			}
-			catch(boost::bad_lexical_cast &) {}
+			catch(const boost::bad_lexical_cast &) {}
 		}
 	}
 
