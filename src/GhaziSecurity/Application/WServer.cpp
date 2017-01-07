@@ -246,7 +246,6 @@ void WServer::initialize()
 			regionalAdministrator.modify()->linkedToCollection.insert(modifyOtherUserRecord);
 			regionalAdministrator.modify()->linkedToCollection.insert(removeOtherUserRecord);
 			regionalAdministrator.modify()->linkedToCollection.insert(viewUnassignedRegionRecord);
-			regionalAdministrator.modify()->linkedToCollection.insert(viewOtherRegionRecord);
 
 			auto regionalUser = _dboSession.add(new Permission(Permissions::RegionalUser, "Regional user permissions"));
 			regionalUser.modify()->linkedToCollection.insert(accessAdminPanel);
@@ -256,7 +255,6 @@ void WServer::initialize()
 			regionalUser.modify()->linkedToCollection.insert(viewUnassignedUserRecord);
 			regionalUser.modify()->linkedToCollection.insert(viewOtherUserRecord);
 			regionalUser.modify()->linkedToCollection.insert(viewUnassignedRegionRecord);
-			regionalUser.modify()->linkedToCollection.insert(viewOtherRegionRecord);
 
 			//Users
 			{

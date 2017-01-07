@@ -94,6 +94,7 @@ namespace GS
 
 		UserView *_view = nullptr;
 		Wt::Dbo::ptr<AuthInfo> _authInfoPtr;
+		PermissionMap _permissionMap;
 		const Permissions::GSPermissions _permissionIdxToId[PermissionCBValues] = { Permissions::RegionalUser, Permissions::RegionalAdministrator, Permissions::GlobalAdministrator };
 	};
 
