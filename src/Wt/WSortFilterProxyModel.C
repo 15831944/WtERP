@@ -473,7 +473,7 @@ void WSortFilterProxyModel::sourceRowsAboutToBeInserted
 void WSortFilterProxyModel::sourceRowsInserted(const WModelIndex& parent,
 					       int start, int end)
 {
-  shiftModelIndexes(parent, end + 1, (end - start + 1), mappedIndexes_);
+  startShiftModelIndexes(parent, end + 1, (end - start + 1), mappedIndexes_);
 
   if (inserting_)
     return;
@@ -530,14 +530,17 @@ void WSortFilterProxyModel::sourceRowsAboutToBeRemoved
       endRemoveRows();
     }
   }
+
+  int count = end - start + 1;
+  startShiftModelIndexes(parent, start, -count, mappedIndexes_);
+
 }
 
 void WSortFilterProxyModel::sourceRowsRemoved(const WModelIndex& parent,
 					      int start, int end)
 {
   int count = end - start + 1;
-
-  shiftModelIndexes(parent, start, -count, mappedIndexes_);
+  endShiftModelIndexes(parent, start, -count, mappedIndexes_);
 
   WModelIndex pparent = mapFromSource(parent);
   // distinguish between invalid parent being root item or being filtered out

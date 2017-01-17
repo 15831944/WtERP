@@ -32,8 +32,11 @@ BOOST_AUTO_TEST_CASE( json_generate_object )
 	      "  \"third\" : null,"
 	      "  \"fourth\" : false,"
 	      "  \"fifth\" : 1.25,"
-	      "  \"sixth\" : 1.54e99,"
-	      "  \"seventh\" : 9.870000000000001e88,"
+#if !defined(WT_NO_SPIRIT) && BOOST_VERSION >= 104700
+              // We lose precision in earlier versions of boost
+	      "  \"sixth\" : 2.418980221897202e90,"
+	      "  \"seventh\" : 2.713877091499598e75,"
+#endif
 	      "  \"eight\" : \"a string type value\","
 	      "  \"ninth\" : {"
 	      "    \"sub-first\" : 1,"
@@ -111,6 +114,8 @@ BOOST_AUTO_TEST_CASE( json_generate_UTF8 )
   BOOST_REQUIRE(initial == reconstructed);
 }
 
+#if !defined(WT_NO_SPIRIT) && BOOST_VERSION >= 104700
+// We lose precision in earlier versions of boost
 BOOST_AUTO_TEST_CASE( json_test_double_dim )
 {
   Json::Value v(2.0487042606859837E-309);  
@@ -122,6 +127,55 @@ BOOST_AUTO_TEST_CASE( json_test_double_dim )
   Json::parse(generated, reconstructed);
 
   BOOST_REQUIRE(obj == reconstructed);
+}
+#endif
+
+BOOST_AUTO_TEST_CASE( json_test_nan )
+{
+  Json::Value v(std::numeric_limits<double>::quiet_NaN());
+  Json::Object obj;
+  obj["test"] = v;
+  std::string generated = Json::serialize(obj);
+
+  Json::Object reconstructed;
+  Json::parse(generated, reconstructed);
+
+  Json::Object obj2;
+  obj2["test"] = Json::Value::Null;
+
+  BOOST_REQUIRE(obj2 == reconstructed);
+}
+
+BOOST_AUTO_TEST_CASE( json_test_infinity )
+{
+  Json::Value v(std::numeric_limits<double>::infinity());
+  Json::Object obj;
+  obj["test"] = v;
+  std::string generated = Json::serialize(obj);
+
+  Json::Object reconstructed;
+  Json::parse(generated, reconstructed);
+
+  Json::Object obj2;
+  obj2["test"] = Json::Value::Null;
+
+  BOOST_REQUIRE(obj2 == reconstructed);
+}
+
+BOOST_AUTO_TEST_CASE( json_test_negative_infinity )
+{
+  Json::Value v(-std::numeric_limits<double>::infinity());
+  Json::Object obj;
+  obj["test"] = v;
+  std::string generated = Json::serialize(obj);
+
+  Json::Object reconstructed;
+  Json::parse(generated, reconstructed);
+
+  Json::Object obj2;
+  obj2["test"] = Json::Value::Null;
+
+  BOOST_REQUIRE(obj2 == reconstructed);
 }
 
 #endif // JSON_PARSER

@@ -219,6 +219,8 @@ void WFileUpload::enableAjax()
 void WFileUpload::setFilters(const std::string& acceptAttributes)
 {
   acceptAttributes_ = acceptAttributes;
+  flags_.set(BIT_ACCEPT_ATTRIBUTE_CHANGED, true);
+  repaint();
 }
 
 void WFileUpload::setProgressBar(WProgressBar *bar)
@@ -356,11 +358,17 @@ void WFileUpload::updateDom(DomElement& element, bool all)
       inputE->callMethod("disabled=false");
     else
       inputE->callMethod("disabled=true");
+  }
+
+  if (flags_.test(BIT_ACCEPT_ATTRIBUTE_CHANGED) || flags_.test(BIT_ENABLED_CHANGED)){
+    if (!inputE)
+      inputE = DomElement::getForUpdate("in" + id(), DomElement_INPUT);
 
     inputE->setAttribute("accept", acceptAttributes_);
-
-    flags_.reset(BIT_ENABLED_CHANGED);
   }
+
+  flags_.reset(BIT_ENABLED_CHANGED);
+  flags_.reset(BIT_ACCEPT_ATTRIBUTE_CHANGED);
 
   EventSignal<> *change = voidEventSignal(CHANGE_SIGNAL, false);
   if (change && change->needsUpdate(all)) {

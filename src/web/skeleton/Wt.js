@@ -73,20 +73,7 @@ this.button = function(e)
     return 0;
   }
 
-  if (!WT.isGecko && 
-      typeof e.which !== UNDEFINED && 
-      typeof e.which !== UNKNOWN) {
-    if (e.which == 3)
-      return 4;
-    else if (e.which == 2)
-      return 2;
-    else if (e.which == 1)
-      return 1;
-    else
-      return 0;
-  } else if (WT.isIE && 
-	     typeof e.which !== UNDEFINED &&
-	     typeof e.which !== UNKNOWN) {
+  if (WT.isIElt9) {
     if (e.button == 2)
       return 4;
     else if (e.button == 4)
@@ -95,16 +82,15 @@ this.button = function(e)
       return 1;
     else
       return 0;
-  } else if (typeof e.which !== UNDEFINED &&
-	     typeof e.which !== UNKNOWN) {
-    if (e.button == 2)
-      return 4;
+  } else {
+    if (e.button == 0)
+      return 1;
     else if (e.button == 1)
       return 2;
+    else if (e.button == 2)
+      return 4;
     else
-      return 1;
-  } else {
-    return 0;
+      return 0;
   }
 };
 
@@ -277,13 +263,9 @@ this.initAjaxComm = function(url, handler) {
 	  if (!sessionUrl)
 	    return;
 
-	  if (good) {
-	    handled = true;
-	    handler(0, request.responseText, userData);
-	  } else {
-	    handler(1, null, userData); 
-	  }
+	  handled = true;
 
+	  var rq = request;
 	  if (request) {
 	    request.onreadystatechange = new Function;
 	    try {
@@ -296,7 +278,11 @@ this.initAjaxComm = function(url, handler) {
 	    request = null;
 	  }
 
-	  handled = true;
+	  if (good) {
+	    handler(0, rq.responseText, userData);
+	  } else {
+	    handler(1, null, userData); 
+	  }
 	}
 
 	function recvCallback() {
@@ -311,6 +297,9 @@ this.initAjaxComm = function(url, handler) {
 	}
 
 	function handleTimeout() {
+	  if (handled)
+	    return;
+
 	  if (!sessionUrl)
 	    return;
 
@@ -1820,7 +1809,6 @@ this.positionAtWidget = function(id, atId, orientation, delta) {
   
     for (p = pp.parentNode; p != domRoot; p = p.parentNode) {
       if (p.wtResize) {
-	p = pp;
 	break;
       }
 
@@ -2830,7 +2818,7 @@ function quit(hasQuitMessage) {
 function doKeepAlive() {
   WT.history._initTimeout();
   if (commErrors == 0)
-    update(null, 'none', null, false);
+    update(null, 'keepAlive', null, false);
 }
 
 function debug(s) {
@@ -3180,10 +3168,14 @@ _$_$if_WEB_SOCKETS_$_();
 	  } else {
 	    var query = sessionUrl.substr(sessionUrl.indexOf('?'));
 	    wsurl = "ws" + location.protocol.substr(4)
-	      + "//" + location.host + deployUrl + query;
+	      + "//" + location.host + _$_WS_PATH_$_ + query;
 	  }
 
 	  wsurl += "&request=ws";
+
+	  var wsid = _$_WS_ID_$_;
+	  if (wsid.length > 0)
+	    wsurl += "&wsid=" + wsid;
 
 	  if (typeof window.WebSocket !== UNDEFINED)
 	    websocket.socket = ws = new WebSocket(wsurl);
@@ -3399,7 +3391,11 @@ function sendUpdate() {
     data.result += '&ackPuzzle=' + encodeURIComponent(solution);
   }
 
-  var params = "_$_PARAMS_$_";
+  function getParams() {
+    // Prevent minifier from optimizing away the length check.
+    return "_$_PARAMS_$_";
+  }
+  var params = getParams();
   if (params.length > 0)
     data.result += '&Wt-params=' + encodeURIComponent(params);
 
@@ -3417,6 +3413,20 @@ function sendUpdate() {
       websocket.socket.send(data.result);
     }
   } else {
+    if (responsePending) {
+      try {
+	throw new Error("responsePending is true before comm.sendUpdate");
+      } catch (e) {
+	var stack = e.stack || e.stacktrace;
+	var description = e.description || e.message;
+	var err = { "exception_description" : description };
+	err.stack = stack;
+	sendError(err, "Wt internal error; description: " + description);
+	throw e;
+      }
+    }
+
+    responsePending = 1;
     responsePending = comm.sendUpdate
       ('request=jsupdate' + data.result, tm, ackUpdateId, -1);
 
@@ -3805,6 +3815,10 @@ function bindGlobal(event, id, f) {
     }, 0);
 }
 
+function refreshMultiSessionCookie() {
+  comm.sendUpdate('request=jsupdate&signal=keepAlive&ackId=' + ackUpdateId, false, ackUpdateId, -1);
+}
+
 this._p_ = {
   ieAlternative : ieAlternative,
   loadScript : loadScript,
@@ -3843,6 +3857,7 @@ this._p_ = {
   setConnectionMonitor : setConnectionMonitor,
   updateGlobal: updateGlobal,
   bindGlobal: bindGlobal,
+  refreshCookie: refreshMultiSessionCookie,
 
   propagateSize : propagateSize
 };

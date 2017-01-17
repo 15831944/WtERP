@@ -318,13 +318,14 @@ private:
   static const char *CHANGE_SIGNAL;
   static const char *UPLOADED_SIGNAL;
 
-  static const int BIT_DO_UPLOAD        = 0;
-  static const int BIT_ENABLE_AJAX      = 1;
-  static const int BIT_UPLOADING        = 2;
-  static const int BIT_MULTIPLE         = 3;
-  static const int BIT_ENABLED_CHANGED  = 4;
+  static const int BIT_DO_UPLOAD        	= 0;
+  static const int BIT_ENABLE_AJAX      	= 1;
+  static const int BIT_UPLOADING        	= 2;
+  static const int BIT_MULTIPLE         	= 3;
+  static const int BIT_ENABLED_CHANGED  	= 4;
+  static const int BIT_ACCEPT_ATTRIBUTE_CHANGED = 5;
 
-  std::bitset<5> flags_;
+  std::bitset<6> flags_;
 
   int textSize_;
 

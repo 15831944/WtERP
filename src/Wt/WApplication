@@ -1873,11 +1873,6 @@ public:
   Signal< ::int64_t >& requestTooLarge() { return requestTooLarge_; }
 
   /*
-   * For persistent sessions only: redirect to another session.
-   */
-  void redirectToSession(const std::string& sessionId);
-
-  /*
    * For persistent sessions only: return whether the persistent session
    * is connected to a browser.
    */

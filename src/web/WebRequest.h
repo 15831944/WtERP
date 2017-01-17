@@ -59,7 +59,9 @@ public:
    */
   virtual void flush(ResponseState state = ResponseDone,
 		     const WriteCallback& callback = WriteCallback()) = 0;
-
+#ifdef WT_TARGET_JAVA
+  virtual void flushBuffer();
+#endif
   /*
    * For a web socket request (isWebSocketRequest()), read a message
    * and call the given callback function when done.
@@ -158,6 +160,10 @@ public:
    */
   const char *userAgent() const;
   const char *referer() const;
+
+#ifndef WT_TARGET_JAVA
+  virtual std::vector<Wt::Http::Message::Header> headers() const = 0;
+#endif
 
   virtual const char *contentType() const;
   virtual ::int64_t contentLength() const;
