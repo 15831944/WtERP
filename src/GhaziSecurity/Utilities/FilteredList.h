@@ -12,6 +12,7 @@
 #define IdColumnWidth 80
 #define DateColumnWidth 120
 #define DateTimeColumnWidth 150
+#define EmailColumnWidth 150
 
 namespace GS
 {

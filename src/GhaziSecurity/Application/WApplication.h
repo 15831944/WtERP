@@ -16,8 +16,10 @@ namespace GS
 	class EntitiesAdminPage;
 	class DashboardAdminPage;
 	class AttendanceAdminPage;
+	class UsersAdminPage;
 	class PositionProxyModel;
 	class ServiceProxyModel;
+	class RegionProxyModel;
 	class AccountsAdminPage;
 	class AuthWidget;
 	class AdminPageWidget;
@@ -27,6 +29,7 @@ namespace GS
 	typedef Wt::Dbo::QueryModel<Wt::Dbo::ptr<City>> CityQueryModel;
 	typedef Wt::Dbo::QueryModel<Wt::Dbo::ptr<EmployeePosition>> PositionQueryModel;
 	typedef Wt::Dbo::QueryModel<Wt::Dbo::ptr<ClientService>> ServiceQueryModel;
+	typedef Wt::Dbo::QueryModel<Wt::Dbo::ptr<Region>> RegionQueryModel;
 
 	class AuthLogin : public Wt::Auth::Login
 	{
@@ -39,8 +42,8 @@ namespace GS
 		};
 
 		AuthLogin();
-		Wt::Dbo::ptr<User> userPtr();
-		Wt::Dbo::ptr<User> userPtr(const Wt::Auth::User &authUser);
+		Wt::Dbo::ptr<User> userPtr() const;
+		Wt::Dbo::ptr<AuthInfo> authInfoPtr() const { return _authInfoPtr; };
 
 		bool hasPermission(long long permissionId) { return checkPermission(permissionId) == Permitted; }
 		PermissionResult checkPermission(long long permissionId);
@@ -65,10 +68,10 @@ namespace GS
 			SelfIdOrNull //CANT modify other
 		};
 
-		void resetPermissions();
-		//void resetPermissionConditions();
+		void handleBeforeLoginChanged();
 		PermissionMap _permissions;
 		PermissionResult _recordCreatePermission;
+		Wt::Dbo::ptr<AuthInfo> _authInfoPtr;
 	};
 
 	class WApplication : public Wt::WApplication
@@ -126,6 +129,10 @@ namespace GS
 		ServiceProxyModel *serviceProxyModel() const { return _serviceProxyModel; }
 		void initServiceQueryModel();
 
+		RegionQueryModel *regionQueryModel() const { return _regionQueryModel; }
+		RegionProxyModel *regionProxyModel() const { return _regionProxyModel; }
+		void initRegionQueryModel();
+
 	protected:
 		long long getUsableIdFromPathPrefix(const std::string &pathPrefix, AdminPageWidget *adminPageWidget, const std::string &pathComponentPrefix);
 		void handleAuthChanged();
@@ -160,6 +167,7 @@ namespace GS
 		EntitiesAdminPage *_entitiesAdminPage = nullptr;
 		AccountsAdminPage *_accountsAdminPage = nullptr;
 		AttendanceAdminPage *_attendanceAdminPage = nullptr;
+		UsersAdminPage *_usersAdminPage = nullptr;
 
 		Wt::WDialog *_errorDialog = nullptr;
 		Wt::WText *_errorDialogText = nullptr;
@@ -176,7 +184,9 @@ namespace GS
 		PositionProxyModel *_positionProxyModel = nullptr;
 		ServiceQueryModel *_serviceQueryModel = nullptr;
 		ServiceProxyModel *_serviceProxyModel = nullptr;
-
+		RegionQueryModel *_regionQueryModel = nullptr;
+		RegionProxyModel *_regionProxyModel = nullptr;
+		
 		//Session related
 		Wt::Dbo::Session _dboSession;
 		AuthLogin _login;

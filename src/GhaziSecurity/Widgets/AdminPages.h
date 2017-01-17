@@ -80,6 +80,12 @@ namespace GS
 		AttendanceAdminPage(Wt::WContainerWidget *parent = nullptr);
 	};
 
+	class UsersAdminPage : public AdminPageWidget
+	{
+	public:
+		UsersAdminPage(Wt::WContainerWidget *parent = nullptr);
+	};
+
 }
 
 #endif

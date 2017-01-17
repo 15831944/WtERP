@@ -132,10 +132,15 @@ namespace GS
 	void TaskScheduler::createPendingCycleEntries(bool scheduleNext)
 	{
 		Wt::log("gs-info") << "TaskScheduler: Checking for pending EntryCycle entries";
-		_createPendingCycleEntries(scheduleNext);
+		boost::posix_time::time_duration nextEntryDuration = _createPendingCycleEntries(scheduleNext);
+
+		//Repeat
+		if(scheduleNext)
+			_server->ioService().schedule(static_cast<int>(nextEntryDuration.total_milliseconds()),
+				boost::bind(&TaskScheduler::createPendingCycleEntries, this, true));
 	}
 
-	void TaskScheduler::_createPendingCycleEntries(bool scheduleNext)
+	boost::posix_time::time_duration TaskScheduler::_createPendingCycleEntries(bool scheduleNext)
 	{
 		Wt::Dbo::Transaction t(dboSession);
 		boost::posix_time::time_duration nextEntryDuration = boost::posix_time::hours(6);
@@ -182,10 +187,7 @@ namespace GS
 				throw;
 		}
 
-		//Repeat
-		if(scheduleNext)
-			_server->ioService().schedule(static_cast<int>(nextEntryDuration.total_milliseconds()),
-				boost::bind(&TaskScheduler::createPendingCycleEntries, this, true));
+		return nextEntryDuration;
 	}
 
 	void TaskScheduler::checkAbnormalRecords(bool scheduleNext)
@@ -240,26 +242,7 @@ namespace GS
 		//Repeat every 24 hours
 		if(scheduleNext)
 			_server->ioService().schedule(static_cast<int>(boost::posix_time::hours(24).total_milliseconds()),
-				boost::bind(&TaskScheduler::createPendingCycleEntries, this, true));
+				boost::bind(&TaskScheduler::checkAbnormalRecords, this, true));
 	}
-
-// 	void TaskScheduler::createSelfEntityAndAccount(bool scheduleNext)
-// 	{
-// 		try
-// 		{
-// 			_accountsDatabase.findOrCreateSelfAccount();
-// 		}
-// 		catch(const std::exception &e)
-// 		{
-// 			Wt::log("error") << "TaskScheduler::createSelfEntityAndAccount(): Error: " << e.what();
-// 			if(_isConstructing)
-// 				throw e;
-// 		}
-// 
-// 		//Repeat every 24 hours
-// 		if(scheduleNext)
-// 			_server->ioService().schedule(static_cast<int>(boost::posix_time::hours(24).total_milliseconds()),
-// 				boost::bind(&TaskScheduler::createSelfEntityAndAccount, this, true));
-// 	}
 
 }

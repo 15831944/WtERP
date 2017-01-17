@@ -12,6 +12,7 @@
 #include "Widgets/EntryCycleMVC.h"
 #include "Widgets/HRMVC.h"
 #include "Widgets/AttendanceMVC.h"
+#include "Widgets/UserMVC.h"
 #include "Widgets/AuthWidget.h"
 
 #include <Wt/WNavigationBar>
@@ -33,25 +34,20 @@ namespace GS
 
 AuthLogin::AuthLogin()
 {
-	resetPermissions();
-	beforeChanged_.connect(this, &AuthLogin::resetPermissions);
+	handleBeforeLoginChanged();
+	beforeChanged_.connect(this, &AuthLogin::handleBeforeLoginChanged);
 }
 
-Wt::Dbo::ptr<User> AuthLogin::userPtr()
+Wt::Dbo::ptr<User> AuthLogin::userPtr() const
 {
-	if(loggedIn())
-		return userPtr(user());
-	else
+	if(!loggedIn())
 		return Wt::Dbo::ptr<User>();
-}
-
-Wt::Dbo::ptr<User> AuthLogin::userPtr(const Wt::Auth::User &authUser)
-{
+	
 	WApplication *app = APP;
 	TRANSACTION(app);
 
-	Wt::Dbo::ptr<AuthInfo> authInfo = app->userDatabase().find(authUser);
-	Wt::Dbo::ptr<User> user = authInfo->user();
+	Wt::Dbo::ptr<AuthInfo> authInfo = app->userDatabase().find(user());
+	Wt::Dbo::ptr<User> user = _authInfoPtr->user();
 
 	if(!user)
 	{
@@ -61,9 +57,15 @@ Wt::Dbo::ptr<User> AuthLogin::userPtr(const Wt::Auth::User &authUser)
 	return user;
 }
 
-void AuthLogin::resetPermissions()
+void AuthLogin::handleBeforeLoginChanged()
 {
 	WApplication *app = APP;
+
+	if(loggedIn())
+		_authInfoPtr = app->userDatabase().find(user());
+	else
+		_authInfoPtr = Wt::Dbo::ptr<AuthInfo>();
+
 	_permissions = SERVER->permissionsDatabase()->getUserPermissions(userPtr(), state(), &app->dboSession());
 
 	//Preloaded permissions
@@ -498,8 +500,47 @@ void WApplication::handleInternalPathChanged(std::string path)
 							_attendanceAdminPage->setDeniedPermissionWidget();
 					}
 				}
+
+				//user view
+				id = getUsableIdFromPathPrefix(User::viewInternalPath(""), _usersAdminPage, USER_PREFIX);
+				if(id != -1)
+				{
+					Wt::Dbo::Transaction t(dboSession());
+					Wt::Dbo::ptr<AuthInfo> ptr = dboSession().load<AuthInfo>(id, true);
+					if(ptr)
+					{
+						if(authLogin().checkRecordViewPermission(ptr.get()) == AuthLogin::Permitted && authLogin().hasPermission(Permissions::ViewUser))
+						{
+							UserView *view = new UserView(ptr);
+							view->load();
+							auto menuItem = _usersAdminPage->createMenuItemWrapped(view->viewName(), view->viewInternalPath(), view);
+						}
+						else
+							_usersAdminPage->setDeniedPermissionWidget();
+					}
+				}
+
+				//region view
+				id = getUsableIdFromPathPrefix(Region::viewInternalPath(""), _usersAdminPage, REGIONS_PATHC "/" REGION_PREFIX);
+				if(id != -1)
+				{
+					Wt::Dbo::Transaction t(dboSession());
+					Wt::Dbo::ptr<Region> ptr = dboSession().load<Region>(id, true);
+					if(ptr)
+					{
+						if(authLogin().checkRecordViewPermission(ptr.get()) == AuthLogin::Permitted && authLogin().hasPermission(Permissions::ViewRegion))
+						{
+							RegionView *view = new RegionView(ptr);
+							view->load();
+							auto menuItem = _usersAdminPage->createMenuItemWrapped(view->viewName(), view->viewInternalPath(), view);
+						}
+						else
+							_usersAdminPage->setDeniedPermissionWidget();
+					}
+				}
 			}
-			catch(Wt::Dbo::Exception &e)
+			catch(const Wt::Dbo::ObjectNotFoundException &) { }
+			catch(const Wt::Dbo::Exception &e)
 			{
 				Wt::log("error") << "WApplication::handleInternalPathChanged(): Dbo error(" << e.code() << "): " << e.what();
 				showDbBackendError(e.code());
@@ -599,6 +640,14 @@ void WApplication::lazyLoadAdminWidgets()
 	auto attendanceMenuItem = new Wt::WMenuItem(Wt::WString::tr("Attendance"), _attendanceAdminPage = new AttendanceAdminPage());
 	attendanceMenuItem->setPathComponent(_attendanceAdminPage->basePathComponent());
 	_adminMenu->addItem(attendanceMenuItem);
+
+	//Users
+	if(authLogin().hasPermission(Permissions::ViewUser))
+	{
+		auto usersMenuItem = new Wt::WMenuItem(Wt::WString::tr("Users"), _usersAdminPage = new UsersAdminPage());
+		usersMenuItem->setPathComponent(_usersAdminPage->basePathComponent());
+		_adminMenu->addItem(usersMenuItem);
+	}
 
 	_mainAdminTemplate->bindWidget("content", _adminStack);
 	_mainAdminTemplate->bindWidget("navigation", _adminNavBar);
@@ -725,6 +774,20 @@ void WApplication::initServiceQueryModel()
 	_serviceQueryModel->addColumn("id");
 
 	_serviceProxyModel = new ServiceProxyModel(_serviceQueryModel, _serviceQueryModel);
+}
+
+void WApplication::initRegionQueryModel()
+{
+	if(_regionQueryModel)
+		return;
+
+	_regionQueryModel = new RegionQueryModel(this);
+	_regionQueryModel->setBatchSize(1000);
+	_regionQueryModel->setQuery(dboSession().find<Region>());
+	_regionQueryModel->addColumn("name");
+	_regionQueryModel->addColumn("id");
+
+	_regionProxyModel = new RegionProxyModel(_regionQueryModel, _regionQueryModel);
 }
 
 void WApplication::showErrorDialog(const Wt::WString &message)

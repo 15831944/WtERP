@@ -308,16 +308,13 @@ namespace GS
 				if(res.second->saveChanges())
 				{
 					nothingSaved = false;
-					if(!wasPersisted && res.second->isRecordPersisted())
+					if(!wasPersisted)
 						res.second->persistedHandler();
 				}
 			}
 
 			t.commit();
 			afterSubmitHandler();
-
-			if(nothingSaved)
-				resetValidationAll();
 		}
 		catch(const Wt::Dbo::StaleObjectException &)
 		{
@@ -331,6 +328,9 @@ namespace GS
 			app->showDbBackendError(e.code());
 			nothingSaved = true;
 		}
+
+		if(nothingSaved)
+			resetValidationAll();
 
 		updateView();
 		if(!nothingSaved)

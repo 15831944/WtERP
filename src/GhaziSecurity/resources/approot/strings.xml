@@ -17,6 +17,7 @@
 <message id="Ok">Ok</message>
 <message id="Yes">Yes</message>
 <message id="No">No</message>
+<message id="None">None</message>
 <message id="Close">Close</message>
 <message id="Add">Add</message>
 <message id="List">List</message>
@@ -60,9 +61,6 @@
 <message id="AddNewX">Add new {1}</message>
 <message id="SelectFromList">Select from list</message>
 <message id="SelectXFromList">Select {1} from list</message>
-
-<!-- User related -->
-<message id="LogoutButton">Logout</message>
 
 <!-- Date time related -->
 <message id="Date">Date</message>
@@ -128,6 +126,8 @@
 <message id="DatabaseValidationFailed">Validation failed due to an internal error, try again</message>
 
 <!-- Permission related -->
+<message id="Permission">Permission</message>
+<message id="Permissions">Permissions</message>
 <message id="PermissionDenied">Permission denied</message>
 <message id="InvalidXSelectionPermissionDenied">You do not have permission to select this {1}</message>
 
@@ -170,6 +170,33 @@
 <message id="AttendanceEntry">Attendance device</message>
 <message id="AttendanceEntries">Attendance entries</message>
 <message id="AttendanceEntryInfo">Attendance Entry Information</message>
+
+<!-- User related and UserView -->
+<message id="User">User</message>
+<message id="Users">Users</message>
+<message id="UserName">User name</message>
+<message id="UserViewName">User {1}</message>
+<message id="CreateNewUser">Create new user</message>
+<message id="UserInfo">User Information</message>
+<message id="Email">Email</message>
+<message id="EmailAddress">Email address</message>
+<message id="InvalidEmailAddress">Invalid email address</message>
+<message id="LogoutButton">Logout</message>
+<message id="RegionalUser">Regional User</message>
+<message id="RegionalAdministrator">Regional Administrator</message>
+<message id="GlobalAdministrator">Global Administrator</message>
+<message id="Password">Password</message>
+<message id="ConfirmPassword">Confirm password</message>
+<message id="LoginName">Login name</message>
+<message id="ChangePassword">Change password</message>
+
+<!-- RegionView -->
+<message id="Region">Region</message>
+<message id="Regions">Regions</message>
+<message id="RegionName">Region name</message>
+<message id="RegionViewName">Region {1}</message>
+<message id="AddRegion">Add region</message>
+<message id="RegionInfo">Region Information</message>
 
 <!-- Entities -->
 <message id="AllEntities">All entities</message>
