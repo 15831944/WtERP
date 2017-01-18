@@ -117,7 +117,7 @@ namespace GS
 
 			setValue(loginNameField, _recordPtr->identity(Wt::Auth::Identity::LoginName));
 			setValue(emailField, _recordPtr->email());
-			setValue(regionField, _recordPtr->user() ? _recordPtr->user()->regionPtr : Wt::Dbo::ptr<Region>());
+			setValue(regionField, _recordPtr->regionPtr);
 
 			if(_recordPtr->user())
 			{
@@ -216,12 +216,13 @@ namespace GS
 			Wt::Auth::User authUser = app->userDatabase().registerNew();
 			authUser.setIdentity(Wt::Auth::Identity::LoginName, valueText(loginNameField));
 			_recordPtr = app->userDatabase().find(authUser);
+			_recordPtr.modify()->setCreatedByValues(false);
 		}
 
 		if(!_recordPtr->user())
 			_recordPtr.modify()->setUser(app->dboSession().add(new User()));
 
-		_recordPtr->user().modify()->regionPtr = boost::any_cast<Wt::Dbo::ptr<Region>>(value(regionField));
+		_recordPtr.modify()->regionPtr = boost::any_cast<Wt::Dbo::ptr<Region>>(value(regionField));
 		_recordPtr.modify()->setEmail(valueText(emailField).toUTF8());
 
 		if(isVisible(passwordField) && isVisible(password2Field))

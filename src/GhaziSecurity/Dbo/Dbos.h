@@ -15,16 +15,18 @@
 namespace GS
 {
 	//User related
+	class AuthInfo;
 	class User;
 	class Region;
 	class Permission;
 	struct UserPermissionPK;
 	class UserPermission;
 	class DefaultPermission;
-	typedef Wt::Auth::Dbo::AuthInfo<User> AuthInfo;
-	typedef AuthInfo::AuthIdentityType AuthIdentity;
-	typedef AuthInfo::AuthTokenType AuthToken;
 
+	typedef Wt::Auth::Dbo::AuthIdentity<AuthInfo> AuthIdentity;
+	typedef Wt::Auth::Dbo::AuthToken<AuthInfo> AuthToken;
+
+	typedef Wt::Dbo::collection<Wt::Dbo::ptr<AuthInfo>> AuthInfoCollection;
 	typedef Wt::Dbo::collection<Wt::Dbo::ptr<User>> UserCollection;
 	typedef Wt::Dbo::collection<Wt::Dbo::ptr<Region>> RegionCollection;
 	typedef Wt::Dbo::collection<Wt::Dbo::ptr<UserPermission>> UserPermissionCollection;
@@ -258,7 +260,7 @@ namespace GS
 		Wt::Dbo::ptr<Region> regionPtr;
 		Wt::WDateTime timestamp = Wt::WDateTime(boost::posix_time::microsec_clock::local_time());
 
-		void setCreatedByValues();
+		void setCreatedByValues(bool setRegion = true);
 
 		template<class Action>
 		void persist(Action& a)
@@ -269,6 +271,21 @@ namespace GS
 		}
 	};
 
+	class AuthInfo : public Wt::Auth::Dbo::AuthInfo<User>, public BaseAdminRecord
+	{
+	public:
+		template<class Action>
+		void persist(Action& a)
+		{
+			Wt::Auth::Dbo::AuthInfo<User>::persist(a);
+			BaseAdminRecord::persist(a);
+		}
+		constexpr static const char *tableName()
+		{
+			return "auth_info";
+		}
+	};
+
 	class User
 	{
 	public:
@@ -276,7 +293,6 @@ namespace GS
 		static std::string viewInternalPath(long long id) { return viewInternalPath(boost::lexical_cast<std::string>(id)); }
 		static std::string viewInternalPath(const std::string &idStr) { return "/" ADMIN_PATHC "/" USERS_PATHC "/" USER_PREFIX + idStr; }
 
-		Wt::Dbo::ptr<Region> regionPtr;
 		Wt::Dbo::weak_ptr<AuthInfo> authInfoWPtr;
 
 		UserPermissionCollection userPermissionCollection;
@@ -286,11 +302,11 @@ namespace GS
 		AccountEntryCollection accountEntriesCollection;
 		IncomeCycleCollection incomeCyclesCollection;
 		ExpenseCycleCollection expenseCyclesCollection;
+		AuthInfoCollection createdAuthInfoCollection;
 
 		template<class Action>
 		void persist(Action& a)
 		{
-			Wt::Dbo::belongsTo(a, regionPtr, "region", Wt::Dbo::OnDeleteSetNull | Wt::Dbo::OnUpdateCascade);
 			Wt::Dbo::hasOne(a, authInfoWPtr, "user");
 			Wt::Dbo::hasMany(a, userPermissionCollection, Wt::Dbo::ManyToOne, "user");
 
@@ -314,7 +330,7 @@ namespace GS
 		static std::string viewInternalPath(const std::string &idStr) { return "/" ADMIN_PATHC "/" USERS_PATHC "/" REGIONS_PATHC "/" REGION_PREFIX + idStr; }
 
 		std::string name;
-		UserCollection userCollection;
+		AuthInfoCollection authInfoCollection;
 
 		EntityCollection entitiesCollection;
 		AccountCollection accountsCollection;
@@ -326,7 +342,7 @@ namespace GS
 		void persist(Action& a)
 		{
 			Wt::Dbo::field(a, name, "name", 70);
-			Wt::Dbo::hasMany(a, userCollection, Wt::Dbo::ManyToOne, "region");
+			Wt::Dbo::hasMany(a, authInfoCollection, Wt::Dbo::ManyToOne, "region");
 
 			Wt::Dbo::hasMany(a, entitiesCollection, Wt::Dbo::ManyToOne, "region");
 			Wt::Dbo::hasMany(a, accountsCollection, Wt::Dbo::ManyToOne, "region");

@@ -38,25 +38,6 @@ AuthLogin::AuthLogin()
 	beforeChanged_.connect(this, &AuthLogin::handleBeforeLoginChanged);
 }
 
-Wt::Dbo::ptr<User> AuthLogin::userPtr() const
-{
-	if(!loggedIn())
-		return Wt::Dbo::ptr<User>();
-	
-	WApplication *app = APP;
-	TRANSACTION(app);
-
-	Wt::Dbo::ptr<AuthInfo> authInfo = app->userDatabase().find(user());
-	Wt::Dbo::ptr<User> user = _authInfoPtr->user();
-
-	if(!user)
-	{
-		user = app->dboSession().add(new User());
-		authInfo.modify()->setUser(user);
-	}
-	return user;
-}
-
 void AuthLogin::handleBeforeLoginChanged()
 {
 	WApplication *app = APP;
@@ -65,6 +46,13 @@ void AuthLogin::handleBeforeLoginChanged()
 		_authInfoPtr = app->userDatabase().find(user());
 	else
 		_authInfoPtr = Wt::Dbo::ptr<AuthInfo>();
+		
+	//Make sure user entry for authinfo exists
+	if(_authInfoPtr && !_authInfoPtr->user())
+	{
+		TRANSACTION(app);
+		_authInfoPtr.modify()->setUser(app->dboSession().add(new User()));
+	}
 
 	_permissions = SERVER->permissionsDatabase()->getUserPermissions(userPtr(), state(), &app->dboSession());
 
@@ -91,8 +79,9 @@ AuthLogin::PermissionResult AuthLogin::checkRecordViewPermission(const BaseAdmin
 		return result;
 
 	TRANSACTION(APP);
+	Wt::Dbo::ptr<AuthInfo> authInfo = authInfoPtr();
 	Wt::Dbo::ptr<User> userSelf = userPtr();
-	if(!userSelf)
+	if(!userSelf || !authInfo)
 		return AuthLogin::Denied;
 
 	if(!record)
@@ -107,7 +96,7 @@ AuthLogin::PermissionResult AuthLogin::checkRecordViewPermission(const BaseAdmin
 		if(viewUnassignedRegionRecord == RequiresStrongLogin)
 			result = RequiresStrongLogin;
 	}
-	else if(userSelf->regionPtr != record->regionPtr)
+	else if(authInfo->regionPtr != record->regionPtr)
 	{
 		PermissionResult viewOtherRegionRecord = checkPermission(Permissions::ViewOtherRegionRecord);
 		if(viewOtherRegionRecord == Denied)
@@ -148,6 +137,7 @@ AuthLogin::PermissionResult AuthLogin::checkRecordModifyPermission(const BaseAdm
 		return result;
 
 	TRANSACTION(APP);
+	Wt::Dbo::ptr<AuthInfo> authInfo = authInfoPtr();
 	Wt::Dbo::ptr<User> userSelf = userPtr();
 	if(!userSelf)
 		return Denied;
@@ -155,7 +145,7 @@ AuthLogin::PermissionResult AuthLogin::checkRecordModifyPermission(const BaseAdm
 	if(!record)
 		return result;
 
-	if(userSelf->regionPtr != record->regionPtr)
+	if(authInfo->regionPtr != record->regionPtr)
 	{
 		PermissionResult permission = checkPermission(Permissions::ViewOtherRegionRecord);
 		if(permission == Denied)

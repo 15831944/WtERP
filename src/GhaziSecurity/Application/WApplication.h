@@ -42,8 +42,8 @@ namespace GS
 		};
 
 		AuthLogin();
-		Wt::Dbo::ptr<User> userPtr() const;
 		Wt::Dbo::ptr<AuthInfo> authInfoPtr() const { return _authInfoPtr; };
+		Wt::Dbo::ptr<User> userPtr() const { return _authInfoPtr ? _authInfoPtr->user() : Wt::Dbo::ptr<User>(); }
 
 		bool hasPermission(long long permissionId) { return checkPermission(permissionId) == Permitted; }
 		PermissionResult checkPermission(long long permissionId);
@@ -209,6 +209,7 @@ namespace GS
 			return;
 		}
 
+		Wt::Dbo::ptr<AuthInfo> selfAuthInfo = authInfoPtr();
 		Wt::Dbo::ptr<User> selfUser = userPtr();
 		if(selfUser)
 		{
@@ -223,7 +224,7 @@ namespace GS
 			}
 			else
 			{
-				if(!selfUser->regionPtr)
+				if(!selfAuthInfo->regionPtr)
 					regionIdOptions = IdOptions::IsNull;
 				else
 				{
@@ -271,9 +272,9 @@ namespace GS
 			else if(regionIdOptions == IdOptions::IsNull)
 				query.where(fieldPrefix + "region_id IS null");
 			else if(regionIdOptions == IdOptions::SelfId)
-				query.where(fieldPrefix + "region_id = ?").bind(selfUser->regionPtr.id());
+				query.where(fieldPrefix + "region_id = ?").bind(selfAuthInfo->regionPtr.id());
 			else if(regionIdOptions == IdOptions::SelfIdOrNull)
-				query.where(fieldPrefix + "region_id = ? OR " + fieldPrefix + "region_id IS null").bind(selfUser->regionPtr.id());
+				query.where(fieldPrefix + "region_id = ? OR " + fieldPrefix + "region_id IS null").bind(selfAuthInfo->regionPtr.id());
 
 			if(userIdOptions == IdOptions::NotNull)
 				query.where(fieldPrefix + "creator_user_id IS NOT null");
