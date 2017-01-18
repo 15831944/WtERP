@@ -363,23 +363,30 @@ namespace GS
 	UsersAdminPage::UsersAdminPage(Wt::WContainerWidget *parent /*= nullptr*/)
 		: AdminPageWidget(USERS_PATHC, parent)
 	{
-		auto usersMenuItem = new Wt::WMenuItem(Wt::WString::tr("Users"));
-		usersMenuItem->setPathComponent("");
-		UserList *userList = new UserList();
-		userList->enableFilters();
-		usersMenuItem->setContents(new AdminPageContentWidget(usersMenuItem->text(), userList));
-		menu()->addItem(usersMenuItem);
+		WApplication *app = APP;
 
-		auto regionsMenuItem = new Wt::WMenuItem(Wt::WString::tr("Regions"));
-		regionsMenuItem->setPathComponent(REGIONS_PATHC);
-		RegionList *regionList = new RegionList();
-		regionList->enableFilters();
-		regionsMenuItem->setContents(new AdminPageContentWidget(regionsMenuItem->text(), regionList));
-		menu()->addItem(regionsMenuItem);
+		if(app->authLogin().hasPermission(Permissions::ViewUser))
+		{
+			auto usersMenuItem = new Wt::WMenuItem(Wt::WString::tr("Users"));
+			usersMenuItem->setPathComponent("");
+			UserList *userList = new UserList();
+			userList->enableFilters();
+			usersMenuItem->setContents(new AdminPageContentWidget(usersMenuItem->text(), userList));
+			menu()->addItem(usersMenuItem);
+		}
+
+		if(app->authLogin().hasPermission(Permissions::ViewRegion))
+		{
+			auto regionsMenuItem = new Wt::WMenuItem(Wt::WString::tr("Regions"));
+			regionsMenuItem->setPathComponent(REGIONS_PATHC);
+			RegionList *regionList = new RegionList();
+			regionList->enableFilters();
+			regionsMenuItem->setContents(new AdminPageContentWidget(regionsMenuItem->text(), regionList));
+			menu()->addItem(regionsMenuItem);
+		}
 
 		menu()->addSeparator();
 
-		WApplication *app = APP;
 		if(app->authLogin().hasPermission(Permissions::CreateRecord))
 		{
 			if(app->authLogin().hasPermission(Permissions::CreateUser))
