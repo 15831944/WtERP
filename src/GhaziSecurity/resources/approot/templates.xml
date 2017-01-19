@@ -737,7 +737,7 @@ ${</direction-selected>}
 		${block:GS.Field permissions Permissions}
 		
 		${submitBtn class="btn-primary"}
-		${<m:user-persisted>}${changePassword}${</m:user-persisted>}
+		${<m:user-modify>}${<m:user-persisted>}${changePassword}${</m:user-persisted>}${</m:user-modify>}
 	</div>
 </div>
 </message>

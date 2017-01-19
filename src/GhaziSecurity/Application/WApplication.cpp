@@ -79,9 +79,8 @@ AuthLogin::PermissionResult AuthLogin::checkRecordViewPermission(const BaseAdmin
 		return result;
 
 	TRANSACTION(APP);
-	Wt::Dbo::ptr<AuthInfo> authInfo = authInfoPtr();
 	Wt::Dbo::ptr<User> userSelf = userPtr();
-	if(!userSelf || !authInfo)
+	if(!userSelf)
 		return AuthLogin::Denied;
 
 	if(!record)
@@ -96,7 +95,7 @@ AuthLogin::PermissionResult AuthLogin::checkRecordViewPermission(const BaseAdmin
 		if(viewUnassignedRegionRecord == RequiresStrongLogin)
 			result = RequiresStrongLogin;
 	}
-	else if(authInfo->regionPtr != record->regionPtr)
+	else if(userSelf->regionPtr != record->regionPtr)
 	{
 		PermissionResult viewOtherRegionRecord = checkPermission(Permissions::ViewOtherRegionRecord);
 		if(viewOtherRegionRecord == Denied)
@@ -137,7 +136,6 @@ AuthLogin::PermissionResult AuthLogin::checkRecordModifyPermission(const BaseAdm
 		return result;
 
 	TRANSACTION(APP);
-	Wt::Dbo::ptr<AuthInfo> authInfo = authInfoPtr();
 	Wt::Dbo::ptr<User> userSelf = userPtr();
 	if(!userSelf)
 		return Denied;
@@ -145,7 +143,7 @@ AuthLogin::PermissionResult AuthLogin::checkRecordModifyPermission(const BaseAdm
 	if(!record)
 		return result;
 
-	if(authInfo->regionPtr != record->regionPtr)
+	if(userSelf->regionPtr != record->regionPtr)
 	{
 		PermissionResult permission = checkPermission(Permissions::ViewOtherRegionRecord);
 		if(permission == Denied)

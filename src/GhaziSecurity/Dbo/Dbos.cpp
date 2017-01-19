@@ -108,7 +108,7 @@ namespace GS
 			creatorUserPtr = app->authLogin().userPtr();
 
 			if(setRegion)
-				regionPtr = app->authLogin().authInfoPtr()->regionPtr;
+				regionPtr = app->authLogin().userPtr()->regionPtr;
 		}
 	}
 

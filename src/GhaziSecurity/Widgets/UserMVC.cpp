@@ -101,7 +101,7 @@ namespace GS
 	const Wt::WFormModel::Field UserFormModel::permissionsField = "permissions";
 
 	UserFormModel::UserFormModel(UserView *view, Wt::Dbo::ptr<AuthInfo> authInfoPtr /*= Wt::Dbo::ptr<AuthInfo>()*/)
-		: RecordFormModel(view, authInfoPtr), _view(view)
+		: RecordFormModel(view, Wt::Dbo::ptr<User>()), _view(view), _authInfoPtr(authInfoPtr)
 	{
 		addField(loginNameField);
 		addField(passwordField);
@@ -110,30 +110,35 @@ namespace GS
 		addField(regionField);
 		addField(permissionsField);
 
-		if(_recordPtr)
+		if(_authInfoPtr)
 		{
 			WApplication *app = APP;
 			TRANSACTION(app);
 
-			setValue(loginNameField, _recordPtr->identity(Wt::Auth::Identity::LoginName));
-			setValue(emailField, _recordPtr->email());
+			Wt::Dbo::ptr<User> userPtr = _authInfoPtr->user();
+			if(!userPtr)
+			{
+				userPtr = app->dboSession().add(new User());
+				_authInfoPtr.modify()->setUser(userPtr);
+			}
+			_recordPtr = userPtr;
+
+			setValue(loginNameField, _authInfoPtr->identity(Wt::Auth::Identity::LoginName));
+			setValue(emailField, _authInfoPtr->email());
 			setValue(regionField, _recordPtr->regionPtr);
 
-			if(_recordPtr->user())
-			{
-				auto permissions = SERVER->permissionsDatabase()->getUserPermissions(_recordPtr->user(), Wt::Auth::StrongLogin, &app->dboSession());
-				if(permissions.find(Permissions::GlobalAdministrator) != permissions.end())
-					setValue(permissionsField, (int)GlobalAdministrator);
-				else if(permissions.find(Permissions::RegionalAdministrator) != permissions.end())
-					setValue(permissionsField, (int)RegionalAdministrator);
-				else
-					setValue(permissionsField, (int)RegionalUser);
-			}
+			auto permissions = SERVER->permissionsDatabase()->getUserPermissions(_recordPtr, Wt::Auth::StrongLogin, &app->dboSession());
+			if(permissions.find(Permissions::GlobalAdministrator) != permissions.end())
+				setValue(permissionsField, (int)GlobalAdministrator);
+			else if(permissions.find(Permissions::RegionalAdministrator) != permissions.end())
+				setValue(permissionsField, (int)RegionalAdministrator);
+			else
+				setValue(permissionsField, (int)RegionalUser);
 
 			setVisible(passwordField, false);
 			setVisible(password2Field, false);
 
-			if(_recordPtr.id() == app->authLogin().authInfoPtr().id())
+			if(_authInfoPtr.id() == app->authLogin().authInfoPtr().id())
 				setReadOnly(permissionsField, true);
 		}
 	}
@@ -147,7 +152,7 @@ namespace GS
 			if(isRecordPersisted())
 			{
 				TRANSACTION(APP);
-				validator->setAllowedName(_recordPtr->identity(Wt::Auth::Identity::LoginName));
+				validator->setAllowedName(_authInfoPtr->identity(Wt::Auth::Identity::LoginName));
 			}
 			setValidator(field, validator);
 			edit->changed().connect(boost::bind(&AbstractRecordFormModel::validateUpdateField, this, loginNameField));
@@ -211,32 +216,43 @@ namespace GS
 		WApplication *app = APP;
 		TRANSACTION(app);
 
-		if(!_recordPtr)
+		if(!_authInfoPtr)
 		{
 			Wt::Auth::User authUser = app->userDatabase().registerNew();
 			authUser.setIdentity(Wt::Auth::Identity::LoginName, valueText(loginNameField));
-			_recordPtr = app->userDatabase().find(authUser);
+			_authInfoPtr = app->userDatabase().find(authUser);
+
+			_recordPtr = app->dboSession().add(new User());
+			_authInfoPtr.modify()->setUser(_recordPtr);
 			_recordPtr.modify()->setCreatedByValues(false);
 		}
 
-		if(!_recordPtr->user())
-			_recordPtr.modify()->setUser(app->dboSession().add(new User()));
+		if(!_recordPtr)
+		{
+			if(_authInfoPtr->user())
+				_recordPtr = _authInfoPtr->user();
+			else
+			{
+				_recordPtr = app->dboSession().add(new User());
+				_authInfoPtr.modify()->setUser(_recordPtr);
+			}
+		}
 
 		_recordPtr.modify()->regionPtr = boost::any_cast<Wt::Dbo::ptr<Region>>(value(regionField));
-		_recordPtr.modify()->setEmail(valueText(emailField).toUTF8());
+		_authInfoPtr.modify()->setEmail(valueText(emailField).toUTF8());
 
 		if(isVisible(passwordField) && isVisible(password2Field))
 		{
 			const Wt::WString &newPassword = valueText(passwordField);
-			SERVER->getPasswordService().updatePassword(app->userDatabase().find(_recordPtr), newPassword);
+			SERVER->getPasswordService().updatePassword(app->userDatabase().find(_authInfoPtr), newPassword);
 		}
 
 		if(app->authLogin().hasPermission(Permissions::GlobalAdministrator) && app->authLogin().hasPermission(Permissions::ModifyUserPermission) && !isReadOnly(permissionsField))
 		{
 			int permissionIndex = boost::any_cast<int>(value(permissionsField));
 
-			_recordPtr->user().modify()->userPermissionCollection.clear();
-			app->dboSession().add(new UserPermission(_recordPtr->user(), app->dboSession().loadLazy<Permission>(permissionIndexToId(permissionIndex))));
+			_recordPtr.modify()->userPermissionCollection.clear();
+			app->dboSession().add(new UserPermission(_recordPtr, app->dboSession().loadLazy<Permission>(permissionIndexToId(permissionIndex))));
 		}
 
 		t.commit();

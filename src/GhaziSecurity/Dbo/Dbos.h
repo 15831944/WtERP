@@ -15,7 +15,6 @@
 namespace GS
 {
 	//User related
-	class AuthInfo;
 	class User;
 	class Region;
 	class Permission;
@@ -23,6 +22,7 @@ namespace GS
 	class UserPermission;
 	class DefaultPermission;
 
+	typedef Wt::Auth::Dbo::AuthInfo<User> AuthInfo;
 	typedef Wt::Auth::Dbo::AuthIdentity<AuthInfo> AuthIdentity;
 	typedef Wt::Auth::Dbo::AuthToken<AuthInfo> AuthToken;
 
@@ -271,22 +271,7 @@ namespace GS
 		}
 	};
 
-	class AuthInfo : public Wt::Auth::Dbo::AuthInfo<User>, public BaseAdminRecord
-	{
-	public:
-		template<class Action>
-		void persist(Action& a)
-		{
-			Wt::Auth::Dbo::AuthInfo<User>::persist(a);
-			BaseAdminRecord::persist(a);
-		}
-		constexpr static const char *tableName()
-		{
-			return "auth_info";
-		}
-	};
-
-	class User
+	class User : public BaseAdminRecord
 	{
 	public:
 		static std::string newInternalPath() { return "/" ADMIN_PATHC "/" USERS_PATHC "/" NEW_USER_PATHC; }
@@ -302,7 +287,7 @@ namespace GS
 		AccountEntryCollection accountEntriesCollection;
 		IncomeCycleCollection incomeCyclesCollection;
 		ExpenseCycleCollection expenseCyclesCollection;
-		AuthInfoCollection createdAuthInfoCollection;
+		UserCollection createdUserCollection;
 
 		template<class Action>
 		void persist(Action& a)
@@ -315,6 +300,9 @@ namespace GS
 			Wt::Dbo::hasMany(a, accountEntriesCollection, Wt::Dbo::ManyToOne, "creator_user");
 			Wt::Dbo::hasMany(a, incomeCyclesCollection, Wt::Dbo::ManyToOne, "creator_user");
 			Wt::Dbo::hasMany(a, expenseCyclesCollection, Wt::Dbo::ManyToOne, "creator_user");
+			Wt::Dbo::hasMany(a, createdUserCollection, Wt::Dbo::ManyToOne, "creator_user");
+
+			BaseAdminRecord::persist(a);
 		}
 		constexpr static const char *tableName()
 		{
@@ -330,8 +318,8 @@ namespace GS
 		static std::string viewInternalPath(const std::string &idStr) { return "/" ADMIN_PATHC "/" USERS_PATHC "/" REGIONS_PATHC "/" REGION_PREFIX + idStr; }
 
 		std::string name;
-		AuthInfoCollection authInfoCollection;
 
+		UserCollection userCollection;
 		EntityCollection entitiesCollection;
 		AccountCollection accountsCollection;
 		AccountEntryCollection accountEntriesCollection;
@@ -342,7 +330,7 @@ namespace GS
 		void persist(Action& a)
 		{
 			Wt::Dbo::field(a, name, "name", 70);
-			Wt::Dbo::hasMany(a, authInfoCollection, Wt::Dbo::ManyToOne, "region");
+			Wt::Dbo::hasMany(a, userCollection, Wt::Dbo::ManyToOne, "region");
 
 			Wt::Dbo::hasMany(a, entitiesCollection, Wt::Dbo::ManyToOne, "region");
 			Wt::Dbo::hasMany(a, accountsCollection, Wt::Dbo::ManyToOne, "region");

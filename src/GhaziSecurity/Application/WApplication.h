@@ -209,7 +209,6 @@ namespace GS
 			return;
 		}
 
-		Wt::Dbo::ptr<AuthInfo> selfAuthInfo = authInfoPtr();
 		Wt::Dbo::ptr<User> selfUser = userPtr();
 		if(selfUser)
 		{
@@ -224,7 +223,7 @@ namespace GS
 			}
 			else
 			{
-				if(!selfAuthInfo->regionPtr)
+				if(!selfUser->regionPtr)
 					regionIdOptions = IdOptions::IsNull;
 				else
 				{
@@ -272,9 +271,9 @@ namespace GS
 			else if(regionIdOptions == IdOptions::IsNull)
 				query.where(fieldPrefix + "region_id IS null");
 			else if(regionIdOptions == IdOptions::SelfId)
-				query.where(fieldPrefix + "region_id = ?").bind(selfAuthInfo->regionPtr.id());
+				query.where(fieldPrefix + "region_id = ?").bind(selfUser->regionPtr.id());
 			else if(regionIdOptions == IdOptions::SelfIdOrNull)
-				query.where(fieldPrefix + "region_id = ? OR " + fieldPrefix + "region_id IS null").bind(selfAuthInfo->regionPtr.id());
+				query.where(fieldPrefix + "region_id = ? OR " + fieldPrefix + "region_id IS null").bind(selfUser->regionPtr.id());
 
 			if(userIdOptions == IdOptions::NotNull)
 				query.where(fieldPrefix + "creator_user_id IS NOT null");

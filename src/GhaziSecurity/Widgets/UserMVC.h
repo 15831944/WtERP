@@ -62,7 +62,7 @@ namespace GS
 		int _minLoginNameLength = 4;
 	};
 
-	class UserFormModel : public RecordFormModel<AuthInfo>
+	class UserFormModel : public RecordFormModel<User>
 	{
 	public:
 		static const Wt::WFormModel::Field loginNameField;
@@ -82,6 +82,7 @@ namespace GS
 		virtual Wt::WWidget *createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 		virtual bool validateField(Field field);
+		Wt::Dbo::ptr<AuthInfo> authInfoPtr() const { return _authInfoPtr; }
 
 		virtual AuthLogin::PermissionResult checkViewPermission() const override;
 		virtual AuthLogin::PermissionResult checkModifyPermission() const override;
@@ -90,7 +91,9 @@ namespace GS
 	protected:
 		virtual void persistedHandler() override;
 		void handleChangePassword();
+
 		UserView *_view = nullptr;
+		Wt::Dbo::ptr<AuthInfo> _authInfoPtr;
 		const Permissions::GSPermissions _permissionIdxToId[PermissionCBValues] = { Permissions::RegionalUser, Permissions::RegionalAdministrator, Permissions::GlobalAdministrator };
 	};
 
@@ -100,7 +103,7 @@ namespace GS
 		UserView(Wt::Dbo::ptr<AuthInfo> authInfoPtr = Wt::Dbo::ptr<AuthInfo>());
 		virtual void initView() override;
 
-		Wt::Dbo::ptr<AuthInfo> authInfoPtr() const { return _model->recordPtr(); }
+		Wt::Dbo::ptr<AuthInfo> authInfoPtr() const { return _model->authInfoPtr(); }
 		UserFormModel *model() const { return _model; }
 
 		virtual Wt::WString viewName() const override;
