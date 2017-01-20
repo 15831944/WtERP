@@ -29,6 +29,7 @@ namespace GS
 			"LEFT JOIN " + std::string(User::tableName()) + " u ON (u.id = ainfo.user_id) "
 			"LEFT JOIN " + std::string(Region::tableName()) + " r ON (r.id = u.region_id)"
 			).bind(Wt::Auth::Identity::LoginName);
+		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "u.");
 
 		Wt::Dbo::Query<ResultType> query(_baseQuery); //must copy the query first
 		model->setQuery(query);
@@ -127,10 +128,10 @@ namespace GS
 			setValue(emailField, _authInfoPtr->email());
 			setValue(regionField, _recordPtr->regionPtr);
 
-			auto permissions = SERVER->permissionsDatabase()->getUserPermissions(_recordPtr, Wt::Auth::StrongLogin, &app->dboSession());
-			if(permissions.find(Permissions::GlobalAdministrator) != permissions.end())
+			_permissionMap = SERVER->permissionsDatabase()->getUserPermissions(_recordPtr, Wt::Auth::StrongLogin, &app->dboSession());
+			if(_permissionMap.find(Permissions::GlobalAdministrator) != _permissionMap.end())
 				setValue(permissionsField, (int)GlobalAdministrator);
-			else if(permissions.find(Permissions::RegionalAdministrator) != permissions.end())
+			else if(_permissionMap.find(Permissions::RegionalAdministrator) != _permissionMap.end())
 				setValue(permissionsField, (int)RegionalAdministrator);
 			else
 				setValue(permissionsField, (int)RegionalUser);
@@ -253,6 +254,7 @@ namespace GS
 
 			_recordPtr.modify()->userPermissionCollection.clear();
 			app->dboSession().add(new UserPermission(_recordPtr, app->dboSession().loadLazy<Permission>(permissionIndexToId(permissionIndex))));
+			_permissionMap = SERVER->permissionsDatabase()->getUserPermissions(_recordPtr, Wt::Auth::StrongLogin, &app->dboSession());
 		}
 
 		t.commit();
@@ -319,7 +321,18 @@ namespace GS
 		if(res != AuthLogin::Permitted)
 			return res;
 
-		return APP->authLogin().checkPermission(Permissions::ModifyUser);
+		WApplication *app = APP;
+
+		auto modifyUserPermission = app->authLogin().checkPermission(Permissions::ModifyUser);
+		if(modifyUserPermission != AuthLogin::Permitted)
+			return modifyUserPermission;
+
+		if(!app->authLogin().hasPermission(Permissions::GlobalAdministrator) && _authInfoPtr.id() != app->authLogin().authInfoPtr().id())
+		{
+			if(_permissionMap.find(Permissions::GlobalAdministrator) != _permissionMap.end() || _permissionMap.find(Permissions::RegionalAdministrator) != _permissionMap.end())
+				return AuthLogin::Denied;
+		}
+		return res;
 	}
 
 	AuthLogin::PermissionResult UserFormModel::checkCreatePermission() const
@@ -491,6 +504,10 @@ namespace GS
 			_recordPtr = app->dboSession().add(new Region());
 
 		_recordPtr.modify()->name = valueText(nameField).toUTF8();
+
+		if(app->regionQueryModel())
+			app->regionQueryModel()->reload();
+
 		return true;
 	}
 
