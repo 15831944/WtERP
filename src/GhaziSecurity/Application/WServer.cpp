@@ -25,7 +25,6 @@ WServer::WServer(int argc, char *argv[], const std::string &wtConfigurationFile)
 {
 	_ptBeforeLoad = boost::posix_time::microsec_clock::local_time();
 	setServerConfiguration(argc, argv, WTHTTP_CONFIGURATION);
-	initialize();
 }
 
 void WServer::initialize()

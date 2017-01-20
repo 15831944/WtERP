@@ -7,10 +7,11 @@ int main(int argc, char *argv[])
 	/* *************************************************************************
 	* *************************  Start Web Server *****************************
 	* *************************************************************************/
+	GS::WServer Server(argc, argv);
 	try
 	{
 		//Initialize Server
-		GS::WServer Server(argc, argv);
+		Server.initialize();
 
 		//Configuration
 		Server.addEntryPoint(Wt::Application, GS::WApplication::createApplication);
@@ -20,8 +21,8 @@ int main(int argc, char *argv[])
 		{
 			//And wait till a shutdown signal is given
 			int sig = GS::WServer::waitForShutdown(argv[0]);
-			Server.stop();
 			Wt::log("gs-info") << "Shutdown (Signal = " << sig << ")";
+			Server.stop();
 		}
 	}
 	catch(Wt::WServer::Exception &e)

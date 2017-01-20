@@ -27,6 +27,7 @@ namespace GS
 	{
 	public:
 		WServer(int argc, char *argv[], const std::string &wtConfigurationFile = "");
+		void initialize();
 		virtual ~WServer() override;
 
 		static WServer *instance() { return dynamic_cast<WServer*>(Wt::WServer::instance()); }
@@ -42,7 +43,6 @@ namespace GS
 
 	protected:
 		void configureAuth();
-		void initialize();
 
 		Wt::Dbo::Session _dboSession;
 		Wt::Dbo::SqlConnectionPool *_sqlPool = nullptr;
