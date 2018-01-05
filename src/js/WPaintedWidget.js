@@ -11,9 +11,18 @@ WT_DECLARE_WT_MEMBER
  function(APP, widget) {
    jQuery.data(widget, 'obj', this);
 
+   var self = this;
+
+   this.imagePreloaders = [];
+   this.images = [];
    this.canvas = document.getElementById('c' + widget.id);
    this.repaint = function() {};
    this.widget = widget;
+   this.cancelPreloaders = function() {
+      for (var i = 0; i < self.imagePreloaders.length; ++i)
+	 self.imagePreloaders[i].cancel();
+      self.imagePreloaders = [];
+   };
  });
 
 // This should be refactored to something, somewhere?

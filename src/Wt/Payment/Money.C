@@ -1,11 +1,7 @@
-#include "Money"
+#include "Money.h"
 
-#include "Wt/WException"
-#include "Wt/WStringStream"
-#include "Wt/WLocale"
-
-#include <boost/lexical_cast.hpp>
-//#include <boost/range/iterator_range.hpp>
+#include "Wt/WException.h"
+#include "Wt/WStringStream.h"
 
 namespace Wt {
   namespace Payment {

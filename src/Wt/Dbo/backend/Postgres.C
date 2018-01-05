@@ -5,28 +5,116 @@
  *
  * Contributed by: Hilary Cheng
  */
-#include "Wt/Dbo/backend/Postgres"
-#include "Wt/Dbo/Exception"
+#include "Wt/WConfig.h"
+
+#ifdef WT_WIN32
+#define NOMINMAX
+// WinSock2.h warns that it should be included before windows.h
+#include <WinSock2.h>
+#endif // WT_WIN32
+
+#include "Wt/Dbo/backend/Postgres.h"
+#include "Wt/Dbo/Exception.h"
 
 #include <libpq-fe.h>
-#include <boost/lexical_cast.hpp>
+#include <cerrno>
+#include <cstdio>
 #include <iostream>
+#include <iomanip>
 #include <vector>
 #include <sstream>
+#include <cstring>
+#include <ctime>
 
-#include <boost/date_time/posix_time/posix_time.hpp>
-#include <boost/date_time/gregorian/gregorian.hpp>
-#include <boost/date_time/posix_time/time_parsers.hpp> 
+#include <boost/config/warning_disable.hpp>
+#include <boost/spirit/include/karma.hpp>
+
+#include "Wt/Date/date.h"
 
 #ifdef WT_WIN32
 #define snprintf _snprintf
 #define strcasecmp _stricmp
-#endif
+#else // WT_WIN32
+#include <sys/select.h>
+#endif // WT_WIN32
 
 #define BYTEAOID 17
 
 //#define DEBUG(x) x
 #define DEBUG(x)
+
+namespace karma = boost::spirit::karma;
+
+namespace {
+
+  inline struct timeval toTimeval(std::chrono::microseconds ms)
+  {
+    std::chrono::seconds s = date::floor<std::chrono::seconds>(ms);
+    struct timeval result;
+    result.tv_sec = s.count();
+    result.tv_usec = (ms - s).count();
+    return result;
+  }
+
+  // adjust rendering for JS flaots
+  template <typename T, int Precision>
+  struct PostgresPolicy : karma::real_policies<T>
+  {
+    // not 'nan', but 'NaN'
+    template <typename CharEncoding, typename Tag, typename OutputIterator>
+    static bool nan (OutputIterator& sink, T n, bool force_sign)
+    {
+      return karma::string_inserter<CharEncoding, Tag>::call(sink, "NaN");
+    }
+
+    // not 'inf', but 'Infinity'
+    template <typename CharEncoding, typename Tag, typename OutputIterator>
+    static bool inf (OutputIterator& sink, T n, bool force_sign)
+    {
+      return karma::sign_inserter::call(sink, false, (n<0), force_sign) &&
+        karma::string_inserter<CharEncoding, Tag>::call(sink, "Infinity");
+    }
+
+    static int floatfield(T t) {
+      return (t != 0.0) && ((t < 0.001) || (t > 1E8)) ?
+        karma::real_policies<T>::fmtflags::scientific :
+        karma::real_policies<T>::fmtflags::fixed;
+    }
+
+    // 7 significant numbers; about float precision
+    static unsigned precision(T) { return Precision; }
+
+  };
+
+  using PostgresReal = karma::real_generator<float, PostgresPolicy<float, 7> >;
+  using PostgresDouble = karma::real_generator<double, PostgresPolicy<double, 15> >;
+
+  static inline std::string double_to_s(const double d)
+  {
+    char buf[30];
+    char *p = buf;
+    if (d != 0) {
+      karma::generate(p, PostgresDouble(), d);
+    } else {
+      *p++ = '0';
+    }
+    *p = '\0';
+    return std::string(buf, p);
+  }
+
+  static inline std::string float_to_s(const float f)
+  {
+    char buf[30];
+    char *p = buf;
+    if (f != 0) {
+      karma::generate(p, PostgresReal(), f);
+    } else {
+      *p++ = '0';
+    }
+    *p = '\0';
+    return std::string(buf, p);
+  }
+}
 
 namespace Wt {
   namespace Dbo {
@@ -44,7 +132,7 @@ public:
   { }
 };
 
-class PostgresStatement : public SqlStatement
+class PostgresStatement final : public SqlStatement
 {
 public:
   PostgresStatement(Postgres& conn, const std::string& sql)
@@ -55,10 +143,10 @@ public:
 
     lastId_ = -1;
     row_ = affectedRows_ = 0;
-    result_ = 0;
+    result_ = nullptr;
 
-    paramValues_ = 0;
-    paramTypes_ = paramLengths_ = paramFormats_ = 0;
+    paramValues_ = nullptr;
+    paramTypes_ = paramLengths_ = paramFormats_ = nullptr;
  
     snprintf(name_, 64, "SQL%p%08X", (void*)this, rand());
 
@@ -69,91 +157,121 @@ public:
 
   virtual ~PostgresStatement()
   {
-    PQclear(result_);
+    if (result_)
+      PQclear(result_);
     delete[] paramValues_;
     delete[] paramTypes_;
   }
 
-  virtual void reset()
+  virtual void reset() override
   {
     params_.clear();
 
     state_ = Done;
   }
 
-  virtual void bind(int column, const std::string& value)
+  void rebuild()
+  {
+    if (result_) {
+      PQclear(result_);
+      result_ = 0;
+    }
+  }
+
+  virtual void bind(int column, const std::string& value) override
   {
     DEBUG(std::cerr << this << " bind " << column << " " << value << std::endl);
 
     setValue(column, value);
   }
 
-  virtual void bind(int column, short value)
+  virtual void bind(int column, short value) override
   {
     bind(column, static_cast<int>(value));
   }
 
-  virtual void bind(int column, int value)
+  virtual void bind(int column, int value) override
   {
     DEBUG(std::cerr << this << " bind " << column << " " << value << std::endl);
 
-    setValue(column, boost::lexical_cast<std::string>(value));
+    setValue(column, std::to_string(value));
   }
 
-  virtual void bind(int column, long long value)
+  virtual void bind(int column, long long value) override
   {
     DEBUG(std::cerr << this << " bind " << column << " " << value << std::endl);
 
-    setValue(column, boost::lexical_cast<std::string>(value));
+    setValue(column, std::to_string(value));
   }
 
-  virtual void bind(int column, float value)
+  virtual void bind(int column, float value) override
   {
     DEBUG(std::cerr << this << " bind " << column << " " << value << std::endl);
 
-    setValue(column, boost::lexical_cast<std::string>(value));
+    setValue(column, float_to_s(value));
   }
 
-  virtual void bind(int column, double value)
+  virtual void bind(int column, double value) override
   {
     DEBUG(std::cerr << this << " bind " << column << " " << value << std::endl);
 
-    setValue(column, boost::lexical_cast<std::string>(value));
+    setValue(column, double_to_s(value));
   }
 
-  virtual void bind(int column, const boost::posix_time::time_duration & value)
+  virtual void bind(int column, const std::chrono::duration<int, std::milli> & value) override
   {
-    DEBUG(std::cerr << this << " bind " << column << " " << boost::posix_time::to_simple_string(value) << std::endl);
+    auto absValue = value < std::chrono::milliseconds::zero() ? -value : value;
+    auto hours = date::floor<std::chrono::hours>(absValue);
+    auto minutes = date::floor<std::chrono::minutes>(absValue) - hours;
+    auto seconds = date::floor<std::chrono::seconds>(absValue) - hours - minutes;
+    auto milliseconds = date::floor<std::chrono::milliseconds>(absValue) - hours - minutes - seconds;
 
-    std::string v = boost::posix_time::to_simple_string(value);   
+    std::stringstream ss;
+    ss.imbue(std::locale::classic());
+    if (absValue != value)
+      ss << '-';
+    ss << std::setfill('0')
+       << std::setw(2) << hours.count() << ':'
+       << std::setw(2) << minutes.count() << ':'
+       << std::setw(2) << seconds.count() << '.'
+       << std::setw(3) << milliseconds.count();
 
-    setValue(column, v);
+    DEBUG(std::cerr << this << " bind " << column << " " << ss.str() << std::endl);
+
+    setValue(column, ss.str());
   }
 
-  virtual void bind(int column, const boost::posix_time::ptime& value,
-		    SqlDateTimeType type)
+  virtual void bind(int column, const std::chrono::system_clock::time_point& value,
+		    SqlDateTimeType type) override
   {
-    DEBUG(std::cerr << this << " bind " << column << " "
-	  << boost::posix_time::to_simple_string(value) << std::endl);
-
-    std::string v;
-    if (type == SqlDate)
-      v = boost::gregorian::to_iso_extended_string(value.date());
-    else {
-      v = boost::posix_time::to_iso_extended_string(value);
-      v[v.find('T')] = ' ';
+    std::stringstream ss;
+    ss.imbue(std::locale::classic());
+    if (type == SqlDateTimeType::Date) {
+      auto daypoint = date::floor<date::days>(value);
+      auto ymd = date::year_month_day(daypoint);
+      ss << (int)ymd.year() << '-' << (unsigned)ymd.month() << '-' << (unsigned)ymd.day();
+    } else {
+      auto daypoint = date::floor<date::days>(value);
+      auto ymd = date::year_month_day(daypoint);
+      auto tod = date::make_time(value - daypoint);
+      ss << (int)ymd.year() << '-' << (unsigned)ymd.month() << '-' << (unsigned)ymd.day() << ' ';
+      ss << std::setfill('0')
+         << std::setw(2) << tod.hours().count() << ':'
+         << std::setw(2) << tod.minutes().count() << ':'
+         << std::setw(2) << tod.seconds().count() << '.'
+         << std::setw(3) << date::floor<std::chrono::milliseconds>(tod.subseconds()).count();
       /*
        * Add explicit timezone offset. Postgres will ignore this for a TIMESTAMP
        * column, but will treat the timestamp as UTC in a TIMESTAMP WITH TIME
        * ZONE column -- possibly in a legacy table.
        */
-      v.append("+00");
+      ss << "+00";
     }
-
-    setValue(column, v);
+    DEBUG(std::cerr << this << " bind " << column << " " << ss.str() << std::endl);
+    setValue(column, ss.str());
   }
 
-  virtual void bind(int column, const std::vector<unsigned char>& value)
+  virtual void bind(int column, const std::vector<unsigned char>& value) override
   {
     DEBUG(std::cerr << this << " bind " << column << " (blob, size=" <<
 	  value.size() << ")" << std::endl);
@@ -164,7 +282,7 @@ public:
     Param& p = params_[column];
     p.value.resize(value.size());
     if (value.size() > 0)
-      memcpy(const_cast<char *>(p.value.data()), &(*value.begin()),
+      std::memcpy(const_cast<char *>(p.value.data()), &(*value.begin()),
 	     value.size());
     p.isbinary = true;
     p.isnull = false;
@@ -173,7 +291,7 @@ public:
     // statement if necessary because the type changes
   }
 
-  virtual void bindNull(int column)
+  virtual void bindNull(int column) override
   {
     DEBUG(std::cerr << this << " bind " << column << " null" << std::endl);
 
@@ -183,7 +301,7 @@ public:
     params_[column].isnull = true;
   }
 
-  virtual void execute()
+  virtual void execute() override
   {
     if (conn_.showQueries())
       std::cerr << sql_ << std::endl;
@@ -213,7 +331,7 @@ public:
 
     for (unsigned i = 0; i < params_.size(); ++i) {
       if (params_[i].isnull)
-	paramValues_[i] = 0;
+	paramValues_[i] = nullptr;
       else
 	if (params_[i].isbinary) {
 	  paramValues_[i] = const_cast<char *>(params_[i].value.data());
@@ -222,15 +340,52 @@ public:
 	  paramValues_[i] = const_cast<char *>(params_[i].value.c_str());
     }
 
-    PQclear(result_);
-    result_ = PQexecPrepared(conn_.connection(), name_, params_.size(),
-			     paramValues_, paramLengths_, paramFormats_, 0);
+    int err = PQsendQueryPrepared(conn_.connection(), name_, params_.size(),
+				  paramValues_, paramLengths_, paramFormats_, 0);
+    if (err != 1)
+      throw PostgresException(PQerrorMessage(conn_.connection()));
 
+    if (conn_.timeout() > std::chrono::microseconds{0}) {
+      fd_set rfds;
+      FD_ZERO(&rfds);
+      FD_SET(PQsocket(conn_.connection()), &rfds);
+      struct timeval timeout = toTimeval(conn_.timeout());
+
+      for (;;) {
+	int result = select(FD_SETSIZE, &rfds, 0, 0, &timeout);
+
+	if (result == 0) {
+	  std::cerr << "Postgres: timeout while executing query" << std::endl;
+	  conn_.disconnect();
+	  throw PostgresException("Database timeout");
+	} else if (result == -1) {
+	  if (errno != EINTR) {
+	    perror("select");
+	    throw PostgresException("Error waiting for result");
+	  } else {
+	    // EINTR, try again
+	  }
+	} else {
+	  err = PQconsumeInput(conn_.connection());
+	  if (err != 1)
+	    throw PostgresException(PQerrorMessage(conn_.connection()));
+
+	  if (PQisBusy(conn_.connection()) != 1)
+	    break;
+	}
+      }
+    }
+
+    std::string error;
+
+    PQclear(result_);
+    result_ = PQgetResult(conn_.connection());
+    
     row_ = 0;
     if (PQresultStatus(result_) == PGRES_COMMAND_OK) {
       std::string s = PQcmdTuples(result_);
       if (!s.empty())
-	affectedRows_ = boost::lexical_cast<int>(s);
+	affectedRows_ = std::stoi(s);
       else
 	affectedRows_ = 0;
     } else if (PQresultStatus(result_) == PGRES_TUPLES_OK)
@@ -248,7 +403,7 @@ public:
     if (isInsertReturningId) {
       state_ = NoFirstRow;
       if (PQntuples(result_) == 1 && PQnfields(result_) == 1) {
-	lastId_ = boost::lexical_cast<long long>(PQgetvalue(result_, 0, 0));
+	lastId_ = std::stoll(PQgetvalue(result_, 0, 0));
       }
     } else {
       if (PQntuples(result_) == 0) {
@@ -258,20 +413,25 @@ public:
       }
     }
 
+    PGresult *nullResult = PQgetResult(conn_.connection());
+    if (nullResult != 0) {
+      throw PostgresException("PQgetResult() returned more results");
+    }
+
     handleErr(PQresultStatus(result_), result_);
   }
 
-  virtual long long insertedId()
+  virtual long long insertedId() override
   {
     return lastId_;
   }
 
-  virtual int affectedRowCount()
+  virtual int affectedRowCount() override
   {
     return affectedRows_;
   }
   
-  virtual bool nextRow()
+  virtual bool nextRow() override
   {
     switch (state_) {
     case NoFirstRow:
@@ -297,7 +457,7 @@ public:
     return false;
   }
 
-  virtual bool getResult(int column, std::string *value, int size)
+  virtual bool getResult(int column, std::string *value, int size) override
   {
     if (PQgetisnull(result_, row_, column))
       return false;
@@ -310,7 +470,7 @@ public:
     return true;
   }
 
-  virtual bool getResult(int column, short *value)
+  virtual bool getResult(int column, short *value) override
   {
     int intValue;
     if (getResult(column, &intValue)) {
@@ -320,7 +480,7 @@ public:
       return false;
   }
 
-  virtual bool getResult(int column, int *value)
+  virtual bool getResult(int column, int *value) override
   {
     if (PQgetisnull(result_, row_, column))
       return false;
@@ -335,7 +495,7 @@ public:
     else if (*v == 't')
 	*value = 1;
     else
-      *value = boost::lexical_cast<int>(v);
+      *value = std::stoi(v);
 
     DEBUG(std::cerr << this 
 	  << " result int " << column << " " << *value << std::endl);
@@ -343,13 +503,12 @@ public:
     return true;
   }
 
-  virtual bool getResult(int column, long long *value)
+  virtual bool getResult(int column, long long *value) override
   {
     if (PQgetisnull(result_, row_, column))
       return false;
 
-    *value
-      = boost::lexical_cast<long long>(PQgetvalue(result_, row_, column));
+    *value = std::stoll(PQgetvalue(result_, row_, column));
 
     DEBUG(std::cerr << this 
 	  << " result long long " << column << " " << *value << std::endl);
@@ -357,12 +516,12 @@ public:
     return true;
   }
   
-  virtual bool getResult(int column, float *value)
+  virtual bool getResult(int column, float *value) override
   {
     if (PQgetisnull(result_, row_, column))
       return false;
 
-    *value = boost::lexical_cast<float>(PQgetvalue(result_, row_, column));
+    *value = std::stof(PQgetvalue(result_, row_, column));
 
     DEBUG(std::cerr << this 
 	  << " result float " << column << " " << *value << std::endl);
@@ -370,12 +529,12 @@ public:
     return true;
   }
 
-  virtual bool getResult(int column, double *value)
+  virtual bool getResult(int column, double *value) override
   {
     if (PQgetisnull(result_, row_, column))
       return false;
 
-    *value = boost::lexical_cast<double>(PQgetvalue(result_, row_, column));
+    *value = std::stod(PQgetvalue(result_, row_, column));
 
     DEBUG(std::cerr << this 
 	  << " result double " << column << " " << *value << std::endl);
@@ -383,54 +542,62 @@ public:
     return true;
   }
 
-  virtual bool getResult(int column, boost::posix_time::ptime *value,
-			 SqlDateTimeType type)
+  virtual bool getResult(int column,
+			 std::chrono::system_clock::time_point *value,
+			 SqlDateTimeType type) override
   {
     if (PQgetisnull(result_, row_, column))
       return false;
 
     std::string v = PQgetvalue(result_, row_, column);
 
-    if (type == SqlDate)
-      *value = boost::posix_time::ptime(boost::gregorian::from_string(v),
-					boost::posix_time::hours(0));
-    else {
+    if (type == SqlDateTimeType::Date){
+      std::istringstream in(v);
+      in.imbue(std::locale::classic());
+      in >> date::parse("%F", *value);
+    } else {
       /*
        * Handle timezone offset. Postgres will append a timezone offset [+-]dd
        * if a column is defined as TIMESTAMP WITH TIME ZONE -- possibly
        * in a legacy table. If offset is present, subtract it for UTC output.
        */
-      if (v.size() >= 3 && std::strchr("+-", v[v.size() - 3])) {
-	int hours = boost::lexical_cast<int>(v.substr(v.size() - 3));
-	boost::posix_time::time_duration offset
-	  = boost::posix_time::hours(hours);
-        *value = boost::posix_time::time_from_string(v.substr(0, v.size() - 3))
-	  - offset;
-      } else
-        *value = boost::posix_time::time_from_string(v);
+      int offsetHour = 0;
+      if(v.size() >= 3 && std::strchr("+-", v[v.size() - 3])){
+          offsetHour = std::stoi(v.substr(v.size() - 3));
+          v = v.substr(0, v.size() - 3);
+      }
+      std::istringstream in(v);
+      in.imbue(std::locale::classic());
+      in >> date::parse("%F %T", *value);
+      *value -= std::chrono::hours{ offsetHour };
     }
-
-    DEBUG(std::cerr << this 
-	  << " result time_duration " << column << " " << *value << std::endl);
 
     return true;
   }
 
-  virtual bool getResult(int column, boost::posix_time::time_duration *value)
+  virtual bool getResult(int column, std::chrono::duration<int, std::milli> *value) override
   {
     if (PQgetisnull(result_, row_, column))
       return false;
 
     std::string v = PQgetvalue(result_, row_, column);
+    bool neg = false;
+    if (!v.empty() && v[0] == '-') {
+      neg = true;
+      v = v.substr(1);
+    }
 
-    *value = boost::posix_time::time_duration
-      (boost::posix_time::duration_from_string(v));
+    std::istringstream in(v);
+    in.imbue(std::locale::classic());
+    in >> date::parse("%T", *value);
+    if (neg)
+      *value = -(*value);
 
     return true;
   }
 
   virtual bool getResult(int column, std::vector<unsigned char> *value,
-			 int size)
+			 int size) override
   {
     if (PQgetisnull(result_, row_, column))
       return false;
@@ -451,7 +618,7 @@ public:
     return true;
   }
 
-  virtual std::string sql() const {
+  virtual std::string sql() const override {
     return sql_;
   }
 
@@ -546,18 +713,22 @@ private:
 };
 
 Postgres::Postgres()
-  : conn_(NULL)
+  : conn_(nullptr),
+    timeout_(0)
 { }
 
 Postgres::Postgres(const std::string& db)
-  : conn_(NULL)
+  : conn_(nullptr),
+    timeout_(0)
 {
   if (!db.empty())
     connect(db);
 }
 
 Postgres::Postgres(const Postgres& other)
-  : SqlConnection(other)
+  : SqlConnection(other),
+    conn_(NULL),
+    timeout_(other.timeout_)
 {
   if (!other.connInfo_.empty())
     connect(other.connInfo_);
@@ -570,9 +741,33 @@ Postgres::~Postgres()
     PQfinish(conn_);
 }
 
-Postgres *Postgres::clone() const
+void Postgres::disconnect()
 {
-  return new Postgres(*this);
+  if (conn_)
+    PQfinish(conn_);
+
+  conn_ = 0;
+
+  std::vector<SqlStatement *> statements = getStatements();
+
+  /* Evict also the statements -- the statements themselves can stay,
+     only running statements behavior is affected (but we are dealing with
+     that while calling disconnect) */
+  for (std::size_t i = 0; i < statements.size(); ++i) {
+    SqlStatement *s = statements[i];
+    PostgresStatement *ps = dynamic_cast<PostgresStatement *>(s);
+    ps->rebuild();
+  }
+}
+    
+void Postgres::setTimeout(std::chrono::microseconds timeout)
+{
+  timeout_ = timeout;
+}
+
+std::unique_ptr<SqlConnection> Postgres::clone() const
+{
+  return std::unique_ptr<SqlConnection>(new Postgres(*this));
 }
 
 bool Postgres::connect(const std::string& db)
@@ -583,7 +778,7 @@ bool Postgres::connect(const std::string& db)
   if (PQstatus(conn_) != CONNECTION_OK) {
     std::string error = PQerrorMessage(conn_);
     PQfinish(conn_);
-    conn_ = 0;
+    conn_ = nullptr;
     throw PostgresException("Could not connect to: " + error);
   }
 
@@ -592,26 +787,111 @@ bool Postgres::connect(const std::string& db)
   return true;
 }
 
-SqlStatement *Postgres::prepareStatement(const std::string& sql)
+bool Postgres::reconnect()
 {
-  return new PostgresStatement(*this, sql);
+  std::cerr << this << " reconnecting..." << std::endl;
+  
+  if (conn_) {
+    if (PQstatus(conn_) == CONNECTION_OK) {
+      PQfinish(conn_);
+    }
+
+    conn_ = 0;
+  }
+
+  clearStatementCache();
+
+  if (!connInfo_.empty())
+    return connect(connInfo_);
+  else
+    return false;
+}
+
+std::unique_ptr<SqlStatement> Postgres::prepareStatement(const std::string& sql)
+{
+  if (PQstatus(conn_) != CONNECTION_OK)  {
+    std::cerr << "Postgres: connection lost to server, trying to reconnect..."
+	      << std::endl;
+    if (!reconnect()) {
+      throw PostgresException("Could not reconnect to server...");
+    }
+  }
+
+  return std::unique_ptr<SqlStatement>(new PostgresStatement(*this, sql));
 }
 
 void Postgres::executeSql(const std::string &sql)
 {
-  PGresult *result;
+  exec(sql, true);
+}
+
+void Postgres::exec(const std::string& sql, bool showQuery)
+{
+  if (PQstatus(conn_) != CONNECTION_OK)  {
+    std::cerr << "Postgres: connection lost to server, trying to reconnect..."
+	      << std::endl;
+    if (!reconnect()) {
+      throw PostgresException("Could not reconnect to server...");
+    }
+  }
+
+  if (showQuery && showQueries())
+    std::cerr << sql << std::endl;
+  
   int err;
 
-  if (showQueries())
-    std::cerr << sql << std::endl;
-			
-  result = PQexec(conn_, sql.c_str());
-  err = PQresultStatus(result);
-  if (err != PGRES_COMMAND_OK && err != PGRES_TUPLES_OK) {
-    PQclear(result);
+  err = PQsendQuery(conn_, sql.c_str());
+  if (err != 1)
     throw PostgresException(PQerrorMessage(conn_));
+
+  if (timeout_ > std::chrono::microseconds{0}) {
+    fd_set rfds;
+    FD_ZERO(&rfds);
+    FD_SET(PQsocket(conn_), &rfds);
+    struct timeval timeout = toTimeval(timeout_);
+
+    for (;;) {
+      int result = select(FD_SETSIZE, &rfds, 0, 0, &timeout);
+
+      if (result == 0) {
+	std::cerr << "Postgres: timeout while executing query" << std::endl;
+	disconnect();
+	throw PostgresException("Database timeout");
+      } else if (result == -1) {
+	if (errno != EINTR) {
+	  perror("select");
+	  throw PostgresException("Error waiting for result");
+	} else {
+	  // EINTR, try again
+	}
+      } else {
+	err = PQconsumeInput(conn_);
+	if (err != 1)
+	  throw PostgresException(PQerrorMessage(conn_));
+
+	if (PQisBusy(conn_) != 1)
+	  break;
+      }
+    }
   }
-  PQclear(result);
+
+  std::string error;
+
+  for (;;) {
+    PGresult *result = PQgetResult(conn_);
+    if (result == 0)
+      return;
+
+    err = PQresultStatus(result);
+
+    if (err != PGRES_COMMAND_OK && err != PGRES_TUPLES_OK)
+      error += PQerrorMessage(conn_);
+
+    PQclear(result);
+  }
+
+  if (!error.empty())
+    throw PostgresException(error);
 }
 
 std::string Postgres::autoincrementType() const
@@ -646,11 +926,11 @@ std::string Postgres::autoincrementInsertSuffix(const std::string& id) const
 const char *Postgres::dateTimeType(SqlDateTimeType type) const
 {
   switch (type) {
-  case SqlDate:
+  case SqlDateTimeType::Date:
     return "date";
-  case SqlDateTime:
+  case SqlDateTimeType::DateTime:
     return "timestamp";
-  case SqlTime:
+  case SqlDateTimeType::Time:
     return "interval";
   }
 
@@ -681,20 +961,17 @@ bool Postgres::requireSubqueryAlias() const
 
 void Postgres::startTransaction()
 {
-  PGresult *result = PQexec(conn_, "start transaction");
-  PQclear(result);
+  exec("start transaction", false);
 }
 
 void Postgres::commitTransaction()
 {
-  PGresult *result = PQexec(conn_, "commit transaction");
-  PQclear(result);
+  exec("commit transaction", false);
 }
 
 void Postgres::rollbackTransaction()
 {
-  PGresult *result = PQexec(conn_, "rollback transaction");
-  PQclear(result);
+  exec("rollback transaction", false);
 }
 
     }

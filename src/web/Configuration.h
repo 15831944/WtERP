@@ -13,17 +13,32 @@
 #include <string>
 
 #if defined(WT_THREADED) && !defined(WT_CONF_NO_SHARED_LOCK)
+#if _MSC_VER >= 1900
+// we're using Visual Studio 2015 or higher, so we can use std::shared_mutex
+#define WT_STD_CONF_LOCK
 #define WT_CONF_LOCK
+#else
+#define WT_BOOST_CONF_LOCK
+#define WT_CONF_LOCK
+#endif
 #endif
 
 #ifdef WT_CONF_LOCK
-#include <boost/thread.hpp>
+#include <thread>
 #endif // WT_CONF_LOCK
 
-#include "Wt/WApplication"
+#ifdef WT_STD_CONF_LOCK
+#include <shared_mutex>
+#endif  // WT_STD_CONF_LOCK
+
+#ifdef WT_BOOST_CONF_LOCK
+#include <boost/thread/shared_mutex.hpp>
+#endif // WT_BOOST_CONF_LOCK
+
+#include "Wt/WApplication.h"
 
 #include "WebSession.h"
-#include "Wt/WRandom"
+#include "Wt/WRandom.h"
 
 namespace boost {
   namespace program_options {
@@ -65,9 +80,22 @@ private:
   std::string favicon_;
 };
 
-typedef std::vector<EntryPoint> EntryPointList;
+typedef std::deque<EntryPoint> EntryPointList;
 
 #endif // WT_TARGET_JAVA
+
+class WT_API HeadMatter {
+public:
+  HeadMatter(std::string contents,
+             std::string userAgent);
+
+  const std::string& contents() const { return contents_; }
+  const std::string& userAgent() const { return userAgent_; }
+
+private:
+  std::string contents_;
+  std::string userAgent_;
+};
 
 class WT_API Configuration
 {
@@ -124,23 +152,34 @@ public:
 
 #ifndef WT_TARGET_JAVA
   void addEntryPoint(const EntryPoint& entryPoint);
+  bool tryAddResource(const EntryPoint& entryPoint); // Returns bool indicating success:
+						     // false if entry point existed already
   void removeEntryPoint(const std::string& path);
   void setDefaultEntryPoint(const std::string& path);
-  const EntryPointList& entryPoints() const { return entryPoints_; }
+  // Returns matching entry point and match length
+  const EntryPoint *matchEntryPoint(const std::string &scriptName,
+                                    const std::string &path,
+                                    bool matchAfterSlash) const;
+  static bool matchesPath(const std::string &path,
+                          const std::string &prefix,
+		          bool matchAfterSlash);
   void setNumThreads(int threads);
 #endif // WT_TARGET_JAVA
 
   const std::vector<MetaHeader>& metaHeaders() const { return metaHeaders_; }
+  const std::vector<HeadMatter>& headMatter() const { return headMatter_; }
   SessionPolicy sessionPolicy() const;
   int numProcesses() const;
   int numThreads() const;
   int maxNumSessions() const;
   ::int64_t maxRequestSize() const;
+  ::int64_t maxFormDataSize() const;
   ::int64_t isapiMaxMemoryRequestSize() const;
   SessionTracking sessionTracking() const;
   bool reloadIsNewSession() const;
   int sessionTimeout() const;
   int keepAlive() const; // sessionTimeout() / 2, or if sessionTimeout == -1, 1000000
+  int multiSessionCookieTimeout() const; // sessionTimeout() * 2
   int bootstrapTimeout() const;
   int indicatorTimeout() const;
   int doubleClickTimeout() const;
@@ -151,6 +190,9 @@ public:
   std::string runDirectory() const;
   int sessionIdLength() const;
   std::string sessionIdPrefix() const;
+  int numSessionThreads() const;
+
+  bool isAllowedOrigin(const std::string &origin) const;
 
 #ifndef WT_TARGET_JAVA
   bool readConfigurationProperty(const std::string& name, std::string& value)
@@ -201,9 +243,12 @@ private:
     BootstrapMethod method;
   };
 
-#ifdef WT_CONF_LOCK
+#ifdef WT_STD_CONF_LOCK
+  mutable std::shared_mutex mutex_;
+#endif // WT_STD_CONF_LOCK
+#ifdef WT_BOOST_CONF_LOCK
   mutable boost::shared_mutex mutex_;
-#endif // WT_CONF_LOCK
+#endif // WT_BOOST_CONF_LOCK
 
   WServer *server_;
   std::string applicationPath_;
@@ -220,6 +265,7 @@ private:
   int             numThreads_;
   int             maxNumSessions_;
   ::int64_t       maxRequestSize_;
+  ::int64_t       maxFormDataSize_;
   ::int64_t       isapiMaxMemoryRequestSize_;
   SessionTracking sessionTracking_;
   bool            reloadIsNewSession_;
@@ -248,9 +294,13 @@ private:
   bool            sessionIdCookie_;
   bool            cookieChecks_;
   bool            webglDetection_;
+  int             numSessionThreads_;
+
+  std::vector<std::string> allowedOrigins_;
 
   std::vector<BootstrapEntry> bootstrapConfig_;
   std::vector<MetaHeader> metaHeaders_;
+  std::vector<HeadMatter> headMatter_;
 
   bool connectorSlashException_;
   bool connectorNeedReadBody_;

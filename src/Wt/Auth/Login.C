@@ -4,7 +4,7 @@
  * See the LICENSE file for terms of use.
  */
 
-#include "Login"
+#include "Login.h"
 
 namespace Wt {
   namespace Auth {
@@ -16,12 +16,12 @@ Login::Login()
 
 void Login::login(const User& user, LoginState state)
 {
-  if (state == LoggedOut || !user.isValid()) {
+  if (state == LoginState::LoggedOut || !user.isValid()) {
     logout();
     return;
   } else {
-    if (state != DisabledLogin && user.status() == User::Disabled)
-      state = DisabledLogin;
+    if (state != LoginState::Disabled && user.status() == AccountStatus::Disabled)
+      state = LoginState::Disabled;
 
     if (user != user_) {
       user_ = user;
@@ -40,8 +40,7 @@ void Login::logout()
 {
   if (user_.isValid()) {
     user_ = User();
-	state_ = LoggedOut;
-	beforeChanged_.emit();
+    state_ = LoginState::LoggedOut;
     changed_.emit();
   }
 }
@@ -53,7 +52,7 @@ LoginState Login::state() const
 
 bool Login::loggedIn() const
 {
-  return user_.isValid() && state_ != DisabledLogin;
+  return user_.isValid() && state_ != LoginState::Disabled;
 }
 
 const User& Login::user() const

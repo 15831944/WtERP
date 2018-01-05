@@ -119,7 +119,7 @@
  * Show pointer even if anchor has no href
  */
 
-.navbar .nav > li > a {
+.nav > li > a {
   cursor: pointer;
 }
 
@@ -376,7 +376,8 @@
  * WPushButton
  */
 
-.btn.with-label img {
+.btn.with-label img,
+.list-group-item.with-label img {
   padding-right: 10px;
 }
 

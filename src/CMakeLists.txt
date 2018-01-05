@@ -50,8 +50,11 @@ FILE_TO_STRING(xml/auth_css_theme.xml
     AuthCssTheme_xml.C AuthCssTheme_xml)
 
 SET(libsources
+Wt/FlexLayoutImpl.C
+Wt/FlexItemImpl.C
 Wt/PopupWindow.C
 Wt/Resizable.C
+Wt/ResizeSensor.C
 Wt/ServerSideFontMetrics.C
 Wt/SizeHandle.C
 Wt/StdGridLayoutImpl2.C
@@ -69,14 +72,13 @@ Wt/WAbstractProxyModel.C
 Wt/WAbstractSpinBox.C
 Wt/WAbstractTableModel.C
 Wt/WAbstractToggleButton.C
-Wt/WAccordionLayout.C
 Wt/WAggregateProxyModel.C
 Wt/WAnchor.C
 Wt/WAnimation.C
+Wt/WAny.C
 Wt/WApplication.C
 Wt/WAudio.C
 Wt/WBatchEditProxyModel.C
-Wt/WBoostAny.C
 Wt/WBootstrapTheme.C
 Wt/WBorder.C
 Wt/WBorderLayout.C
@@ -101,7 +103,6 @@ Wt/WDateEdit.C
 Wt/WDatePicker.C
 Wt/WDateTime.C
 Wt/WDateValidator.C
-Wt/WDefaultLayout.C
 Wt/WDefaultLoadingIndicator.C
 Wt/WDialog.C
 Wt/WDoubleSpinBox.C
@@ -146,6 +147,7 @@ Wt/WJavaScriptPreamble.C
 Wt/WJavaScriptSlot.C
 Wt/WLabel.C
 Wt/WLayout.C
+Wt/WLayoutImpl.C
 Wt/WLayoutItem.C
 Wt/WLayoutItemImpl.C
 Wt/WLength.C
@@ -153,6 +155,7 @@ Wt/WLengthValidator.C
 Wt/WLineEdit.C
 Wt/WLineF.C
 Wt/WLink.C
+Wt/WLinkedCssStyleSheet.C
 Wt/WLoadingIndicator.C
 Wt/WLocalizedStrings.C
 Wt/WLogger.C
@@ -187,11 +190,8 @@ Wt/WRandom.C
 Wt/WReadOnlyProxyModel.C
 Wt/WRectArea.C
 Wt/WRectF.C
-Wt/WRegExp.C
 Wt/WRegExpValidator.C
 Wt/WResource.C
-Wt/WScrollArea.C
-Wt/WScrollBar.C
 Wt/WSelectionBox.C
 Wt/WServer.C
 Wt/WShadow.C
@@ -240,7 +240,6 @@ Wt/WTreeNode.C
 Wt/WTreeTable.C
 Wt/WTreeTableNode.C
 Wt/WTreeView.C
-Wt/WValidationStatus.C
 Wt/WValidator.C
 Wt/WVBoxLayout.C
 Wt/WVector3.C
@@ -253,6 +252,7 @@ Wt/WVirtualImage.C
 Wt/WWebWidget.C
 Wt/WWidget.C
 Wt/WWidgetItem.C
+Wt/WWidgetItemImpl.C
 Wt/Auth/AbstractPasswordService.C
 Wt/Auth/AbstractUserDatabase.C
 Wt/Auth/AuthModel.C
@@ -266,6 +266,7 @@ Wt/Auth/Identity.C
 Wt/Auth/Login.C
 Wt/Auth/LostPasswordWidget.C
 Wt/Auth/OAuthService.C
+Wt/Auth/OAuthWidget.C
 Wt/Auth/passwdqc_check.c
 Wt/Auth/PasswordHash.C
 Wt/Auth/PasswordPromptDialog.C
@@ -279,6 +280,12 @@ Wt/Auth/UpdatePasswordWidget.C
 Wt/Auth/User.C
 Wt/Auth/AuthUtils.C
 Wt/Auth/MailUtils.C
+Wt/Auth/OAuthClient.C
+Wt/Auth/OAuthTokenEndpoint.C
+Wt/Auth/OidcUserInfoEndpoint.C
+Wt/Auth/OAuthAuthorizationEndpointProcess.C
+Wt/Auth/IssuedToken.C
+Wt/Auth/OidcService.C
 Wt/Chart/WAbstractChart.C
 Wt/Chart/WAbstractChartModel.C
 Wt/Chart/WAxis.C
@@ -302,6 +309,9 @@ Wt/Chart/WGridData.C
 Wt/Chart/WEquidistantGridData.C
 Wt/Chart/WScatterData.C
 Wt/Chart/WSelection.C
+Wt/Core/observable.cpp
+Wt/Core/observing_ptr.cpp
+Wt/Date/tz.cpp
 Wt/Json/Array.C
 Wt/Json/Object.C
 Wt/Json/Parser.C
@@ -333,6 +343,7 @@ Wt/Render/LayoutBox.C
 Wt/Render/RenderUtils.C
 Wt/Render/Specificity.C
 Wt/Render/WTextRenderer.C
+Wt/Signals/signals.cpp
 web/md5.c
 web/sha1.c
 web/CgiParser.C
@@ -354,13 +365,14 @@ web/WebRenderer.C
 web/WebUtils.C
 web/FileUtils.C
 web/PdfUtils.C
+web/StringUtils.cpp
 web/TimeUtil.C
 web/XSSFilter.C
 web/XSSUtils.C
 web/SslUtils.C
 web/UriUtils.C
-web/random_device.cpp
 web/base64.cpp
+#experimental/any.cpp
 Plain_html.C
 Boot_html.C
 Hybrid_html.C
@@ -388,7 +400,7 @@ SET(libsources ${libsources}
 
 IF(HAVE_HARU)
   SET(libsources ${libsources} Wt/WPdfImage.C Wt/Render/WPdfRenderer.C)
-  SET(BOOST_WT_LIBRARIES ${BOOST_WT_LIBRARIES} ${BOOST_FS_LIB})
+  SET(BOOST_WT_LIBRARIES ${BOOST_WT_LIBRARIES})
   ADD_DEFINITIONS(-DHAVE_PDF_IMAGE)
 ENDIF(HAVE_HARU)
 
@@ -396,6 +408,8 @@ IF("${WT_WRASTERIMAGE_IMPLEMENTATION}" STREQUAL "GraphicsMagick")
   SET(libsources ${libsources} Wt/WRasterImage-gm.C)
 ELSEIF("${WT_WRASTERIMAGE_IMPLEMENTATION}" STREQUAL "skia")
   SET(libsources ${libsources} Wt/WRasterImage-skia.C)
+ELSEIF("${WT_WRASTERIMAGE_IMPLEMENTATION}" STREQUAL "Direct2D")
+  SET(libsources ${libsources} Wt/WRasterImage-d2d1.C)
 ENDIF("${WT_WRASTERIMAGE_IMPLEMENTATION}" STREQUAL "GraphicsMagick")
 
 IF(HAVE_GL)
@@ -409,15 +423,26 @@ IF(HAVE_GL)
   ENDIF(NOT USE_SYSTEM_GLEW)
 ENDIF(HAVE_GL)
 
-IF(HAVE_HARU OR "${WT_WRASTERIMAGE_IMPLEMENTATION}" STREQUAL "GraphicsMagick")
-  IF(HAVE_PANGO)
+SET(WT_FONTSUPPORT_SIMPLE false)
+SET(WT_FONTSUPPORT_PANGO false)
+SET(WT_FONTSUPPORT_DIRECTWRITE false)
+SET(HAVE_DIRECTWRITE false)
+IF(WIN32 AND NOT MINGW)
+  SET(HAVE_DIRECTWRITE true)
+ENDIF(WIN32 AND NOT MINGW)
+
+IF(HAVE_HARU OR "${WT_WRASTERIMAGE_IMPLEMENTATION}" STREQUAL "GraphicsMagick" OR "${WT_WRASTERIMAGE_IMPLEMENTATION}" STREQUAL "Direct2D")
+  IF(HAVE_PANGO AND NOT "${WT_WRASTERIMAGE_IMPLEMENTATION}" STREQUAL "Direct2D")
     SET(libsources ${libsources} Wt/FontSupportPango.C)
-  ELSE(HAVE_PANGO)
+    SET(WT_FONTSUPPORT_PANGO true)
+  ELSEIF(HAVE_DIRECTWRITE)
+    SET(libsources ${libsources} Wt/FontSupportDirectWrite.C)
+    SET(WT_FONTSUPPORT_DIRECTWRITE true)
+  ELSE(HAVE_PANGO AND NOT "${WT_WRASTERIMAGE_IMPLEMENTATION}" STREQUAL "Direct2D")
     SET(libsources ${libsources} Wt/FontSupportSimple.C)
-  ENDIF(HAVE_PANGO)
-ELSE(HAVE_HARU OR "${WT_WRASTERIMAGE_IMPLEMENTATION}" STREQUAL "GraphicsMagick")
-  SET(HAVE_PANGO false) # font support is not needed
-ENDIF(HAVE_HARU OR "${WT_WRASTERIMAGE_IMPLEMENTATION}" STREQUAL "GraphicsMagick")
+    SET(WT_FONTSUPPORT_SIMPLE true)
+  ENDIF(HAVE_PANGO AND NOT "${WT_WRASTERIMAGE_IMPLEMENTATION}" STREQUAL "Direct2D")
+ENDIF(HAVE_HARU OR "${WT_WRASTERIMAGE_IMPLEMENTATION}" STREQUAL "GraphicsMagick" OR "${WT_WRASTERIMAGE_IMPLEMENTATION}" STREQUAL "Direct2D")
 
 # check if we need -lrt, used in boost::chrone::steady_clock::now()
 SET(RT_test_fname "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/rt.c")
@@ -443,9 +468,19 @@ IF(WIN32)
 ENDIF(WIN32)
 
 ADD_LIBRARY(wt ${libsources})
+
+if (WT_ASIO_IS_STANDALONE_ASIO)
+  TARGET_LINK_LIBRARIES(wt
+    PRIVATE ${BOOST_WT_LIBRARIES})
+else (WT_ASIO_IS_STANDALONE_ASIO)
+  TARGET_LINK_LIBRARIES(wt
+    PUBLIC ${BOOST_WT_LIBRARIES})
+endif (WT_ASIO_IS_STANDALONE_ASIO)
+
 TARGET_LINK_LIBRARIES(wt
-    ${BOOST_WT_LIBRARIES}
+  PUBLIC
     ${WT_SOCKET_LIBRARY}
+  PRIVATE
     ${WT_MATH_LIBRARY}
     ${RT_LIBRARY}
     )
@@ -458,17 +493,24 @@ IF(ENABLE_LIBWTTEST)
   TARGET_LINK_LIBRARIES(wttest wt)
 
   INSTALL(TARGETS wttest
+          EXPORT wt-target-test
 	  RUNTIME DESTINATION bin
 	  LIBRARY DESTINATION ${LIB_INSTALL_DIR}
 	  ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
 
+  INSTALL(EXPORT wt-target-test
+          DESTINATION ${CMAKE_INSTALL_DIR}/wt
+          NAMESPACE Wt::)
+
   IF(MSVC)
     SET_TARGET_PROPERTIES(wttest PROPERTIES COMPILE_FLAGS "${BUILD_PARALLEL} /wd4251 /wd4275 /wd4355 /wd4800 /wd4996 /wd4101 /wd4267")
+	SET_TARGET_PROPERTIES(wttest PROPERTIES FOLDER "test")
   ENDIF(MSVC)
 
   SET_TARGET_PROPERTIES(
     wttest
   PROPERTIES
+    EXPORT_NAME Test
     VERSION ${VERSION_SERIES}.${VERSION_MAJOR}.${VERSION_MINOR}
     SOVERSION ${WTTEST_SOVERSION}
     DEBUG_POSTFIX ${DEBUG_LIB_POSTFIX}
@@ -478,7 +520,7 @@ ELSE(ENABLE_LIBWTTEST)
 ENDIF(ENABLE_LIBWTTEST)
 
 IF(HAVE_SSL)
-  TARGET_LINK_LIBRARIES(wt ${SSL_LIBRARIES})
+  TARGET_LINK_LIBRARIES(wt PRIVATE ${SSL_LIBRARIES})
   INCLUDE_DIRECTORIES(${SSL_INCLUDE_DIRS})
 ELSE(HAVE_SSL)
   MESSAGE("** Disabling crypto support (Auth::SHA1HashFunction, HTTPS support): requires OpenSSL.")
@@ -488,7 +530,7 @@ ELSE(HAVE_SSL)
 ENDIF(HAVE_SSL)
 
 IF(HAVE_HARU)
-  TARGET_LINK_LIBRARIES(wt ${HARU_LIBRARIES})
+  TARGET_LINK_LIBRARIES(wt PRIVATE ${HARU_LIBRARIES})
   INCLUDE_DIRECTORIES(${HARU_INCLUDE_DIRS})
 ELSE(HAVE_HARU)
   MESSAGE("** Disabling PDF support (WPdfImage, WPdfRenderer): requires libharu.")
@@ -498,13 +540,15 @@ ELSE(HAVE_HARU)
 ENDIF(HAVE_HARU)
 
 IF("${WT_WRASTERIMAGE_IMPLEMENTATION}" STREQUAL "GraphicsMagick")
-  TARGET_LINK_LIBRARIES(wt ${GM_LIBRARIES})
+  TARGET_LINK_LIBRARIES(wt PRIVATE ${GM_LIBRARIES})
   INCLUDE_DIRECTORIES(${GM_INCLUDE_DIRS})
   ADD_DEFINITIONS(-DHAVE_GRAPHICSMAGICK)
 ELSEIF("${WT_WRASTERIMAGE_IMPLEMENTATION}" STREQUAL "skia")
-  TARGET_LINK_LIBRARIES(wt ${SKIA_LIBRARIES})
+  TARGET_LINK_LIBRARIES(wt PRIVATE ${SKIA_LIBRARIES})
   INCLUDE_DIRECTORIES(${SKIA_INCLUDE_DIRS})
   ADD_DEFINITIONS(${SKIA_DEFINES})
+ELSEIF("${WT_WRASTERIMAGE_IMPLEMENTATION}" STREQUAL "Direct2D")
+  TARGET_LINK_LIBRARIES(wt PRIVATE D2d1 Dwrite Windowscodecs Shlwapi)
 ELSE("${WT_WRASTERIMAGE_IMPLEMENTATION}" STREQUAL "GraphicsMagick")
   MESSAGE("** Disabling raster image support (WRasterImage): set WT_WRASTERIMAGE_IMPLEMENTATION to GraphicsMagick or skia.")
 ENDIF("${WT_WRASTERIMAGE_IMPLEMENTATION}" STREQUAL "GraphicsMagick")
@@ -512,33 +556,57 @@ ENDIF("${WT_WRASTERIMAGE_IMPLEMENTATION}" STREQUAL "GraphicsMagick")
 IF(HAVE_GL)
   INCLUDE_DIRECTORIES(${GL_INCLUDE_DIRS})
   IF(USE_SYSTEM_GLEW)
-    TARGET_LINK_LIBRARIES(wt GLEW)
+    TARGET_LINK_LIBRARIES(wt PRIVATE GLEW)
   ENDIF(USE_SYSTEM_GLEW)
-  TARGET_LINK_LIBRARIES(wt ${GL_LIBRARIES})
+  TARGET_LINK_LIBRARIES(wt PRIVATE ${GL_LIBRARIES})
 ELSE(HAVE_GL)
   MESSAGE("** Disabling server-side opengl rendering for WGLWidget: requires gl, glew and WRasterImage (GraphicsMagick or skia).")
 ENDIF(HAVE_GL)
 
-IF(HAVE_PANGO)
-  TARGET_LINK_LIBRARIES(wt ${PANGO_FT2_LIBRARIES})
-  INCLUDE_DIRECTORIES(${PANGO_FT2_INCLUDE_DIRS})
-  ADD_DEFINITIONS(-DHAVE_PANGO)
-  MESSAGE("** Enabling advanced font support using libpango")
-ELSE(HAVE_PANGO)
+IF(WT_FONTSUPPORT_SIMPLE)
+  ADD_DEFINITIONS(-DWT_FONTSUPPORT_SIMPLE)
   MESSAGE("** Disabling advanced font rendering support: requires libpango.")
   IF(ENABLE_PANGO)
     MESSAGE("   Wt will use pkg-config to retrieve your libpango installation location.")
   ENDIF(ENABLE_PANGO)
-ENDIF(HAVE_PANGO)
+ELSEIF(WT_FONTSUPPORT_PANGO)
+  TARGET_LINK_LIBRARIES(wt PRIVATE ${PANGO_FT2_LIBRARIES})
+  INCLUDE_DIRECTORIES(${PANGO_FT2_INCLUDE_DIRS})
+  ADD_DEFINITIONS(-DWT_FONTSUPPORT_PANGO)
+  MESSAGE("** Enabling advanced font support using libpango")
+ELSEIF(WT_FONTSUPPORT_DIRECTWRITE)
+  TARGET_LINK_LIBRARIES(wt PRIVATE Dwrite)
+  ADD_DEFINITIONS(-DWT_FONTSUPPORT_DIRECTWRITE)
+  MESSAGE("** Enabling advanced font support using DirectWrite")
+ENDIF(WT_FONTSUPPORT_SIMPLE)
+
+IF(HAVE_UNWIND)
+  ADD_DEFINITIONS(-DWT_WITH_UNWIND)
+  TARGET_LINK_LIBRARIES(wt PRIVATE ${UNWIND_LIBRARIES})
+  INCLUDE_DIRECTORIES(${UNWIND_INCLUDE_DIRS})
+  MESSAGE("** Enabling stacktrace prints using libunwind")
+ELSE(HAVE_UNWIND)
+  IF(ENABLE_UNWIND)
+    MESSAGE("** Disabling stacktrace prints: could not find libunwind")
+  ENDIF(ENABLE_UNWIND)
+ENDIF(HAVE_UNWIND)
 
 IF(MULTI_THREADED_BUILD)
-  TARGET_LINK_LIBRARIES(wt ${CMAKE_THREAD_LIBS_INIT})
+  TARGET_LINK_LIBRARIES(wt PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 ENDIF(MULTI_THREADED_BUILD)
 
+TARGET_INCLUDE_DIRECTORIES(wt INTERFACE
+  $<INSTALL_INTERFACE:include>)
+
 INSTALL(TARGETS wt
+    EXPORT wt-target-wt
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION ${LIB_INSTALL_DIR}
     ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
+
+INSTALL(EXPORT wt-target-wt
+        DESTINATION ${CMAKE_INSTALL_DIR}/wt
+        NAMESPACE Wt::)
 
 CONFIGURE_FILE(
   ${WT_SOURCE_DIR}/WtInstall.cmake
@@ -548,6 +616,7 @@ CONFIGURE_FILE(
 SET_TARGET_PROPERTIES(
   wt
 PROPERTIES
+  EXPORT_NAME Wt
   POST_INSTALL_SCRIPT ${WT_BINARY_DIR}/WtInstall.cmake
   VERSION ${VERSION_SERIES}.${VERSION_MAJOR}.${VERSION_MINOR}
   SOVERSION ${WT_SOVERSION}
@@ -556,7 +625,7 @@ PROPERTIES
 
 IF(MSVC)
   SET_TARGET_PROPERTIES(wt PROPERTIES COMPILE_FLAGS "${BUILD_PARALLEL} /wd4251 /wd4275 /wd4355 /wd4800 /wd4996 /wd4101 /wd4267")
-  TARGET_LINK_LIBRARIES(wt winmm)
+  TARGET_LINK_LIBRARIES(wt PRIVATE winmm)
 ENDIF(MSVC)
 
 SUBDIRS(isapi fcgi http)

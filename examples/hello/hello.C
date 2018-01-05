@@ -1,28 +1,28 @@
-#include <Wt/WApplication>
-#include <Wt/WContainerWidget>
-#include <Wt/WPushButton>
-#include <Wt/WText>
-#include <Wt/WBootstrapTheme>
-#include <Wt/WProgressBar>
-#include <Wt/WTemplate>
-#include <Wt/WMenu>
-#include <Wt/WStackedWidget>
+/*
+ * Copyright (C) 2008 Emweb bvba, Heverlee, Belgium.
+ *
+ * See the LICENSE file for terms of use.
+ */
 
-using namespace Wt;
+#include <Wt/WApplication.h>
+#include <Wt/WBreak.h>
+#include <Wt/WContainerWidget.h>
+#include <Wt/WLineEdit.h>
+#include <Wt/WPushButton.h>
+#include <Wt/WText.h>
 
-//My Classes
-class Reloadable
+/*
+ * A simple hello world application class which demonstrates how to react
+ * to events, read input, and give feed-back.
+ */
+class HelloApplication : public Wt::WApplication
 {
 public:
-	Reloadable() { }
-	virtual void reload() = 0;
-};
+  HelloApplication(const Wt::WEnvironment& env);
 
-template<class Base>
-class ReloadOnVisibleWidget : public Base, public Reloadable
-{
-public:
-	ReloadOnVisibleWidget() { }
+private:
+  Wt::WLineEdit *nameEdit_;
+  Wt::WText     *greeting_;
 
 protected:
 	virtual void propagateSetVisible(bool visible) override;
@@ -30,127 +30,76 @@ protected:
 	bool _wasVisible = true;
 };
 
-class ReloadableProgress : public WProgressBar, public Reloadable
+/*
+ * The env argument contains information about the new session, and
+ * the initial request. It must be passed to the WApplication
+ * constructor so it is typically also an argument for your custom
+ * application constructor.
+*/
+HelloApplication::HelloApplication(const Wt::WEnvironment& env)
+  : WApplication(env)
 {
-public:
-	ReloadableProgress(WContainerWidget *parent = nullptr) : WProgressBar(parent) { }
-	virtual void reload() override;
-};
+  setTitle("Hello world");                            // application title
 
-class ReloadableProgressTemplate : public Wt::WTemplate, public Reloadable
-{
-public:
-	ReloadableProgressTemplate(WContainerWidget *parent);
-	virtual void reload() override;
+  root()->addWidget(Wt::cpp14::make_unique<Wt::WText>("Your name, please ? ")); // show some text
 
-protected:
-	Wt::WText *_text = nullptr;
-};
+  nameEdit_ = root()->addWidget(Wt::cpp14::make_unique<Wt::WLineEdit>()); // allow text input
+  nameEdit_->setFocus();                              // give focus
 
-class ReloadableContainer : public ReloadOnVisibleWidget<Wt::WContainerWidget>
-{
-public:
-	virtual void reload() override
-	{
-		//isNotStateless(); doesnt work either; already called previously on the call stack in ReloadOnVisibleWidget::render
-		for(auto w : children())
-		{
-			if(auto rW = dynamic_cast<Reloadable*>(w))
-				rW->reload();
-		}
-	}
-};
+  auto button = root()->addWidget(Wt::cpp14::make_unique<Wt::WPushButton>("Greet me."));
+                                                      // create a button
+  button->setMargin(5, Wt::Side::Left);                   // add 5 pixels margin
 
-class HelloApplication : public WApplication
-{
-public:
-	HelloApplication(const WEnvironment& env);
-};
+  root()->addWidget(Wt::cpp14::make_unique<Wt::WBreak>());    // insert a line break
+  greeting_ = root()->addWidget(Wt::cpp14::make_unique<Wt::WText>()); // empty text
 
-//APPLICATION LOGIC
-HelloApplication::HelloApplication(const WEnvironment& env)
-	: WApplication(env)
-{
-	setTitle("Bug when reloading within render() during a learned slot event");
+  /*
+   * Connect signals with slots
+   *
+   * - simple Wt-way: specify object and method
+   */
+  button->clicked().connect(this, &HelloApplication::greet);
 
-	//Irrelevant
-	auto theme = new WBootstrapTheme();
-	theme->setVersion(WBootstrapTheme::Version3);
-	setTheme(theme);
+  /*
+   * - using an arbitrary function object, e.g. useful to bind
+   *   values with std::bind() to the resulting method call
+   */
+  nameEdit_->enterPressed().connect(std::bind(&HelloApplication::greet, this));
 
-	//WMenu with stacked widget change currentWidget using a learned slot
-	Wt::WStackedWidget *stack = new Wt::WStackedWidget();
-	auto menu = new WMenu(stack, root());
-	root()->addWidget(stack);
-
-	//Every Reloadable object's reload() is called when it becomes visible again
-	auto reloadableContainer = new ReloadableContainer();
-	menu->addItem("ReloadableContainer", reloadableContainer);
-	(new ReloadableProgress(reloadableContainer))->setInline(false);
-	new ReloadableProgressTemplate(reloadableContainer);
-
-	//Just to hide reloadableContainer
-	menu->addItem("Empty", new WContainerWidget());
+  /*
+   * - using a lambda:
+   */
+  button->clicked().connect([=]() { 
+      std::cerr << "Hello there, " << nameEdit_->text() << std::endl;
+  });
 }
 
-//MAIN
-WApplication *createApplication(const WEnvironment& env) { return new HelloApplication(env); }
+void HelloApplication::greet()
+{
+  /*
+   * Update the text, using text input into the nameEdit_ field.
+   */
+  greeting_->setText("Hello there, " + nameEdit_->text());
+}
+
 int main(int argc, char **argv)
 {
-	return WRun(argc, argv, &createApplication);
-}
-
-//FUCNTION DEFINITIONS
-template<class Base>
-void ReloadOnVisibleWidget<Base>::propagateSetVisible(bool visible)
-{
-	scheduleRender();
-	Base::propagateSetVisible(visible);
-}
-
-template<class Base>
-void ReloadOnVisibleWidget<Base>::render(Wt::WFlags<Wt::RenderFlag> flags)
-{
-	isNotStateless();
-	if(canOptimizeUpdates() && (flags & Wt::RenderFull) == 0)
-	{
-		bool visible = isVisible();
-		if(visible && !_wasVisible)
-		{
-			reload();
-		}
-
-		_wasVisible = visible;
-	}
-
-	Base::render(flags);
-}
-
-ReloadableProgressTemplate::ReloadableProgressTemplate(WContainerWidget *parent)
-	: WTemplate(parent)
-{
-	setTemplateText(
-		"<div class=\"progress\">"
-		"${progress-bar class=\"progress-bar\"}"
-		"</div>"
-		);
-
-	auto container = new Wt::WContainerWidget();
-	container->setWidth(Wt::WLength(0, Wt::WLength::Percentage));
-	_text = new Wt::WText("0%", container);
-	bindWidget("progress-bar", container);
-}
-
-void ReloadableProgressTemplate::reload()
-{
-	auto container = resolveWidget("progress-bar");
-	container->setWidth(Wt::WLength(container->width().value() + 5, WLength::Percentage));
-	_text->setText(container->width().cssText());
-	Wt::log("warn") << "ReloadableProgressTemplate::reload(): " << _text->text();
-}
-
-void ReloadableProgress::reload()
-{
-	setValue(value() + 5);
-	Wt::log("warn") << "ReloadableProgress::reload(): " << value() << "%";
+  /*
+   * Your main method may set up some shared resources, but should then
+   * start the server application (FastCGI or httpd) that starts listening
+   * for requests, and handles all of the application life cycles.
+   *
+   * The last argument to WRun specifies the function that will instantiate
+   * new application objects. That function is executed when a new user surfs
+   * to the Wt application, and after the library has negotiated browser
+   * support. The function should return a newly instantiated application
+   * object.
+   */
+  return Wt::WRun(argc, argv, [](const Wt::WEnvironment &env) {
+    /*
+     * You could read information from the environment to decide whether
+     * the user has permission to start a new application
+     */
+    return Wt::cpp14::make_unique<HelloApplication>(env);
+  });
 }
