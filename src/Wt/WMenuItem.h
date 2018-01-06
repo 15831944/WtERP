@@ -298,6 +298,8 @@ public:
    */
   WWidget *contents() const;
 
+  WWidget *contentsSafe() const;
+
   /*! \brief Removes the contents widget from this item.
    */
   std::unique_ptr<WWidget> removeContents();

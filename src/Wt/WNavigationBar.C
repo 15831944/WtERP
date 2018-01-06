@@ -74,16 +74,16 @@ void WNavigationBar::setTitle(const WString& title, const WLink& link)
   titleLink->setLink(link);
 }
 
-void WNavigationBar::setTitle(WImage* image, const WLink& link)
+void WNavigationBar::setTitle(std::unique_ptr<WImage> image, const WLink& link)
 {
   WAnchor *titleLink = resolve<WAnchor *>("title-link");
 
   if (!titleLink) {
-    bindWidget("title-link", titleLink = new WAnchor());
-    wApp->theme()->apply(this, titleLink, NavBrandRole);
+    titleLink = bindWidget("title-link", cpp14::make_unique<WAnchor>());
+    wApp->theme()->apply(this, titleLink, WidgetThemeRole::NavBrand);
   }
-  
-  titleLink->setImage(image);
+
+  titleLink->setImage(std::move(image));
   titleLink->setLink(link);
 }
 

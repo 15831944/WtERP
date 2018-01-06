@@ -97,7 +97,7 @@ std::shared_ptr<WDateValidator> WDateEdit::dateValidator() const
 
 void WDateEdit::resetValidator()
 {
-	setValidator(new WDateValidator("dd/MM/yyyy", this));
+	setValidator(std::make_shared<WDateValidator>(WApplication::instance()->locale().dateFormat()));
 }
 
 void WDateEdit::setFormat(const WT_USTRING& format)

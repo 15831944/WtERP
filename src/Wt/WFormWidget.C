@@ -347,6 +347,12 @@ void WFormWidget::setValidator(const std::shared_ptr<WValidator>& validator)
   }
 }
 
+void WFormWidget::resetValidator()
+{
+	if (validator())
+		setValidator(nullptr);
+}
+
 ValidationState WFormWidget::validate()
 {
   if (validator()) {

@@ -12,6 +12,7 @@
 #include "Wt/WContainerWidget.h"
 #include "Wt/WException.h"
 #include "Wt/WLogger.h"
+#include "Wt/WFormWidget.h"
 
 namespace Wt {
 
@@ -497,6 +498,20 @@ void WCompositeWidget::setImplementation(std::unique_ptr<WWidget> widget)
   WWidget *p = parent();
   if (p && p->loaded())
     impl_->load();
+}
+
+void WCompositeWidget::setFormWidgetImpl(WFormWidget *formWidget)
+{
+	fwImpl_ = formWidget;
+}
+
+WFormWidget *WCompositeWidget::getFormWidget(WWidget *widget)
+{
+	WCompositeWidget *cw = dynamic_cast<WCompositeWidget*>(widget);
+	if (cw && cw->formWidgetImpl())
+		return cw->formWidgetImpl();
+
+	return dynamic_cast<WFormWidget*>(widget);
 }
 
 std::unique_ptr<WWidget> WCompositeWidget::takeImplementation()

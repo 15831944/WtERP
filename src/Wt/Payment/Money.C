@@ -2,6 +2,7 @@
 
 #include "Wt/WException.h"
 #include "Wt/WStringStream.h"
+#include "Wt/WLocale.h"
 
 namespace Wt {
   namespace Payment {
@@ -50,7 +51,7 @@ void Money::setValueFromString(const std::string &str)
 	else
 	{
 		long long left = WLocale::currentLocale().toLong(str.substr(0, dotPos));
-		unsigned int right = boost::lexical_cast<unsigned int>(str.substr(dotPos + 1));
+		unsigned long right = std::stoul(str.substr(dotPos + 1));
 		while(right > 99)
 		{
 			right /= 10;

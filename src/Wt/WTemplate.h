@@ -194,6 +194,9 @@ private:
   bool _id(const std::vector<WString>& args, 
 	   std::ostream& result);
 
+  bool _fwId(const std::vector<WString>& args,
+	  std::ostream& result);
+
 public:
   /*! \brief Typedef for enum Wt::TemplateWidgetIdMode */
   typedef TemplateWidgetIdMode WidgetIdMode;
@@ -351,6 +354,8 @@ public:
 #ifndef WT_TARGET_JAVA
     static bool id(WTemplate *t, const std::vector<WString>& args,
 		   std::ostream& result);
+
+	static bool fwId(WTemplate *t, const std::vector<WString>& args, std::ostream& result);
 #else
     static Function& id = IdFunction();
 #endif // WT_TARGET_JAVA

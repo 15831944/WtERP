@@ -203,6 +203,8 @@ public:
    */
   int toInt(const WT_USTRING& value) const;
 
+  long long toLong(const WT_USTRING& value) const;
+
   /*! \brief Formats an integer number.
    */
   WT_USTRING toString(int value) const;
@@ -218,6 +220,8 @@ public:
   /*! \brief Formats an integer number.
    */
   WT_USTRING toString(::uint64_t value) const;
+
+  WT_USTRING toString(const Payment::Money &value) const;
 
   /*! \brief Formats a floating point number.
    */

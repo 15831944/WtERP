@@ -81,6 +81,8 @@ public:
    */
   void setValidator(const std::shared_ptr<WValidator>& validator);
 
+  virtual void resetValidator();
+
   /*! \brief Returns the validator.
    */
   virtual std::shared_ptr<WValidator> validator() const { return validator_; }

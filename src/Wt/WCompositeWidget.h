@@ -176,6 +176,10 @@ public:
 
   virtual int baseZIndex() const final override;
 
+  WFormWidget *formWidgetImpl() const { return fwImpl_; }
+
+  static WFormWidget *getFormWidget(WWidget *widget);
+
 protected:
   virtual void setHideWithOffsets(bool how) override;
 
@@ -191,6 +195,8 @@ protected:
    *       it has been rendered.
    */
   void setImplementation(std::unique_ptr<WWidget> widget);
+
+  void setFormWidgetImpl(WFormWidget *widget);
 
   template <typename Widget>
     Widget *setImplementation(std::unique_ptr<Widget> widget)
@@ -227,6 +233,10 @@ protected:
 
 private:
   std::unique_ptr<WWidget> impl_;
+
+  WFormWidget *fwImpl_ = nullptr;
+
+  bool skipImplPropagateSetEnabled_ = false;
 };
 
 }

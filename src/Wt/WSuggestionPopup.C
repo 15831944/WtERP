@@ -312,6 +312,40 @@ void WSuggestionPopup::forEdit(WFormWidget *edit, WFlags<PopupTrigger> triggers)
   edits_.push_back(edit);
 }
 
+
+/*! \brief %Signal that indicates that the model should be filtered.
+*
+* The argument is the initial input. When \link
+* PopupTrigger::Editing Editing\endlink is used as edit
+* trigger, its length will always equal the filterLength(). When
+* \link PopupTrigger::DropDownIcon DropDownIcon\endlink is used
+* as edit trigger, the input length may be less than
+* filterLength(), and the the signal will be called repeatedly as
+* the user provides more input.
+*
+* For example, if you are using a WSortFilterProxyModel, you could
+* react to this signal with:
+* \if cpp
+* \code
+* void MyClass::filterSuggestions(const WString& filter)
+* {
+*   proxyModel->setFilterRegExp(filter + ".*");
+* }
+* \endcode
+* \elseif java
+* \code
+* public filterSuggestions(String filter) {
+*   proxyModel.setFilterRegExp(filter + ".*");
+* }
+* \endcode
+* \endif
+*/
+
+Signal<WT_USTRING, WFormWidget*>& WSuggestionPopup::filterModel()
+{
+	return filterModel_;
+}
+
 void WSuggestionPopup::setDropDownIconUnfiltered(bool isUnfiltered)
 {
   isDropDownIconUnfiltered_ = isUnfiltered;

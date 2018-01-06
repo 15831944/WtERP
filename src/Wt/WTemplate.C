@@ -12,6 +12,8 @@
 #include "Wt/WContainerWidget.h"
 #include "Wt/WLogger.h"
 #include "Wt/WTemplate.h"
+#include "Wt/WCompositeWidget.h"
+#include "Wt/WFormWidget.h"
 
 #include "EscapeOStream.h"
 #include "WebUtils.h"

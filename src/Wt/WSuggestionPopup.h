@@ -436,7 +436,7 @@ public:
    * \endcode
    * \endif 
    */
-  Signal<WT_USTRING>& filterModel() { return filterModel_; }
+  Signal<WT_USTRING, WFormWidget*>& filterModel();
 
   /*! \brief %Signal emitted when a suggestion was selected.
    *
@@ -485,18 +485,18 @@ private:
   std::string       matcherJS_;
   std::string       replacerJS_;
 
-  Signal<WT_USTRING> filterModel_;
+  Signal<WT_USTRING, WFormWidget *> filterModel_;
   Signal<int, WFormWidget *> activated_;
 
   std::vector<Wt::Signals::connection> modelConnections_;
 
-  JSignal<std::string> filter_;
+  JSignal<std::string, std::string> filter_;
   JSignal<std::string, std::string> jactivated_;
 
   std::vector<WFormWidget *> edits_;
 
   void init();
-  void doFilter(std::string input);
+  void doFilter(std::string input, std::string editId);
   void doActivate(std::string itemId, std::string editId);
   void connectObjJS(EventSignalBase& s, const std::string& methodName);
 

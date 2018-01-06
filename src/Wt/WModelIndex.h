@@ -166,6 +166,10 @@ public:
 
   static constexpr int User = 32;           //!< First role reserved for user purposes
 
+  static constexpr int Width = 40;
+  static constexpr int AdditionalRow = 41;
+  static constexpr int ViewIndex = 42;
+
 private:
   int role_;
 };

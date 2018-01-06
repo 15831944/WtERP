@@ -55,6 +55,8 @@ public:
      */
     virtual std::shared_ptr<WTimeValidator> timeValidator() const;
 
+	virtual void resetValidator();
+
     /*! \brief Sets the format of the Time
      */
     void setFormat(const WT_USTRING& format);

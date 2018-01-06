@@ -87,7 +87,7 @@ std::shared_ptr<WTimeValidator> WTimeEdit::timeValidator() const
 
 void WTimeEdit::resetValidator()
 {
-	setValidator(new WTimeValidator(this));
+	setValidator(std::make_shared<WTimeValidator>());
 }
 
 void WTimeEdit::setFormat(const WT_USTRING& format)

@@ -24,10 +24,7 @@ private:
   Wt::WLineEdit *nameEdit_;
   Wt::WText     *greeting_;
 
-protected:
-	virtual void propagateSetVisible(bool visible) override;
-	virtual void render(Wt::WFlags<Wt::RenderFlag> flags) override;
-	bool _wasVisible = true;
+  void greet();
 };
 
 /*

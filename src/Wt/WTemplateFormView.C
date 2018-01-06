@@ -11,6 +11,7 @@
 #include "Wt/WText.h"
 #include "Wt/WTemplateFormView.h"
 #include "Wt/WTheme.h"
+#include "Wt/WCompositeWidget.h"
 
 #include "WebUtils.h"
 
@@ -152,7 +153,7 @@ void WTemplateFormView::updateViewField(WFormModel *model,
 
 	if(fedit)
 	{
-		Wt::WValidator *modelValidator = model->validator(field);
+		std::shared_ptr<WValidator> modelValidator = model->validator(field);
 		if(modelValidator)
 		{
 			if(model->isAllReadOnly() || !isEnabled())

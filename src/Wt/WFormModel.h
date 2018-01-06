@@ -144,6 +144,8 @@ public:
    */
   virtual void reset();
 
+  void resetValidation();
+
   /*! \brief Validates the current input.
    *
    * The default implementation calls validateField() for each field and
@@ -190,11 +192,15 @@ public:
    */
   void setReadOnly(Field field, bool readOnly);
 
+  void setAllReadOnly(bool readOnly);
+
   /*! \brief Returns whether a field is read only.
    *
    * The default implementation returns the value set by setReadOnly()
    */
   virtual bool isReadOnly(Field field) const;
+
+  bool isAllReadOnly() const { return allReadOnly_; }
 
   /*! \brief Returns a field label.
    *

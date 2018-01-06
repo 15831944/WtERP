@@ -35,6 +35,8 @@ public:
    */
   void setTitle(const WString& title, const WLink& link = WLink());
 
+  void setTitle(std::unique_ptr<WImage> image, const WLink& link);
+
   /*! \brief Sets whether the navigation bar will respond to screen size.
    *
    * For screens that are less wide, the navigation bar can be
@@ -53,7 +55,7 @@ public:
    * navigation bar.
    */
   WMenu *addMenu(std::unique_ptr<WMenu> menu,
-               AlignmentFlag alignment = AlignmentFlag::Left);
+               AlignmentFlag alignment = AlignmentFlag::Left, bool stacked = false);
 
   /*! \brief Adds a form field to the navigation bar.
    *
@@ -78,7 +80,7 @@ public:
    * require special CSS style to blend well with the navigation bar style.
    */
   void addWidget(std::unique_ptr<WWidget> widget,
-		 AlignmentFlag alignment = AlignmentFlag::Left);
+		 AlignmentFlag alignment = AlignmentFlag::Left, bool doNotAlign = false);
 
 protected:
   std::unique_ptr<WInteractWidget> createCollapseButton();

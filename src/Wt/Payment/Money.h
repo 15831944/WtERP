@@ -45,11 +45,17 @@ public:
   
   Money(const std::string &str, const std::string& currency);
 
+  Money(long long valueInCents, const std::string &currency);
+
   /*! \brief Returns the int part of money.
    *
    * Returns the int part of money (money with no cents).
    */
   long long value() const {return valueInCents_ / 100;}
+
+  long long valueInCents() const { return valueInCents_; }
+
+  double valueDbl() const { return static_cast<double>(valueInCents_) / 100; }
 
   /*! \brief Returns the cents.
    *
@@ -111,8 +117,6 @@ private:
   long long valueInCents_;
   std::string currency_;
 
-  Money(long long valueInCents, const std::string &currency);
-  long long valueInCents() const {return valueInCents_;}
   void checkCurrency(Money& ans, const Money& v1, const Money& v2);
 };
 

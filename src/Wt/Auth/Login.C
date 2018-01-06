@@ -10,8 +10,7 @@ namespace Wt {
   namespace Auth {
 
 Login::Login()
-  : changed_(this), beforeChanged_(this),
-    state_(LoggedOut)
+  : state_(LoginState::LoggedOut)
 { }
 
 void Login::login(const User& user, LoginState state)
