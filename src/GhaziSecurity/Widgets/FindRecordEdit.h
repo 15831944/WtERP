@@ -1,6 +1,7 @@
 #ifndef GS_FINDRECORDEDIT_H
 #define GS_FINDRECORDEDIT_H
 
+#include "Common.h"
 #include "Application/WApplication.h"
 
 #include <Wt/WTemplate.h>
@@ -20,7 +21,7 @@ namespace GS
 	class FindRecordEditTemplate : public Wt::WTemplate
 	{
 	public:
-		FindRecordEditTemplate(std::unique_ptr<Wt::WLineEdit> edit);
+		FindRecordEditTemplate(unique_ptr<Wt::WLineEdit> edit);
 		virtual void setDisabled(bool disabled) override;
 
 	protected:
@@ -56,10 +57,10 @@ namespace GS
 	class FindRecordEdit : public AbstractFindRecordEdit
 	{
 	public:
-		virtual void setValuePtr(Wt::any ptrData) override { setValuePtr(ptrData.empty() ? Wt::Dbo::ptr<Value>() : Wt::cpp17::any_cast<Wt::Dbo::ptr<Value>>(ptrData)); }
-		void setValuePtr(Wt::Dbo::ptr<Value> ptr);
+		virtual void setValuePtr(Wt::any ptrData) override { setValuePtr(ptrData.empty() ? Dbo::ptr<Value>() : Wt::cpp17::any_cast<Dbo::ptr<Value>>(ptrData)); }
+		void setValuePtr(Dbo::ptr<Value> ptr);
 
-		Wt::Dbo::ptr<Value> valuePtr() const { return _valuePtr; }
+		Dbo::ptr<Value> valuePtr() const { return _valuePtr; }
 		virtual Wt::any valueAny() const override { return valuePtr(); }
 		void setIdColumn(int column) { _idColumn = column; }
 		int idColumn() const { return _idColumn; }
@@ -67,7 +68,7 @@ namespace GS
 	protected:
 		void handleActivated(int index, Wt::WFormWidget *lineEdit);
 
-		Wt::Dbo::ptr<Value> _valuePtr;
+		Dbo::ptr<Value> _valuePtr;
 		int _idColumn = 0;
 	};
 
@@ -188,7 +189,7 @@ namespace GS
 		FindLocationSuggestionPopup();
 
 	protected:
-		typedef std::tuple<long long, std::string, std::string, std::string, std::string> ResultTuple;
+		typedef tuple<long long, std::string, std::string, std::string, std::string> ResultTuple;
 		void handleFilterModel(const Wt::WString &str, Wt::WFormWidget *edit);
 	};
 

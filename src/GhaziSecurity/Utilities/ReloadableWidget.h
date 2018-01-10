@@ -1,7 +1,7 @@
 #ifndef GS_RELOADABLEWIDGET_UTILITY_H
 #define GS_RELOADABLEWIDGET_UTILITY_H
 
-#include <Wt/WGlobal.h>
+#include "Common.h"
 
 namespace GS
 {

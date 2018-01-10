@@ -1,6 +1,7 @@
 #ifndef GS_WSERVER_H
 #define GS_WSERVER_H
 
+#include "Common.h"
 #include <Wt/WServer.h>
 
 #include <Wt/Auth/AuthService.h>
@@ -17,13 +18,11 @@ namespace WW
 
 namespace GS
 {
-	using namespace std::chrono;
-
 	class WApplication;
 	class TaskScheduler;
 	class PermissionsDatabase;
 
-	typedef std::vector<std::unique_ptr<const Wt::Auth::OAuthService>> OAuthServiceMap;
+	typedef std::vector<unique_ptr<const Wt::Auth::OAuthService>> OAuthServiceMap;
 
 	class WServer : public Wt::WServer
 	{
@@ -35,7 +34,7 @@ namespace GS
 		static WServer *instance() { return dynamic_cast<WServer*>(Wt::WServer::instance()); }
 		bool start();
 
-		Wt::Dbo::SqlConnectionPool &sqlPool() const { return *_sqlPool; }
+		Dbo::SqlConnectionPool &sqlPool() const { return *_sqlPool; }
 		WW::ConfigurationsDatabase &configs() const { return *_configs; }
 		PermissionsDatabase &permissionsDatabase() const { return *_permissionsDatabase; }
 
@@ -46,11 +45,11 @@ namespace GS
 	protected:
 		void configureAuth();
 
-		Wt::Dbo::Session _dboSession;
-		std::unique_ptr<Wt::Dbo::SqlConnectionPool> _sqlPool;
-		std::unique_ptr<WW::ConfigurationsDatabase> _configs;
-		std::unique_ptr<PermissionsDatabase> _permissionsDatabase;
-		std::unique_ptr<TaskScheduler> _taskScheduler;
+		Dbo::Session _dboSession;
+		unique_ptr<Dbo::SqlConnectionPool> _sqlPool;
+		unique_ptr<WW::ConfigurationsDatabase> _configs;
+		unique_ptr<PermissionsDatabase> _permissionsDatabase;
+		unique_ptr<TaskScheduler> _taskScheduler;
 
 		Wt::Auth::AuthService _authService;
 		Wt::Auth::PasswordService _passwordService;

@@ -12,7 +12,7 @@
 
 #include <boost/lexical_cast.hpp>
 
-#define TRANSACTION(app) Wt::Dbo::Transaction t(app->dboSession())
+#define TRANSACTION(app) Dbo::Transaction t(app->dboSession())
 
 namespace GS
 {
@@ -28,16 +28,16 @@ namespace GS
 	typedef Wt::Auth::Dbo::AuthIdentity<AuthInfo> AuthIdentity;
 	typedef Wt::Auth::Dbo::AuthToken<AuthInfo> AuthToken;
 
-	typedef Wt::Dbo::collection<Wt::Dbo::ptr<AuthInfo>> AuthInfoCollection;
-	typedef Wt::Dbo::collection<Wt::Dbo::ptr<User>> UserCollection;
-	typedef Wt::Dbo::collection<Wt::Dbo::ptr<Region>> RegionCollection;
-	typedef Wt::Dbo::collection<Wt::Dbo::ptr<UserPermission>> UserPermissionCollection;
-	typedef Wt::Dbo::collection<Wt::Dbo::ptr<Permission>> PermissionCollection;
-	typedef Wt::Dbo::collection<Wt::Dbo::ptr<DefaultPermission>> DefaultPermissionCollection;
+	typedef Dbo::collection<Dbo::ptr<AuthInfo>> AuthInfoCollection;
+	typedef Dbo::collection<Dbo::ptr<User>> UserCollection;
+	typedef Dbo::collection<Dbo::ptr<Region>> RegionCollection;
+	typedef Dbo::collection<Dbo::ptr<UserPermission>> UserPermissionCollection;
+	typedef Dbo::collection<Dbo::ptr<Permission>> PermissionCollection;
+	typedef Dbo::collection<Dbo::ptr<DefaultPermission>> DefaultPermissionCollection;
 
 	struct PermissionDdo;
-	typedef std::shared_ptr<PermissionDdo> PermissionSPtr;
-	typedef std::shared_ptr<const PermissionDdo> PermissionCPtr;
+	typedef shared_ptr<PermissionDdo> PermissionSPtr;
+	typedef shared_ptr<const PermissionDdo> PermissionCPtr;
 	typedef std::map<long long, PermissionCPtr> PermissionMap;
 
 	typedef Wt::Auth::Dbo::UserDatabase<GS::AuthInfo> UserDatabase;
@@ -89,43 +89,43 @@ namespace GS
 	class AttendanceDevice;
 	class AttendanceEntry;
 
-	typedef Wt::Dbo::collection<Wt::Dbo::ptr<Entity>> EntityCollection;
-	typedef Wt::Dbo::collection<Wt::Dbo::ptr<Person>> PersonCollection;
-	typedef Wt::Dbo::collection<Wt::Dbo::ptr<Business>> BusinessCollection;
-	typedef Wt::Dbo::collection<Wt::Dbo::ptr<Employee>> EmployeeCollection;
-	typedef Wt::Dbo::collection<Wt::Dbo::ptr<Personnel>> PersonnelCollection;
-	typedef Wt::Dbo::collection<Wt::Dbo::ptr<EmployeePosition>> EmployeePositionCollection;
-	typedef Wt::Dbo::collection<Wt::Dbo::ptr<ClientService>> ClientServiceCollection;
-	typedef Wt::Dbo::collection<Wt::Dbo::ptr<ContactNumber>> ContactNumberCollection;
-	typedef Wt::Dbo::collection<Wt::Dbo::ptr<Country>> CountryCollection;
-	typedef Wt::Dbo::collection<Wt::Dbo::ptr<City>> CityCollection;
-	typedef Wt::Dbo::collection<Wt::Dbo::ptr<Location>> LocationCollection;
-	typedef Wt::Dbo::collection<Wt::Dbo::ptr<EmployeeAssignment>> EmployeeAssignmentCollection;
-	typedef Wt::Dbo::collection<Wt::Dbo::ptr<ClientAssignment>> ClientAssignmentCollection;
-// 	typedef Wt::Dbo::collection<Wt::Dbo::ptr<Inquiry>> InquiryCollection;
-// 	typedef Wt::Dbo::collection<Wt::Dbo::ptr<Asset>> AssetCollection;
-// 	typedef Wt::Dbo::collection<Wt::Dbo::ptr<Inventory>> InventoryCollection;
-// 	typedef Wt::Dbo::collection<Wt::Dbo::ptr<ClothingTemplate>> ClothingTemplateCollection;
-// 	typedef Wt::Dbo::collection<Wt::Dbo::ptr<ClothingItem>> ClothingItemCollection;
-// 	typedef Wt::Dbo::collection<Wt::Dbo::ptr<AlarmTemplate>> AlarmTemplateCollection;
-// 	typedef Wt::Dbo::collection<Wt::Dbo::ptr<AlarmItem>> AlarmItemCollection;
-// 	typedef Wt::Dbo::collection<Wt::Dbo::ptr<WeaponTemplate>> WeaponTemplateCollection;
-// 	typedef Wt::Dbo::collection<Wt::Dbo::ptr<Weapon>> WeaponCollection;
-// 	typedef Wt::Dbo::collection<Wt::Dbo::ptr<VehicleTemplate>> VehicleTemplateCollection;
-// 	typedef Wt::Dbo::collection<Wt::Dbo::ptr<Vehicle>> VehicleCollection;
-// 	typedef Wt::Dbo::collection<Wt::Dbo::ptr<Office>> OfficeCollection;
-// 	typedef Wt::Dbo::collection<Wt::Dbo::ptr<RentHouse>> RentHouseCollection;
-// 	typedef Wt::Dbo::collection<Wt::Dbo::ptr<AssetRegistration>> LicenseCollection;
-	typedef Wt::Dbo::collection<Wt::Dbo::ptr<IncomeCycle>> IncomeCycleCollection;
-	typedef Wt::Dbo::collection<Wt::Dbo::ptr<ExpenseCycle>> ExpenseCycleCollection;
-	typedef Wt::Dbo::collection<Wt::Dbo::ptr<Account>> AccountCollection;
-	typedef Wt::Dbo::collection<Wt::Dbo::ptr<AccountEntry>> AccountEntryCollection;
-	typedef Wt::Dbo::collection<Wt::Dbo::ptr<OvertimeInfo>> OvertimeInfoCollection;
-	typedef Wt::Dbo::collection<Wt::Dbo::ptr<FineInfo>> FineInfoCollection;
-	typedef Wt::Dbo::collection<Wt::Dbo::ptr<PettyExpenditureInfo>> PettyExpenditureInfoCollection;
-	typedef Wt::Dbo::collection<Wt::Dbo::ptr<UploadedFile>> UploadedFileCollection;
-	typedef Wt::Dbo::collection<Wt::Dbo::ptr<AttendanceDevice>> AttendanceDeviceCollection;
-	typedef Wt::Dbo::collection<Wt::Dbo::ptr<AttendanceEntry>> AttendanceEntryCollection;
+	typedef Dbo::collection<Dbo::ptr<Entity>> EntityCollection;
+	typedef Dbo::collection<Dbo::ptr<Person>> PersonCollection;
+	typedef Dbo::collection<Dbo::ptr<Business>> BusinessCollection;
+	typedef Dbo::collection<Dbo::ptr<Employee>> EmployeeCollection;
+	typedef Dbo::collection<Dbo::ptr<Personnel>> PersonnelCollection;
+	typedef Dbo::collection<Dbo::ptr<EmployeePosition>> EmployeePositionCollection;
+	typedef Dbo::collection<Dbo::ptr<ClientService>> ClientServiceCollection;
+	typedef Dbo::collection<Dbo::ptr<ContactNumber>> ContactNumberCollection;
+	typedef Dbo::collection<Dbo::ptr<Country>> CountryCollection;
+	typedef Dbo::collection<Dbo::ptr<City>> CityCollection;
+	typedef Dbo::collection<Dbo::ptr<Location>> LocationCollection;
+	typedef Dbo::collection<Dbo::ptr<EmployeeAssignment>> EmployeeAssignmentCollection;
+	typedef Dbo::collection<Dbo::ptr<ClientAssignment>> ClientAssignmentCollection;
+// 	typedef Dbo::collection<Dbo::ptr<Inquiry>> InquiryCollection;
+// 	typedef Dbo::collection<Dbo::ptr<Asset>> AssetCollection;
+// 	typedef Dbo::collection<Dbo::ptr<Inventory>> InventoryCollection;
+// 	typedef Dbo::collection<Dbo::ptr<ClothingTemplate>> ClothingTemplateCollection;
+// 	typedef Dbo::collection<Dbo::ptr<ClothingItem>> ClothingItemCollection;
+// 	typedef Dbo::collection<Dbo::ptr<AlarmTemplate>> AlarmTemplateCollection;
+// 	typedef Dbo::collection<Dbo::ptr<AlarmItem>> AlarmItemCollection;
+// 	typedef Dbo::collection<Dbo::ptr<WeaponTemplate>> WeaponTemplateCollection;
+// 	typedef Dbo::collection<Dbo::ptr<Weapon>> WeaponCollection;
+// 	typedef Dbo::collection<Dbo::ptr<VehicleTemplate>> VehicleTemplateCollection;
+// 	typedef Dbo::collection<Dbo::ptr<Vehicle>> VehicleCollection;
+// 	typedef Dbo::collection<Dbo::ptr<Office>> OfficeCollection;
+// 	typedef Dbo::collection<Dbo::ptr<RentHouse>> RentHouseCollection;
+// 	typedef Dbo::collection<Dbo::ptr<AssetRegistration>> LicenseCollection;
+	typedef Dbo::collection<Dbo::ptr<IncomeCycle>> IncomeCycleCollection;
+	typedef Dbo::collection<Dbo::ptr<ExpenseCycle>> ExpenseCycleCollection;
+	typedef Dbo::collection<Dbo::ptr<Account>> AccountCollection;
+	typedef Dbo::collection<Dbo::ptr<AccountEntry>> AccountEntryCollection;
+	typedef Dbo::collection<Dbo::ptr<OvertimeInfo>> OvertimeInfoCollection;
+	typedef Dbo::collection<Dbo::ptr<FineInfo>> FineInfoCollection;
+	typedef Dbo::collection<Dbo::ptr<PettyExpenditureInfo>> PettyExpenditureInfoCollection;
+	typedef Dbo::collection<Dbo::ptr<UploadedFile>> UploadedFileCollection;
+	typedef Dbo::collection<Dbo::ptr<AttendanceDevice>> AttendanceDeviceCollection;
+	typedef Dbo::collection<Dbo::ptr<AttendanceEntry>> AttendanceEntryCollection;
 }
 
 namespace Wt
@@ -136,8 +136,8 @@ namespace Wt
 		template <class Action>
 		void field(Action &a, GS::UserPermissionPK &key, const std::string &, int size = -1)
 		{
-			Wt::Dbo::belongsTo(a, key.userPtr, "user", Wt::Dbo::OnDeleteCascade | Wt::Dbo::OnUpdateCascade | Wt::Dbo::NotNull);
-			Wt::Dbo::belongsTo(a, key.permissionPtr, "permission", Wt::Dbo::OnDeleteCascade | Wt::Dbo::OnUpdateCascade | Wt::Dbo::NotNull);
+			belongsTo(a, key.userPtr, "user", OnDeleteCascade | OnUpdateCascade | NotNull);
+			belongsTo(a, key.permissionPtr, "permission", OnDeleteCascade | OnUpdateCascade | NotNull);
 		}
 		template<>
 		struct dbo_traits<GS::UserPermission> : public dbo_default_traits
@@ -156,28 +156,28 @@ namespace Wt
 		template<>
 		struct dbo_traits<GS::Person> : public dbo_default_traits
 		{
-			typedef Wt::Dbo::ptr<GS::Entity> IdType;
+			typedef ptr<GS::Entity> IdType;
 			static IdType invalidId() { return IdType(); }
 			constexpr static const char *surrogateIdField() { return nullptr; }
 		};
 		template<>
 		struct dbo_traits<GS::Business> : public dbo_default_traits
 		{
-			typedef Wt::Dbo::ptr<GS::Entity> IdType;
+			typedef ptr<GS::Entity> IdType;
 			static IdType invalidId() { return IdType(); }
 			constexpr static const char *surrogateIdField() { return nullptr; }
 		};
 		template<>
 		struct dbo_traits<GS::Employee> : public dbo_default_traits
 		{
-			typedef Wt::Dbo::ptr<GS::Person> IdType;
+			typedef ptr<GS::Person> IdType;
 			static IdType invalidId() { return IdType(); }
 			constexpr static const char *surrogateIdField() { return nullptr; }
 		};
 		template<>
 		struct dbo_traits<GS::Personnel> : public dbo_default_traits
 		{
-			typedef Wt::Dbo::ptr<GS::Employee> IdType;
+			typedef ptr<GS::Employee> IdType;
 			static IdType invalidId() { return IdType(); }
 			constexpr static const char *surrogateIdField() { return nullptr; }
 		};
@@ -193,35 +193,35 @@ namespace Wt
 // 		template<>
 // 		struct dbo_traits<GS::Inventory> : public dbo_default_traits
 // 		{
-// 			typedef Wt::Dbo::ptr<GS::Asset> IdType;
+// 			typedef ptr<GS::Asset> IdType;
 // 			static IdType invalidId() { return IdType(); }
 // 			constexpr static const char *surrogateIdField() { return nullptr; }
 // 		};
 // 		template<>
 // 		struct dbo_traits<GS::Weapon> : public dbo_default_traits
 // 		{
-// 			typedef Wt::Dbo::ptr<GS::Asset> IdType;
+// 			typedef ptr<GS::Asset> IdType;
 // 			static IdType invalidId() { return IdType(); }
 // 			constexpr static const char *surrogateIdField() { return nullptr; }
 // 		};
 // 		template<>
 // 		struct dbo_traits<GS::Vehicle> : public dbo_default_traits
 // 		{
-// 			typedef Wt::Dbo::ptr<GS::Asset> IdType;
+// 			typedef ptr<GS::Asset> IdType;
 // 			static IdType invalidId() { return IdType(); }
 // 			constexpr static const char *surrogateIdField() { return nullptr; }
 // 		};
 // 		template<>
 // 		struct dbo_traits<GS::ClothingItem> : public dbo_default_traits
 // 		{
-// 			typedef Wt::Dbo::ptr<GS::Asset> IdType;
+// 			typedef ptr<GS::Asset> IdType;
 // 			static IdType invalidId() { return IdType(); }
 // 			constexpr static const char *surrogateIdField() { return nullptr; }
 // 		};
 // 		template<>
 // 		struct dbo_traits<GS::AlarmItem> : public dbo_default_traits
 // 		{
-// 			typedef Wt::Dbo::ptr<GS::Asset> IdType;
+// 			typedef ptr<GS::Asset> IdType;
 // 			static IdType invalidId() { return IdType(); }
 // 			constexpr static const char *surrogateIdField() { return nullptr; }
 // 		};
@@ -230,21 +230,21 @@ namespace Wt
 		template<>
 		struct dbo_traits<GS::OvertimeInfo> : public dbo_default_traits
 		{
-			typedef Wt::Dbo::ptr<GS::AccountEntry> IdType;
+			typedef ptr<GS::AccountEntry> IdType;
 			static IdType invalidId() { return IdType(); }
 			constexpr static const char *surrogateIdField() { return nullptr; }
 		};
 		template<>
 		struct dbo_traits<GS::FineInfo> : public dbo_default_traits
 		{
-			typedef Wt::Dbo::ptr<GS::AccountEntry> IdType;
+			typedef ptr<GS::AccountEntry> IdType;
 			static IdType invalidId() { return IdType(); }
 			constexpr static const char *surrogateIdField() { return nullptr; }
 		};
 		template<>
 		struct dbo_traits<GS::PettyExpenditureInfo> : public dbo_default_traits
 		{
-			typedef Wt::Dbo::ptr<GS::AccountEntry> IdType;
+			typedef ptr<GS::AccountEntry> IdType;
 			static IdType invalidId() { return IdType(); }
 			constexpr static const char *surrogateIdField() { return nullptr; }
 		};
@@ -258,8 +258,8 @@ namespace GS
 	class BaseAdminRecord
 	{
 	public:
-		Wt::Dbo::ptr<User> creatorUserPtr;
-		Wt::Dbo::ptr<Region> regionPtr;
+		Dbo::ptr<User> creatorUserPtr;
+		Dbo::ptr<Region> regionPtr;
 		Wt::WDateTime timestamp = Wt::WDateTime::currentDateTime();
 
 		void setCreatedByValues(bool setRegion = true);
@@ -267,9 +267,9 @@ namespace GS
 		template<class Action>
 		void persist(Action& a)
 		{
-			Wt::Dbo::belongsTo(a, creatorUserPtr, "creator_user", Wt::Dbo::OnDeleteSetNull | Wt::Dbo::OnUpdateCascade);
-			Wt::Dbo::belongsTo(a, regionPtr, "region", Wt::Dbo::OnDeleteSetNull | Wt::Dbo::OnUpdateCascade);
-			Wt::Dbo::field(a, timestamp, "timestamp");
+			Dbo::belongsTo(a, creatorUserPtr, "creator_user", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
+			Dbo::belongsTo(a, regionPtr, "region", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
+			Dbo::field(a, timestamp, "timestamp");
 		}
 	};
 
@@ -280,7 +280,7 @@ namespace GS
 		static std::string viewInternalPath(long long id) { return viewInternalPath(boost::lexical_cast<std::string>(id)); }
 		static std::string viewInternalPath(const std::string &idStr) { return "/" ADMIN_PATHC "/" USERS_PATHC "/" USER_PREFIX + idStr; }
 
-		Wt::Dbo::weak_ptr<AuthInfo> authInfoWPtr;
+		Dbo::weak_ptr<AuthInfo> authInfoWPtr;
 
 		UserPermissionCollection userPermissionCollection;
 
@@ -294,15 +294,15 @@ namespace GS
 		template<class Action>
 		void persist(Action& a)
 		{
-			Wt::Dbo::hasOne(a, authInfoWPtr, "user");
-			Wt::Dbo::hasMany(a, userPermissionCollection, Wt::Dbo::ManyToOne, "user");
+			Dbo::hasOne(a, authInfoWPtr, "user");
+			Dbo::hasMany(a, userPermissionCollection, Dbo::ManyToOne, "user");
 
-			Wt::Dbo::hasMany(a, entitiesCollection, Wt::Dbo::ManyToOne, "creator_user");
-			Wt::Dbo::hasMany(a, accountsCollection, Wt::Dbo::ManyToOne, "creator_user");
-			Wt::Dbo::hasMany(a, accountEntriesCollection, Wt::Dbo::ManyToOne, "creator_user");
-			Wt::Dbo::hasMany(a, incomeCyclesCollection, Wt::Dbo::ManyToOne, "creator_user");
-			Wt::Dbo::hasMany(a, expenseCyclesCollection, Wt::Dbo::ManyToOne, "creator_user");
-			Wt::Dbo::hasMany(a, createdUserCollection, Wt::Dbo::ManyToOne, "creator_user");
+			Dbo::hasMany(a, entitiesCollection, Dbo::ManyToOne, "creator_user");
+			Dbo::hasMany(a, accountsCollection, Dbo::ManyToOne, "creator_user");
+			Dbo::hasMany(a, accountEntriesCollection, Dbo::ManyToOne, "creator_user");
+			Dbo::hasMany(a, incomeCyclesCollection, Dbo::ManyToOne, "creator_user");
+			Dbo::hasMany(a, expenseCyclesCollection, Dbo::ManyToOne, "creator_user");
+			Dbo::hasMany(a, createdUserCollection, Dbo::ManyToOne, "creator_user");
 
 			BaseAdminRecord::persist(a);
 		}
@@ -331,14 +331,14 @@ namespace GS
 		template<class Action>
 		void persist(Action& a)
 		{
-			Wt::Dbo::field(a, name, "name", 70);
-			Wt::Dbo::hasMany(a, userCollection, Wt::Dbo::ManyToOne, "region");
+			Dbo::field(a, name, "name", 70);
+			Dbo::hasMany(a, userCollection, Dbo::ManyToOne, "region");
 
-			Wt::Dbo::hasMany(a, entitiesCollection, Wt::Dbo::ManyToOne, "region");
-			Wt::Dbo::hasMany(a, accountsCollection, Wt::Dbo::ManyToOne, "region");
-			Wt::Dbo::hasMany(a, accountEntriesCollection, Wt::Dbo::ManyToOne, "region");
-			Wt::Dbo::hasMany(a, incomeCyclesCollection, Wt::Dbo::ManyToOne, "region");
-			Wt::Dbo::hasMany(a, expenseCyclesCollection, Wt::Dbo::ManyToOne, "region");
+			Dbo::hasMany(a, entitiesCollection, Dbo::ManyToOne, "region");
+			Dbo::hasMany(a, accountsCollection, Dbo::ManyToOne, "region");
+			Dbo::hasMany(a, accountEntriesCollection, Dbo::ManyToOne, "region");
+			Dbo::hasMany(a, incomeCyclesCollection, Dbo::ManyToOne, "region");
+			Dbo::hasMany(a, expenseCyclesCollection, Dbo::ManyToOne, "region");
 		}
 		constexpr static const char *tableName()
 		{
@@ -367,13 +367,13 @@ namespace GS
 		template<class Action>
 		void persist(Action& a)
 		{
-			Wt::Dbo::id(a, _id);
-			Wt::Dbo::field(a, name, "name", 70);
-			Wt::Dbo::field(a, requireStrongLogin, "requireStrongLogin");
-			Wt::Dbo::hasMany(a, userPermissionCollection, Wt::Dbo::ManyToOne, "permission");
-			Wt::Dbo::hasMany(a, defaultPermissionCollection, Wt::Dbo::ManyToOne, "permission");
-			Wt::Dbo::hasMany(a, linkedToCollection, Wt::Dbo::ManyToMany, "linked_permission", "to");
-			Wt::Dbo::hasMany(a, linkedByCollection, Wt::Dbo::ManyToMany, "linked_permission", "by");
+			Dbo::id(a, _id);
+			Dbo::field(a, name, "name", 70);
+			Dbo::field(a, requireStrongLogin, "requireStrongLogin");
+			Dbo::hasMany(a, userPermissionCollection, Dbo::ManyToOne, "permission");
+			Dbo::hasMany(a, defaultPermissionCollection, Dbo::ManyToOne, "permission");
+			Dbo::hasMany(a, linkedToCollection, Dbo::ManyToMany, "linked_permission", "to");
+			Dbo::hasMany(a, linkedByCollection, Dbo::ManyToMany, "linked_permission", "by");
 		}
 		constexpr static const char *tableName()
 		{
@@ -386,18 +386,18 @@ namespace GS
 		std::string name;
 		bool requireStrongLogin = false;
 
-		PermissionDdo(Wt::Dbo::ptr<Permission> ptr)
+		PermissionDdo(Dbo::ptr<Permission> ptr)
 			: id(ptr.id()), name(ptr->name), requireStrongLogin(ptr->requireStrongLogin)
 		{ }
 	};
 
 	struct UserPermissionPK
 	{
-		Wt::Dbo::ptr<User> userPtr;
-		Wt::Dbo::ptr<Permission> permissionPtr;
+		Dbo::ptr<User> userPtr;
+		Dbo::ptr<Permission> permissionPtr;
 
 		UserPermissionPK() = default;
-		UserPermissionPK(Wt::Dbo::ptr<User> userPtr, Wt::Dbo::ptr<Permission> permissionPtr)
+		UserPermissionPK(Dbo::ptr<User> userPtr, Dbo::ptr<Permission> permissionPtr)
 			: userPtr(userPtr), permissionPtr(permissionPtr)
 		{ }
 
@@ -423,7 +423,7 @@ namespace GS
 		bool denied = false;
 
 		UserPermission() = default;
-		UserPermission(Wt::Dbo::ptr<User> userPtr, Wt::Dbo::ptr<Permission> permissionPtr)
+		UserPermission(Dbo::ptr<User> userPtr, Dbo::ptr<Permission> permissionPtr)
 		{
 			_id.userPtr = userPtr;
 			_id.permissionPtr = permissionPtr;
@@ -431,8 +431,8 @@ namespace GS
 
 		template<class Action>void persist(Action &a)
 		{
-			Wt::Dbo::id(a, _id, "id");
-			Wt::Dbo::field(a, denied, "denied");
+			Dbo::id(a, _id, "id");
+			Dbo::field(a, denied, "denied");
 		}
 		constexpr static const char *tableName()
 		{
@@ -455,13 +455,13 @@ namespace GS
 			AllStates		= 0xFF
 		};
 
-		Wt::Dbo::ptr<Permission> permissionPtr;
+		Dbo::ptr<Permission> permissionPtr;
 		LoginStates loginStates = AllStates;
 
 		template<class Action>void persist(Action &a)
 		{
-			Wt::Dbo::belongsTo(a, permissionPtr, "permission", Wt::Dbo::OnDeleteCascade | Wt::Dbo::OnUpdateCascade | Wt::Dbo::NotNull);
-			Wt::Dbo::field(a, loginStates, "loginStates");
+			Dbo::belongsTo(a, permissionPtr, "permission", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
+			Dbo::field(a, loginStates, "loginStates");
 		}
 		constexpr static const char *tableName()
 		{
@@ -473,7 +473,7 @@ namespace GS
 // 		long long permissionId;
 // 		DefaultPermission::LoginStates loginStates = DefaultPermission::AllStates;
 // 
-// 		DefaultPermissionDdo(Wt::Dbo::ptr<DefaultPermission> ptr)
+// 		DefaultPermissionDdo(Dbo::ptr<DefaultPermission> ptr)
 // 			: permissionId(ptr->permissionPtr.id()), loginStates(ptr->loginStates)
 // 		{ }
 // 	};
@@ -535,11 +535,11 @@ namespace GS
 		std::string name;
 		Type type = InvalidType;
 		Wt::WFlags<SpecificType> specificTypeMask = UnspecificType;
-		Wt::Dbo::ptr<Account> balAccountPtr;
-		Wt::Dbo::ptr<Account> pnlAccountPtr;
+		Dbo::ptr<Account> balAccountPtr;
+		Dbo::ptr<Account> pnlAccountPtr;
 
-		Wt::Dbo::weak_ptr<Person> personWPtr;
-		Wt::Dbo::weak_ptr<Business> businessWPtr;
+		Dbo::weak_ptr<Person> personWPtr;
+		Dbo::weak_ptr<Business> businessWPtr;
 
 		ContactNumberCollection contactNumberCollection;
 		LocationCollection locationCollection;
@@ -556,26 +556,26 @@ namespace GS
 		template<class Action>
 		void persist(Action& a)
 		{
-			Wt::Dbo::field(a, name, "name", 70);
-			Wt::Dbo::field(a, type, "type");
-			Wt::Dbo::field(a, specificTypeMask, "specificTypeMask");
-			Wt::Dbo::belongsTo(a, balAccountPtr, "bal_account", Wt::Dbo::OnDeleteSetNull | Wt::Dbo::OnUpdateCascade);
-			Wt::Dbo::belongsTo(a, pnlAccountPtr, "pnl_account", Wt::Dbo::OnDeleteSetNull | Wt::Dbo::OnUpdateCascade);
+			Dbo::field(a, name, "name", 70);
+			Dbo::field(a, type, "type");
+			Dbo::field(a, specificTypeMask, "specificTypeMask");
+			Dbo::belongsTo(a, balAccountPtr, "bal_account", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
+			Dbo::belongsTo(a, pnlAccountPtr, "pnl_account", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 
-			Wt::Dbo::hasOne(a, personWPtr, "entity");
-			Wt::Dbo::hasOne(a, businessWPtr, "entity");
+			Dbo::hasOne(a, personWPtr, "entity");
+			Dbo::hasOne(a, businessWPtr, "entity");
 
-			Wt::Dbo::hasMany(a, contactNumberCollection, Wt::Dbo::ManyToOne, "entity");
-			Wt::Dbo::hasMany(a, locationCollection, Wt::Dbo::ManyToOne, "entity");
-			Wt::Dbo::hasMany(a, uploadedFileCollection, Wt::Dbo::ManyToOne, "entity");
-			Wt::Dbo::hasMany(a, incomeCycleCollection, Wt::Dbo::ManyToOne, "entity");
-			Wt::Dbo::hasMany(a, expenseCycleCollection, Wt::Dbo::ManyToOne, "entity");
-			Wt::Dbo::hasMany(a, employeeAssignmentCollection, Wt::Dbo::ManyToOne, "entity");
-			Wt::Dbo::hasMany(a, clientAssignmentCollection, Wt::Dbo::ManyToOne, "entity");
-			Wt::Dbo::hasMany(a, attendanceCollection, Wt::Dbo::ManyToOne, "entity");
-// 			Wt::Dbo::hasMany(a, inquiryCollection, Wt::Dbo::ManyToOne, "entity");
-// 			Wt::Dbo::hasMany(a, owningRentHouseCollection, Wt::Dbo::ManyToOne, "owner_entity");
-// 			Wt::Dbo::hasMany(a, assignedAlarmItemCollection, Wt::Dbo::ManyToOne, "entity");
+			Dbo::hasMany(a, contactNumberCollection, Dbo::ManyToOne, "entity");
+			Dbo::hasMany(a, locationCollection, Dbo::ManyToOne, "entity");
+			Dbo::hasMany(a, uploadedFileCollection, Dbo::ManyToOne, "entity");
+			Dbo::hasMany(a, incomeCycleCollection, Dbo::ManyToOne, "entity");
+			Dbo::hasMany(a, expenseCycleCollection, Dbo::ManyToOne, "entity");
+			Dbo::hasMany(a, employeeAssignmentCollection, Dbo::ManyToOne, "entity");
+			Dbo::hasMany(a, clientAssignmentCollection, Dbo::ManyToOne, "entity");
+			Dbo::hasMany(a, attendanceCollection, Dbo::ManyToOne, "entity");
+// 			Dbo::hasMany(a, inquiryCollection, Dbo::ManyToOne, "entity");
+// 			Dbo::hasMany(a, owningRentHouseCollection, Dbo::ManyToOne, "owner_entity");
+// 			Dbo::hasMany(a, assignedAlarmItemCollection, Dbo::ManyToOne, "entity");
 
 			BaseAdminRecord::persist(a);
 		}
@@ -587,10 +587,10 @@ namespace GS
 	class Person
 	{
 	private:
-		Wt::Dbo::ptr<Entity> _entityPtr;
+		Dbo::ptr<Entity> _entityPtr;
 
 	public:
-		Wt::Dbo::ptr<Entity> entityPtr() const { return _entityPtr; }
+		Dbo::ptr<Entity> entityPtr() const { return _entityPtr; }
 		Wt::WDate dateOfBirth;
 		std::string cnicNumber;
 		std::string motherTongue;
@@ -600,48 +600,48 @@ namespace GS
 		MaritalStatus maritalStatus = UnknownMS;
 		std::string remarks;
 
-		Wt::Dbo::ptr<Person> fatherPersonPtr;
-		Wt::Dbo::ptr<Person> motherPersonPtr;
+		Dbo::ptr<Person> fatherPersonPtr;
+		Dbo::ptr<Person> motherPersonPtr;
 		PersonCollection fatherChildrenCollection;
 		PersonCollection motherChildrenCollection;
 
 		PersonCollection nextOfKinCollection;
-		Wt::Dbo::ptr<Person> nextOfKinOfPtr;
+		Dbo::ptr<Person> nextOfKinOfPtr;
 
-		Wt::Dbo::weak_ptr<Employee> employeeWPtr;
+		Dbo::weak_ptr<Employee> employeeWPtr;
 		PersonnelCollection witnesserCollection;
 
-		Wt::Dbo::ptr<UploadedFile> profilePictureFilePtr;
-		Wt::Dbo::ptr<UploadedFile> cnicFile1Ptr;
-		Wt::Dbo::ptr<UploadedFile> cnicFile2Ptr;
+		Dbo::ptr<UploadedFile> profilePictureFilePtr;
+		Dbo::ptr<UploadedFile> cnicFile1Ptr;
+		Dbo::ptr<UploadedFile> cnicFile2Ptr;
 
 		template<class Action>
 		void persist(Action& a)
 		{
-			Wt::Dbo::id(a, _entityPtr, "entity", Wt::Dbo::OnDeleteCascade | Wt::Dbo::OnUpdateCascade | Wt::Dbo::NotNull);
-			Wt::Dbo::field(a, dateOfBirth, "dateOfBirth");
-			Wt::Dbo::field(a, cnicNumber, "cnicNumber", 13);
-			Wt::Dbo::field(a, motherTongue, "motherTongue", 70);
-			Wt::Dbo::field(a, identificationMark, "identificationMark", 255);
-			Wt::Dbo::field(a, height, "height");
-			Wt::Dbo::field(a, bloodType, "bloodType");
-			Wt::Dbo::field(a, maritalStatus, "maritalStatus");
-			Wt::Dbo::field(a, remarks, "remarks");
+			Dbo::id(a, _entityPtr, "entity", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
+			Dbo::field(a, dateOfBirth, "dateOfBirth");
+			Dbo::field(a, cnicNumber, "cnicNumber", 13);
+			Dbo::field(a, motherTongue, "motherTongue", 70);
+			Dbo::field(a, identificationMark, "identificationMark", 255);
+			Dbo::field(a, height, "height");
+			Dbo::field(a, bloodType, "bloodType");
+			Dbo::field(a, maritalStatus, "maritalStatus");
+			Dbo::field(a, remarks, "remarks");
 
-			Wt::Dbo::belongsTo(a, fatherPersonPtr, "father_person", Wt::Dbo::OnDeleteSetNull | Wt::Dbo::OnUpdateCascade);
-			Wt::Dbo::belongsTo(a, motherPersonPtr, "mother_person", Wt::Dbo::OnDeleteSetNull | Wt::Dbo::OnUpdateCascade);
-			Wt::Dbo::hasMany(a, fatherChildrenCollection, Wt::Dbo::ManyToOne, "father_person");
-			Wt::Dbo::hasMany(a, motherChildrenCollection, Wt::Dbo::ManyToOne, "mother_person");
+			Dbo::belongsTo(a, fatherPersonPtr, "father_person", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
+			Dbo::belongsTo(a, motherPersonPtr, "mother_person", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
+			Dbo::hasMany(a, fatherChildrenCollection, Dbo::ManyToOne, "father_person");
+			Dbo::hasMany(a, motherChildrenCollection, Dbo::ManyToOne, "mother_person");
 
-			Wt::Dbo::hasMany(a, nextOfKinCollection, Wt::Dbo::ManyToOne, "nextOfKin_person");
-			Wt::Dbo::belongsTo(a, nextOfKinOfPtr, "nextOfKin_person", Wt::Dbo::OnDeleteSetNull | Wt::Dbo::OnUpdateCascade);
+			Dbo::hasMany(a, nextOfKinCollection, Dbo::ManyToOne, "nextOfKin_person");
+			Dbo::belongsTo(a, nextOfKinOfPtr, "nextOfKin_person", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 
-			Wt::Dbo::hasOne(a, employeeWPtr, "person");
-			Wt::Dbo::hasMany(a, witnesserCollection, Wt::Dbo::ManyToMany, "personnel_witness");
+			Dbo::hasOne(a, employeeWPtr, "person");
+			Dbo::hasMany(a, witnesserCollection, Dbo::ManyToMany, "personnel_witness");
 
-			Wt::Dbo::belongsTo(a, profilePictureFilePtr, "profilePictureFile", Wt::Dbo::OnDeleteSetNull | Wt::Dbo::OnUpdateCascade);
-			Wt::Dbo::belongsTo(a, cnicFile1Ptr, "cnicFile1", Wt::Dbo::OnDeleteSetNull | Wt::Dbo::OnUpdateCascade);
-			Wt::Dbo::belongsTo(a, cnicFile2Ptr, "cnicFile2", Wt::Dbo::OnDeleteSetNull | Wt::Dbo::OnUpdateCascade);
+			Dbo::belongsTo(a, profilePictureFilePtr, "profilePictureFile", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
+			Dbo::belongsTo(a, cnicFile1Ptr, "cnicFile1", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
+			Dbo::belongsTo(a, cnicFile2Ptr, "cnicFile2", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 		}
 		constexpr static const char *tableName()
 		{
@@ -654,10 +654,10 @@ namespace GS
 	class Employee
 	{
 	private:
-		Wt::Dbo::ptr<Person> _personPtr;
+		Dbo::ptr<Person> _personPtr;
 
 	public:
-		Wt::Dbo::ptr<Person> personPtr() const { return _personPtr; }
+		Dbo::ptr<Person> personPtr() const { return _personPtr; }
 		std::string companyNumber;
 		std::string grade;
 		Wt::WDate recruitmentDate;
@@ -666,21 +666,21 @@ namespace GS
 		std::string addtionalQualifications;
 
 		//ClothingItemCollection assignedClothesCollection;
-		Wt::Dbo::weak_ptr<Personnel> personnelWPtr;
+		Dbo::weak_ptr<Personnel> personnelWPtr;
 
 		template<class Action>
 		void persist(Action& a)
 		{
-			Wt::Dbo::id(a, _personPtr, "person", Wt::Dbo::OnDeleteCascade | Wt::Dbo::OnUpdateCascade | Wt::Dbo::NotNull);
-			Wt::Dbo::field(a, companyNumber, "companyNumber", 35);
-			Wt::Dbo::field(a, grade, "grade", 35);
-			Wt::Dbo::field(a, recruitmentDate, "recruitmentDate");
-			Wt::Dbo::field(a, education, "education");
-			Wt::Dbo::field(a, experience, "experience");
-			Wt::Dbo::field(a, addtionalQualifications, "addtionalQualifications");
+			Dbo::id(a, _personPtr, "person", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
+			Dbo::field(a, companyNumber, "companyNumber", 35);
+			Dbo::field(a, grade, "grade", 35);
+			Dbo::field(a, recruitmentDate, "recruitmentDate");
+			Dbo::field(a, education, "education");
+			Dbo::field(a, experience, "experience");
+			Dbo::field(a, addtionalQualifications, "addtionalQualifications");
 
-			//Wt::Dbo::hasMany(a, assignedClothesCollection, Wt::Dbo::ManyToOne, "employee");
-			Wt::Dbo::hasOne(a, personnelWPtr, "employee");
+			//Dbo::hasMany(a, assignedClothesCollection, Dbo::ManyToOne, "employee");
+			Dbo::hasOne(a, personnelWPtr, "employee");
 		}
 		constexpr static const char *tableName()
 		{
@@ -693,10 +693,10 @@ namespace GS
 	class Personnel
 	{
 	private:
-		Wt::Dbo::ptr<Employee> _employeePtr;
+		Dbo::ptr<Employee> _employeePtr;
 
 	public:
-		Wt::Dbo::ptr<Employee> employeePtr() const { return _employeePtr; }
+		Dbo::ptr<Employee> employeePtr() const { return _employeePtr; }
 		std::string policeStation;
 		bool policeVerified = false;
 		std::string trainingCourses;
@@ -708,14 +708,14 @@ namespace GS
 		template<class Action>
 		void persist(Action& a)
 		{
-			Wt::Dbo::id(a, _employeePtr, "employee", Wt::Dbo::OnDeleteCascade | Wt::Dbo::OnUpdateCascade | Wt::Dbo::NotNull);
-			Wt::Dbo::field(a, policeStation, "policeStation", 70);
-			Wt::Dbo::field(a, policeVerified, "policeVerified");
-			Wt::Dbo::field(a, trainingCourses, "trainingCourses");
-			Wt::Dbo::field(a, armyNumber, "armyNumber", 35);
-			Wt::Dbo::field(a, rank, "rank", 35);
+			Dbo::id(a, _employeePtr, "employee", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
+			Dbo::field(a, policeStation, "policeStation", 70);
+			Dbo::field(a, policeVerified, "policeVerified");
+			Dbo::field(a, trainingCourses, "trainingCourses");
+			Dbo::field(a, armyNumber, "armyNumber", 35);
+			Dbo::field(a, rank, "rank", 35);
 
-			Wt::Dbo::hasMany(a, witnessCollection, Wt::Dbo::ManyToMany, "personnel_witness");
+			Dbo::hasMany(a, witnessCollection, Dbo::ManyToMany, "personnel_witness");
 		}
 		constexpr static const char *tableName()
 		{
@@ -742,9 +742,9 @@ namespace GS
 		template<class Action>
 		void persist(Action& a)
 		{
-			Wt::Dbo::field(a, title, "title", 70);
-			Wt::Dbo::field(a, type, "type");
-			Wt::Dbo::hasMany(a, employeeAssignmentCollection, Wt::Dbo::ManyToOne, "employeeposition");
+			Dbo::field(a, title, "title", 70);
+			Dbo::field(a, type, "type");
+			Dbo::hasMany(a, employeeAssignmentCollection, Dbo::ManyToOne, "employeeposition");
 		}
 		constexpr static const char *tableName()
 		{
@@ -761,8 +761,8 @@ namespace GS
 		template<class Action>
 		void persist(Action& a)
 		{
-			Wt::Dbo::field(a, title, "title", 70);
-			Wt::Dbo::hasMany(a, clientAssignmentCollection, Wt::Dbo::ManyToOne, "clientservice");
+			Dbo::field(a, title, "title", 70);
+			Dbo::hasMany(a, clientAssignmentCollection, Dbo::ManyToOne, "clientservice");
 		}
 		constexpr static const char *tableName()
 		{
@@ -773,15 +773,15 @@ namespace GS
 	class Business
 	{
 	private:
-		Wt::Dbo::ptr<Entity> _entityPtr;
+		Dbo::ptr<Entity> _entityPtr;
 
 	public:
-		Wt::Dbo::ptr<Entity> entityPtr() const { return _entityPtr; }
+		Dbo::ptr<Entity> entityPtr() const { return _entityPtr; }
 
 		template<class Action>
 		void persist(Action& a)
 		{
-			Wt::Dbo::id(a, _entityPtr, "entity", Wt::Dbo::OnDeleteCascade | Wt::Dbo::OnUpdateCascade | Wt::Dbo::NotNull);
+			Dbo::id(a, _entityPtr, "entity", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
 		}
 		constexpr static const char *tableName()
 		{
@@ -795,18 +795,18 @@ namespace GS
 	class ContactNumber
 	{
 	public:
-		Wt::Dbo::ptr<Entity> entityPtr;
-		Wt::Dbo::ptr<Location> locationPtr;
+		Dbo::ptr<Entity> entityPtr;
+		Dbo::ptr<Location> locationPtr;
 		std::string countryCode;
 		std::string nationalNumber;
 
 		template<class Action>
 		void persist(Action& a)
 		{
-			Wt::Dbo::belongsTo(a, entityPtr, "entity", Wt::Dbo::OnDeleteCascade | Wt::Dbo::OnUpdateCascade | Wt::Dbo::NotNull);
-			Wt::Dbo::belongsTo(a, locationPtr, "location", Wt::Dbo::OnDeleteSetNull | Wt::Dbo::OnUpdateCascade);
-			Wt::Dbo::field(a, countryCode, "countryCode", 3);
-			Wt::Dbo::field(a, nationalNumber, "nationalNumber", 15);
+			Dbo::belongsTo(a, entityPtr, "entity", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
+			Dbo::belongsTo(a, locationPtr, "location", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
+			Dbo::field(a, countryCode, "countryCode", 3);
+			Dbo::field(a, nationalNumber, "nationalNumber", 15);
 		}
 		constexpr static const char *tableName()
 		{
@@ -826,9 +826,9 @@ namespace GS
 		template<class Action>
 		void persist(Action& a)
 		{
-			Wt::Dbo::id(a, code, "code", 3);
-			Wt::Dbo::field(a, name, "name", 70);
-			Wt::Dbo::hasMany(a, cityCollection, Wt::Dbo::ManyToOne, "country");
+			Dbo::id(a, code, "code", 3);
+			Dbo::field(a, name, "name", 70);
+			Dbo::hasMany(a, cityCollection, Dbo::ManyToOne, "country");
 		}
 		constexpr static const char *tableName()
 		{
@@ -838,17 +838,17 @@ namespace GS
 	class City
 	{
 	public:
-		Wt::Dbo::ptr<Country> countryPtr;
+		Dbo::ptr<Country> countryPtr;
 		std::string name;
 
 		City() = default;
-		City(Wt::Dbo::ptr<Country> countryPtr, const std::string &name = "") : countryPtr(countryPtr), name(name) { }
+		City(Dbo::ptr<Country> countryPtr, const std::string &name = "") : countryPtr(countryPtr), name(name) { }
 
 		template<class Action>
 		void persist(Action& a)
 		{
-			Wt::Dbo::belongsTo(a, countryPtr, "country", Wt::Dbo::OnDeleteCascade | Wt::Dbo::OnUpdateCascade | Wt::Dbo::NotNull);
-			Wt::Dbo::field(a, name, "name", 70);
+			Dbo::belongsTo(a, countryPtr, "country", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
+			Dbo::field(a, name, "name", 70);
 		}
 		constexpr static const char *tableName()
 		{
@@ -858,10 +858,10 @@ namespace GS
 	class Location : public BaseAdminRecord
 	{
 	public:
-		Wt::Dbo::ptr<Entity> entityPtr;
+		Dbo::ptr<Entity> entityPtr;
 		std::string address;
-		Wt::Dbo::ptr<Country> countryPtr;
-		Wt::Dbo::ptr<City> cityPtr;
+		Dbo::ptr<Country> countryPtr;
+		Dbo::ptr<City> cityPtr;
 
 		ContactNumberCollection contactNumberCollection;
 		EmployeeAssignmentCollection assignedEmployeeCollection;
@@ -874,18 +874,18 @@ namespace GS
 		template<class Action>
 		void persist(Action& a)
 		{
-			Wt::Dbo::belongsTo(a, entityPtr, "entity", Wt::Dbo::OnDeleteCascade | Wt::Dbo::OnUpdateCascade | Wt::Dbo::NotNull);
-			Wt::Dbo::field(a, address, "address");
-			Wt::Dbo::belongsTo(a, countryPtr, "country", Wt::Dbo::OnDeleteSetNull | Wt::Dbo::OnUpdateCascade);
-			Wt::Dbo::belongsTo(a, cityPtr, "city", Wt::Dbo::OnDeleteSetNull | Wt::Dbo::OnUpdateCascade);
+			Dbo::belongsTo(a, entityPtr, "entity", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
+			Dbo::field(a, address, "address");
+			Dbo::belongsTo(a, countryPtr, "country", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
+			Dbo::belongsTo(a, cityPtr, "city", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 
-			Wt::Dbo::hasMany(a, contactNumberCollection, Wt::Dbo::ManyToOne, "location");
-			Wt::Dbo::hasMany(a, assignedEmployeeCollection, Wt::Dbo::ManyToOne, "location");
-			Wt::Dbo::hasMany(a, attendanceDeviceCollection, Wt::Dbo::ManyToOne, "location");
-			Wt::Dbo::hasMany(a, attendanceCollection, Wt::Dbo::ManyToOne, "location");
-// 			Wt::Dbo::hasMany(a, inquiryCollection, Wt::Dbo::ManyToOne, "location");
-// 			Wt::Dbo::hasMany(a, assetCollection, Wt::Dbo::ManyToOne, "location");
-// 			Wt::Dbo::hasMany(a, rentHouseCollection, Wt::Dbo::ManyToOne, "location");
+			Dbo::hasMany(a, contactNumberCollection, Dbo::ManyToOne, "location");
+			Dbo::hasMany(a, assignedEmployeeCollection, Dbo::ManyToOne, "location");
+			Dbo::hasMany(a, attendanceDeviceCollection, Dbo::ManyToOne, "location");
+			Dbo::hasMany(a, attendanceCollection, Dbo::ManyToOne, "location");
+// 			Dbo::hasMany(a, inquiryCollection, Dbo::ManyToOne, "location");
+// 			Dbo::hasMany(a, assetCollection, Dbo::ManyToOne, "location");
+// 			Dbo::hasMany(a, rentHouseCollection, Dbo::ManyToOne, "location");
 
 			BaseAdminRecord::persist(a);
 		}
@@ -901,14 +901,14 @@ namespace GS
 		Wt::WDate startDate;
 		Wt::WDate endDate;
 		std::string description;
-		Wt::Dbo::ptr<EmployeePosition> positionPtr;
-		Wt::Dbo::ptr<Entity> entityPtr;
-		Wt::Dbo::ptr<Location> locationPtr;
-		Wt::Dbo::ptr<ExpenseCycle> expenseCyclePtr;
-		Wt::Dbo::ptr<ClientAssignment> clientAssignmentPtr;
+		Dbo::ptr<EmployeePosition> positionPtr;
+		Dbo::ptr<Entity> entityPtr;
+		Dbo::ptr<Location> locationPtr;
+		Dbo::ptr<ExpenseCycle> expenseCyclePtr;
+		Dbo::ptr<ClientAssignment> clientAssignmentPtr;
 
-		Wt::Dbo::weak_ptr<EmployeeAssignment> transferredToWPtr;
-		Wt::Dbo::ptr<EmployeeAssignment> transferredFromPtr;
+		Dbo::weak_ptr<EmployeeAssignment> transferredToWPtr;
+		Dbo::ptr<EmployeeAssignment> transferredFromPtr;
 
 		static std::string newInternalPath() { return "/" ADMIN_PATHC "/" ENTITIES_PATHC "/" EMPLOYEES_PATHC "/" NEW_EMPLOYEEASSIGNMENT_PATHC; }
 		static std::string viewInternalPath(long long id) { return viewInternalPath(boost::lexical_cast<std::string>(id)); }
@@ -917,17 +917,17 @@ namespace GS
 		template<class Action>
 		void persist(Action& a)
 		{
-			Wt::Dbo::field(a, startDate, "startDate");
-			Wt::Dbo::field(a, endDate, "endDate");
-			Wt::Dbo::field(a, description, "description");
-			Wt::Dbo::belongsTo(a, positionPtr, "employeeposition", Wt::Dbo::OnDeleteCascade | Wt::Dbo::OnUpdateCascade | Wt::Dbo::NotNull);
-			Wt::Dbo::belongsTo(a, entityPtr, "entity", Wt::Dbo::OnDeleteCascade | Wt::Dbo::OnUpdateCascade | Wt::Dbo::NotNull);
-			Wt::Dbo::belongsTo(a, locationPtr, "location", Wt::Dbo::OnDeleteSetNull | Wt::Dbo::OnUpdateCascade);
-			Wt::Dbo::belongsTo(a, expenseCyclePtr, "expensecycle", Wt::Dbo::OnDeleteSetNull | Wt::Dbo::OnUpdateCascade);
-			Wt::Dbo::belongsTo(a, clientAssignmentPtr, "clientassignment", Wt::Dbo::OnDeleteSetNull | Wt::Dbo::OnUpdateCascade);
+			Dbo::field(a, startDate, "startDate");
+			Dbo::field(a, endDate, "endDate");
+			Dbo::field(a, description, "description");
+			Dbo::belongsTo(a, positionPtr, "employeeposition", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
+			Dbo::belongsTo(a, entityPtr, "entity", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
+			Dbo::belongsTo(a, locationPtr, "location", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
+			Dbo::belongsTo(a, expenseCyclePtr, "expensecycle", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
+			Dbo::belongsTo(a, clientAssignmentPtr, "clientassignment", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 
-			Wt::Dbo::hasOne(a, transferredToWPtr, "transferred_from");
-			Wt::Dbo::belongsTo(a, transferredFromPtr, "transferred_from", Wt::Dbo::OnDeleteSetNull | Wt::Dbo::OnUpdateCascade);
+			Dbo::hasOne(a, transferredToWPtr, "transferred_from");
+			Dbo::belongsTo(a, transferredFromPtr, "transferred_from", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 
 			BaseAdminRecord::persist(a);
 		}
@@ -943,9 +943,9 @@ namespace GS
 		Wt::WDate startDate;
 		Wt::WDate endDate;
 		std::string description;
-		Wt::Dbo::ptr<ClientService> servicePtr;
-		Wt::Dbo::ptr<Entity> entityPtr;
-		Wt::Dbo::ptr<IncomeCycle> incomeCyclePtr;
+		Dbo::ptr<ClientService> servicePtr;
+		Dbo::ptr<Entity> entityPtr;
+		Dbo::ptr<IncomeCycle> incomeCyclePtr;
 
 		EmployeeAssignmentCollection employeeAssignmentCollection;
 
@@ -956,14 +956,14 @@ namespace GS
 		template<class Action>
 		void persist(Action& a)
 		{
-			Wt::Dbo::field(a, startDate, "startDate");
-			Wt::Dbo::field(a, endDate, "endDate");
-			Wt::Dbo::field(a, description, "description");
-			Wt::Dbo::belongsTo(a, servicePtr, "clientservice", Wt::Dbo::OnDeleteCascade | Wt::Dbo::OnUpdateCascade | Wt::Dbo::NotNull);
-			Wt::Dbo::belongsTo(a, entityPtr, "entity", Wt::Dbo::OnDeleteCascade | Wt::Dbo::OnUpdateCascade | Wt::Dbo::NotNull);
-			Wt::Dbo::belongsTo(a, incomeCyclePtr, "incomecycle", Wt::Dbo::OnDeleteSetNull | Wt::Dbo::OnUpdateCascade);
+			Dbo::field(a, startDate, "startDate");
+			Dbo::field(a, endDate, "endDate");
+			Dbo::field(a, description, "description");
+			Dbo::belongsTo(a, servicePtr, "clientservice", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
+			Dbo::belongsTo(a, entityPtr, "entity", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
+			Dbo::belongsTo(a, incomeCyclePtr, "incomecycle", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 
-			Wt::Dbo::hasMany(a, employeeAssignmentCollection, Wt::Dbo::ManyToOne, "clientassignment");
+			Dbo::hasMany(a, employeeAssignmentCollection, Dbo::ManyToOne, "clientassignment");
 
 			BaseAdminRecord::persist(a);
 		}
@@ -999,21 +999,21 @@ namespace GS
 
 		AccountEntryCollection debitEntryCollection;
 		AccountEntryCollection creditEntryCollection;
-		Wt::Dbo::weak_ptr<Entity> balOfEntityWPtr;
-		Wt::Dbo::weak_ptr<Entity> pnlOfEntityWPtr;
+		Dbo::weak_ptr<Entity> balOfEntityWPtr;
+		Dbo::weak_ptr<Entity> pnlOfEntityWPtr;
 
 		template<class Action>
 		void persist(Action& a)
 		{
-			Wt::Dbo::field(a, name, "name", 70);
-			Wt::Dbo::field(a, type, "type");
-			Wt::Dbo::field(a, _currency, "currency", 3);
-			Wt::Dbo::field(a, _balanceInCents, "balance");
+			Dbo::field(a, name, "name", 70);
+			Dbo::field(a, type, "type");
+			Dbo::field(a, _currency, "currency", 3);
+			Dbo::field(a, _balanceInCents, "balance");
 
-			Wt::Dbo::hasMany(a, debitEntryCollection, Wt::Dbo::ManyToOne, "debit_account");
-			Wt::Dbo::hasMany(a, creditEntryCollection, Wt::Dbo::ManyToOne, "credit_account");
-			Wt::Dbo::hasOne(a, balOfEntityWPtr, "bal_account");
-			Wt::Dbo::hasOne(a, pnlOfEntityWPtr, "pnl_account");
+			Dbo::hasMany(a, debitEntryCollection, Dbo::ManyToOne, "debit_account");
+			Dbo::hasMany(a, creditEntryCollection, Dbo::ManyToOne, "credit_account");
+			Dbo::hasOne(a, balOfEntityWPtr, "bal_account");
+			Dbo::hasOne(a, pnlOfEntityWPtr, "pnl_account");
 
 			BaseAdminRecord::persist(a);
 		}
@@ -1032,14 +1032,14 @@ namespace GS
 	class AccountEntry : public BaseAdminRecord
 	{
 	private:
-		AccountEntry(Money amount, Wt::Dbo::ptr<Account> debitAccountPtr, Wt::Dbo::ptr<Account> creditAccountPtr)
+		AccountEntry(Money amount, Dbo::ptr<Account> debitAccountPtr, Dbo::ptr<Account> creditAccountPtr)
 			: _amountInCents(amount.valueInCents()), _debitAccountPtr(debitAccountPtr), _creditAccountPtr(creditAccountPtr)
 		{ }
 		AccountEntry(const AccountEntry &) = default;
 
 		long long _amountInCents = 0;
-		Wt::Dbo::ptr<Account> _debitAccountPtr;
-		Wt::Dbo::ptr<Account> _creditAccountPtr;
+		Dbo::ptr<Account> _debitAccountPtr;
+		Dbo::ptr<Account> _creditAccountPtr;
 
 		friend class AccountsDatabase;
 
@@ -1060,34 +1060,34 @@ namespace GS
 
 		Type type = UnspecifiedType;
 		Money amount() const { return Money(_amountInCents, DEFAULT_CURRENCY); }
-		Wt::Dbo::ptr<Account> debitAccountPtr() const { return _debitAccountPtr; }
-		Wt::Dbo::ptr<Account> creditAccountPtr() const { return _creditAccountPtr; }
+		Dbo::ptr<Account> debitAccountPtr() const { return _debitAccountPtr; }
+		Dbo::ptr<Account> creditAccountPtr() const { return _creditAccountPtr; }
 		Wt::WString description;
 
-		Wt::Dbo::ptr<ExpenseCycle> expenseCyclePtr;
-		Wt::Dbo::ptr<IncomeCycle> incomeCyclePtr;
-		//Wt::Dbo::ptr<RentHouse> depositRentHousePtr;
+		Dbo::ptr<ExpenseCycle> expenseCyclePtr;
+		Dbo::ptr<IncomeCycle> incomeCyclePtr;
+		//Dbo::ptr<RentHouse> depositRentHousePtr;
 
-		Wt::Dbo::weak_ptr<OvertimeInfo> overtimeInfoWPtr;
-		Wt::Dbo::weak_ptr<FineInfo> fineInfoWPtr;
-		Wt::Dbo::weak_ptr<PettyExpenditureInfo> pettyExpenditureInfoWPtr;
+		Dbo::weak_ptr<OvertimeInfo> overtimeInfoWPtr;
+		Dbo::weak_ptr<FineInfo> fineInfoWPtr;
+		Dbo::weak_ptr<PettyExpenditureInfo> pettyExpenditureInfoWPtr;
 
 		template<class Action>
 		void persist(Action& a)
 		{
-			Wt::Dbo::belongsTo(a, _debitAccountPtr, "debit_account", Wt::Dbo::OnDeleteCascade | Wt::Dbo::OnUpdateCascade | Wt::Dbo::NotNull);
-			Wt::Dbo::belongsTo(a, _creditAccountPtr, "credit_account", Wt::Dbo::OnDeleteCascade | Wt::Dbo::OnUpdateCascade | Wt::Dbo::NotNull);
-			Wt::Dbo::field(a, type, "type");
-			Wt::Dbo::field(a, _amountInCents, "amount");
-			Wt::Dbo::field(a, description, "description", 255);
+			Dbo::belongsTo(a, _debitAccountPtr, "debit_account", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
+			Dbo::belongsTo(a, _creditAccountPtr, "credit_account", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
+			Dbo::field(a, type, "type");
+			Dbo::field(a, _amountInCents, "amount");
+			Dbo::field(a, description, "description", 255);
 
-			Wt::Dbo::belongsTo(a, expenseCyclePtr, "expensecycle", Wt::Dbo::OnDeleteSetNull | Wt::Dbo::OnUpdateCascade);
-			Wt::Dbo::belongsTo(a, incomeCyclePtr, "incomecycle", Wt::Dbo::OnDeleteSetNull | Wt::Dbo::OnUpdateCascade);
-			//Wt::Dbo::belongsTo(a, depositRentHousePtr, "deposit_renthouse", Wt::Dbo::OnDeleteSetNull | Wt::Dbo::OnUpdateCascade);
+			Dbo::belongsTo(a, expenseCyclePtr, "expensecycle", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
+			Dbo::belongsTo(a, incomeCyclePtr, "incomecycle", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
+			//Dbo::belongsTo(a, depositRentHousePtr, "deposit_renthouse", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 
-			Wt::Dbo::hasOne(a, overtimeInfoWPtr, "accountentry");
-			Wt::Dbo::hasOne(a, fineInfoWPtr, "accountentry");
-			Wt::Dbo::hasOne(a, pettyExpenditureInfoWPtr, "accountentry");
+			Dbo::hasOne(a, overtimeInfoWPtr, "accountentry");
+			Dbo::hasOne(a, fineInfoWPtr, "accountentry");
+			Dbo::hasOne(a, pettyExpenditureInfoWPtr, "accountentry");
 
 			BaseAdminRecord::persist(a);
 		}
@@ -1099,13 +1099,13 @@ namespace GS
 	class OvertimeInfo
 	{
 	private:
-		Wt::Dbo::ptr<AccountEntry> entryPtr;
+		Dbo::ptr<AccountEntry> entryPtr;
 
 	public:
 		template<class Action>
 		void persist(Action& a)
 		{
-			Wt::Dbo::id(a, entryPtr, "accountentry", Wt::Dbo::OnDeleteCascade | Wt::Dbo::OnUpdateCascade | Wt::Dbo::NotNull);
+			Dbo::id(a, entryPtr, "accountentry", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
 		}
 		constexpr static const char *tableName()
 		{
@@ -1115,13 +1115,13 @@ namespace GS
 	class FineInfo
 	{
 	private:
-		Wt::Dbo::ptr<AccountEntry> entryPtr;
+		Dbo::ptr<AccountEntry> entryPtr;
 
 	public:
 		template<class Action>
 		void persist(Action& a)
 		{
-			Wt::Dbo::id(a, entryPtr, "accountentry", Wt::Dbo::OnDeleteCascade | Wt::Dbo::OnUpdateCascade | Wt::Dbo::NotNull);
+			Dbo::id(a, entryPtr, "accountentry", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
 		}
 		constexpr static const char *tableName()
 		{
@@ -1131,13 +1131,13 @@ namespace GS
 	class PettyExpenditureInfo
 	{
 	private:
-		Wt::Dbo::ptr<AccountEntry> entryPtr;
+		Dbo::ptr<AccountEntry> entryPtr;
 
 	public:
 		template<class Action>
 		void persist(Action& a)
 		{
-			Wt::Dbo::id(a, entryPtr, "accountentry", Wt::Dbo::OnDeleteCascade | Wt::Dbo::OnUpdateCascade | Wt::Dbo::NotNull);
+			Dbo::id(a, entryPtr, "accountentry", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
 		}
 		constexpr static const char *tableName()
 		{
@@ -1158,7 +1158,7 @@ namespace GS
 	class EntryCycle : public BaseAdminRecord
 	{
 	public:
-		Wt::Dbo::ptr<Entity> entityPtr;
+		Dbo::ptr<Entity> entityPtr;
 		Wt::WDate startDate;
 		Wt::WDate endDate;
 		CycleInterval interval = YearlyInterval;
@@ -1173,15 +1173,15 @@ namespace GS
 		template<class Action>
 		void persist(Action& a, const std::string &cycleName)
 		{
-			Wt::Dbo::belongsTo(a, entityPtr, "entity", Wt::Dbo::OnDeleteCascade | Wt::Dbo::OnUpdateCascade | Wt::Dbo::NotNull);
-			Wt::Dbo::field(a, startDate, "startDate");
-			Wt::Dbo::field(a, endDate, "endDate");
-			Wt::Dbo::field(a, _amountInCents, "amount");
-			Wt::Dbo::field(a, interval, "interval");
-			Wt::Dbo::field(a, nIntervals, "nIntervals");
-			Wt::Dbo::field(a, firstEntryAfterCycle, "firstEntryAfterCycle");
+			Dbo::belongsTo(a, entityPtr, "entity", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
+			Dbo::field(a, startDate, "startDate");
+			Dbo::field(a, endDate, "endDate");
+			Dbo::field(a, _amountInCents, "amount");
+			Dbo::field(a, interval, "interval");
+			Dbo::field(a, nIntervals, "nIntervals");
+			Dbo::field(a, firstEntryAfterCycle, "firstEntryAfterCycle");
 
-			Wt::Dbo::hasMany(a, entryCollection, Wt::Dbo::ManyToOne, cycleName);
+			Dbo::hasMany(a, entryCollection, Dbo::ManyToOne, cycleName);
 			BaseAdminRecord::persist(a);
 		}
 
@@ -1210,7 +1210,7 @@ namespace GS
 		void persist(Action& a)
 		{
 			EntryCycle::persist(a, "incomecycle");
-			Wt::Dbo::hasMany(a, clientAssignmentCollection, Wt::Dbo::ManyToOne, "incomecycle");
+			Dbo::hasMany(a, clientAssignmentCollection, Dbo::ManyToOne, "incomecycle");
 		}
 		constexpr static const char *tableName()
 		{
@@ -1235,14 +1235,14 @@ namespace GS
 		static std::string viewInternalPath(const std::string &idStr) { return "/" ADMIN_PATHC "/" ACCOUNTS_PATHC "/" EXPENSECYCLES_PATHC "/" EXPENSECYCLE_PREFIX + idStr; }
 		
 		EmployeeAssignmentCollection employeeAssignmentCollection;
-		//Wt::Dbo::weak_ptr<RentHouse> rentHouseWPtr;
+		//Dbo::weak_ptr<RentHouse> rentHouseWPtr;
 
 		template<class Action>
 		void persist(Action& a)
 		{
 			EntryCycle::persist(a, "expensecycle");
-			Wt::Dbo::hasMany(a, employeeAssignmentCollection, Wt::Dbo::ManyToOne, "expensecycle");
-			//Wt::Dbo::hasOne(a, rentHouseWPtr, "expensecycle");
+			Dbo::hasMany(a, employeeAssignmentCollection, Dbo::ManyToOne, "expensecycle");
+			//Dbo::hasOne(a, rentHouseWPtr, "expensecycle");
 		}
 		constexpr static const char *tableName()
 		{
@@ -1253,7 +1253,7 @@ namespace GS
 		friend class ExpenseCycleFormModel;
 	};
 
-	class UploadedFile : public Wt::Dbo::Dbo<UploadedFile>
+	class UploadedFile : public Dbo::Dbo<UploadedFile>
 	{
 	public:
 		Wt::Dbo::ptr<Entity> entityPtr;
@@ -1289,7 +1289,7 @@ namespace GS
 	{
 	public:
 		std::string hostName;
-		Wt::Dbo::ptr<Location> locationPtr;
+		Dbo::ptr<Location> locationPtr;
 
 		AttendanceEntryCollection attendanceCollection;
 
@@ -1300,10 +1300,10 @@ namespace GS
 		template<class Action>
 		void persist(Action& a)
 		{
-			Wt::Dbo::field(a, hostName, "hostName", 255);
-			Wt::Dbo::belongsTo(a, locationPtr, "location", Wt::Dbo::OnDeleteSetNull | Wt::Dbo::OnUpdateCascade);
+			Dbo::field(a, hostName, "hostName", 255);
+			Dbo::belongsTo(a, locationPtr, "location", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 
-			Wt::Dbo::hasMany(a, attendanceCollection, Wt::Dbo::ManyToOne, "attendancedevice");
+			Dbo::hasMany(a, attendanceCollection, Dbo::ManyToOne, "attendancedevice");
 		}
 		constexpr static const char *tableName()
 		{
@@ -1316,9 +1316,9 @@ namespace GS
 	public:
 		Wt::WDateTime timestampIn;
 		Wt::WDateTime timestampOut;
-		Wt::Dbo::ptr<Entity> entityPtr;
-		Wt::Dbo::ptr<AttendanceDevice> attendanceDevicePtr;
-		Wt::Dbo::ptr<Location> locationPtr;
+		Dbo::ptr<Entity> entityPtr;
+		Dbo::ptr<AttendanceDevice> attendanceDevicePtr;
+		Dbo::ptr<Location> locationPtr;
 
 		static std::string newInternalPath() { return "/" ADMIN_PATHC "/" ATTENDANCE_PATHC "/" NEW_ATTENDANCEENTRY_PATHC; }
 		static std::string viewInternalPath(long long id) { return viewInternalPath(boost::lexical_cast<std::string>(id)); }
@@ -1327,11 +1327,11 @@ namespace GS
 		template<class Action>
 		void persist(Action& a)
 		{
-			Wt::Dbo::field(a, timestampIn, "timestampIn");
-			Wt::Dbo::field(a, timestampOut, "timestampOut");
-			Wt::Dbo::belongsTo(a, entityPtr, "entity", Wt::Dbo::OnDeleteCascade | Wt::Dbo::OnUpdateCascade | Wt::Dbo::NotNull);
-			Wt::Dbo::belongsTo(a, attendanceDevicePtr, "attendancedevice", Wt::Dbo::OnDeleteSetNull | Wt::Dbo::OnUpdateCascade);
-			Wt::Dbo::belongsTo(a, locationPtr, "location", Wt::Dbo::OnDeleteSetNull | Wt::Dbo::OnUpdateCascade);
+			Dbo::field(a, timestampIn, "timestampIn");
+			Dbo::field(a, timestampOut, "timestampOut");
+			Dbo::belongsTo(a, entityPtr, "entity", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
+			Dbo::belongsTo(a, attendanceDevicePtr, "attendancedevice", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
+			Dbo::belongsTo(a, locationPtr, "location", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 		}
 		constexpr static const char *tableName()
 		{
@@ -1339,7 +1339,7 @@ namespace GS
 		}
 	};
 
-	void mapDboTree(Wt::Dbo::Session &dboSession);
+	void mapDboTree(Dbo::Session &dboSession);
 
 // 	class Inquiry
 // 	{
@@ -1348,20 +1348,20 @@ namespace GS
 // 		Wt::WDateTime startDt;
 // 		Wt::WDateTime resolutionDt;
 // 
-// 		Wt::Dbo::ptr<Entity> entityPtr;
-// 		Wt::Dbo::ptr<Location> locationPtr;
-// 		Wt::Dbo::ptr<Asset> assetPtr;
+// 		Dbo::ptr<Entity> entityPtr;
+// 		Dbo::ptr<Location> locationPtr;
+// 		Dbo::ptr<Asset> assetPtr;
 // 
 // 		template<class Action>
 // 		void persist(Action& a)
 // 		{
-// 			Wt::Dbo::field(a, notes, "notes");
-// 			Wt::Dbo::field(a, startDt, "startDt");
-// 			Wt::Dbo::field(a, resolutionDt, "resolutionDt");
+// 			Dbo::field(a, notes, "notes");
+// 			Dbo::field(a, startDt, "startDt");
+// 			Dbo::field(a, resolutionDt, "resolutionDt");
 // 
-// 			Wt::Dbo::belongsTo(a, entityPtr, "entity", Wt::Dbo::OnDeleteSetNull | Wt::Dbo::OnUpdateCascade);
-// 			Wt::Dbo::belongsTo(a, locationPtr, "location", Wt::Dbo::OnDeleteSetNull | Wt::Dbo::OnUpdateCascade);
-// 			Wt::Dbo::belongsTo(a, assetPtr, "asset", Wt::Dbo::OnDeleteSetNull | Wt::Dbo::OnUpdateCascade);
+// 			Dbo::belongsTo(a, entityPtr, "entity", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
+// 			Dbo::belongsTo(a, locationPtr, "location", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
+// 			Dbo::belongsTo(a, assetPtr, "asset", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 // 		}
 // 		constexpr static const char *tableName()
 // 		{
@@ -1373,33 +1373,33 @@ namespace GS
 // 	{
 // 	public:
 // 		std::string name;
-// 		Wt::Dbo::ptr<Location> locationPtr;
-// 		Wt::Dbo::ptr<AssetRegistration> registrationPtr;
+// 		Dbo::ptr<Location> locationPtr;
+// 		Dbo::ptr<AssetRegistration> registrationPtr;
 // 
 // 		InquiryCollection inquiryCollection;
-// 		Wt::Dbo::weak_ptr<Office> officeWPtr;
-// 		Wt::Dbo::weak_ptr<RentHouse> rentHouseWPtr;
-// 		Wt::Dbo::weak_ptr<Inventory> inventoryWPtr;
-// 		Wt::Dbo::weak_ptr<ClothingItem> clothingItemWPtr;
-// 		Wt::Dbo::weak_ptr<AlarmItem> alarmItemWPtr;
-// 		Wt::Dbo::weak_ptr<Weapon> weaponWPtr;
-// 		Wt::Dbo::weak_ptr<Vehicle> vehicleWPtr;
+// 		Dbo::weak_ptr<Office> officeWPtr;
+// 		Dbo::weak_ptr<RentHouse> rentHouseWPtr;
+// 		Dbo::weak_ptr<Inventory> inventoryWPtr;
+// 		Dbo::weak_ptr<ClothingItem> clothingItemWPtr;
+// 		Dbo::weak_ptr<AlarmItem> alarmItemWPtr;
+// 		Dbo::weak_ptr<Weapon> weaponWPtr;
+// 		Dbo::weak_ptr<Vehicle> vehicleWPtr;
 // 
 // 		template<class Action>
 // 		void persist(Action& a)
 // 		{
-// 			Wt::Dbo::field(a, name, "name", 255);
-// 			Wt::Dbo::belongsTo(a, locationPtr, "location", Wt::Dbo::OnDeleteSetNull | Wt::Dbo::OnUpdateCascade);
-// 			Wt::Dbo::belongsTo(a, registrationPtr, "assetregistration", Wt::Dbo::OnDeleteSetNull | Wt::Dbo::OnUpdateCascade);
+// 			Dbo::field(a, name, "name", 255);
+// 			Dbo::belongsTo(a, locationPtr, "location", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
+// 			Dbo::belongsTo(a, registrationPtr, "assetregistration", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 // 
-// 			Wt::Dbo::hasMany(a, inquiryCollection, Wt::Dbo::ManyToOne, "asset");
-// 			Wt::Dbo::hasOne(a, officeWPtr, "asset");
-// 			Wt::Dbo::hasOne(a, rentHouseWPtr, "asset");
-// 			Wt::Dbo::hasOne(a, inventoryWPtr, "asset");
-// 			Wt::Dbo::hasOne(a, clothingItemWPtr, "asset");
-// 			Wt::Dbo::hasOne(a, alarmItemWPtr, "asset");
-// 			Wt::Dbo::hasOne(a, weaponWPtr, "asset");
-// 			Wt::Dbo::hasOne(a, vehicleWPtr, "asset");
+// 			Dbo::hasMany(a, inquiryCollection, Dbo::ManyToOne, "asset");
+// 			Dbo::hasOne(a, officeWPtr, "asset");
+// 			Dbo::hasOne(a, rentHouseWPtr, "asset");
+// 			Dbo::hasOne(a, inventoryWPtr, "asset");
+// 			Dbo::hasOne(a, clothingItemWPtr, "asset");
+// 			Dbo::hasOne(a, alarmItemWPtr, "asset");
+// 			Dbo::hasOne(a, weaponWPtr, "asset");
+// 			Dbo::hasOne(a, vehicleWPtr, "asset");
 // 		}
 // 		constexpr static const char *tableName()
 // 		{
@@ -1409,7 +1409,7 @@ namespace GS
 // 	class Inventory
 // 	{
 // 	private:
-// 		Wt::Dbo::ptr<Asset> assetPtr;
+// 		Dbo::ptr<Asset> assetPtr;
 // 
 // 	public:
 // 		int quantity = 0;
@@ -1417,8 +1417,8 @@ namespace GS
 // 		template<class Action>
 // 		void persist(Action& a)
 // 		{
-// 			Wt::Dbo::id(a, assetPtr, "asset", Wt::Dbo::OnDeleteCascade | Wt::Dbo::OnUpdateCascade | Wt::Dbo::NotNull);
-// 			Wt::Dbo::field(a, quantity, "quantity");
+// 			Dbo::id(a, assetPtr, "asset", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
+// 			Dbo::field(a, quantity, "quantity");
 // 		}
 // 		constexpr static const char *tableName()
 // 		{
@@ -1433,7 +1433,7 @@ namespace GS
 // 		template<class Action>
 // 		void persist(Action& a)
 // 		{
-// 			Wt::Dbo::hasMany(a, clothingItemCollection, Wt::Dbo::ManyToOne, "clothingtemplate");
+// 			Dbo::hasMany(a, clothingItemCollection, Dbo::ManyToOne, "clothingtemplate");
 // 		}
 // 		constexpr static const char *tableName()
 // 		{
@@ -1443,20 +1443,20 @@ namespace GS
 // 	class ClothingItem
 // 	{
 // 	private:
-// 		Wt::Dbo::ptr<Asset> assetPtr;
+// 		Dbo::ptr<Asset> assetPtr;
 // 
 // 	public:
-// 		Wt::Dbo::ptr<ClothingTemplate> clothingTemplatePtr;
+// 		Dbo::ptr<ClothingTemplate> clothingTemplatePtr;
 // 		bool serviceable = false;
-// 		Wt::Dbo::ptr<Employee> assignedEmployeePtr;
+// 		Dbo::ptr<Employee> assignedEmployeePtr;
 // 
 // 		template<class Action>
 // 		void persist(Action& a)
 // 		{
-// 			Wt::Dbo::id(a, assetPtr, "asset", Wt::Dbo::OnDeleteCascade | Wt::Dbo::OnUpdateCascade | Wt::Dbo::NotNull);
-// 			Wt::Dbo::belongsTo(a, clothingTemplatePtr, "clothingtemplate", Wt::Dbo::OnDeleteCascade | Wt::Dbo::OnUpdateCascade);
-// 			Wt::Dbo::field(a, serviceable, "serviceable");
-// 			Wt::Dbo::belongsTo(a, assignedEmployeePtr, "employee", Wt::Dbo::OnDeleteSetNull | Wt::Dbo::OnUpdateCascade);
+// 			Dbo::id(a, assetPtr, "asset", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
+// 			Dbo::belongsTo(a, clothingTemplatePtr, "clothingtemplate", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade);
+// 			Dbo::field(a, serviceable, "serviceable");
+// 			Dbo::belongsTo(a, assignedEmployeePtr, "employee", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 // 		}
 // 		constexpr static const char *tableName()
 // 		{
@@ -1471,7 +1471,7 @@ namespace GS
 // 		template<class Action>
 // 		void persist(Action& a)
 // 		{
-// 			Wt::Dbo::hasMany(a, alarmItemCollection, Wt::Dbo::ManyToOne, "alarmtemplate");
+// 			Dbo::hasMany(a, alarmItemCollection, Dbo::ManyToOne, "alarmtemplate");
 // 		}
 // 		constexpr static const char *tableName()
 // 		{
@@ -1481,20 +1481,20 @@ namespace GS
 // 	class AlarmItem
 // 	{
 // 	private:
-// 		Wt::Dbo::ptr<Asset> assetPtr;
+// 		Dbo::ptr<Asset> assetPtr;
 // 
 // 	public:
-// 		Wt::Dbo::ptr<AlarmTemplate> alarmTemplatePtr;
+// 		Dbo::ptr<AlarmTemplate> alarmTemplatePtr;
 // 		bool serviceable = false;
-// 		Wt::Dbo::ptr<Entity> assignedEntityPtr;
+// 		Dbo::ptr<Entity> assignedEntityPtr;
 // 
 // 		template<class Action>
 // 		void persist(Action& a)
 // 		{
-// 			Wt::Dbo::id(a, assetPtr, "asset", Wt::Dbo::OnDeleteCascade | Wt::Dbo::OnUpdateCascade | Wt::Dbo::NotNull);
-// 			Wt::Dbo::belongsTo(a, alarmTemplatePtr, "alarmtemplate", Wt::Dbo::OnDeleteCascade | Wt::Dbo::OnUpdateCascade);
-// 			Wt::Dbo::field(a, serviceable, "serviceable");
-// 			Wt::Dbo::belongsTo(a, assignedEntityPtr, "entity", Wt::Dbo::OnDeleteSetNull | Wt::Dbo::OnUpdateCascade);
+// 			Dbo::id(a, assetPtr, "asset", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
+// 			Dbo::belongsTo(a, alarmTemplatePtr, "alarmtemplate", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade);
+// 			Dbo::field(a, serviceable, "serviceable");
+// 			Dbo::belongsTo(a, assignedEntityPtr, "entity", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 // 		}
 // 		constexpr static const char *tableName()
 // 		{
@@ -1509,7 +1509,7 @@ namespace GS
 // 		template<class Action>
 // 		void persist(Action& a)
 // 		{
-// 			Wt::Dbo::hasMany(a, weaponCollection, Wt::Dbo::ManyToOne, "weapontemplate");
+// 			Dbo::hasMany(a, weaponCollection, Dbo::ManyToOne, "weapontemplate");
 // 		}
 // 		constexpr static const char *tableName()
 // 		{
@@ -1519,18 +1519,18 @@ namespace GS
 // 	class Weapon
 // 	{
 // 	private:
-// 		Wt::Dbo::ptr<Asset> assetPtr;
+// 		Dbo::ptr<Asset> assetPtr;
 // 
 // 	public:
-// 		Wt::Dbo::ptr<WeaponTemplate> weaponTemplatePtr;
+// 		Dbo::ptr<WeaponTemplate> weaponTemplatePtr;
 // 		int weaponNumber;
 // 
 // 		template<class Action>
 // 		void persist(Action& a)
 // 		{
-// 			Wt::Dbo::id(a, assetPtr, "asset", Wt::Dbo::OnDeleteCascade | Wt::Dbo::OnUpdateCascade | Wt::Dbo::NotNull);
-// 			Wt::Dbo::belongsTo(a, weaponTemplatePtr, "weapontemplate", Wt::Dbo::OnDeleteCascade | Wt::Dbo::OnUpdateCascade);
-// 			Wt::Dbo::field(a, weaponNumber, "weaponNumber");
+// 			Dbo::id(a, assetPtr, "asset", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
+// 			Dbo::belongsTo(a, weaponTemplatePtr, "weapontemplate", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade);
+// 			Dbo::field(a, weaponNumber, "weaponNumber");
 // 		}
 // 		constexpr static const char *tableName()
 // 		{
@@ -1545,7 +1545,7 @@ namespace GS
 // 		template<class Action>
 // 		void persist(Action& a)
 // 		{
-// 			Wt::Dbo::hasMany(a, vehicleCollection, Wt::Dbo::ManyToOne, "vehicletemplate");
+// 			Dbo::hasMany(a, vehicleCollection, Dbo::ManyToOne, "vehicletemplate");
 // 		}
 // 		constexpr static const char *tableName()
 // 		{
@@ -1555,16 +1555,16 @@ namespace GS
 // 	class Vehicle
 // 	{
 // 	private:
-// 		Wt::Dbo::ptr<Asset> assetPtr;
+// 		Dbo::ptr<Asset> assetPtr;
 // 
 // 	public:
-// 		Wt::Dbo::ptr<VehicleTemplate> vehicleTemplatePtr;
+// 		Dbo::ptr<VehicleTemplate> vehicleTemplatePtr;
 // 
 // 		template<class Action>
 // 		void persist(Action& a)
 // 		{
-// 			Wt::Dbo::id(a, assetPtr, "asset", Wt::Dbo::OnDeleteCascade | Wt::Dbo::OnUpdateCascade | Wt::Dbo::NotNull);
-// 			Wt::Dbo::belongsTo(a, vehicleTemplatePtr, "vehicletemplate", Wt::Dbo::OnDeleteCascade | Wt::Dbo::OnUpdateCascade);
+// 			Dbo::id(a, assetPtr, "asset", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
+// 			Dbo::belongsTo(a, vehicleTemplatePtr, "vehicletemplate", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade);
 // 		}
 // 		constexpr static const char *tableName()
 // 		{
@@ -1579,22 +1579,22 @@ namespace GS
 // 		Wt::WDate expiryDate;
 // 		std::string registrationNumber;
 // 
-// 		Wt::Dbo::ptr<AssetRegistration> renewedLicensePtr;
-// 		Wt::Dbo::weak_ptr<AssetRegistration> previousLicenseWPtr;
+// 		Dbo::ptr<AssetRegistration> renewedLicensePtr;
+// 		Dbo::weak_ptr<AssetRegistration> previousLicenseWPtr;
 // 
-// 		Wt::Dbo::weak_ptr<Asset> assetWPtr;
+// 		Dbo::weak_ptr<Asset> assetWPtr;
 // 
 // 		template<class Action>
 // 		void persist(Action& a)
 // 		{
-// 			Wt::Dbo::field(a, registrationDate, "registrationDate");
-// 			Wt::Dbo::field(a, expiryDate, "expiryDate");
-// 			Wt::Dbo::field(a, registrationNumber, "registrationNumber", 20);
+// 			Dbo::field(a, registrationDate, "registrationDate");
+// 			Dbo::field(a, expiryDate, "expiryDate");
+// 			Dbo::field(a, registrationNumber, "registrationNumber", 20);
 // 
-// 			Wt::Dbo::belongsTo(a, renewedLicensePtr, "renewed_license", Wt::Dbo::OnDeleteSetNull | Wt::Dbo::OnUpdateCascade);
-// 			Wt::Dbo::hasOne(a, previousLicenseWPtr, "renewed_license");
+// 			Dbo::belongsTo(a, renewedLicensePtr, "renewed_license", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
+// 			Dbo::hasOne(a, previousLicenseWPtr, "renewed_license");
 // 
-// 			Wt::Dbo::hasOne(a, assetWPtr, "assetregistration");
+// 			Dbo::hasOne(a, assetWPtr, "assetregistration");
 // 		}
 // 		constexpr static const char *tableName()
 // 		{
@@ -1604,12 +1604,12 @@ namespace GS
 // 	class Office
 // 	{
 // 	public:
-// 		Wt::Dbo::ptr<Asset> assetPtr;
+// 		Dbo::ptr<Asset> assetPtr;
 // 
 // 		template<class Action>
 // 		void persist(Action& a)
 // 		{
-// 			Wt::Dbo::belongsTo(a, assetPtr, "asset", Wt::Dbo::OnDeleteSetNull | Wt::Dbo::OnUpdateCascade);
+// 			Dbo::belongsTo(a, assetPtr, "asset", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 // 		}
 // 		constexpr static const char *tableName()
 // 		{
@@ -1619,24 +1619,24 @@ namespace GS
 // 	class RentHouse
 // 	{
 // 	public:
-// 		Wt::Dbo::ptr<Asset> assetPtr;
+// 		Dbo::ptr<Asset> assetPtr;
 // 		std::string name;
-// 		Wt::Dbo::ptr<Location> locationPtr;
-// 		Wt::Dbo::ptr<ExpenseCycle> expenseCyclePtr;
-// 		Wt::Dbo::ptr<Entity> ownerEntityPtr;
+// 		Dbo::ptr<Location> locationPtr;
+// 		Dbo::ptr<ExpenseCycle> expenseCyclePtr;
+// 		Dbo::ptr<Entity> ownerEntityPtr;
 // 
 // 		AccountEntryCollection depositEntryCollection;
 // 
 // 		template<class Action>
 // 		void persist(Action& a)
 // 		{
-// 			Wt::Dbo::belongsTo(a, assetPtr, "asset", Wt::Dbo::OnDeleteCascade | Wt::Dbo::OnUpdateCascade);
-// 			Wt::Dbo::field(a, name, "name", 255);
-// 			Wt::Dbo::belongsTo(a, locationPtr, "location", Wt::Dbo::OnDeleteSetNull | Wt::Dbo::OnUpdateCascade);
-// 			Wt::Dbo::belongsTo(a, expenseCyclePtr, "expensecycle", Wt::Dbo::OnDeleteSetNull | Wt::Dbo::OnUpdateCascade);
-// 			Wt::Dbo::belongsTo(a, ownerEntityPtr, "owner_entity", Wt::Dbo::OnDeleteSetNull | Wt::Dbo::OnUpdateCascade);
+// 			Dbo::belongsTo(a, assetPtr, "asset", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade);
+// 			Dbo::field(a, name, "name", 255);
+// 			Dbo::belongsTo(a, locationPtr, "location", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
+// 			Dbo::belongsTo(a, expenseCyclePtr, "expensecycle", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
+// 			Dbo::belongsTo(a, ownerEntityPtr, "owner_entity", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 // 
-// 			Wt::Dbo::hasMany(a, depositEntryCollection, Wt::Dbo::ManyToOne, "deposit_renthouse");
+// 			Dbo::hasMany(a, depositEntryCollection, Dbo::ManyToOne, "deposit_renthouse");
 // 		}
 // 		constexpr static const char *tableName()
 // 		{

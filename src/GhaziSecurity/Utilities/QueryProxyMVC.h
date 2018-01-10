@@ -19,10 +19,10 @@ namespace GS
 
 		int indexOf(const Result &result) const
 		{
-			std::shared_ptr<Wt::WAbstractItemModel> srcModel = sourceModel();
-			std::shared_ptr<Wt::Dbo::QueryModel<Result>> qryModel;
+			shared_ptr<Wt::WAbstractItemModel> srcModel = sourceModel();
+			shared_ptr<Dbo::QueryModel<Result>> qryModel;
 
-			std::vector<std::shared_ptr<Wt::WAbstractProxyModel>> srcProxyModels;
+			std::vector<shared_ptr<Wt::WAbstractProxyModel>> srcProxyModels;
 			do
 			{
 				if(!srcModel)
@@ -31,10 +31,10 @@ namespace GS
 					return -1;
 				}
 
-				qryModel = std::dynamic_pointer_cast<Wt::Dbo::QueryModel<Result>>(srcModel);
+				qryModel = dynamic_pointer_cast<Dbo::QueryModel<Result>>(srcModel);
 				if(!qryModel)
 				{
-					if(std::shared_ptr<Wt::WAbstractProxyModel> srcProxyModel = std::dynamic_pointer_cast<Wt::WAbstractProxyModel>(srcModel))
+					if(shared_ptr<Wt::WAbstractProxyModel> srcProxyModel = dynamic_pointer_cast<Wt::WAbstractProxyModel>(srcModel))
 					{
 						srcProxyModels.push_back(srcProxyModel);
 						srcModel = srcProxyModel->sourceModel();
@@ -76,8 +76,8 @@ namespace GS
 			if(!idx.isValid())
 				return nullptr;
 
-			std::shared_ptr<Wt::WAbstractItemModel> srcModel = sourceModel();
-			std::shared_ptr<Wt::Dbo::QueryModel<Result>> qryModel;
+			shared_ptr<Wt::WAbstractItemModel> srcModel = sourceModel();
+			shared_ptr<Dbo::QueryModel<Result>> qryModel;
 
 			do
 			{
@@ -87,10 +87,10 @@ namespace GS
 					return nullptr;
 				}
 
-				qryModel = std::dynamic_pointer_cast<Wt::Dbo::QueryModel<Result>>(srcModel);
+				qryModel = dynamic_pointer_cast<Dbo::QueryModel<Result>>(srcModel);
 				if(!qryModel)
 				{
-					if(std::shared_ptr<Wt::WAbstractProxyModel> srcProxyModel = std::dynamic_pointer_cast<Wt::WAbstractProxyModel>(srcModel))
+					if(shared_ptr<Wt::WAbstractProxyModel> srcProxyModel = dynamic_pointer_cast<Wt::WAbstractProxyModel>(srcModel))
 					{
 						idx = srcProxyModel->mapToSource(idx);
 						if(!idx.isValid())
@@ -114,7 +114,7 @@ namespace GS
 	class AbstractQueryProxyModelCB : public Wt::WComboBox
 	{
 	protected:
-		AbstractQueryProxyModelCB(std::shared_ptr<Wt::WAbstractItemModel> model)
+		AbstractQueryProxyModelCB(shared_ptr<Wt::WAbstractItemModel> model)
 		{
 			setModel(model);
 			setCurrentIndex(0);
@@ -129,7 +129,7 @@ namespace GS
 	class QueryProxyModelCB : public AbstractQueryProxyModelCB
 	{
 	public:
-		QueryProxyModelCB(std::shared_ptr<QueryProxyModel> model) : AbstractQueryProxyModelCB(model) { }
+		QueryProxyModelCB(shared_ptr<QueryProxyModel> model) : AbstractQueryProxyModelCB(model) { }
 		virtual void setViewValue(const Wt::any &v) override
 		{
 			if(v.empty())
@@ -139,12 +139,12 @@ namespace GS
 			}
 
 			const auto &result = Wt::any_cast<QueryProxyModel::Result>(v);
-			std::shared_ptr<QueryProxyModel> proxyModel = std::static_pointer_cast<QueryProxyModel>(model());
+			shared_ptr<QueryProxyModel> proxyModel = static_pointer_cast<QueryProxyModel>(model());
 			setCurrentIndex(std::max(0, proxyModel->indexOf(result)));
 		}
 		virtual Wt::any modelValue() override
 		{
-			std::shared_ptr<QueryProxyModel> proxyModel = std::static_pointer_cast<QueryProxyModel>(model());
+			shared_ptr<QueryProxyModel> proxyModel = static_pointer_cast<QueryProxyModel>(model());
 			const QueryProxyModel::Result *res = proxyModel->resultRow(currentIndex());
 			if(res)
 				return *res;
@@ -175,7 +175,7 @@ namespace GS
 			if(_cb->currentIndex() == -1)
 				return Result(Wt::ValidationState::Invalid, _errorStr);
 
-			auto proxyModel = std::static_pointer_cast<QueryProxyModel>(_cb->model());
+			auto proxyModel = static_pointer_cast<QueryProxyModel>(_cb->model());
 			auto result = proxyModel->resultRow(_cb->currentIndex());
 			if(!result)
 				return Result(Wt::ValidationState::Invalid, _errorStr);
@@ -199,7 +199,7 @@ namespace GS
 			if(_cb->currentIndex() == -1)
 				return Result(Wt::ValidationState::Invalid, _errorStr);
 
-			auto proxyModel = std::dynamic_pointer_cast<Wt::WAbstractProxyModel>(_cb->model());
+			auto proxyModel = dynamic_pointer_cast<Wt::WAbstractProxyModel>(_cb->model());
 			if(!proxyModel)
 			{
 				Wt::log("warning") << "ProxyModelCBValidator::validator(): null proxyModel";

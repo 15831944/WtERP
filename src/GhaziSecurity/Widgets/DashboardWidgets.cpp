@@ -121,7 +121,7 @@ namespace GS
 		: _queryFunction(queryFunction), _relativeTo(relativeTo)
 	{
 		setTemplateText(tr("GS.RecordCountTemplate.ProgressBar"));
-		auto container = std::make_unique<Wt::WContainerWidget>();
+		auto container = make_unique<Wt::WContainerWidget>();
 		container->setWidth(Wt::WLength(100, Wt::LengthUnit::Percentage));
 		_text = container->addNew<Wt::WText>(tr("Loading..."));
 		bindWidget("progress-bar", std::move(container));
@@ -159,7 +159,7 @@ namespace GS
 			else
 				resolveWidget("progress-bar")->setWidth(Wt::WLength(100,  Wt::LengthUnit::Percentage));
 		}
-		catch(const Wt::Dbo::Exception &e)
+		catch(const Dbo::Exception &e)
 		{
 			Wt::log("error") << "RecordCountTemplate::reload(): Dbo error(" << e.code() << "): " << e.what();
 			resolveWidget("progress-bar")->setWidth(Wt::WLength(100,  Wt::LengthUnit::Percentage));
@@ -172,7 +172,7 @@ namespace GS
 		: RecordCountTemplate(leftQueryFunction), _totalCountFunction(totalQueryFunction)
 	{
 		setTemplateText(tr("GS.RecordCountTemplate.MultiProgressBar"));
-		auto rightContainer = std::make_unique<Wt::WContainerWidget>();
+		auto rightContainer = make_unique<Wt::WContainerWidget>();
 		rightContainer->setWidth(0);
 		_rightText = rightContainer->addNew<Wt::WText>(tr("Loading..."));
 		bindWidget("progress-bar-right", std::move(rightContainer));
@@ -203,7 +203,7 @@ namespace GS
 			resolveWidget("progress-bar")->setWidth(Wt::WLength(leftWidth,  Wt::LengthUnit::Percentage));
 			resolveWidget("progress-bar-right")->setWidth(Wt::WLength(100 - leftWidth,  Wt::LengthUnit::Percentage));
 		}
-		catch(const Wt::Dbo::Exception &e)
+		catch(const Dbo::Exception &e)
 		{
 			Wt::log("error") << "RecordMultiCountTemplate::reload(): Dbo error(" << e.code() << "): " << e.what();
 			_totalCount = -1;
@@ -247,7 +247,7 @@ namespace GS
 				setStyleClass("");
 			}
 		}
-		catch(const Wt::Dbo::Exception &e)
+		catch(const Dbo::Exception &e)
 		{
 			Wt::log("error") << "CashAccountBalance::reload(): Dbo error(" << e.code() << "): " << e.what();
 			setText(tr("CouldNotLoad"));
@@ -287,7 +287,7 @@ namespace GS
 				setStyleClass("");
 			}
 		}
-		catch(const Wt::Dbo::Exception &e)
+		catch(const Dbo::Exception &e)
 		{
 			Wt::log("error") << "ReceivablesBalance::reload(): Dbo error(" << e.code() << "): " << e.what();
 			setText(tr("CouldNotLoad"));
@@ -327,7 +327,7 @@ namespace GS
 				setStyleClass("");
 			}
 		}
-		catch(const Wt::Dbo::Exception &e)
+		catch(const Dbo::Exception &e)
 		{
 			Wt::log("error") << "PayablesBalance::reload(): Dbo error(" << e.code() << "): " << e.what();
 			setText(tr("CouldNotLoad"));

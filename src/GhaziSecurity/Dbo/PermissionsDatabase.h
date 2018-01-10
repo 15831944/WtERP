@@ -1,7 +1,7 @@
 #ifndef GS_DBODATABASE_PERMISSION_H
 #define GS_DBODATABASE_PERMISSION_H
 
-#include <map>
+#include "Common.h"
 #include "Dbo/Dbos.h"
 
 #include <Wt/Auth/Login.h>
@@ -22,11 +22,11 @@ namespace GS
 		typedef std::map<long long, PermissionItem> _PermissionItemMap;
 
 	public:
-		PermissionsDatabase(Wt::Dbo::Session &session);
+		PermissionsDatabase(Dbo::Session &session);
 		void reload() { fetchAll(); }
 
 		PermissionCPtr getPermissionPtr(long long permissionId) const;
-		PermissionMap getUserPermissions(Wt::Dbo::ptr<User> userPtr, Wt::Auth::LoginState loginState, Wt::Dbo::Session *altSession = nullptr);
+		PermissionMap getUserPermissions(Dbo::ptr<User> userPtr, Wt::Auth::LoginState loginState, Dbo::Session *altSession = nullptr);
 
 	protected:
 		void fetchAll();
@@ -38,7 +38,7 @@ namespace GS
 		PermissionMap _logggedInPermissions;
 
 		milliseconds _loadDuration;
-		Wt::Dbo::Session &dboSession;
+		Dbo::Session &dboSession;
 
 	private:
 		mutable std::shared_mutex _mutex;

@@ -18,16 +18,16 @@ namespace GS
 
 	void AllEntityList::initFilters()
 	{
-		filtersTemplate()->addFilterModel(std::make_shared<WLineEditFilterModel>(tr("ID"), "e.id", std::bind(&FiltersTemplate::initIdEdit, std::placeholders::_1)));
-		filtersTemplate()->addFilterModel(std::make_shared<NameFilterModel>(tr("Name"), "e.name"));
+		filtersTemplate()->addFilterModel(make_shared<WLineEditFilterModel>(tr("ID"), "e.id", std::bind(&FiltersTemplate::initIdEdit, _1)));
+		filtersTemplate()->addFilterModel(make_shared<NameFilterModel>(tr("Name"), "e.name"));
 		filtersTemplate()->addFilter(2);
-		filtersTemplate()->addFilterModel(std::make_shared<WComboBoxFilterModel>(tr("Type"), "e.type", std::bind(&FiltersTemplate::initEntityTypeEdit, std::placeholders::_1)));
+		filtersTemplate()->addFilterModel(make_shared<WComboBoxFilterModel>(tr("Type"), "e.type", std::bind(&FiltersTemplate::initEntityTypeEdit, _1)));
 	}
 
 	void AllEntityList::initModel()
 	{
-		std::shared_ptr<QueryModelType> model;
-		_model = model = std::make_shared<QueryModelType>();
+		shared_ptr<QueryModelType> model;
+		_model = model = make_shared<QueryModelType>();
 
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
@@ -44,12 +44,12 @@ namespace GS
 		addColumn(ViewEntityType, model->addColumn("e.type"), tr("Type"), TypeColumnWidth);
 		addColumn(ViewRole, model->addColumn("ea.id"), tr("Roles"), RolesColumnWidth);
 
-		_proxyModel = std::make_shared<EntityListProxyModel<AllEntityList>>(_model);
+		_proxyModel = make_shared<EntityListProxyModel<AllEntityList>>(_model);
 	}
 
-	Wt::Dbo::Query<AllEntityList::ResultType> AllEntityList::generateQuery() const
+	Dbo::Query<AllEntityList::ResultType> AllEntityList::generateQuery() const
 	{
-		Wt::Dbo::Query<ResultType> query(_baseQuery);
+		Dbo::Query<ResultType> query(_baseQuery);
 		Wt::WDate currentDate = Wt::WDate::currentServerDate();
 		query.bind(currentDate).bind(currentDate).bind(currentDate).bind(currentDate);
 		return query;
@@ -57,14 +57,14 @@ namespace GS
 
 	void PersonList::initFilters()
 	{
-		filtersTemplate()->addFilterModel(std::make_shared<WLineEditFilterModel>(tr("ID"), "e.id", std::bind(&FiltersTemplate::initIdEdit, std::placeholders::_1)));
-		filtersTemplate()->addFilterModel(std::make_shared<NameFilterModel>(tr("Name"), "e.name")); filtersTemplate()->addFilter(2);
+		filtersTemplate()->addFilterModel(make_shared<WLineEditFilterModel>(tr("ID"), "e.id", std::bind(&FiltersTemplate::initIdEdit, _1)));
+		filtersTemplate()->addFilterModel(make_shared<NameFilterModel>(tr("Name"), "e.name")); filtersTemplate()->addFilter(2);
 	}
 
 	void PersonList::initModel()
 	{
-		std::shared_ptr<QueryModelType> model;
-		_model = model = std::make_shared<QueryModelType>();
+		shared_ptr<QueryModelType> model;
+		_model = model = make_shared<QueryModelType>();
 
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
@@ -80,12 +80,12 @@ namespace GS
 		addColumn(ViewName, model->addColumn("e.name"), tr("Name"), NameColumnWidth);
 		addColumn(ViewRole, model->addColumn("ea.id"), tr("Roles"), RolesColumnWidth);
 
-		_proxyModel = std::make_shared<EntityListProxyModel<PersonList>>(_model);
+		_proxyModel = make_shared<EntityListProxyModel<PersonList>>(_model);
 	}
 
-	Wt::Dbo::Query<PersonList::ResultType> PersonList::generateQuery() const
+	Dbo::Query<PersonList::ResultType> PersonList::generateQuery() const
 	{
-		Wt::Dbo::Query<ResultType> query(_baseQuery);
+		Dbo::Query<ResultType> query(_baseQuery);
 		Wt::WDate currentDate = Wt::WDate::currentServerDate();
 		query.bind(currentDate).bind(currentDate).bind(currentDate).bind(currentDate);
 		return query;
@@ -93,14 +93,14 @@ namespace GS
 
 	void BusinessList::initFilters()
 	{
-		filtersTemplate()->addFilterModel(std::make_shared<WLineEditFilterModel>(tr("ID"), "e.id", std::bind(&FiltersTemplate::initIdEdit, std::placeholders::_1)));
-		filtersTemplate()->addFilterModel(std::make_shared<NameFilterModel>(tr("Name"), "e.name")); filtersTemplate()->addFilter(2);
+		filtersTemplate()->addFilterModel(make_shared<WLineEditFilterModel>(tr("ID"), "e.id", std::bind(&FiltersTemplate::initIdEdit, _1)));
+		filtersTemplate()->addFilterModel(make_shared<NameFilterModel>(tr("Name"), "e.name")); filtersTemplate()->addFilter(2);
 	}
 
 	void BusinessList::initModel()
 	{
-		std::shared_ptr<QueryModelType> model;
-		_model = model = std::make_shared<QueryModelType>();
+		shared_ptr<QueryModelType> model;
+		_model = model = make_shared<QueryModelType>();
 
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
@@ -116,12 +116,12 @@ namespace GS
 		addColumn(ViewName, model->addColumn("e.name"), tr("Name"), NameColumnWidth);
 		addColumn(ViewRole, model->addColumn("ea.id"), tr("Roles"), RolesColumnWidth);
 
-		_proxyModel = std::make_shared<EntityListProxyModel<BusinessList>>(_model);
+		_proxyModel = make_shared<EntityListProxyModel<BusinessList>>(_model);
 	}
 
-	Wt::Dbo::Query<BusinessList::ResultType> BusinessList::generateQuery() const
+	Dbo::Query<BusinessList::ResultType> BusinessList::generateQuery() const
 	{
-		Wt::Dbo::Query<ResultType> query(_baseQuery);
+		Dbo::Query<ResultType> query(_baseQuery);
 		Wt::WDate currentDate = Wt::WDate::currentServerDate();
 		query.bind(currentDate).bind(currentDate).bind(currentDate).bind(currentDate);
 		return query;
@@ -129,14 +129,14 @@ namespace GS
 
 	void EmployeeList::initFilters()
 	{
-		filtersTemplate()->addFilterModel(std::make_shared<WLineEditFilterModel>(tr("ID"), "e.id", std::bind(&FiltersTemplate::initIdEdit, std::placeholders::_1)));
-		filtersTemplate()->addFilterModel(std::make_shared<NameFilterModel>(tr("Name"), "e.name")); filtersTemplate()->addFilter(2);
+		filtersTemplate()->addFilterModel(make_shared<WLineEditFilterModel>(tr("ID"), "e.id", std::bind(&FiltersTemplate::initIdEdit, _1)));
+		filtersTemplate()->addFilterModel(make_shared<NameFilterModel>(tr("Name"), "e.name")); filtersTemplate()->addFilter(2);
 	}
 
 	void EmployeeList::initModel()
 	{
-		std::shared_ptr<QueryModelType> model;
-		_model = model = std::make_shared<QueryModelType>();
+		shared_ptr<QueryModelType> model;
+		_model = model = make_shared<QueryModelType>();
 
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
@@ -152,12 +152,12 @@ namespace GS
 		addColumn(ViewName, model->addColumn("e.name"), tr("Name"), NameColumnWidth);
 		addColumn(ViewRole, model->addColumn("ea.id"), tr("Roles"), RolesColumnWidth);
 
-		_proxyModel = std::make_shared<EntityListProxyModel<EmployeeList>>(_model);
+		_proxyModel = make_shared<EntityListProxyModel<EmployeeList>>(_model);
 	}
 
-	Wt::Dbo::Query<EmployeeList::ResultType> EmployeeList::generateQuery() const
+	Dbo::Query<EmployeeList::ResultType> EmployeeList::generateQuery() const
 	{
-		Wt::Dbo::Query<ResultType> query(_baseQuery);
+		Dbo::Query<ResultType> query(_baseQuery);
 		Wt::WDate currentDate = Wt::WDate::currentServerDate();
 		query.bind(currentDate).bind(currentDate).bind(currentDate).bind(currentDate);
 		return query;
@@ -165,14 +165,14 @@ namespace GS
 
 	void PersonnelList::initFilters()
 	{
-		filtersTemplate()->addFilterModel(std::make_shared<WLineEditFilterModel>(tr("ID"), "e.id", std::bind(&FiltersTemplate::initIdEdit, std::placeholders::_1)));
-		filtersTemplate()->addFilterModel(std::make_shared<NameFilterModel>(tr("Name"), "e.name")); filtersTemplate()->addFilter(2);
+		filtersTemplate()->addFilterModel(make_shared<WLineEditFilterModel>(tr("ID"), "e.id", std::bind(&FiltersTemplate::initIdEdit, _1)));
+		filtersTemplate()->addFilterModel(make_shared<NameFilterModel>(tr("Name"), "e.name")); filtersTemplate()->addFilter(2);
 	}
 
 	void PersonnelList::initModel()
 	{
-		std::shared_ptr<QueryModelType> model;
-		_model = model = std::make_shared<QueryModelType>();
+		shared_ptr<QueryModelType> model;
+		_model = model = make_shared<QueryModelType>();
 
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
@@ -188,12 +188,12 @@ namespace GS
 		addColumn(ViewName, model->addColumn("e.name"), tr("Name"), NameColumnWidth);
 		addColumn(ViewRole, model->addColumn("ea.id"), tr("Roles"), RolesColumnWidth);
 
-		_proxyModel = std::make_shared<EntityListProxyModel<PersonnelList>>(_model);
+		_proxyModel = make_shared<EntityListProxyModel<PersonnelList>>(_model);
 	}
 
-	Wt::Dbo::Query<PersonnelList::ResultType> PersonnelList::generateQuery() const
+	Dbo::Query<PersonnelList::ResultType> PersonnelList::generateQuery() const
 	{
-		Wt::Dbo::Query<ResultType> query(_baseQuery);
+		Dbo::Query<ResultType> query(_baseQuery);
 		Wt::WDate currentDate = Wt::WDate::currentServerDate();
 		query.bind(currentDate).bind(currentDate).bind(currentDate).bind(currentDate);
 		return query;
@@ -201,15 +201,15 @@ namespace GS
 
 	void ClientList::initFilters()
 	{
-		filtersTemplate()->addFilterModel(std::make_shared<WLineEditFilterModel>(tr("ID"), "e.id", std::bind(&FiltersTemplate::initIdEdit, std::placeholders::_1)));
-		filtersTemplate()->addFilterModel(std::make_shared<NameFilterModel>(tr("Name"), "e.name")); filtersTemplate()->addFilter(2);
-		filtersTemplate()->addFilterModel(std::make_shared<WComboBoxFilterModel>(tr("Type"), "e.type", std::bind(&FiltersTemplate::initEntityTypeEdit, std::placeholders::_1)));
+		filtersTemplate()->addFilterModel(make_shared<WLineEditFilterModel>(tr("ID"), "e.id", std::bind(&FiltersTemplate::initIdEdit, _1)));
+		filtersTemplate()->addFilterModel(make_shared<NameFilterModel>(tr("Name"), "e.name")); filtersTemplate()->addFilter(2);
+		filtersTemplate()->addFilterModel(make_shared<WComboBoxFilterModel>(tr("Type"), "e.type", std::bind(&FiltersTemplate::initEntityTypeEdit, _1)));
 	}
 
 	void ClientList::initModel()
 	{
-		std::shared_ptr<QueryModelType> model;
-		_model = model = std::make_shared<QueryModelType>();
+		shared_ptr<QueryModelType> model;
+		_model = model = make_shared<QueryModelType>();
 
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
@@ -226,12 +226,12 @@ namespace GS
 		addColumn(ViewEntityType, model->addColumn("e.type"), tr("Type"), TypeColumnWidth);
 		addColumn(ViewRole, model->addColumn("ea.id"), tr("Roles"), RolesColumnWidth);
 
-		_proxyModel = std::make_shared<EntityListProxyModel<ClientList>>(_model);
+		_proxyModel = make_shared<EntityListProxyModel<ClientList>>(_model);
 	}
 
-	Wt::Dbo::Query<ClientList::ResultType> ClientList::generateQuery() const
+	Dbo::Query<ClientList::ResultType> ClientList::generateQuery() const
 	{
-		Wt::Dbo::Query<ResultType> query(_baseQuery);
+		Dbo::Query<ResultType> query(_baseQuery);
 		Wt::WDate currentDate = Wt::WDate::currentServerDate();
 		query.bind(currentDate).bind(currentDate).bind(currentDate).bind(currentDate);
 		return query;

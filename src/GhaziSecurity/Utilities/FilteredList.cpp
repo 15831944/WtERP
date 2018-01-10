@@ -21,9 +21,9 @@ namespace GS
 			_enabled = false;
 	}
 
-	std::unique_ptr<Wt::WCheckBox> AbstractFilterWidgetModel::createCheckbox()
+	unique_ptr<Wt::WCheckBox> AbstractFilterWidgetModel::createCheckbox()
 	{
-		auto cb = std::make_unique<Wt::WCheckBox>();
+		auto cb = make_unique<Wt::WCheckBox>();
 		_cb = cb.get();
 		return cb;
 	}
@@ -72,23 +72,23 @@ namespace GS
 			_enabled = false;
 	}
 
-	std::unique_ptr<Wt::WWidget> WLineEditFilterModel::createWidget()
+	unique_ptr<Wt::WWidget> WLineEditFilterModel::createWidget()
 	{
-		auto edit = std::make_unique<Wt::WLineEdit>();
+		auto edit = make_unique<Wt::WLineEdit>();
 		_edit = edit.get();
 		if(_function) _function(_edit);
 		return edit;
 	}
 
-	std::unique_ptr<Wt::WWidget> WComboBoxFilterModel::createWidget()
+	unique_ptr<Wt::WWidget> WComboBoxFilterModel::createWidget()
 	{
-		auto edit = std::make_unique<Wt::WComboBox>();
+		auto edit = make_unique<Wt::WComboBox>();
 		_edit = edit.get();
 		if(_function) _function(_edit);
 		return edit;
 	}
 
-	std::unique_ptr<Wt::WWidget> NameFilterModel::createWidget()
+	unique_ptr<Wt::WWidget> NameFilterModel::createWidget()
 	{
 		auto edit = WLineEditFilterModel::createWidget();
 		_edit->setMaxLength(70);
@@ -216,7 +216,7 @@ namespace GS
 		return fitr == _viewIndexToColumnMap.end() ? -1 : fitr->second;
 	}
 
-	void FiltersTemplate::addFilterModel(std::shared_ptr<AbstractFilterWidgetModel> model)
+	void FiltersTemplate::addFilterModel(shared_ptr<AbstractFilterWidgetModel> model)
 	{
 		if(!model)
 			return;
@@ -277,19 +277,19 @@ namespace GS
 
 	void FiltersTemplate::initIdEdit(Wt::WLineEdit *edit)
 	{
-		edit->setValidator(std::make_shared<Wt::WIntValidator>());
+		edit->setValidator(make_shared<Wt::WIntValidator>());
 		edit->setMaxLength(20);
 	}
 
 	RangeEdit::RangeEdit()
 	{
 		setTextSize(30);
-		setValidator(std::make_shared<Wt::WDoubleValidator>());
+		setValidator(make_shared<Wt::WDoubleValidator>());
 	}
 
-	std::unique_ptr<Wt::WComboBox> RangeEdit::createOperatorCombo()
+	unique_ptr<Wt::WComboBox> RangeEdit::createOperatorCombo()
 	{
-		auto combo = std::make_unique<Wt::WComboBox>();
+		auto combo = make_unique<Wt::WComboBox>();
 		_operatorCombo = combo.get();
 		_operatorCombo->insertItem(Equal, "=");
 		_operatorCombo->insertItem(LessThan, "<");
@@ -332,9 +332,9 @@ namespace GS
 		}
 	}
 
-	std::unique_ptr<Wt::WWidget> RangeFilterModel::createWidget()
+	unique_ptr<Wt::WWidget> RangeFilterModel::createWidget()
 	{
-		auto edit = std::make_unique<RangeEdit>();
+		auto edit = make_unique<RangeEdit>();
 		_edit = edit.get();
 		if(_function) _function(_edit);
 		return edit;

@@ -4,12 +4,12 @@
 
 namespace GS
 {
-	Wt::Dbo::ptr<Entity> EntitiesDatabase::findOrCreateSelfEntity()
+	Dbo::ptr<Entity> EntitiesDatabase::findOrCreateSelfEntity()
 	{
 		WServer *server = SERVER;
 
-		Wt::Dbo::Transaction t(dboSession);
-		Wt::Dbo::ptr<Entity> entityPtr;
+		Dbo::Transaction t(dboSession);
+		Dbo::ptr<Entity> entityPtr;
 
 		//Config found
 		if(server->configs().getLongIntPtr("SelfEntityId"))

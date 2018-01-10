@@ -3,8 +3,13 @@
 
 #include <functional>
 #include <chrono>
+#include <tuple>
+
+#include <Wt/WGlobal.h>
 #include <Wt/WString.h>
 #include <Wt/cpp17/any.hpp>
+
+#include <boost/optional.hpp>
 
 #define DEFAULT_CURRENCY "PKR"
 
@@ -99,13 +104,37 @@ namespace GS
 
 namespace Wt
 {
-	typedef cpp17::any any;
+	using namespace cpp17;
+}
+namespace GS
+{
+	namespace Dbo = Wt::Dbo;
 
-	template <typename T, typename U>
-	auto any_cast(const U &u) -> decltype(cpp17::any_cast<T>(u))
-	{
-		return cpp17::any_cast<T>(u);
-	}
+	using namespace std::placeholders;
+
+	using std::chrono::system_clock;
+	using std::chrono::steady_clock;
+	using std::chrono::high_resolution_clock;
+	using std::chrono::time_point;
+	using std::chrono::duration;
+	using std::chrono::duration_cast;
+	using std::chrono::nanoseconds;
+	using std::chrono::microseconds;
+	using std::chrono::milliseconds;
+	using std::chrono::seconds;
+	using std::chrono::minutes;
+	using std::chrono::hours;
+
+	using std::unique_ptr;
+	using std::shared_ptr;
+	using std::make_unique;
+	using std::make_shared;
+	using std::static_pointer_cast;
+	using std::dynamic_pointer_cast;
+	using std::pair;
+	using std::tuple;
+
+	using boost::optional;
 }
 
 #endif 

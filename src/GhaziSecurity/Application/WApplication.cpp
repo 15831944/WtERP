@@ -31,8 +31,6 @@
 
 namespace GS
 {
-	using namespace std::placeholders;
-
 	AuthLogin::AuthLogin()
 	{
 		handleBeforeLoginChanged();
@@ -46,7 +44,7 @@ namespace GS
 		if(loggedIn())
 			_authInfoPtr = app->userDatabase().find(user());
 		else
-			_authInfoPtr = Wt::Dbo::ptr<AuthInfo>();
+			_authInfoPtr = Dbo::ptr<AuthInfo>();
 		
 		//Make sure user entry for authinfo exists
 		if(_authInfoPtr && !_authInfoPtr->user())
@@ -80,7 +78,7 @@ namespace GS
 			return result;
 
 		TRANSACTION(APP);
-		Wt::Dbo::ptr<User> userSelf = userPtr();
+		Dbo::ptr<User> userSelf = userPtr();
 		if(!userSelf)
 			return AuthLogin::Denied;
 
@@ -137,7 +135,7 @@ namespace GS
 			return result;
 
 		TRANSACTION(APP);
-		Wt::Dbo::ptr<User> userSelf = userPtr();
+		Dbo::ptr<User> userSelf = userPtr();
 		if(!userSelf)
 			return Denied;
 
@@ -214,12 +212,12 @@ namespace GS
 		useStyleSheet(Wt::WLink("style.css"));
 		useStyleSheet(Wt::WLink(resourcesUrl() + "font-awesome/css/font-awesome.min.css"));
 
-		auto theme = std::make_unique<Wt::WBootstrapTheme>();
+		auto theme = make_unique<Wt::WBootstrapTheme>();
 		theme->setVersion(Wt::WBootstrapTheme::Version::v3);
 		setTheme(std::move(theme));
 
 		//Error Dialog
-		_errorDialog = std::make_unique<Wt::WDialog>(tr("AnErrorOccurred"));
+		_errorDialog = make_unique<Wt::WDialog>(tr("AnErrorOccurred"));
 		_errorDialog->setTransient(true);
 		_errorDialog->rejectWhenEscapePressed(true);
 		_errorDialog->setClosable(true);
@@ -318,12 +316,12 @@ namespace GS
 				if(id != -1)
 				{
 					TRANSACTION(this);
-					Wt::Dbo::ptr<Entity> ptr = dboSession().load<Entity>(id, true);
+					Dbo::ptr<Entity> ptr = dboSession().load<Entity>(id, true);
 					if(ptr)
 					{
 						if(authLogin().checkRecordViewPermission(ptr.get()) == AuthLogin::Permitted)
 						{
-							auto view = std::make_unique<EntityView>(ptr);
+							auto view = make_unique<EntityView>(ptr);
 							view->load();
 							auto menuItem = _entitiesAdminPage->createMenuItemWrapped(std::move(view));
 						}
@@ -337,12 +335,12 @@ namespace GS
 				if(id != -1)
 				{
 					TRANSACTION(this);
-					Wt::Dbo::ptr<EmployeeAssignment> ptr = dboSession().load<EmployeeAssignment>(id, true);
+					Dbo::ptr<EmployeeAssignment> ptr = dboSession().load<EmployeeAssignment>(id, true);
 					if(ptr)
 					{
 						if(authLogin().checkRecordViewPermission(ptr.get()) == AuthLogin::Permitted)
 						{
-							auto view = std::make_unique<EmployeeAssignmentView>(ptr);
+							auto view = make_unique<EmployeeAssignmentView>(ptr);
 							view->load();
 							auto menuItem = _entitiesAdminPage->createMenuItemWrapped(std::move(view));
 						}
@@ -356,12 +354,12 @@ namespace GS
 				if(id != -1)
 				{
 					TRANSACTION(this);
-					Wt::Dbo::ptr<ClientAssignment> ptr = dboSession().load<ClientAssignment>(id, true);
+					Dbo::ptr<ClientAssignment> ptr = dboSession().load<ClientAssignment>(id, true);
 					if(ptr)
 					{
 						if(authLogin().checkRecordViewPermission(ptr.get()) == AuthLogin::Permitted)
 						{
-							auto view = std::make_unique<ClientAssignmentView>(ptr);
+							auto view = make_unique<ClientAssignmentView>(ptr);
 							view->load();
 							auto menuItem = _entitiesAdminPage->createMenuItemWrapped(std::move(view));
 						}
@@ -375,12 +373,12 @@ namespace GS
 				if(id != -1)
 				{
 					TRANSACTION(this);
-					Wt::Dbo::ptr<Account> ptr = dboSession().load<Account>(id, true);
+					Dbo::ptr<Account> ptr = dboSession().load<Account>(id, true);
 					if(ptr)
 					{
 						if(authLogin().checkRecordViewPermission(ptr.get()) == AuthLogin::Permitted)
 						{
-							auto view = std::make_unique<AccountView>(ptr);
+							auto view = make_unique<AccountView>(ptr);
 							view->load();
 							auto menuItem = _accountsAdminPage->createMenuItemWrapped(std::move(view));
 						}
@@ -394,12 +392,12 @@ namespace GS
 				if(id != -1)
 				{
 					TRANSACTION(this);
-					Wt::Dbo::ptr<AccountEntry> ptr = dboSession().load<AccountEntry>(id, true);
+					Dbo::ptr<AccountEntry> ptr = dboSession().load<AccountEntry>(id, true);
 					if(ptr)
 					{
 						if(authLogin().checkRecordViewPermission(ptr.get()) == AuthLogin::Permitted)
 						{
-							auto view = std::make_unique<AccountEntryView>(ptr);
+							auto view = make_unique<AccountEntryView>(ptr);
 							view->load();
 							auto menuItem = _accountsAdminPage->createMenuItemWrapped(std::move(view));
 						}
@@ -413,12 +411,12 @@ namespace GS
 				if(id != -1)
 				{
 					TRANSACTION(this);
-					Wt::Dbo::ptr<IncomeCycle> ptr = dboSession().load<IncomeCycle>(id, true);
+					Dbo::ptr<IncomeCycle> ptr = dboSession().load<IncomeCycle>(id, true);
 					if(ptr)
 					{
 						if(authLogin().checkRecordViewPermission(ptr.get()) == AuthLogin::Permitted)
 						{
-							auto view = std::make_unique<IncomeCycleView>(ptr);
+							auto view = make_unique<IncomeCycleView>(ptr);
 							view->load();
 							auto menuItem = _accountsAdminPage->createMenuItemWrapped(std::move(view));
 						}
@@ -432,12 +430,12 @@ namespace GS
 				if(id != -1)
 				{
 					TRANSACTION(this);
-					Wt::Dbo::ptr<ExpenseCycle> ptr = dboSession().load<ExpenseCycle>(id, true);
+					Dbo::ptr<ExpenseCycle> ptr = dboSession().load<ExpenseCycle>(id, true);
 					if(ptr)
 					{
 						if(authLogin().checkRecordViewPermission(ptr.get()) == AuthLogin::Permitted)
 						{
-							auto view = std::make_unique<ExpenseCycleView>(ptr);
+							auto view = make_unique<ExpenseCycleView>(ptr);
 							view->load();
 							auto menuItem = _accountsAdminPage->createMenuItemWrapped(std::move(view));
 						}
@@ -451,12 +449,12 @@ namespace GS
 				if(id != -1)
 				{
 					TRANSACTION(this);
-					Wt::Dbo::ptr<AttendanceEntry> ptr = dboSession().load<AttendanceEntry>(id, true);
+					Dbo::ptr<AttendanceEntry> ptr = dboSession().load<AttendanceEntry>(id, true);
 					if(ptr)
 					{
 						if(authLogin().checkRecordViewPermission(ptr.get()) == AuthLogin::Permitted)
 						{
-							auto view = std::make_unique<AttendanceEntryView>(ptr);
+							auto view = make_unique<AttendanceEntryView>(ptr);
 							view->load();
 							auto menuItem = _attendanceAdminPage->createMenuItemWrapped(std::move(view));
 						}
@@ -470,12 +468,12 @@ namespace GS
 				if(id != -1)
 				{
 					TRANSACTION(this);
-					Wt::Dbo::ptr<AttendanceDevice> ptr = dboSession().load<AttendanceDevice>(id, true);
+					Dbo::ptr<AttendanceDevice> ptr = dboSession().load<AttendanceDevice>(id, true);
 					if(ptr)
 					{
 						if(authLogin().checkRecordViewPermission(ptr.get()) == AuthLogin::Permitted)
 						{
-							auto view = std::make_unique<AttendanceDeviceView>(ptr);
+							auto view = make_unique<AttendanceDeviceView>(ptr);
 							view->load();
 							auto menuItem = _attendanceAdminPage->createMenuItemWrapped(std::move(view));
 						}
@@ -489,12 +487,12 @@ namespace GS
 				if(id != -1)
 				{
 					TRANSACTION(this);
-					Wt::Dbo::ptr<AuthInfo> ptr = dboSession().load<AuthInfo>(id, true);
+					Dbo::ptr<AuthInfo> ptr = dboSession().load<AuthInfo>(id, true);
 					if(ptr)
 					{
 						if(authLogin().checkRecordViewPermission(ptr.get()) == AuthLogin::Permitted && authLogin().hasPermission(Permissions::ViewUser))
 						{
-							auto view = std::make_unique<UserView>(ptr);
+							auto view = make_unique<UserView>(ptr);
 							view->load();
 							auto menuItem = _usersAdminPage->createMenuItemWrapped(std::move(view));
 						}
@@ -508,12 +506,12 @@ namespace GS
 				if(id != -1)
 				{
 					TRANSACTION(this);
-					Wt::Dbo::ptr<Region> ptr = dboSession().load<Region>(id, true);
+					Dbo::ptr<Region> ptr = dboSession().load<Region>(id, true);
 					if(ptr)
 					{
 						if(authLogin().checkRecordViewPermission(ptr.get()) == AuthLogin::Permitted && authLogin().hasPermission(Permissions::ViewRegion))
 						{
-							auto view = std::make_unique<RegionView>(ptr);
+							auto view = make_unique<RegionView>(ptr);
 							view->load();
 							auto menuItem = _usersAdminPage->createMenuItemWrapped(std::move(view));
 						}
@@ -522,8 +520,8 @@ namespace GS
 					}
 				}
 			}
-			catch(const Wt::Dbo::ObjectNotFoundException &) { }
-			catch(const Wt::Dbo::Exception &e)
+			catch(const Dbo::ObjectNotFoundException &) { }
+			catch(const Dbo::Exception &e)
 			{
 				Wt::log("error") << "WApplication::handleInternalPathChanged(): Dbo error(" << e.code() << "): " << e.what();
 				showDbBackendError(e.code());
@@ -561,13 +559,13 @@ namespace GS
 		_visitorNavBar->bindString("container-class", "container");
 		_visitorNavBar->setResponsive(true);
 
-		auto menu = std::make_unique<Wt::WMenu>(_visitorStack);
+		auto menu = make_unique<Wt::WMenu>(_visitorStack);
 		_visitorMenu = menu.get();
 		_visitorMenu->setInternalPathEnabled("/");
 		_visitorNavBar->addMenu(std::move(menu));
 
 		//Logo
-		auto logoImage = std::make_unique<Wt::WImage>(Wt::WLink("images/logo.png"), tr("GS.Logo.Alt"));
+		auto logoImage = make_unique<Wt::WImage>(Wt::WLink("images/logo.png"), tr("GS.Logo.Alt"));
 		_visitorNavBar->setTitle(std::move(logoImage), Wt::WLink(Wt::LinkType::InternalPath, "/"));
 
 		//Page widgets
@@ -589,27 +587,27 @@ namespace GS
 		_adminNavBar->bindString("container-class", "container-fluid");
 		_adminNavBar->setResponsive(true);
 
-		auto menu = std::make_unique<Wt::WMenu>(_adminStack);
+		auto menu = make_unique<Wt::WMenu>(_adminStack);
 		_adminMenu = menu.get();
 		_adminMenu->setInternalPathEnabled("/" ADMIN_PATHC "/");
 		_adminNavBar->addMenu(std::move(menu));
 
-		auto logoutBtn = std::make_unique<Wt::WPushButton>(tr("LogoutButton"), Wt::TextFormat::XHTML);
+		auto logoutBtn = make_unique<Wt::WPushButton>(tr("LogoutButton"), Wt::TextFormat::XHTML);
 		logoutBtn->clicked().connect(&authLogin(), &Wt::Auth::Login::logout);
 		_adminNavBar->addWidget(std::move(logoutBtn), Wt::AlignmentFlag::Right);
 
-		auto logoImage = std::make_unique<Wt::WImage>(Wt::WLink("images/logo.png"), tr("GS.Logo.Alt"));
+		auto logoImage = make_unique<Wt::WImage>(Wt::WLink("images/logo.png"), tr("GS.Logo.Alt"));
 		_adminNavBar->setTitle(std::move(logoImage), Wt::WLink(Wt::LinkType::InternalPath, "/"));
 
 		//Admin page widgets
-		_dashboardAdminPage = addMenuItem(_adminMenu, tr("Dashboard"), std::make_unique<DashboardAdminPage>());
-		_entitiesAdminPage = addMenuItem(_adminMenu, tr("Entities"), std::make_unique<EntitiesAdminPage>());
-		_accountsAdminPage = addMenuItem(_adminMenu, tr("FinancialRecords"), std::make_unique<AccountsAdminPage>());
-		_attendanceAdminPage = addMenuItem(_adminMenu, tr("Attendance"), std::make_unique<AttendanceAdminPage>());
+		_dashboardAdminPage = addMenuItem(_adminMenu, tr("Dashboard"), make_unique<DashboardAdminPage>());
+		_entitiesAdminPage = addMenuItem(_adminMenu, tr("Entities"), make_unique<EntitiesAdminPage>());
+		_accountsAdminPage = addMenuItem(_adminMenu, tr("FinancialRecords"), make_unique<AccountsAdminPage>());
+		_attendanceAdminPage = addMenuItem(_adminMenu, tr("Attendance"), make_unique<AttendanceAdminPage>());
 
 		//Users
 		if(authLogin().hasPermission(Permissions::ViewUser))
-			_usersAdminPage = addMenuItem(_adminMenu, tr("Users"), std::make_unique<UsersAdminPage>());
+			_usersAdminPage = addMenuItem(_adminMenu, tr("Users"), make_unique<UsersAdminPage>());
 	}
 
 	void WApplication::initFindEntitySuggestion()
@@ -635,13 +633,13 @@ namespace GS
 		if(_countryQueryModel)
 			return;
 
-		_countryQueryModel = std::make_shared<CountryQueryModel>();
+		_countryQueryModel = make_shared<CountryQueryModel>();
 		_countryQueryModel->setBatchSize(1000);
 		_countryQueryModel->setQuery(dboSession().find<Country>().orderBy("CASE WHEN code = 'PK' THEN 1 ELSE 2 END ASC"));
 		_countryQueryModel->addColumn("name");
 		_countryQueryModel->addColumn("code");
 
-		_countryProxyModel = std::make_shared<CountryProxyModel>(_countryQueryModel);
+		_countryProxyModel = make_shared<CountryProxyModel>(_countryQueryModel);
 	}
 
 	void WApplication::initCityQueryModel()
@@ -649,7 +647,7 @@ namespace GS
 		if(_cityQueryModel)
 			return;
 
-		_cityQueryModel = std::make_shared<CityQueryModel>();
+		_cityQueryModel = make_shared<CityQueryModel>();
 		_cityQueryModel->setBatchSize(10000);
 		_cityQueryModel->setQuery(dboSession().find<City>());
 		_cityQueryModel->addColumn("name");
@@ -662,13 +660,13 @@ namespace GS
 		if(_positionQueryModel)
 			return;
 
-		_positionQueryModel = std::make_shared<PositionQueryModel>();
+		_positionQueryModel = make_shared<PositionQueryModel>();
 		_positionQueryModel->setBatchSize(1000);
 		_positionQueryModel->setQuery(dboSession().find<EmployeePosition>());
 		_positionQueryModel->addColumn("title");
 		_positionQueryModel->addColumn("id");
 
-		_positionProxyModel = std::make_shared<PositionProxyModel>(_positionQueryModel);
+		_positionProxyModel = make_shared<PositionProxyModel>(_positionQueryModel);
 	}
 
 	void WApplication::initServiceQueryModel()
@@ -676,13 +674,13 @@ namespace GS
 		if(_serviceQueryModel)
 			return;
 
-		_serviceQueryModel = std::make_shared<ServiceQueryModel>();
+		_serviceQueryModel = make_shared<ServiceQueryModel>();
 		_serviceQueryModel->setBatchSize(1000);
 		_serviceQueryModel->setQuery(dboSession().find<ClientService>());
 		_serviceQueryModel->addColumn("title");
 		_serviceQueryModel->addColumn("id");
 
-		_serviceProxyModel = std::make_shared<ServiceProxyModel>(_serviceQueryModel);
+		_serviceProxyModel = make_shared<ServiceProxyModel>(_serviceQueryModel);
 	}
 
 	void WApplication::initRegionQueryModel()
@@ -690,13 +688,13 @@ namespace GS
 		if(_regionQueryModel)
 			return;
 
-		_regionQueryModel = std::make_shared<RegionQueryModel>();
+		_regionQueryModel = make_shared<RegionQueryModel>();
 		_regionQueryModel->setBatchSize(1000);
 		_regionQueryModel->setQuery(dboSession().find<Region>());
 		_regionQueryModel->addColumn("name");
 		_regionQueryModel->addColumn("id");
 
-		_regionProxyModel = std::make_shared<RegionProxyModel>(_regionQueryModel);
+		_regionProxyModel = make_shared<RegionProxyModel>(_regionQueryModel);
 	}
 
 	void WApplication::showErrorDialog(const Wt::WString &message)

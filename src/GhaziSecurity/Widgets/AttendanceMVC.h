@@ -1,6 +1,7 @@
 #ifndef GS_ATTENDANCEDEVICE_MVC_H
 #define GS_ATTENDANCEDEVICE_MVC_H
 
+#include "Common.h"
 #include "Dbo/Dbos.h"
 #include "Utilities/FilteredList.h"
 #include "Utilities/RecordFormView.h"
@@ -18,7 +19,7 @@ namespace GS
 	class AttendanceDeviceListProxyModel : public Wt::WBatchEditProxyModel
 	{
 	public:
-		AttendanceDeviceListProxyModel(std::shared_ptr<Wt::WAbstractItemModel> model);
+		AttendanceDeviceListProxyModel(shared_ptr<Wt::WAbstractItemModel> model);
 		virtual Wt::any data(const Wt::WModelIndex &idx, Wt::ItemDataRole role = Wt::ItemDataRole::Display) const override;
 		virtual Wt::any headerData(int section, Wt::Orientation orientation = Wt::Orientation::Horizontal, Wt::ItemDataRole role = Wt::ItemDataRole::Display) const override;
 		virtual Wt::WFlags<Wt::ItemFlag> flags(const Wt::WModelIndex &index) const override;
@@ -28,7 +29,7 @@ namespace GS
 		int _linkColumn = -1;
 	};
 
-	class AttendanceDeviceList : public QueryModelFilteredList<std::tuple<long long, std::string, std::string, std::string, std::string>>
+	class AttendanceDeviceList : public QueryModelFilteredList<tuple<long long, std::string, std::string, std::string, std::string>>
 	{
 	public:
 		enum ResultColumns { ResId, ResHostName, ResCountryName, ResCityName, ResAddress };
@@ -45,8 +46,8 @@ namespace GS
 		static const Wt::WFormModel::Field hostNameField;
 		static const Wt::WFormModel::Field locationField;
 
-		AttendanceDeviceFormModel(AttendanceDeviceView *view, Wt::Dbo::ptr<AttendanceDevice> attendanceDevicePtr = Wt::Dbo::ptr<AttendanceDevice>());
-		virtual std::unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
+		AttendanceDeviceFormModel(AttendanceDeviceView *view, Dbo::ptr<AttendanceDevice> attendanceDevicePtr = Dbo::ptr<AttendanceDevice>());
+		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
 	protected:
@@ -56,26 +57,26 @@ namespace GS
 	class AttendanceDeviceView : public RecordFormView
 	{
 	public:
-		AttendanceDeviceView(Wt::Dbo::ptr<AttendanceDevice> attendanceDevicePtr = Wt::Dbo::ptr<AttendanceDevice>());
+		AttendanceDeviceView(Dbo::ptr<AttendanceDevice> attendanceDevicePtr = Dbo::ptr<AttendanceDevice>());
 		virtual void initView() override;
 
-		Wt::Dbo::ptr<AttendanceDevice> attendanceDevicePtr() const { return _model->recordPtr(); }
-		std::shared_ptr<AttendanceDeviceFormModel> model() const { return _model; }
+		Dbo::ptr<AttendanceDevice> attendanceDevicePtr() const { return _model->recordPtr(); }
+		shared_ptr<AttendanceDeviceFormModel> model() const { return _model; }
 
 		virtual Wt::WString viewName() const override { return tr("AttendanceDeviceViewName").arg(attendanceDevicePtr().id()); }
 		virtual std::string viewInternalPath() const override { return attendanceDevicePtr() ? AttendanceDevice::viewInternalPath(attendanceDevicePtr().id()) : ""; }
-		virtual std::unique_ptr<RecordFormView> createFormView() override { return std::make_unique<AttendanceDeviceView>(); }
+		virtual unique_ptr<RecordFormView> createFormView() override { return make_unique<AttendanceDeviceView>(); }
 
 	protected:
-		std::shared_ptr<AttendanceDeviceFormModel> _model;
-		Wt::Dbo::ptr<AttendanceDevice> _tempPtr;
+		shared_ptr<AttendanceDeviceFormModel> _model;
+		Dbo::ptr<AttendanceDevice> _tempPtr;
 	};
 
 	//ATTENDANCE ENTRY
 	class AttendanceEntryListProxyModel : public Wt::WBatchEditProxyModel
 	{
 	public:
-		AttendanceEntryListProxyModel(std::shared_ptr<Wt::WAbstractItemModel> model);
+		AttendanceEntryListProxyModel(shared_ptr<Wt::WAbstractItemModel> model);
 		virtual Wt::any data(const Wt::WModelIndex &idx, Wt::ItemDataRole role = Wt::ItemDataRole::Display) const override;
 		virtual Wt::any headerData(int section, Wt::Orientation orientation = Wt::Orientation::Horizontal, Wt::ItemDataRole role = Wt::ItemDataRole::Display) const override;
 		virtual Wt::WFlags<Wt::ItemFlag> flags(const Wt::WModelIndex &index) const override;
@@ -85,7 +86,7 @@ namespace GS
 		int _linkColumn = -1;
 	};
 
-	class AttendanceEntryList : public QueryModelFilteredList<std::tuple<long long, std::string, Wt::WDateTime, Wt::WDateTime, std::string, std::string, std::string>>
+	class AttendanceEntryList : public QueryModelFilteredList<tuple<long long, std::string, Wt::WDateTime, Wt::WDateTime, std::string, std::string, std::string>>
 	{
 	public:
 		enum ResultColumns { ResId, ResEntityName, ResTimestampIn, ResTimestampOut, ResCountryName, ResCityName, ResAddress };
@@ -109,8 +110,8 @@ namespace GS
 		static const Wt::WFormModel::Field timeOutField;
 		static const Wt::WFormModel::Field locationField;
 
-		AttendanceEntryFormModel(AttendanceEntryView *view, Wt::Dbo::ptr<AttendanceEntry> attendanceEntryPtr = Wt::Dbo::ptr<AttendanceEntry>());
-		virtual std::unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
+		AttendanceEntryFormModel(AttendanceEntryView *view, Dbo::ptr<AttendanceEntry> attendanceEntryPtr = Dbo::ptr<AttendanceEntry>());
+		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
 	protected:
@@ -123,22 +124,22 @@ namespace GS
 	class AttendanceEntryView : public RecordFormView
 	{
 	public:
-		AttendanceEntryView(Wt::Dbo::ptr<AttendanceEntry> attendanceEntryPtr = Wt::Dbo::ptr<AttendanceEntry>());
+		AttendanceEntryView(Dbo::ptr<AttendanceEntry> attendanceEntryPtr = Dbo::ptr<AttendanceEntry>());
 		virtual void initView() override;
 
-		Wt::Dbo::ptr<AttendanceEntry> attendanceEntryPtr() const { return _model->recordPtr(); }
-		std::shared_ptr<AttendanceEntryFormModel> model() const { return _model; }
+		Dbo::ptr<AttendanceEntry> attendanceEntryPtr() const { return _model->recordPtr(); }
+		shared_ptr<AttendanceEntryFormModel> model() const { return _model; }
 
 		virtual Wt::WString viewName() const override;
 		virtual std::string viewInternalPath() const override { return attendanceEntryPtr() ? AttendanceEntry::viewInternalPath(attendanceEntryPtr().id()) : ""; }
-		virtual std::unique_ptr<RecordFormView> createFormView() override { return std::make_unique<AttendanceEntryView>(); }
+		virtual unique_ptr<RecordFormView> createFormView() override { return make_unique<AttendanceEntryView>(); }
 
 	protected:
 		virtual void updateView(Wt::WFormModel *model) override;
 		virtual void updateModel(Wt::WFormModel *model) override;
 
-		std::shared_ptr<AttendanceEntryFormModel> _model = nullptr;
-		Wt::Dbo::ptr<AttendanceEntry> _tempPtr;
+		shared_ptr<AttendanceEntryFormModel> _model = nullptr;
+		Dbo::ptr<AttendanceEntry> _tempPtr;
 	};
 }
 

@@ -13,13 +13,13 @@ namespace GS
 
 	void UserList::initFilters()
 	{
-		filtersTemplate()->addFilterModel(std::make_shared<WLineEditFilterModel>(tr("ID"), "ainfo.id", std::bind(&FiltersTemplate::initIdEdit, std::placeholders::_1))); filtersTemplate()->addFilter(1);
+		filtersTemplate()->addFilterModel(make_shared<WLineEditFilterModel>(tr("ID"), "ainfo.id", std::bind(&FiltersTemplate::initIdEdit, _1))); filtersTemplate()->addFilter(1);
 	}
 
 	void UserList::initModel()
 	{
-		std::shared_ptr<QueryModelType> model;
-		_model = model = std::make_shared<QueryModelType>();
+		shared_ptr<QueryModelType> model;
+		_model = model = make_shared<QueryModelType>();
 
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
@@ -37,10 +37,10 @@ namespace GS
 		addColumn(ViewEmail, model->addColumn("ainfo.email"), tr("Email"), EmailColumnWidth);
 		addColumn(ViewRegionName, model->addColumn("r.name"), tr("Region"), 150);
 
-		_proxyModel = std::make_shared<UserListProxyModel>(_model);
+		_proxyModel = make_shared<UserListProxyModel>(_model);
 	}
 
-	UserListProxyModel::UserListProxyModel(std::shared_ptr<Wt::WAbstractItemModel> model)
+	UserListProxyModel::UserListProxyModel(shared_ptr<Wt::WAbstractItemModel> model)
 	{
 		setSourceModel(model);
 		addAdditionalColumns();
@@ -83,7 +83,7 @@ namespace GS
 				return tr("GS.LinkIcon");
 			else if(role == Wt::ItemDataRole::Link)
 			{
-				const UserList::ResultType &res = std::static_pointer_cast<Wt::Dbo::QueryModel<UserList::ResultType>>(sourceModel())->resultRow(idx.row());
+				const UserList::ResultType &res = static_pointer_cast<Dbo::QueryModel<UserList::ResultType>>(sourceModel())->resultRow(idx.row());
 				long long id = std::get<UserList::ResId>(res);
 				return Wt::WLink(Wt::LinkType::InternalPath, User::viewInternalPath(id));
 			}
@@ -98,8 +98,8 @@ namespace GS
 	const Wt::WFormModel::Field UserFormModel::regionField = "region";
 	const Wt::WFormModel::Field UserFormModel::permissionsField = "permissions";
 
-	UserFormModel::UserFormModel(UserView *view, Wt::Dbo::ptr<AuthInfo> authInfoPtr /*= Wt::Dbo::ptr<AuthInfo>()*/)
-		: RecordFormModel(view, Wt::Dbo::ptr<User>()), _view(view), _authInfoPtr(authInfoPtr)
+	UserFormModel::UserFormModel(UserView *view, Dbo::ptr<AuthInfo> authInfoPtr /*= Dbo::ptr<AuthInfo>()*/)
+		: RecordFormModel(view, Dbo::ptr<User>()), _view(view), _authInfoPtr(authInfoPtr)
 	{
 		addField(loginNameField);
 		addField(passwordField);
@@ -113,7 +113,7 @@ namespace GS
 			WApplication *app = APP;
 			TRANSACTION(app);
 
-			Wt::Dbo::ptr<User> userPtr = _authInfoPtr->user();
+			Dbo::ptr<User> userPtr = _authInfoPtr->user();
 			if(!userPtr)
 			{
 				userPtr = app->dboSession().addNew<User>();
@@ -141,12 +141,12 @@ namespace GS
 		}
 	}
 
-	std::unique_ptr<Wt::WWidget> UserFormModel::createFormWidget(Field field)
+	unique_ptr<Wt::WWidget> UserFormModel::createFormWidget(Field field)
 	{
 		if(field == loginNameField)
 		{
-			auto edit = std::make_unique<Wt::WLineEdit>();
-			auto validator = std::make_shared<LoginNameValidator>();
+			auto edit = make_unique<Wt::WLineEdit>();
+			auto validator = make_shared<LoginNameValidator>();
 			if(isRecordPersisted())
 			{
 				TRANSACTION(APP);
@@ -158,21 +158,21 @@ namespace GS
 		}
 		if(field == passwordField)
 		{
-			auto edit = std::make_unique<Wt::WLineEdit>();
+			auto edit = make_unique<Wt::WLineEdit>();
 			edit->setEchoMode(Wt::EchoMode::Password);
-			setValidator(field, std::shared_ptr<Wt::Auth::AbstractPasswordService::AbstractStrengthValidator>(SERVER->getPasswordService().strengthValidator()));
+			setValidator(field, shared_ptr<Wt::Auth::AbstractPasswordService::AbstractStrengthValidator>(SERVER->getPasswordService().strengthValidator()));
 			return edit;
 		}
 		if(field == password2Field)
 		{
-			auto edit = std::make_unique<Wt::WLineEdit>();
+			auto edit = make_unique<Wt::WLineEdit>();
 			edit->setEchoMode(Wt::EchoMode::Password);
 			return edit;
 		}
 		if(field == emailField)
 		{
-			auto edit = std::make_unique<Wt::WLineEdit>();
-			auto validator = std::make_shared<Wt::WRegExpValidator>(".+\\@.+\\..+");
+			auto edit = make_unique<Wt::WLineEdit>();
+			auto validator = make_shared<Wt::WRegExpValidator>(".+\\@.+\\..+");
 			validator->setMandatory(true);
 			validator->setInvalidNoMatchText(tr("InvalidEmailAddress"));
 			setValidator(field, validator);
@@ -182,14 +182,14 @@ namespace GS
 		{
 			WApplication *app = APP;
 			app->initRegionQueryModel();
-			auto edit = std::make_unique<QueryProxyModelCB<RegionProxyModel>>(app->regionProxyModel());
+			auto edit = make_unique<QueryProxyModelCB<RegionProxyModel>>(app->regionProxyModel());
 			return edit;
 		}
 		if(field == permissionsField)
 		{
 			WApplication *app = APP;
 
-			auto edit = std::make_unique<Wt::WComboBox>();
+			auto edit = make_unique<Wt::WComboBox>();
 			edit->insertItem(RegionalUser, tr("RegionalUser"));
 
 			if(app->authLogin().hasPermission(Permissions::GlobalAdministrator))
@@ -236,7 +236,7 @@ namespace GS
 			}
 		}
 
-		_recordPtr.modify()->regionPtr = Wt::any_cast<Wt::Dbo::ptr<Region>>(value(regionField));
+		_recordPtr.modify()->regionPtr = Wt::any_cast<Dbo::ptr<Region>>(value(regionField));
 		_authInfoPtr.modify()->setEmail(valueText(emailField).toUTF8());
 
 		if(isVisible(passwordField) && isVisible(password2Field))
@@ -257,7 +257,7 @@ namespace GS
 		t.commit();
 
 		app->dboSession().flush();
-		auto nameValidator = std::static_pointer_cast<LoginNameValidator>(validator(loginNameField));
+		auto nameValidator = static_pointer_cast<LoginNameValidator>(validator(loginNameField));
 		nameValidator->setAllowedName(valueText(loginNameField));
 
 		if(isVisible(passwordField) && isVisible(password2Field))
@@ -366,13 +366,13 @@ namespace GS
 		_view->updateView();
 	}
 
-	UserView::UserView(Wt::Dbo::ptr<AuthInfo> authInfoPtr /*= Wt::Dbo::ptr<AuthInfo>()*/)
+	UserView::UserView(Dbo::ptr<AuthInfo> authInfoPtr /*= Dbo::ptr<AuthInfo>()*/)
 		: RecordFormView(tr("GS.Admin.UserView")), _tempPtr(authInfoPtr)
 	{ }
 
 	void UserView::initView()
 	{
-		_model = std::make_shared<UserFormModel>(this, _tempPtr);
+		_model = make_shared<UserFormModel>(this, _tempPtr);
 		addFormModel("user", _model);
 	}
 
@@ -384,13 +384,13 @@ namespace GS
 
 	void RegionList::initFilters()
 	{
-		filtersTemplate()->addFilterModel(std::make_shared<WLineEditFilterModel>(tr("ID"), "r.id", std::bind(&FiltersTemplate::initIdEdit, std::placeholders::_1))); filtersTemplate()->addFilter(1);
+		filtersTemplate()->addFilterModel(make_shared<WLineEditFilterModel>(tr("ID"), "r.id", std::bind(&FiltersTemplate::initIdEdit, _1))); filtersTemplate()->addFilter(1);
 	}
 
 	void RegionList::initModel()
 	{
-		std::shared_ptr<QueryModelType> model;
-		_model = model = std::make_shared<QueryModelType>();
+		shared_ptr<QueryModelType> model;
+		_model = model = make_shared<QueryModelType>();
 
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
@@ -400,10 +400,10 @@ namespace GS
 		addColumn(ViewId, model->addColumn("r.id"), tr("ID"), IdColumnWidth);
 		addColumn(ViewName, model->addColumn("r.name"), tr("Name"), 300);
 
-		_proxyModel = std::make_shared<RegionListProxyModel>(_model);
+		_proxyModel = make_shared<RegionListProxyModel>(_model);
 	}
 
-	RegionListProxyModel::RegionListProxyModel(std::shared_ptr<Wt::WAbstractItemModel> model)
+	RegionListProxyModel::RegionListProxyModel(shared_ptr<Wt::WAbstractItemModel> model)
 	{
 		setSourceModel(model);
 		addAdditionalColumns();
@@ -446,7 +446,7 @@ namespace GS
 				return tr("GS.LinkIcon");
 			else if(role == Wt::ItemDataRole::Link)
 			{
-				const RegionList::ResultType &res = std::static_pointer_cast<Wt::Dbo::QueryModel<RegionList::ResultType>>(sourceModel())->resultRow(idx.row());
+				const RegionList::ResultType &res = static_pointer_cast<Dbo::QueryModel<RegionList::ResultType>>(sourceModel())->resultRow(idx.row());
 				long long id = std::get<RegionList::ResId>(res);
 				return Wt::WLink(Wt::LinkType::InternalPath, Region::viewInternalPath(id));
 			}
@@ -456,7 +456,7 @@ namespace GS
 
 	const Wt::WFormModel::Field RegionFormModel::nameField = "name";
 
-	RegionFormModel::RegionFormModel(RegionView *view, Wt::Dbo::ptr<Region> regionPtr /*= Wt::Dbo::ptr<Region>()*/)
+	RegionFormModel::RegionFormModel(RegionView *view, Dbo::ptr<Region> regionPtr /*= Dbo::ptr<Region>()*/)
 		: RecordFormModel(view, regionPtr), _view(view)
 	{
 		addField(nameField);
@@ -470,13 +470,13 @@ namespace GS
 		}
 	}
 
-	std::unique_ptr<Wt::WWidget> RegionFormModel::createFormWidget(Field field)
+	unique_ptr<Wt::WWidget> RegionFormModel::createFormWidget(Field field)
 	{
 		if(field == nameField)
 		{
-			auto hostName = std::make_unique<Wt::WLineEdit>();
+			auto hostName = make_unique<Wt::WLineEdit>();
 			hostName->setMaxLength(70);
-			auto validator = std::make_shared<Wt::WLengthValidator>(0, 70);
+			auto validator = make_shared<Wt::WLengthValidator>(0, 70);
 			validator->setMandatory(true);
 			setValidator(nameField, validator);
 			return hostName;
@@ -530,13 +530,13 @@ namespace GS
 		return APP->authLogin().checkPermission(Permissions::CreateRegion);
 	}
 
-	RegionView::RegionView(Wt::Dbo::ptr<Region> regionPtr /*= Wt::Dbo::ptr<Region>()*/)
+	RegionView::RegionView(Dbo::ptr<Region> regionPtr /*= Dbo::ptr<Region>()*/)
 		: RecordFormView(tr("GS.Admin.RegionView")), _tempPtr(regionPtr)
 	{ }
 
 	void RegionView::initView()
 	{
-		_model = std::make_shared<RegionFormModel>(this, _tempPtr);
+		_model = make_shared<RegionFormModel>(this, _tempPtr);
 		addFormModel("region", _model);
 	}
 
@@ -546,7 +546,7 @@ namespace GS
 		return tr("RegionViewName").arg(regionPtr()->name);
 	}
 
-	RegionProxyModel::RegionProxyModel(std::shared_ptr<QueryModel> sourceModel)
+	RegionProxyModel::RegionProxyModel(shared_ptr<QueryModel> sourceModel)
 	{
 		setSourceModel(sourceModel);
 		addAdditionalRows();

@@ -36,7 +36,7 @@ namespace GS
 		Wt::WTemplate::setDisabled(disabled);
 	}
 
-	FindRecordEditTemplate::FindRecordEditTemplate(std::unique_ptr<Wt::WLineEdit> edit)
+	FindRecordEditTemplate::FindRecordEditTemplate(unique_ptr<Wt::WLineEdit> edit)
 		: Wt::WTemplate(tr("GS.FindRecordEdit")), _edit(edit.get())
 	{
 		bindWidget("edit", std::move(edit));
@@ -45,11 +45,11 @@ namespace GS
 
 	AbstractFindRecordEdit::AbstractFindRecordEdit()
 	{
-		auto edit = std::make_unique<Wt::WLineEdit>();
+		auto edit = make_unique<Wt::WLineEdit>();
 		_lineEdit = edit.get();
 		setFormWidgetImpl(_lineEdit);
 
-		_containerTemplate = setImplementation(std::make_unique<FindRecordEditTemplate>(std::move(edit)));
+		_containerTemplate = setImplementation(make_unique<FindRecordEditTemplate>(std::move(edit)));
 
 		_lineEdit->changed().connect(this, &AbstractFindRecordEdit::handleLineEditChanged);
 		valueChanged().connect(_lineEdit, std::bind(&Wt::WLineEdit::validate, _lineEdit));
@@ -104,19 +104,19 @@ namespace GS
 				TRANSACTION(app);
 				setValuePtr(app->dboSession().load<Value>(Wt::any_cast<long long>(itemIndex.data(Wt::ItemDataRole::User))));
 			}
-			catch(const Wt::Dbo::Exception &e)
+			catch(const Dbo::Exception &e)
 			{
 				Wt::log("error") << "FindRecordEdit::handleActivated(): Dbo error(" << e.code() << "): " << e.what();
-				setValuePtr(Wt::Dbo::ptr<Value>());
+				setValuePtr(Dbo::ptr<Value>());
 				app->showDbBackendError(e.code());
 			}
 		}
 		else
-			setValuePtr(Wt::Dbo::ptr<Value>());
+			setValuePtr(Dbo::ptr<Value>());
 	}
 
 	template<class Value>
-	void FindRecordEdit<Value>::setValuePtr(Wt::Dbo::ptr<Value> ptr)
+	void FindRecordEdit<Value>::setValuePtr(Dbo::ptr<Value> ptr)
 	{
 		if(_valuePtr != ptr)
 		{
@@ -131,7 +131,7 @@ namespace GS
 	{
 		_lineEdit->setPlaceholderText(tr("FindEntityEditPlaceholder"));
 
-		auto newEntity = std::make_unique<Wt::WPushButton>();
+		auto newEntity = make_unique<Wt::WPushButton>();
 		newEntity->clicked().connect(this, &FindEntityEdit::showNewEntityDialog);
 		switch(_entityType)
 		{
@@ -141,7 +141,7 @@ namespace GS
 		}
 		_containerTemplate->bindWidget("new", std::move(newEntity));
 
-		auto showList = std::make_unique<Wt::WPushButton>(tr("SelectFromList"));
+		auto showList = make_unique<Wt::WPushButton>(tr("SelectFromList"));
 		showList->clicked().connect(this, &FindEntityEdit::showEntityListDialog);
 		_containerTemplate->bindWidget("list", std::move(showList));
 
@@ -156,7 +156,7 @@ namespace GS
 		if(_newDialog)
 			_newDialog->removeFromParent();
 
-		_newDialog = addChild(std::make_unique<Wt::WDialog>());
+		_newDialog = addChild(make_unique<Wt::WDialog>());
 		_newDialog->setClosable(true);
 		_newDialog->resize(Wt::WLength(85, Wt::LengthUnit::Percentage), Wt::WLength(95, Wt::LengthUnit::Percentage));
 		_newDialog->setTransient(true);
@@ -181,22 +181,22 @@ namespace GS
 		if(_listDialog)
 			_listDialog->removeFromParent();
 
-		std::unique_ptr<Wt::WDialog> ld;
+		unique_ptr<Wt::WDialog> ld;
 		if(_entityType == Entity::PersonType)
 		{
-			auto selectionDialog = std::make_unique<ListSelectionDialog<PersonList>>(tr("SelectXFromList").arg(tr("person")));
+			auto selectionDialog = make_unique<ListSelectionDialog<PersonList>>(tr("SelectXFromList").arg(tr("person")));
 			selectionDialog->selected().connect(this, &FindEntityEdit::handleListSelectionChanged);
 			ld = std::move(selectionDialog);
 		}
 		else if(_entityType == Entity::BusinessType)
 		{
-			auto selectionDialog = std::make_unique<ListSelectionDialog<BusinessList>>(tr("SelectXFromList").arg(tr("business")));
+			auto selectionDialog = make_unique<ListSelectionDialog<BusinessList>>(tr("SelectXFromList").arg(tr("business")));
 			selectionDialog->selected().connect(this, &FindEntityEdit::handleListSelectionChanged);
 			ld = std::move(selectionDialog);
 		}
 		else
 		{
-			auto selectionDialog = std::make_unique<ListSelectionDialog<AllEntityList>>(tr("SelectXFromList").arg(tr("entity")));
+			auto selectionDialog = make_unique<ListSelectionDialog<AllEntityList>>(tr("SelectXFromList").arg(tr("entity")));
 			selectionDialog->selected().connect(this, &FindEntityEdit::handleListSelectionChanged);
 			ld = std::move(selectionDialog);
 		}
@@ -211,10 +211,10 @@ namespace GS
 		try
 		{
 			TRANSACTION(app);
-			Wt::Dbo::ptr<Entity> entityPtr = app->dboSession().load<Entity>(id);
+			Dbo::ptr<Entity> entityPtr = app->dboSession().load<Entity>(id);
 			setValuePtr(entityPtr);
 		}
-		catch(const Wt::Dbo::Exception &e)
+		catch(const Dbo::Exception &e)
 		{
 			Wt::log("error") << "FindEntityEdit::handleListSelectionChanged(): Dbo error(" << e.code() << "): " << e.what();
 			app->showDbBackendError(e.code());
@@ -338,7 +338,7 @@ namespace GS
 		if(_newDialog)
 			_newDialog->removeFromParent();
 
-		_newDialog = addChild(std::make_unique<Wt::WDialog>(tr("AddNewX").arg(tr("account"))));
+		_newDialog = addChild(make_unique<Wt::WDialog>(tr("AddNewX").arg(tr("account"))));
 		_newDialog->setClosable(true);
 		_newDialog->resize(Wt::WLength(85, Wt::LengthUnit::Percentage), Wt::WLength(95, Wt::LengthUnit::Percentage));
 		_newDialog->setTransient(true);
@@ -361,7 +361,7 @@ namespace GS
 		if(_listDialog)
 			_listDialog->removeFromParent();
 
-		auto selectionDialog = std::make_unique<ListSelectionDialog<AccountList>>(tr("SelectXFromList").arg(tr("account")));
+		auto selectionDialog = make_unique<ListSelectionDialog<AccountList>>(tr("SelectXFromList").arg(tr("account")));
 		selectionDialog->selected().connect(this, &FindAccountEdit::handleListSelectionChanged);
 		
 		_listDialog = selectionDialog.get();
@@ -375,10 +375,10 @@ namespace GS
 		try
 		{
 			TRANSACTION(app);
-			Wt::Dbo::ptr<Account> accountPtr = APP->dboSession().load<Account>(id);
+			Dbo::ptr<Account> accountPtr = APP->dboSession().load<Account>(id);
 			setValuePtr(accountPtr);
 		}
-		catch(const Wt::Dbo::Exception &e)
+		catch(const Dbo::Exception &e)
 		{
 			Wt::log("error") << "FindAccountEdit::handleListSelectionChanged(): Dbo error(" << e.code() << "): " << e.what();
 			app->showDbBackendError(e.code());
@@ -467,7 +467,7 @@ namespace GS
 		if(_newDialog)
 			_newDialog->removeFromParent();
 
-		_newDialog = addChild(std::make_unique<Wt::WDialog>(tr("AddNewX").arg(tr("location"))));
+		_newDialog = addChild(make_unique<Wt::WDialog>(tr("AddNewX").arg(tr("location"))));
 		_newDialog->setClosable(true);
 		_newDialog->resize(Wt::WLength(85, Wt::LengthUnit::Percentage), Wt::WLength(95, Wt::LengthUnit::Percentage));
 		_newDialog->setTransient(true);
@@ -490,7 +490,7 @@ namespace GS
 		if(_listDialog)
 			_listDialog->removeFromParent();
 
-		auto selectionDialog = std::make_unique<ListSelectionDialog<LocationList>>(tr("SelectXFromList").arg(tr("location")));
+		auto selectionDialog = make_unique<ListSelectionDialog<LocationList>>(tr("SelectXFromList").arg(tr("location")));
 		selectionDialog->selected().connect(this, &FindLocationEdit::handleListSelectionChanged);
 
 		_listDialog = selectionDialog.get();
@@ -504,10 +504,10 @@ namespace GS
 		try
 		{
 			TRANSACTION(app);
-			Wt::Dbo::ptr<Location> ptr = app->dboSession().load<Location>(id);
+			Dbo::ptr<Location> ptr = app->dboSession().load<Location>(id);
 			setValuePtr(ptr);
 		}
-		catch(const Wt::Dbo::Exception &e)
+		catch(const Dbo::Exception &e)
 		{
 			Wt::log("error") << "FindLocationEdit::handleListSelectionChanged(): Dbo error(" << e.code() << "): " << e.what();
 			app->showDbBackendError(e.code());
@@ -565,7 +565,7 @@ namespace GS
 	void FindEntitySuggestionPopup::handleFilterModel(const Wt::WString &str, Wt::WFormWidget *edit)
 	{
 		bool modifyPermissionRequired = false;
-		if(auto validator = std::dynamic_pointer_cast<FindEntityValidator>(edit->validator()))
+		if(auto validator = dynamic_pointer_cast<FindEntityValidator>(edit->validator()))
 			modifyPermissionRequired = validator->modifyPermissionRequired();
 
 		Entity::Type typeFilter = Entity::InvalidType;
@@ -579,11 +579,11 @@ namespace GS
 			}
 		}
 
-		auto stringList = std::static_pointer_cast<Wt::WStringListModel>(model());
+		auto stringList = static_pointer_cast<Wt::WStringListModel>(model());
 		stringList->removeRows(0, stringList->rowCount());
 
 		WApplication *app = APP;
-		typedef std::tuple<std::string, long long> FEMTuple;
+		typedef tuple<std::string, long long> FEMTuple;
 		auto query = app->dboSession().query<FEMTuple>("SELECT name, id FROM " + std::string(Entity::tableName())).limit(50);
 		auto countQuery = app->dboSession().query<int>("SELECT COUNT(1) FROM " + std::string(Entity::tableName()));
 
@@ -627,7 +627,7 @@ namespace GS
 
 		TRANSACTION(app);
 		int count = countQuery;
-		Wt::Dbo::collection<FEMTuple> result = query;
+		Dbo::collection<FEMTuple> result = query;
 
 		for(const FEMTuple &row : result)
 		{
@@ -657,14 +657,14 @@ namespace GS
 	void FindAccountSuggestionPopup::handleFilterModel(const Wt::WString &str, Wt::WFormWidget *edit)
 	{
 		bool modifyPermissionRequired = false;
-		if(auto validator = std::dynamic_pointer_cast<FindAccountValidator>(edit->validator()))
+		if(auto validator = dynamic_pointer_cast<FindAccountValidator>(edit->validator()))
 			modifyPermissionRequired = validator->modifyPermissionRequired();
 
-		auto stringList = std::static_pointer_cast<Wt::WStringListModel>(model());
+		auto stringList = static_pointer_cast<Wt::WStringListModel>(model());
 		stringList->removeRows(0, stringList->rowCount());
 
 		WApplication *app = APP;
-		typedef std::tuple<std::string, long long, Account::Type, std::string> FAMTuple;
+		typedef tuple<std::string, long long, Account::Type, std::string> FAMTuple;
 		std::string joinPart = "LEFT JOIN " + std::string(Entity::tableName()) + " e ON (e.bal_account_id = acc.id OR e.pnl_account_id = acc.id)";
 		auto query = app->dboSession().query<FAMTuple>("SELECT acc.name, acc.id, acc.type, e.name FROM " + std::string(Account::tableName()) + " acc " + joinPart).limit(50);
 		auto countQuery = app->dboSession().query<int>("SELECT COUNT(acc.id) FROM " + std::string(Account::tableName()) + " acc " + joinPart);
@@ -699,7 +699,7 @@ namespace GS
 
 		TRANSACTION(app);
 		int count = countQuery;
-		Wt::Dbo::collection<FAMTuple> result = query;
+		Dbo::collection<FAMTuple> result = query;
 
 		for(const FAMTuple &row : result)
 		{
@@ -737,10 +737,10 @@ namespace GS
 	void FindLocationSuggestionPopup::handleFilterModel(const Wt::WString &str, Wt::WFormWidget *edit)
 	{
 		bool modifyPermissionRequired = false;
-		if(auto validator = std::dynamic_pointer_cast<FindLocationValidator>(edit->validator()))
+		if(auto validator = dynamic_pointer_cast<FindLocationValidator>(edit->validator()))
 			modifyPermissionRequired = validator->modifyPermissionRequired();
 
-		auto stringList = std::static_pointer_cast<Wt::WStringListModel>(model());
+		auto stringList = static_pointer_cast<Wt::WStringListModel>(model());
 		stringList->removeRows(0, stringList->rowCount());
 
 		WApplication *app = APP;
@@ -781,7 +781,7 @@ namespace GS
 
 		TRANSACTION(app);
 		int count = countQuery;
-		Wt::Dbo::collection<ResultTuple> result = query;
+		Dbo::collection<ResultTuple> result = query;
 
 		for(const ResultTuple &row : result)
 		{

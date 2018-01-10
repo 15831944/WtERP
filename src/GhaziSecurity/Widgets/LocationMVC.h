@@ -1,6 +1,7 @@
 #ifndef GS_LOCATION_MVC_H
 #define GS_LOCATION_MVC_H
 
+#include "Common.h"
 #include "Dbo/Dbos.h"
 #include "Utilities/QueryProxyMVC.h"
 #include "Utilities/RecordFormView.h"
@@ -19,11 +20,11 @@ namespace GS
 	class CountryView;
 	class CityView;
 
-	class CountryProxyModel : public QueryProxyModel<Wt::Dbo::ptr<Country>>
+	class CountryProxyModel : public QueryProxyModel<Dbo::ptr<Country>>
 	{
 	public:
-		typedef Wt::Dbo::QueryModel<Wt::Dbo::ptr<Country>> QueryModel;
-		CountryProxyModel(std::shared_ptr<QueryModel> sourceModel);
+		typedef Dbo::QueryModel<Dbo::ptr<Country>> QueryModel;
+		CountryProxyModel(shared_ptr<QueryModel> sourceModel);
 
 	protected:
 		void addAdditionalRows();
@@ -43,16 +44,16 @@ namespace GS
 		std::string _countryCode;
 	};
 
-	class CityProxyModel : public QueryProxyModel<Wt::Dbo::ptr<City>>
+	class CityProxyModel : public QueryProxyModel<Dbo::ptr<City>>
 	{
 	public:
-		typedef Wt::Dbo::QueryModel<Wt::Dbo::ptr<City>> QueryModel;
-		CityProxyModel(std::shared_ptr<QueryModel> sourceModel);
-		std::shared_ptr<CityFilterModel> filterModel() const { return _filterModel; }
+		typedef Dbo::QueryModel<Dbo::ptr<City>> QueryModel;
+		CityProxyModel(shared_ptr<QueryModel> sourceModel);
+		shared_ptr<CityFilterModel> filterModel() const { return _filterModel; }
 
 	protected:
 		void addAdditionalRows();
-		std::shared_ptr<CityFilterModel> _filterModel = nullptr;
+		shared_ptr<CityFilterModel> _filterModel = nullptr;
 	};
 
 	class CountryFormModel : public RecordFormModel<Country>
@@ -61,8 +62,8 @@ namespace GS
 		static const Wt::WFormModel::Field codeField;
 		static const Wt::WFormModel::Field nameField;
 
-		CountryFormModel(CountryView *view, Wt::Dbo::ptr<Country> countryPtr = Wt::Dbo::ptr<Country>());
-		virtual std::unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
+		CountryFormModel(CountryView *view, Dbo::ptr<Country> countryPtr = Dbo::ptr<Country>());
+		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
 	protected:
@@ -72,16 +73,16 @@ namespace GS
 	class CountryView : public RecordFormView
 	{
 	public:
-		CountryView(Wt::Dbo::ptr<Country> countryPtr);
+		CountryView(Dbo::ptr<Country> countryPtr);
 		CountryView();
 		virtual void initView() override;
 
-		Wt::Dbo::ptr<Country> countryPtr() const { return _model->recordPtr(); }
-		std::shared_ptr<CountryFormModel> model() const { return _model; }
+		Dbo::ptr<Country> countryPtr() const { return _model->recordPtr(); }
+		shared_ptr<CountryFormModel> model() const { return _model; }
 
 	protected:
-		std::shared_ptr<CountryFormModel> _model;
-		Wt::Dbo::ptr<Country> _tempPtr;
+		shared_ptr<CountryFormModel> _model;
+		Dbo::ptr<Country> _tempPtr;
 	};
 
 	class CountryCodeValidator : public Wt::WLengthValidator
@@ -105,8 +106,8 @@ namespace GS
 		static const Wt::WFormModel::Field countryField;
 		static const Wt::WFormModel::Field nameField;
 
-		CityFormModel(CityView *view, Wt::Dbo::ptr<City> cityPtr = Wt::Dbo::ptr<City>());
-		virtual std::unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
+		CityFormModel(CityView *view, Dbo::ptr<City> cityPtr = Dbo::ptr<City>());
+		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
 	protected:
@@ -117,15 +118,15 @@ namespace GS
 	{
 	public:
 		CityView();
-		CityView(Wt::Dbo::ptr<City> cityPtr);
+		CityView(Dbo::ptr<City> cityPtr);
 		virtual void initView() override;
 
-		Wt::Dbo::ptr<City> cityPtr() const { return _model->recordPtr(); }
-		std::shared_ptr<CityFormModel> model() const { return _model; }
+		Dbo::ptr<City> cityPtr() const { return _model->recordPtr(); }
+		shared_ptr<CityFormModel> model() const { return _model; }
 
 	protected:
-		std::shared_ptr<CityFormModel> _model = nullptr;
-		Wt::Dbo::ptr<City> _tempPtr;
+		shared_ptr<CityFormModel> _model = nullptr;
+		Dbo::ptr<City> _tempPtr;
 	};
 
 	class LocationFormModel : public RecordFormModel<Location>
@@ -136,8 +137,8 @@ namespace GS
 		static const Field cityField;
 		static const Field addressField;
 
-		LocationFormModel(LocationView *view, Wt::Dbo::ptr<Location> locationPtr = Wt::Dbo::ptr<Location>());
-		virtual std::unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
+		LocationFormModel(LocationView *view, Dbo::ptr<Location> locationPtr = Dbo::ptr<Location>());
+		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
 	protected:
@@ -147,7 +148,7 @@ namespace GS
 	class LocationView : public RecordFormView
 	{
 	public:
-		LocationView(Wt::Dbo::ptr<Location> locationPtr = Wt::Dbo::ptr<Location>());
+		LocationView(Dbo::ptr<Location> locationPtr = Dbo::ptr<Location>());
 		virtual void initView() override;
 
 		void handleCountryChanged(bool resetCity);
@@ -157,8 +158,8 @@ namespace GS
 
 		QueryProxyModelCB<CountryProxyModel> *countryCombo() const { return _countryCombo; }
 		QueryProxyModelCB<CityProxyModel> *cityCombo() const { return _cityCombo; }
-		std::shared_ptr<LocationFormModel> model() const { return _model; }
-		Wt::Dbo::ptr<Location> locationPtr() const { return _model->recordPtr(); }
+		shared_ptr<LocationFormModel> model() const { return _model; }
+		Dbo::ptr<Location> locationPtr() const { return _model->recordPtr(); }
 		using RecordFormView::updateView;
 
 	protected:
@@ -167,13 +168,13 @@ namespace GS
 		QueryProxyModelCB<CountryProxyModel> *_countryCombo = nullptr;
 		QueryProxyModelCB<CityProxyModel> *_cityCombo = nullptr;
 		Wt::WDialog *_dialog = nullptr;
-		std::shared_ptr<CityProxyModel> _cityProxyModel;
-		std::shared_ptr<LocationFormModel> _model;
-		Wt::Dbo::ptr<Location> _tempPtr;
+		shared_ptr<CityProxyModel> _cityProxyModel;
+		shared_ptr<LocationFormModel> _model;
+		Dbo::ptr<Location> _tempPtr;
 	};
 
 	//LocationList
-	class LocationList : public QueryModelFilteredList<std::tuple<long long, std::string, std::string, std::string, std::string>>
+	class LocationList : public QueryModelFilteredList<tuple<long long, std::string, std::string, std::string, std::string>>
 	{
 	public:
 		enum ResultColumns { ResId, ResAddress, ResCountryName, ResCityName, ResEntityName };

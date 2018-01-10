@@ -5,10 +5,10 @@
 
 namespace GS
 {
-	Wt::Dbo::ptr<Account> AccountsDatabase::findOrCreateCashAccount(bool loadLazy /*= false*/)
+	Dbo::ptr<Account> AccountsDatabase::findOrCreateCashAccount(bool loadLazy /*= false*/)
 	{
-		Wt::Dbo::Transaction t(dboSession);
-		Wt::Dbo::ptr<Account> accountPtr;
+		Dbo::Transaction t(dboSession);
+		Dbo::ptr<Account> accountPtr;
 		WServer *server = SERVER;
 
 		//Config found
@@ -40,12 +40,12 @@ namespace GS
 		return accountPtr;
 	}
 
-	void AccountsDatabase::createEntityAccountsIfNotFound(Wt::Dbo::ptr<Entity> entityPtr)
+	void AccountsDatabase::createEntityAccountsIfNotFound(Dbo::ptr<Entity> entityPtr)
 	{
 		if(!entityPtr)
 			return;
 
-		Wt::Dbo::Transaction t(dboSession);
+		Dbo::Transaction t(dboSession);
 
 		if(!entityPtr->balAccountPtr)
 		{
@@ -69,13 +69,13 @@ namespace GS
 		t.commit();
 	}
 
-	Wt::Dbo::ptr<AccountEntry> AccountsDatabase::createAccountEntry(const Money &amount, Wt::Dbo::ptr<Account> debitAccountPtr, Wt::Dbo::ptr<Account> creditAccountPtr)
+	Dbo::ptr<AccountEntry> AccountsDatabase::createAccountEntry(const Money &amount, Dbo::ptr<Account> debitAccountPtr, Dbo::ptr<Account> creditAccountPtr)
 	{
 		if(!debitAccountPtr || !creditAccountPtr)
-			return Wt::Dbo::ptr<AccountEntry>();
+			return Dbo::ptr<AccountEntry>();
 
-		Wt::Dbo::Transaction t(dboSession);
-		auto result = dboSession.add(std::unique_ptr<AccountEntry>(new AccountEntry(amount, debitAccountPtr, creditAccountPtr)));
+		Dbo::Transaction t(dboSession);
+		auto result = dboSession.add(unique_ptr<AccountEntry>(new AccountEntry(amount, debitAccountPtr, creditAccountPtr)));
 		result.modify()->setCreatedByValues();
 
 		updateAccountBalances(result);
@@ -84,7 +84,7 @@ namespace GS
 		return result;
 	}
 
-	void AccountsDatabase::updateAccountBalances(Wt::Dbo::ptr<AccountEntry> accountEntryPtr)
+	void AccountsDatabase::updateAccountBalances(Dbo::ptr<AccountEntry> accountEntryPtr)
 	{
 		try
 		{
@@ -93,7 +93,7 @@ namespace GS
 			accountEntryPtr->_debitAccountPtr.flush();
 			accountEntryPtr->_creditAccountPtr.flush();
 		}
-		catch(const Wt::Dbo::StaleObjectException &)
+		catch(const Dbo::StaleObjectException &)
 		{
 			Account debitAccount = *accountEntryPtr->_debitAccountPtr;
 			Account creditAccount = *accountEntryPtr->_creditAccountPtr;
@@ -107,7 +107,7 @@ namespace GS
 				accountEntryPtr->_debitAccountPtr.flush();
 				accountEntryPtr->_creditAccountPtr.flush();
 			}
-			catch(const Wt::Dbo::StaleObjectException &)
+			catch(const Dbo::StaleObjectException &)
 			{
 				Wt::log("warn") << "AccountsDatabase::updateAccountBalances(): StaleObjectException caught twice";
 				accountEntryPtr->_debitAccountPtr.modify()->operator=(debitAccount);
@@ -117,9 +117,9 @@ namespace GS
 		}
 	}
 
-	void AccountsDatabase::createPendingCycleEntry(Wt::Dbo::ptr<IncomeCycle> cyclePtr, Wt::Dbo::ptr<AccountEntry> lastEntryPtr, const Wt::WDateTime &currentDt, steady_clock::duration *nextEntryDuration)
+	void AccountsDatabase::createPendingCycleEntry(Dbo::ptr<IncomeCycle> cyclePtr, Dbo::ptr<AccountEntry> lastEntryPtr, const Wt::WDateTime &currentDt, steady_clock::duration *nextEntryDuration)
 	{
-		Wt::Dbo::Transaction t(dboSession);
+		Dbo::Transaction t(dboSession);
 
 		if(!cyclePtr)
 			throw std::logic_error("AccountsDatabase::createPendingCycleEntry(): cyclePtr was null");
@@ -135,7 +135,7 @@ namespace GS
 
 		auto assignmentCount = cyclePtr->clientAssignmentCollection.size();
 
-		while(Wt::Dbo::ptr<AccountEntry> newEntry = _createPendingCycleEntry(*cyclePtr, lastEntryPtr, currentDt, nextEntryDuration))
+		while(Dbo::ptr<AccountEntry> newEntry = _createPendingCycleEntry(*cyclePtr, lastEntryPtr, currentDt, nextEntryDuration))
 		{
 			newEntry.modify()->incomeCyclePtr = cyclePtr;
 			newEntry.modify()->_debitAccountPtr = cyclePtr->entityPtr->balAccountPtr;
@@ -153,9 +153,9 @@ namespace GS
 		t.commit();
 	}
 
-	void AccountsDatabase::createPendingCycleEntry(Wt::Dbo::ptr<ExpenseCycle> cyclePtr, Wt::Dbo::ptr<AccountEntry> lastEntryPtr, const Wt::WDateTime &currentDt, steady_clock::duration *nextEntryDuration)
+	void AccountsDatabase::createPendingCycleEntry(Dbo::ptr<ExpenseCycle> cyclePtr, Dbo::ptr<AccountEntry> lastEntryPtr, const Wt::WDateTime &currentDt, steady_clock::duration *nextEntryDuration)
 	{
-		Wt::Dbo::Transaction t(dboSession);
+		Dbo::Transaction t(dboSession);
 
 		if(!cyclePtr)
 			throw std::logic_error("AccountsDatabase::createPendingCycleEntry(): cyclePtr was null");
@@ -171,7 +171,7 @@ namespace GS
 
 		auto assignmentCount = cyclePtr->employeeAssignmentCollection.size();
 
-		while(Wt::Dbo::ptr<AccountEntry> newEntry = _createPendingCycleEntry(*cyclePtr, lastEntryPtr, currentDt, nextEntryDuration))
+		while(Dbo::ptr<AccountEntry> newEntry = _createPendingCycleEntry(*cyclePtr, lastEntryPtr, currentDt, nextEntryDuration))
 		{
 			newEntry.modify()->expenseCyclePtr = cyclePtr;
 			newEntry.modify()->_debitAccountPtr = cyclePtr->entityPtr->pnlAccountPtr;
@@ -189,39 +189,39 @@ namespace GS
 		t.commit();
 	}
 
-	Wt::Dbo::ptr<AccountEntry> AccountsDatabase::_createPendingCycleEntry(
+	Dbo::ptr<AccountEntry> AccountsDatabase::_createPendingCycleEntry(
 		const EntryCycle &cycle,
-		Wt::Dbo::ptr<AccountEntry> lastEntryPtr,
+		Dbo::ptr<AccountEntry> lastEntryPtr,
 		const Wt::WDateTime &currentDt,
 		steady_clock::duration *nextEntryDuration)
 	{
 		//DO NOT ALLOW THESE NULL DATES(in scan query)
 		if(cycle.startDate.isNull() || cycle.timestamp.isNull())
-			return Wt::Dbo::ptr<AccountEntry>();
+			return Dbo::ptr<AccountEntry>();
 
 		//Do not allow cycles with start dates later than today and creation dt later than now(already filtered, reasserted)
 		if(cycle.startDate > currentDt.date() || cycle.timestamp > currentDt)
-			return Wt::Dbo::ptr<AccountEntry>();
+			return Dbo::ptr<AccountEntry>();
 
 		//Do not allow cycles with end dates earlier or equal to start date
 		if(cycle.endDate.isValid() && cycle.endDate <= cycle.startDate)
-			return Wt::Dbo::ptr<AccountEntry>();
+			return Dbo::ptr<AccountEntry>();
 
 		//Do not allow invalid interval or nIntervals
 		if(cycle.interval < DailyInterval || cycle.interval > YearlyInterval)
-			return Wt::Dbo::ptr<AccountEntry>();
+			return Dbo::ptr<AccountEntry>();
 		if(cycle.nIntervals < 1)
-			return Wt::Dbo::ptr<AccountEntry>();
+			return Dbo::ptr<AccountEntry>();
 
 		if(lastEntryPtr)
 		{
 			//Do not allow cycles which have ended and the final entry had already been made(already filtered, reasserted)
 			if(cycle.endDate.isValid() && cycle.endDate <= lastEntryPtr->timestamp.date())
-				return Wt::Dbo::ptr<AccountEntry>();
+				return Dbo::ptr<AccountEntry>();
 
 			//Do not allow entries with invalid date(in scan query)
 			if(lastEntryPtr->timestamp.isNull() || lastEntryPtr->timestamp > currentDt)
-				return Wt::Dbo::ptr<AccountEntry>();
+				return Dbo::ptr<AccountEntry>();
 		}
 
 		//BEGIN
@@ -248,12 +248,12 @@ namespace GS
 			else
 			{
 				Wt::log("error") << "AccountsDatabase::_createPendingCycleEntry() logic error: lastEntryPtr AND cycle.firstEntryAfterCycle were both false!";
-				return Wt::Dbo::ptr<AccountEntry>();
+				return Dbo::ptr<AccountEntry>();
 			}
 
 			//Its possible because of cycle.firstEntryAfterCycle
 			if(previousCyclePeriodDt > currentDt)
-				return Wt::Dbo::ptr<AccountEntry>();
+				return Dbo::ptr<AccountEntry>();
 
 			elapsedDuration = currentDt.toTimePoint() - previousCyclePeriodDt.toTimePoint();
 			nextCyclePeriodDt = addCycleInterval(previousCyclePeriodDt, cycle.interval, cycle.nIntervals);
@@ -297,7 +297,7 @@ namespace GS
 		}
 
 		if(!createEntry)
-			return Wt::Dbo::ptr<AccountEntry>();
+			return Dbo::ptr<AccountEntry>();
 
 		AccountEntry newEntry;
 		if(incompleteDurationEntry)

@@ -18,7 +18,7 @@
 namespace GS
 {
 
-	UploadedImage::UploadedImage(Wt::Dbo::ptr<UploadedFile> ptr)
+	UploadedImage::UploadedImage(Dbo::ptr<UploadedFile> ptr)
 		: temporary(false), filePtr(ptr), fileName(ptr->pathToFile()), mimeType(ptr->mimeType), extension(ptr->extension)
 	{ }
 
@@ -37,7 +37,7 @@ namespace GS
 		else
 			bindEmpty("label-for");
 
-		_tempImage = std::make_unique<Wt::WImage>(Wt::WLink());
+		_tempImage = make_unique<Wt::WImage>(Wt::WLink());
 		_image = _tempImage.get();
 
 		_fileUpload->setFilters("image/*");
@@ -71,7 +71,7 @@ namespace GS
 			Magick::Blob blob;
 			createThumbnail(fileInfo.spoolFileName(), &blob);
 
-			auto memoryResource = std::make_shared<Wt::WMemoryResource>("image/jpeg");
+			auto memoryResource = make_shared<Wt::WMemoryResource>("image/jpeg");
 			memoryResource->setData((const unsigned char*)blob.data(), static_cast<int>(blob.length()));
 			_image->setImageLink(Wt::WLink(memoryResource));
 			_thumbnailResource = memoryResource;
@@ -80,7 +80,7 @@ namespace GS
 			_imageInfo.mimeType = fileInfo.contentType();
 			_imageInfo.extension = filePath.extension().string();
 			_imageInfo.temporary = true;
-			_imageInfo.filePtr = Wt::Dbo::ptr<UploadedFile>();
+			_imageInfo.filePtr = Dbo::ptr<UploadedFile>();
 
 			resolve<Wt::WText*>("action")->setText(_actionChange);
 			setCondition("has-image", true);
@@ -134,7 +134,7 @@ namespace GS
 		
 		if(!_dialog)
 		{
-			_dialog = addChild(std::make_unique<Wt::WDialog>());
+			_dialog = addChild(make_unique<Wt::WDialog>());
 			_dialog->setClosable(true);
 			_dialog->resize(Wt::WLength(95,  Wt::LengthUnit::Percentage), Wt::WLength(95,  Wt::LengthUnit::Percentage));
 			_dialog->rejectWhenEscapePressed(true);
@@ -142,7 +142,7 @@ namespace GS
 			_dialog->contents()->setOverflow(Wt::Overflow::Auto);
 
 			if(!_imageResource)
-				_imageResource = std::make_shared<Wt::WFileResource>();
+				_imageResource = make_shared<Wt::WFileResource>();
 			_imageResource->setFileName(_imageInfo.fileName);
 			_imageResource->setMimeType(_imageInfo.mimeType);
 
@@ -168,9 +168,9 @@ namespace GS
 			return;
 		}
 
-		auto thumbFileResource = std::dynamic_pointer_cast<Wt::WFileResource>(_thumbnailResource);
+		auto thumbFileResource = dynamic_pointer_cast<Wt::WFileResource>(_thumbnailResource);
 		if(!thumbFileResource)
-			_thumbnailResource = thumbFileResource = std::make_shared<Wt::WFileResource>();
+			_thumbnailResource = thumbFileResource = make_shared<Wt::WFileResource>();
 
 		boost::filesystem::path path(_imageInfo.fileName);
 		boost::filesystem::path thumbnailPath = path.parent_path() / path.stem().concat("_thumb.jpg");
@@ -183,7 +183,7 @@ namespace GS
 		lazyBindImage();
 	}
 
-	bool ImageUpload::saveAndRelocate(Wt::Dbo::ptr<Entity> entityPtr, const std::string &description /*= ""*/)
+	bool ImageUpload::saveAndRelocate(Dbo::ptr<Entity> entityPtr, const std::string &description /*= ""*/)
 	{
 		if(!_imageInfo.temporary || !entityPtr || _fileUpload->uploadedFiles().empty())
 			return false;
@@ -214,7 +214,7 @@ namespace GS
 			boost::filesystem::remove(_imageInfo.fileName);
 			_fileUpload->uploadedFiles().back().stealSpoolFile();
 
-			auto thumbMemoryResource = std::static_pointer_cast<Wt::WMemoryResource>(_thumbnailResource);
+			auto thumbMemoryResource = static_pointer_cast<Wt::WMemoryResource>(_thumbnailResource);
 			std::ofstream thumbnailStream(thumbnailFilePath.string(), std::ofstream::binary | std::ofstream::trunc);
 			auto thumbnailData = thumbMemoryResource->data();
 			thumbnailStream.write((const char*)&thumbnailData[0], thumbnailData.size() * sizeof(unsigned char));
@@ -226,8 +226,8 @@ namespace GS
 			if(_imageResource)
 				_imageResource->setFileName(newFilePath.string());
 
-			std::shared_ptr<Wt::WFileResource> thumbFileResource;
-			_thumbnailResource = thumbFileResource = std::make_shared<Wt::WFileResource>();
+			shared_ptr<Wt::WFileResource> thumbFileResource;
+			_thumbnailResource = thumbFileResource = make_shared<Wt::WFileResource>();
 			thumbFileResource->setFileName(thumbnailFilePath.string());
 			thumbFileResource->setMimeType("image/jpeg");
 			_image->setImageLink(Wt::WLink(_thumbnailResource));

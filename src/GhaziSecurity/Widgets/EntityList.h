@@ -1,6 +1,7 @@
 #ifndef GS_ENTITYLIST_WIDGET_H
 #define GS_ENTITYLIST_WIDGET_H
 
+#include "Common.h"
 #include "Dbo/Dbos.h"
 #include "Application/WApplication.h"
 #include "Utilities/FilteredList.h"
@@ -17,8 +18,6 @@
 #include <Wt/WBatchEditProxyModel.h>
 #include <Wt/WSortFilterProxyModel.h>
 
-#include <boost/optional.hpp>
-
 namespace GS
 {
 	class EntityView;
@@ -29,7 +28,7 @@ namespace GS
 	class EntityListProxyModel : public Wt::WBatchEditProxyModel
 	{
 	public:
-		EntityListProxyModel(std::shared_ptr<Wt::WAbstractItemModel> model);
+		EntityListProxyModel(shared_ptr<Wt::WAbstractItemModel> model);
 		virtual Wt::any data(const Wt::WModelIndex &idx, Wt::ItemDataRole role = Wt::ItemDataRole::Display) const override;
 		virtual Wt::any headerData(int section, Wt::Orientation orientation = Wt::Orientation::Horizontal, Wt::ItemDataRole role = Wt::ItemDataRole::Display) const override;
 		virtual Wt::WFlags<Wt::ItemFlag> flags(const Wt::WModelIndex &index) const override;
@@ -40,81 +39,81 @@ namespace GS
 	};
 
 	//ENTITY LISTS
-	class AllEntityList : public QueryModelFilteredList<std::tuple<long long, std::string, Entity::Type, boost::optional<long long>, boost::optional<long long>, boost::optional<long long>>>
+	class AllEntityList : public QueryModelFilteredList<tuple<long long, std::string, Entity::Type, optional<long long>, optional<long long>, optional<long long>>>
 	{
 	public:
 		enum ResultColumns { ResId, ResName, ResEntityType, ResEmployeeAssignment, ResPersonnelPosition, ResClientAssignment };
 		enum ViewColumns { ViewId, ViewName, ViewEntityType, ViewRole };
 
 	protected:
-		virtual Wt::Dbo::Query<ResultType> generateQuery() const override;
+		virtual Dbo::Query<ResultType> generateQuery() const override;
 		virtual void initFilters() override;
 		virtual void initModel() override;
 	};
 
-	class PersonList : public QueryModelFilteredList<std::tuple<long long, std::string, boost::optional<long long>, boost::optional<long long>, boost::optional<long long>>>
+	class PersonList : public QueryModelFilteredList<tuple<long long, std::string, optional<long long>, optional<long long>, optional<long long>>>
 	{
 	public:
 		enum ResultColumns { ResId, ResName, ResEmployeeAssignment, ResPersonnelPosition, ResClientAssignment };
 		enum ViewColumns { ViewId, ViewName, ViewRole };
 
 	protected:
-		virtual Wt::Dbo::Query<ResultType> generateQuery() const override;
+		virtual Dbo::Query<ResultType> generateQuery() const override;
 		virtual void initFilters() override;
 		virtual void initModel() override;
 	};
 
-	class EmployeeList : public QueryModelFilteredList<std::tuple<long long, std::string, boost::optional<long long>, boost::optional<long long>, boost::optional<long long>>>
+	class EmployeeList : public QueryModelFilteredList<tuple<long long, std::string, optional<long long>, optional<long long>, optional<long long>>>
 	{
 	public:
 		enum ResultColumns { ResId, ResName, ResEmployeeAssignment, ResPersonnelPosition, ResClientAssignment };
 		enum ViewColumns { ViewId, ViewName, ViewRole };
 
 	protected:
-		virtual Wt::Dbo::Query<ResultType> generateQuery() const override;
+		virtual Dbo::Query<ResultType> generateQuery() const override;
 		virtual void initFilters() override;
 		virtual void initModel() override;
 	};
 
-	class PersonnelList : public QueryModelFilteredList<std::tuple<long long, std::string, boost::optional<long long>, boost::optional<long long>, boost::optional<long long>>>
+	class PersonnelList : public QueryModelFilteredList<tuple<long long, std::string, optional<long long>, optional<long long>, optional<long long>>>
 	{
 	public:
 		enum ResultColumns { ResId, ResName, ResEmployeeAssignment, ResPersonnelPosition, ResClientAssignment };
 		enum ViewColumns { ViewId, ViewName, ViewRole };
 
 	protected:
-		virtual Wt::Dbo::Query<ResultType> generateQuery() const override;
+		virtual Dbo::Query<ResultType> generateQuery() const override;
 		virtual void initFilters() override;
 		virtual void initModel() override;
 	};
 
-	class BusinessList : public QueryModelFilteredList<std::tuple<long long, std::string, boost::optional<long long>, boost::optional<long long>, boost::optional<long long>>>
+	class BusinessList : public QueryModelFilteredList<tuple<long long, std::string, optional<long long>, optional<long long>, optional<long long>>>
 	{
 	public:
 		enum ResultColumns { ResId, ResName, ResEmployeeAssignment, ResPersonnelPosition, ResClientAssignment };
 		enum ViewColumns { ViewId, ViewName, ViewRole };
 
 	protected:
-		virtual Wt::Dbo::Query<ResultType> generateQuery() const override;
+		virtual Dbo::Query<ResultType> generateQuery() const override;
 		virtual void initFilters() override;
 		virtual void initModel() override;
 	};
 
-	class ClientList : public QueryModelFilteredList<std::tuple<long long, std::string, Entity::Type, boost::optional<long long>, boost::optional<long long>, boost::optional<long long>>>
+	class ClientList : public QueryModelFilteredList<tuple<long long, std::string, Entity::Type, optional<long long>, optional<long long>, optional<long long>>>
 	{
 	public:
 		enum ResultColumns { ResId, ResName, ResEntityType, ResEmployeeAssignment, ResPersonnelPosition, ResClientAssignment };
 		enum ViewColumns { ViewId, ViewName, ViewEntityType, ViewRole };
 
 	protected:
-		virtual Wt::Dbo::Query<ResultType> generateQuery() const override;
+		virtual Dbo::Query<ResultType> generateQuery() const override;
 		virtual void initFilters() override;
 		virtual void initModel() override;
 	};
 
 	//TEMPLATE CLASS DEFINITIONS
 	template<class FilteredList>
-	EntityListProxyModel<FilteredList>::EntityListProxyModel(std::shared_ptr<Wt::WAbstractItemModel> model)
+	EntityListProxyModel<FilteredList>::EntityListProxyModel(shared_ptr<Wt::WAbstractItemModel> model)
 	{
 		setSourceModel(model);
 		addAdditionalColumns();
@@ -129,7 +128,7 @@ namespace GS
 				return tr("GS.LinkIcon");
 			else if(role == Wt::ItemDataRole::Link)
 			{
-				const FilteredList::ResultType &res = std::static_pointer_cast<Wt::Dbo::QueryModel<FilteredList::ResultType>>(sourceModel())->resultRow(idx.row());
+				const FilteredList::ResultType &res = static_pointer_cast<Dbo::QueryModel<FilteredList::ResultType>>(sourceModel())->resultRow(idx.row());
 				long long id = std::get<FilteredList::ResId>(res);
 				return Wt::WLink(Wt::LinkType::InternalPath, Entity::viewInternalPath(id));
 			}
@@ -142,7 +141,7 @@ namespace GS
 
 		if(viewIndex == FilteredList::ViewRole && role == Wt::ItemDataRole::Display)
 		{
-			const FilteredList::ResultType &res = std::static_pointer_cast<Wt::Dbo::QueryModel<FilteredList::ResultType>>(sourceModel())->resultRow(idx.row());
+			const FilteredList::ResultType &res = static_pointer_cast<Dbo::QueryModel<FilteredList::ResultType>>(sourceModel())->resultRow(idx.row());
 			int typeMask = Entity::UnspecificType;
 			if(std::get<FilteredList::ResEmployeeAssignment>(res).is_initialized())
 				typeMask |= Entity::EmployeeType;

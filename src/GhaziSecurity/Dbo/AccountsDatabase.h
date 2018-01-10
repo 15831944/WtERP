@@ -1,47 +1,46 @@
 #ifndef GS_ACCOUNTSDATABASE_H
 #define GS_ACCOUNTSDATABASE_H
 
+#include "Common.h"
 #include "Dbo/Dbos.h"
 #include "Dbo/EntitiesDatabase.h"
 
 namespace GS
 {
-	using namespace std::chrono;
-
 	class AccountsDatabase
 	{
 	public:
-		AccountsDatabase(Wt::Dbo::Session &session) : dboSession(session), _entitiesDatabase(dboSession) { }
-		void createEntityAccountsIfNotFound(Wt::Dbo::ptr<Entity> entityPtr);
+		AccountsDatabase(Dbo::Session &session) : dboSession(session), _entitiesDatabase(dboSession) { }
+		void createEntityAccountsIfNotFound(Dbo::ptr<Entity> entityPtr);
 
-		Wt::Dbo::ptr<AccountEntry> createAccountEntry(const Money &amount, Wt::Dbo::ptr<Account> debitAccountPtr, Wt::Dbo::ptr<Account> creditAccountPtr);
-		void createPendingCycleEntry(Wt::Dbo::ptr<IncomeCycle> cyclePtr, Wt::Dbo::ptr<AccountEntry> lastEntryPtr, const Wt::WDateTime &currentDt, steady_clock::duration *nextEntryDuration = nullptr);
-		void createPendingCycleEntry(Wt::Dbo::ptr<ExpenseCycle> cyclePtr, Wt::Dbo::ptr<AccountEntry> lastEntryPtr, const Wt::WDateTime &currentDt, steady_clock::duration *nextEntryDuration = nullptr);
+		Dbo::ptr<AccountEntry> createAccountEntry(const Money &amount, Dbo::ptr<Account> debitAccountPtr, Dbo::ptr<Account> creditAccountPtr);
+		void createPendingCycleEntry(Dbo::ptr<IncomeCycle> cyclePtr, Dbo::ptr<AccountEntry> lastEntryPtr, const Wt::WDateTime &currentDt, steady_clock::duration *nextEntryDuration = nullptr);
+		void createPendingCycleEntry(Dbo::ptr<ExpenseCycle> cyclePtr, Dbo::ptr<AccountEntry> lastEntryPtr, const Wt::WDateTime &currentDt, steady_clock::duration *nextEntryDuration = nullptr);
 		
-		Wt::Dbo::ptr<Account> findOrCreateCashAccount(bool loadLazy = false);
+		Dbo::ptr<Account> findOrCreateCashAccount(bool loadLazy = false);
 
-// 		Wt::Dbo::ptr<Account> findOrCreateSelfAccount();
-// 		Wt::Dbo::ptr<Account> findOrCreateEntityAccount(Wt::Dbo::ptr<Entity> entityPtr);
-// 		Wt::Dbo::ptr<Account> findOrCreateIncomeExpenseAccount(Wt::Dbo::ptr<IncomeCycle> cyclePtr);
-// 		Wt::Dbo::ptr<Account> findOrCreateIncomeExpenseAccount(Wt::Dbo::ptr<ExpenseCycle> cyclePtr);
-// 		Wt::Dbo::ptr<Account> findOrCreateGeneralIncomeAccount();
-// 		Wt::Dbo::ptr<Account> findOrCreateGeneralExpenseAccount();
+// 		Dbo::ptr<Account> findOrCreateSelfAccount();
+// 		Dbo::ptr<Account> findOrCreateEntityAccount(Dbo::ptr<Entity> entityPtr);
+// 		Dbo::ptr<Account> findOrCreateIncomeExpenseAccount(Dbo::ptr<IncomeCycle> cyclePtr);
+// 		Dbo::ptr<Account> findOrCreateIncomeExpenseAccount(Dbo::ptr<ExpenseCycle> cyclePtr);
+// 		Dbo::ptr<Account> findOrCreateGeneralIncomeAccount();
+// 		Dbo::ptr<Account> findOrCreateGeneralExpenseAccount();
 
 	protected:
-		//void initEntityAccountValues(Wt::Dbo::ptr<Account> accountPtr, Wt::Dbo::ptr<Entity> entityPtr);
+		//void initEntityAccountValues(Dbo::ptr<Account> accountPtr, Dbo::ptr<Entity> entityPtr);
 
-		Wt::Dbo::Session &dboSession;
+		Dbo::Session &dboSession;
 		EntitiesDatabase _entitiesDatabase;
 
 	private:
-		Wt::Dbo::ptr<AccountEntry> _createPendingCycleEntry(
+		Dbo::ptr<AccountEntry> _createPendingCycleEntry(
 			const EntryCycle &cycle,
-			Wt::Dbo::ptr<AccountEntry> lastEntryPtr,
+			Dbo::ptr<AccountEntry> lastEntryPtr,
 			const Wt::WDateTime &currentDt,
 			steady_clock::duration *nextEntryDuration
 		);
 
-		void updateAccountBalances(Wt::Dbo::ptr<AccountEntry> accountEntryPtr);
+		void updateAccountBalances(Dbo::ptr<AccountEntry> accountEntryPtr);
 	};
 
 }

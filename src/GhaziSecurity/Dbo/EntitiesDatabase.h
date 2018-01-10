@@ -1,6 +1,7 @@
 #ifndef GS_ENTITIESDATABASE_H
 #define GS_ENTITIESDATABASE_H
 
+#include "Common.h"
 #include "Dbo/Dbos.h"
 
 namespace GS
@@ -8,12 +9,12 @@ namespace GS
 	class EntitiesDatabase
 	{
 	public:
-		EntitiesDatabase(Wt::Dbo::Session &session) : dboSession(session) { }
+		EntitiesDatabase(Dbo::Session &session) : dboSession(session) { }
 
-		Wt::Dbo::ptr<Entity> findOrCreateSelfEntity();
+		Dbo::ptr<Entity> findOrCreateSelfEntity();
 
 	protected:
-		Wt::Dbo::Session &dboSession;
+		Dbo::Session &dboSession;
 	};
 }
 

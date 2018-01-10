@@ -1,10 +1,10 @@
 #ifndef GS_RECORDFORMVIEW_H
 #define GS_RECORDFORMVIEW_H
 
+#include "Common.h"
 #include "Utilities/QueryProxyMVC.h"
 #include "Application/WApplication.h"
 
-#include <vector>
 #include <Wt/WTemplateFormView.h>
 #include <Wt/WPushButton.h>
 #include <Wt/WContainerWidget.h>
@@ -20,7 +20,7 @@ namespace GS
 	public:
 		virtual Wt::WString viewName() const { return tr("Unknown"); }
 		virtual std::string viewInternalPath() const { return ""; }
-		virtual std::unique_ptr<RecordFormView> createFormView() { return nullptr; }
+		virtual unique_ptr<RecordFormView> createFormView() { return nullptr; }
 
 		Wt::Signal<> &submitted() { return _submitted; }
 
@@ -50,18 +50,18 @@ namespace GS
 
 		virtual Wt::WString recordName() const { return tr("Unknown"); }
 
-		std::shared_ptr<AbstractRecordFormModel> model() { return _firstModel; }
+		shared_ptr<AbstractRecordFormModel> model() { return _firstModel; }
 		Wt::WPushButton *submitBtn() { return _submitBtn; }
 
 	protected:
 		virtual void initView() { }
 		virtual void afterSubmitHandler() { }
 		virtual void submit();
-		virtual std::unique_ptr<Wt::WWidget> createFormWidget(Wt::WFormModel::Field field) override;
+		virtual unique_ptr<Wt::WWidget> createFormWidget(Wt::WFormModel::Field field) override;
 
-		typedef std::pair<ModelKey, std::shared_ptr<AbstractRecordFormModel>> ModelKeyPair;
+		typedef pair<ModelKey, shared_ptr<AbstractRecordFormModel>> ModelKeyPair;
 		typedef std::vector<ModelKeyPair> FormModelVector;
-		void addFormModel(ModelKey key, std::shared_ptr<AbstractRecordFormModel> model);
+		void addFormModel(ModelKey key, shared_ptr<AbstractRecordFormModel> model);
 		FormModelVector &modelVector() { return _modelVector; }
 
 		using Wt::WTemplateFormView::updateView;
@@ -74,7 +74,7 @@ namespace GS
 		std::bitset<FlagsCount> _viewFlags;
 
 		FormModelVector _modelVector;
-		std::shared_ptr<AbstractRecordFormModel> _firstModel = nullptr;
+		shared_ptr<AbstractRecordFormModel> _firstModel = nullptr;
 		Wt::WPushButton *_submitBtn = nullptr;
 	};
 
@@ -121,7 +121,7 @@ namespace GS
 
 	protected:
 		AbstractRecordFormModel(RecordFormView *view) : _view(view) { }
-		virtual std::unique_ptr<Wt::WWidget> createFormWidget(Wt::WFormModel::Field field) { return nullptr; }
+		virtual unique_ptr<Wt::WWidget> createFormWidget(Wt::WFormModel::Field field) { return nullptr; }
 		virtual void persistedHandler() { }
 
 		RecordFormView *_view = nullptr;
@@ -130,28 +130,28 @@ namespace GS
 		friend class RecordFormView;
 	};
 
-	template<class T>
+	template<class DboType>
 	class RecordFormModel : public AbstractRecordFormModel
 	{
 	public:
-		typedef typename T Dbo;
-		RecordFormModel(RecordFormView *view, Wt::Dbo::ptr<Dbo> recordPtr) : AbstractRecordFormModel(view), _recordPtr(recordPtr) { }
+		typedef typename DboType RecordDbo;
+		RecordFormModel(RecordFormView *view, Dbo::ptr<RecordDbo> recordPtr) : AbstractRecordFormModel(view), _recordPtr(recordPtr) { }
 
-		Wt::Dbo::ptr<Dbo> recordPtr() const { return _recordPtr; }
+		Dbo::ptr<RecordDbo> recordPtr() const { return _recordPtr; }
 		virtual bool isRecordPersisted() const override { return !_recordPtr.isTransient(); }
 
 		virtual AuthLogin::PermissionResult checkViewPermission() const override { return APP->authLogin().checkRecordViewPermission(recordPtr().get()); }
 		virtual AuthLogin::PermissionResult checkModifyPermission() const override { return APP->authLogin().checkRecordModifyPermission(recordPtr().get()); }
 
 	protected:
-		Wt::Dbo::ptr<Dbo> _recordPtr;
+		Dbo::ptr<RecordDbo> _recordPtr;
 	};
 
-	template<class T>
-	class ChildRecordFormModel : public RecordFormModel<T>
+	template<class DboType>
+	class ChildRecordFormModel : public RecordFormModel<DboType>
 	{
 	public:
-		ChildRecordFormModel(std::shared_ptr<AbstractRecordFormModel> parentModel, RecordFormView *view, Wt::Dbo::ptr<Dbo> recordPtr = nullptr)
+		ChildRecordFormModel(shared_ptr<AbstractRecordFormModel> parentModel, RecordFormView *view, Dbo::ptr<RecordDbo> recordPtr = nullptr)
 			: RecordFormModel(view, recordPtr), _parentModel(parentModel) { }
 
 		virtual AuthLogin::PermissionResult checkViewPermission() const override { return _parentModel->checkViewPermission(); }
@@ -159,7 +159,7 @@ namespace GS
 
 	protected:
 
-		std::shared_ptr<AbstractRecordFormModel> _parentModel = nullptr;
+		shared_ptr<AbstractRecordFormModel> _parentModel = nullptr;
 	};
 
 	class AbstractMultipleRecordModel : public AbstractRecordFormModel
@@ -173,40 +173,40 @@ namespace GS
 		AbstractMultipleRecordModel(RecordFormView *view) : AbstractRecordFormModel(view) { }
 	};
 
-	template<class RecordDbo>
+	template<class DboType>
 	class MultipleRecordModel : public AbstractMultipleRecordModel
 	{
 	public:
-		typedef typename RecordDbo Dbo;
-		typedef std::vector<Wt::Dbo::ptr<Dbo>> PtrVector;
-		typedef Wt::Dbo::collection<Wt::Dbo::ptr<Dbo>> PtrCollection;
-		typedef RecordFormModel<Dbo> ModelType;
-		typedef std::vector<std::shared_ptr<ModelType>> ModelVector;
+		typedef typename DboType RecordDbo;
+		typedef std::vector<Dbo::ptr<RecordDbo>> PtrVector;
+		typedef Dbo::collection<Dbo::ptr<RecordDbo>> PtrCollection;
+		typedef RecordFormModel<RecordDbo> ModelType;
+		typedef std::vector<shared_ptr<ModelType>> ModelVector;
 
 		static const Field field;
 
-		virtual void addRecordPtr() override { addRecordPtr(Wt::Dbo::ptr<Dbo>()); }
-		virtual void addRecordPtr(Wt::Dbo::ptr<Dbo> ptr);
+		virtual void addRecordPtr() override { addRecordPtr(Dbo::ptr<RecordDbo>()); }
+		virtual void addRecordPtr(Dbo::ptr<RecordDbo> ptr);
 		virtual void updateContainer(RecordViewsContainer *container) override;
 		virtual void updateModelValue() override;
 		virtual bool saveChanges() override;
-		virtual std::unique_ptr<Wt::WWidget> createFormWidget(Field f) override { return f == field ? createContainer() : nullptr; }
-		std::unique_ptr<RecordViewsContainer> createContainer() { return std::make_unique<RecordViewsContainer>(this); }
+		virtual unique_ptr<Wt::WWidget> createFormWidget(Field f) override { return f == field ? createContainer() : nullptr; }
+		unique_ptr<RecordViewsContainer> createContainer() { return make_unique<RecordViewsContainer>(this); }
 		virtual bool validate() override;
 
 		const PtrVector &ptrVector() const { return Wt::any_cast<const PtrVector&>(value(field)); }
 
 	protected:
 		MultipleRecordModel(RecordFormView *view, PtrCollection collection = PtrCollection());
-		std::tuple<std::unique_ptr<RecordFormView>, std::shared_ptr<ModelType>> createRecordView() { return createRecordView(Wt::Dbo::ptr<Dbo>()); }
-		virtual std::tuple<std::unique_ptr<RecordFormView>, std::shared_ptr<ModelType>> createRecordView(Wt::Dbo::ptr<Dbo> recordPtr) = 0;
+		tuple<unique_ptr<RecordFormView>, shared_ptr<ModelType>> createRecordView() { return createRecordView(Dbo::ptr<RecordDbo>()); }
+		virtual tuple<unique_ptr<RecordFormView>, shared_ptr<ModelType>> createRecordView(Dbo::ptr<RecordDbo> recordPtr) = 0;
 
 		ModelVector _modelVector;
 	};
 
 	//TEMPLATE CLASS DEFITIONS
-	template<class RecordDbo>
-	MultipleRecordModel<RecordDbo>::MultipleRecordModel(RecordFormView *view, PtrCollection collection /*= PtrCollection()*/)
+	template<class DboType>
+	MultipleRecordModel<DboType>::MultipleRecordModel(RecordFormView *view, PtrCollection collection /*= PtrCollection()*/)
 		: AbstractMultipleRecordModel(view)
 	{
 		TRANSACTION(APP);
@@ -214,16 +214,16 @@ namespace GS
 		setValue(field, result);
 	}
 
-	template<class RecordDbo>
-	void MultipleRecordModel<RecordDbo>::addRecordPtr(Wt::Dbo::ptr<Dbo> ptr)
+	template<class DboType>
+	void MultipleRecordModel<DboType>::addRecordPtr(Dbo::ptr<RecordDbo> ptr)
 	{
 		PtrVector newVec(ptrVector());
 		newVec.push_back(ptr);
 		setValue(field, newVec);
 	}
 
-	template<class RecordDbo>
-	void MultipleRecordModel<RecordDbo>::updateContainer(RecordViewsContainer *container)
+	template<class DboType>
+	void MultipleRecordModel<DboType>::updateContainer(RecordViewsContainer *container)
 	{
 		auto ptrs = ptrVector();
 		_modelVector.resize(ptrs.size(), nullptr);
@@ -239,8 +239,8 @@ namespace GS
 			container->widget(wCount - 1)->removeFromParent();
 	}
 
-	template<class RecordDbo>
-	void MultipleRecordModel<RecordDbo>::updateModelValue()
+	template<class DboType>
+	void MultipleRecordModel<DboType>::updateModelValue()
 	{
 		PtrVector result;
 		for(const auto &res : _modelVector)
@@ -249,8 +249,8 @@ namespace GS
 		setValue(field, result);
 	}
 
-	template<class RecordDbo>
-	bool MultipleRecordModel<RecordDbo>::validate()
+	template<class DboType>
+	bool MultipleRecordModel<DboType>::validate()
 	{
 		bool valid = true;
 		for(const auto &res : _modelVector)
@@ -262,8 +262,8 @@ namespace GS
 		return valid;
 	}
 
-	template<class RecordDbo>
-	bool MultipleRecordModel<RecordDbo>::saveChanges()
+	template<class DboType>
+	bool MultipleRecordModel<DboType>::saveChanges()
 	{
 		if(!valid())
 			return false;

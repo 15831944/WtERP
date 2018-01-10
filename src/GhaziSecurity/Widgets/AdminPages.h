@@ -1,6 +1,7 @@
 #ifndef GS_ADMINPAGES_WIDGET_H
 #define GS_ADMINPAGES_WIDGET_H
 
+#include "Common.h"
 #include <Wt/WTemplate.h>
 #include <Wt/WTabWidget.h>
 
@@ -15,12 +16,12 @@ namespace GS
 	public:
 		AdminPageWidget(const std::string basePathComponent);
 
-		Wt::WMenuItem *createMenuItemWrapped(std::unique_ptr<RecordFormView> contents);
-		Wt::WMenuItem *createMenuItemWrapped(const Wt::WString &label, const std::string &pathComponent, std::unique_ptr<AbstractFilteredList> contents);
-		Wt::WMenuItem *createMenuItemWrapped(const Wt::WString &label, const std::string &path, std::unique_ptr<Wt::WWidget> contents, bool isInternalPath);
-		Wt::WMenuItem *createMenuItemWrapped(int index, const Wt::WString &label, const std::string &path, std::unique_ptr<Wt::WWidget> contents, bool isInternalPath);
-		Wt::WMenuItem *createMenuItem(const Wt::WString &label, const std::string &path, std::unique_ptr<Wt::WWidget> contents, bool isInternalPath);
-		Wt::WMenuItem *createMenuItem(int index, const Wt::WString &label, const std::string &path, std::unique_ptr<Wt::WWidget> contents, bool isInternalPath);
+		Wt::WMenuItem *createMenuItemWrapped(unique_ptr<RecordFormView> contents);
+		Wt::WMenuItem *createMenuItemWrapped(const Wt::WString &label, const std::string &pathComponent, unique_ptr<AbstractFilteredList> contents);
+		Wt::WMenuItem *createMenuItemWrapped(const Wt::WString &label, const std::string &path, unique_ptr<Wt::WWidget> contents, bool isInternalPath);
+		Wt::WMenuItem *createMenuItemWrapped(int index, const Wt::WString &label, const std::string &path, unique_ptr<Wt::WWidget> contents, bool isInternalPath);
+		Wt::WMenuItem *createMenuItem(const Wt::WString &label, const std::string &path, unique_ptr<Wt::WWidget> contents, bool isInternalPath);
+		Wt::WMenuItem *createMenuItem(int index, const Wt::WString &label, const std::string &path, unique_ptr<Wt::WWidget> contents, bool isInternalPath);
 		bool checkPathComponentExist(const std::string &pathComponent) const;
 		void connectFormSubmitted(Wt::WMenuItem *item);
 		void setDeniedPermissionWidget();
@@ -48,7 +49,7 @@ namespace GS
 	class AdminPageContentWidget : public Wt::WTemplate
 	{
 	public:
-		AdminPageContentWidget(const Wt::WString &title, std::unique_ptr<Wt::WWidget> content);
+		AdminPageContentWidget(const Wt::WString &title, unique_ptr<Wt::WWidget> content);
 		Wt::WText *title() const { return _title; }
 		Wt::WWidget *content() const { return _content; }
 

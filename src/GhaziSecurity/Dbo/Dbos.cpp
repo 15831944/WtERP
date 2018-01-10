@@ -5,7 +5,7 @@
 
 namespace GS
 {
-	void mapDboTree(Wt::Dbo::Session &dboSession)
+	void mapDboTree(Dbo::Session &dboSession)
 	{
 		dboSession.mapClass<User>(User::tableName());
 		dboSession.mapClass<Region>(Region::tableName());

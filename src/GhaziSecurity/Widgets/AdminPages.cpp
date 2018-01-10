@@ -25,7 +25,7 @@ namespace GS
 		_stackWidget = bindNew<Wt::WStackedWidget>("content");
 
 		_sideBar->setResponsive(true);
-		_menu = _sideBar->addMenu(std::make_unique<Wt::WMenu>(_stackWidget), Wt::AlignmentFlag::Left, true);
+		_menu = _sideBar->addMenu(make_unique<Wt::WMenu>(_stackWidget), Wt::AlignmentFlag::Left, true);
 		_menu->addStyleClass("nav-admin-side");
 
 		if(_basePathComponent.empty())
@@ -34,35 +34,35 @@ namespace GS
 			_menu->setInternalPathEnabled("/" ADMIN_PATHC "/" + _basePathComponent + "/");
 	}
 
-	Wt::WMenuItem *AdminPageWidget::createMenuItemWrapped(std::unique_ptr<RecordFormView> contents)
+	Wt::WMenuItem *AdminPageWidget::createMenuItemWrapped(unique_ptr<RecordFormView> contents)
 	{
 		auto name = contents->viewName();
 		auto internalPath = contents->viewInternalPath();
 		return createMenuItem(name, internalPath, std::move(contents), true);
 	}
 
-	Wt::WMenuItem *AdminPageWidget::createMenuItemWrapped(const Wt::WString &label, const std::string &pathComponent, std::unique_ptr<AbstractFilteredList> contents)
+	Wt::WMenuItem *AdminPageWidget::createMenuItemWrapped(const Wt::WString &label, const std::string &pathComponent, unique_ptr<AbstractFilteredList> contents)
 	{
 		contents->enableFilters();
 		return createMenuItemWrapped(label, pathComponent, std::move(contents), false);
 	}
 
-	Wt::WMenuItem *AdminPageWidget::createMenuItemWrapped(const Wt::WString &label, const std::string &path, std::unique_ptr<Wt::WWidget> contents, bool isInternalPath)
+	Wt::WMenuItem *AdminPageWidget::createMenuItemWrapped(const Wt::WString &label, const std::string &path, unique_ptr<Wt::WWidget> contents, bool isInternalPath)
 	{
 		return createMenuItemWrapped(menu()->count(), label, path, std::move(contents), isInternalPath);
 	}
 
-	Wt::WMenuItem *AdminPageWidget::createMenuItemWrapped(int index, const Wt::WString &label, const std::string &path, std::unique_ptr<Wt::WWidget> contents, bool isInternalPath)
+	Wt::WMenuItem *AdminPageWidget::createMenuItemWrapped(int index, const Wt::WString &label, const std::string &path, unique_ptr<Wt::WWidget> contents, bool isInternalPath)
 	{
-		return createMenuItem(index, label, path, std::make_unique<AdminPageContentWidget>(label, std::move(contents)), isInternalPath);
+		return createMenuItem(index, label, path, make_unique<AdminPageContentWidget>(label, std::move(contents)), isInternalPath);
 	}
 
-	Wt::WMenuItem *AdminPageWidget::createMenuItem(const Wt::WString &label, const std::string &path, std::unique_ptr<Wt::WWidget> contents, bool isInternalPath)
+	Wt::WMenuItem *AdminPageWidget::createMenuItem(const Wt::WString &label, const std::string &path, unique_ptr<Wt::WWidget> contents, bool isInternalPath)
 	{
 		return createMenuItem(menu()->count(), label, path, std::move(contents), isInternalPath);
 	}
 
-	Wt::WMenuItem *AdminPageWidget::createMenuItem(int index, const Wt::WString &label, const std::string &path, std::unique_ptr<Wt::WWidget> contents, bool isInternalPath)
+	Wt::WMenuItem *AdminPageWidget::createMenuItem(int index, const Wt::WString &label, const std::string &path, unique_ptr<Wt::WWidget> contents, bool isInternalPath)
 	{
 		std::string pathComponent = path;
 		if(isInternalPath)
@@ -78,7 +78,7 @@ namespace GS
 		if(!pathComponent.empty() && pathComponent.front() == '/')
 			pathComponent = pathComponent.substr(1);
 
-		auto menuItem = std::make_unique<Wt::WMenuItem>(label, std::move(contents));
+		auto menuItem = make_unique<Wt::WMenuItem>(label, std::move(contents));
 		menuItem->setPathComponent(pathComponent);
 		return menu()->insertItem(index, std::move(menuItem));
 	}
@@ -114,7 +114,7 @@ namespace GS
 		contentContainer->title()->setText(submittedView->viewName());
 
 		auto newFormView = submittedView->createFormView();
-		auto newPageContainer = std::make_unique<AdminPageContentWidget>(submittedItem->text(), std::move(newFormView));
+		auto newPageContainer = make_unique<AdminPageContentWidget>(submittedItem->text(), std::move(newFormView));
 		submittedItem->setContents(std::move(newPageContainer), Wt::ContentLoading::Lazy);
 
 		_submitSignalMap[submittedItem].disconnect();
@@ -142,7 +142,7 @@ namespace GS
 		_stackWidget->setCurrentWidget(_deniedPermissionWidget);
 	}
 
-	AdminPageContentWidget::AdminPageContentWidget(const Wt::WString &title, std::unique_ptr<Wt::WWidget> content)
+	AdminPageContentWidget::AdminPageContentWidget(const Wt::WString &title, unique_ptr<Wt::WWidget> content)
 		: Wt::WTemplate(tr("GS.Admin.Main.Content"))
 	{
 		_content = content.get();
@@ -153,38 +153,38 @@ namespace GS
 	DashboardAdminPage::DashboardAdminPage()
 		: AdminPageWidget("")
 	{
-		auto overviewMenuItem = createMenuItemWrapped(tr("Overview"), "", std::make_unique<DashboardOverviewTemplate>(), false);
+		auto overviewMenuItem = createMenuItemWrapped(tr("Overview"), "", make_unique<DashboardOverviewTemplate>(), false);
 		menu()->addSeparator();
 	}
 
 	EntitiesAdminPage::EntitiesAdminPage()
 		: AdminPageWidget(ENTITIES_PATHC)
 	{
-		auto allEntitiesMenuItem = createMenuItemWrapped(tr("AllEntities"), "", std::make_unique<AllEntityList>());
-		auto personsMenuItem = createMenuItemWrapped(tr("Persons"), PERSONS_PATHC, std::make_unique<PersonList>());
-		auto businessesMenuItem = createMenuItemWrapped(tr("Businesses"), BUSINESSES_PATHC, std::make_unique<BusinessList>());
-		auto employeesMenuItem = createMenuItemWrapped(tr("Employees"), EMPLOYEES_PATHC, std::make_unique<EmployeeList>());
-		auto personnelMenuItem = createMenuItemWrapped(tr("Personnel"), PERSONNEL_PATHC, std::make_unique<PersonnelList>());
-		auto clientsMenuItem = createMenuItemWrapped(tr("Clients"), CLIENTS_PATHC, std::make_unique<ClientList>());
+		auto allEntitiesMenuItem = createMenuItemWrapped(tr("AllEntities"), "", make_unique<AllEntityList>());
+		auto personsMenuItem = createMenuItemWrapped(tr("Persons"), PERSONS_PATHC, make_unique<PersonList>());
+		auto businessesMenuItem = createMenuItemWrapped(tr("Businesses"), BUSINESSES_PATHC, make_unique<BusinessList>());
+		auto employeesMenuItem = createMenuItemWrapped(tr("Employees"), EMPLOYEES_PATHC, make_unique<EmployeeList>());
+		auto personnelMenuItem = createMenuItemWrapped(tr("Personnel"), PERSONNEL_PATHC, make_unique<PersonnelList>());
+		auto clientsMenuItem = createMenuItemWrapped(tr("Clients"), CLIENTS_PATHC, make_unique<ClientList>());
 		menu()->addSeparator();
 
 		auto empAsnMenuItem = createMenuItemWrapped(tr("EmployeeAssignments"), EMPLOYEES_PATHC "/" EMPLOYEEASSIGNMENTS_PATHC,
-			std::make_unique<EmployeeAssignmentList>());
+			make_unique<EmployeeAssignmentList>());
 		auto clAsnMenuItem = createMenuItemWrapped(tr("ClientAssignments"), CLIENTS_PATHC "/" CLIENTASSIGNMENTS_PATHC,
-			std::make_unique<ClientAssignmentList>());
+			make_unique<ClientAssignmentList>());
 		menu()->addSeparator();
 
 		if(APP->authLogin().hasPermission(Permissions::CreateRecord))
 		{
-			_newEntityMenuItem = createMenuItemWrapped(tr("AddNewX").arg(tr("entity")), NEW_ENTITY_PATHC, std::make_unique<EntityView>(), false);
+			_newEntityMenuItem = createMenuItemWrapped(tr("AddNewX").arg(tr("entity")), NEW_ENTITY_PATHC, make_unique<EntityView>(), false);
 			connectFormSubmitted(_newEntityMenuItem);
 
 			auto assignEmployeeMenuItem = createMenuItemWrapped(tr("AssignEmployee"), EMPLOYEES_PATHC "/" NEW_EMPLOYEEASSIGNMENT_PATHC,
-				std::make_unique<EmployeeAssignmentView>(), false);
+				make_unique<EmployeeAssignmentView>(), false);
 			connectFormSubmitted(assignEmployeeMenuItem);
 
 			auto assignClientMenuItem = createMenuItemWrapped(tr("AssignClient"), CLIENTS_PATHC "/" NEW_CLIENTASSIGNMENT_PATHC,
-				std::make_unique<ClientAssignmentView>(), false);
+				make_unique<ClientAssignmentView>(), false);
 			connectFormSubmitted(assignClientMenuItem);
 			
 			menu()->addSeparator();
@@ -195,34 +195,34 @@ namespace GS
 		: AdminPageWidget(ACCOUNTS_PATHC)
 	{
 		WApplication *app = APP;
-		Wt::Dbo::ptr<Account> cashAccountPtr = app->accountsDatabase().findOrCreateCashAccount(true);
+		Dbo::ptr<Account> cashAccountPtr = app->accountsDatabase().findOrCreateCashAccount(true);
 
-		auto accountsMenuItem = createMenuItemWrapped(tr("Accounts"), "", std::make_unique<AccountList>());
+		auto accountsMenuItem = createMenuItemWrapped(tr("Accounts"), "", make_unique<AccountList>());
 		auto transactionsMenuItem = createMenuItemWrapped(tr("Transactions"), ACCOUNT_PREFIX + boost::lexical_cast<std::string>(cashAccountPtr.id()),
-			std::make_unique<AccountView>(cashAccountPtr), false);
-		auto recurringIncomesMenuItem = createMenuItemWrapped(tr("RecurringIncomes"), INCOMECYCLES_PATHC, std::make_unique<IncomeCycleList>());
-		auto recurringExpensesMenuItem = createMenuItemWrapped(tr("RecurringExpenses"), EXPENSECYCLES_PATHC, std::make_unique<ExpenseCycleList>());
+			make_unique<AccountView>(cashAccountPtr), false);
+		auto recurringIncomesMenuItem = createMenuItemWrapped(tr("RecurringIncomes"), INCOMECYCLES_PATHC, make_unique<IncomeCycleList>());
+		auto recurringExpensesMenuItem = createMenuItemWrapped(tr("RecurringExpenses"), EXPENSECYCLES_PATHC, make_unique<ExpenseCycleList>());
 		menu()->addSeparator();
 
 		if(app->authLogin().hasPermission(Permissions::CreateRecord))
 		{
-			auto createAccountMenuItem = createMenuItemWrapped(tr("CreateAccount"), NEW_ACCOUNT_PATHC, std::make_unique<AccountView>(), false);
+			auto createAccountMenuItem = createMenuItemWrapped(tr("CreateAccount"), NEW_ACCOUNT_PATHC, make_unique<AccountView>(), false);
 			connectFormSubmitted(createAccountMenuItem);
 
 			auto createAccountEntryMenuItem = createMenuItemWrapped(tr("CreateAccountEntry"), NEW_ACCOUNTENTRY_PATHC,
-				std::make_unique<AccountEntryView>(), false);
+				make_unique<AccountEntryView>(), false);
 			connectFormSubmitted(createAccountEntryMenuItem);
 
 			auto createTransactionMenuItem = createMenuItemWrapped(tr("CreateTransaction"), NEW_TRANSACTION_PATHC,
-				std::make_unique<TransactionView>(), false);
+				make_unique<TransactionView>(), false);
 			connectFormSubmitted(createTransactionMenuItem);
 
 			auto createRecurringIncomeMenuItem = createMenuItemWrapped(tr("CreateRecurringIncome"), INCOMECYCLES_PATHC "/" NEW_INCOMECYCLE_PATHC,
-				std::make_unique<IncomeCycleView>(), false);
+				make_unique<IncomeCycleView>(), false);
 			connectFormSubmitted(createRecurringIncomeMenuItem);
 
 			auto createRecurringExpenseMenuItem = createMenuItemWrapped(tr("CreateRecurringExpense"), EXPENSECYCLES_PATHC "/" NEW_EXPENSECYCLE_PATHC,
-				std::make_unique<ExpenseCycleView>(), false);
+				make_unique<ExpenseCycleView>(), false);
 			connectFormSubmitted(createRecurringExpenseMenuItem);
 
 			menu()->addSeparator();
@@ -232,18 +232,18 @@ namespace GS
 	AttendanceAdminPage::AttendanceAdminPage()
 		: AdminPageWidget(ATTENDANCE_PATHC)
 	{
-		auto attendanceEntriesMenuItem = createMenuItemWrapped(tr("AttendanceEntries"), "", std::make_unique<AttendanceEntryList>());
-		auto attendanceDevicesMenuItem = createMenuItemWrapped(tr("AttendanceDevices"), ATTENDANCEDEVICES_PATHC, std::make_unique<AttendanceDeviceList>());
+		auto attendanceEntriesMenuItem = createMenuItemWrapped(tr("AttendanceEntries"), "", make_unique<AttendanceEntryList>());
+		auto attendanceDevicesMenuItem = createMenuItemWrapped(tr("AttendanceDevices"), ATTENDANCEDEVICES_PATHC, make_unique<AttendanceDeviceList>());
 		menu()->addSeparator();
 
 		if(APP->authLogin().hasPermission(Permissions::CreateRecord))
 		{
 			auto newAttendanceEntryMenuItem = createMenuItemWrapped(tr("CreateAttendanceEntry"), NEW_ATTENDANCEENTRY_PATHC,
-				std::make_unique<AttendanceEntryView>(), false);
+				make_unique<AttendanceEntryView>(), false);
 			connectFormSubmitted(newAttendanceEntryMenuItem);
 
 			auto newAttendanceDeviceMenuItem = createMenuItemWrapped(tr("AddAttendanceDevice"), ATTENDANCEDEVICES_PATHC "/" NEW_ATTENDANCEDEVICE_PATHC,
-				std::make_unique<AttendanceDeviceView>(), false);
+				make_unique<AttendanceDeviceView>(), false);
 			connectFormSubmitted(newAttendanceDeviceMenuItem);
 
 			menu()->addSeparator();
@@ -256,10 +256,10 @@ namespace GS
 		WApplication *app = APP;
 
 		if(app->authLogin().hasPermission(Permissions::ViewUser))
-			auto usersMenuItem = createMenuItemWrapped(tr("Users"), "", std::make_unique<UserList>());
+			auto usersMenuItem = createMenuItemWrapped(tr("Users"), "", make_unique<UserList>());
 
 		if(app->authLogin().hasPermission(Permissions::ViewRegion))
-			auto regionsMenuItem = createMenuItemWrapped(tr("Regions"), REGIONS_PATHC, std::make_unique<RegionList>());
+			auto regionsMenuItem = createMenuItemWrapped(tr("Regions"), REGIONS_PATHC, make_unique<RegionList>());
 
 		menu()->addSeparator();
 
@@ -267,13 +267,13 @@ namespace GS
 		{
 			if(app->authLogin().hasPermission(Permissions::CreateUser))
 			{
-				auto newUserMenuItem = createMenuItemWrapped(tr("CreateNewUser"), NEW_USER_PATHC, std::make_unique<UserView>(), false);
+				auto newUserMenuItem = createMenuItemWrapped(tr("CreateNewUser"), NEW_USER_PATHC, make_unique<UserView>(), false);
 				connectFormSubmitted(newUserMenuItem);
 			}
 
 			if(app->authLogin().hasPermission(Permissions::CreateRegion))
 			{
-				auto newRegionMenuItem = createMenuItemWrapped(tr("AddRegion"), REGIONS_PATHC "/" NEW_REGION_PATHC, std::make_unique<RegionView>(), false);
+				auto newRegionMenuItem = createMenuItemWrapped(tr("AddRegion"), REGIONS_PATHC "/" NEW_REGION_PATHC, make_unique<RegionView>(), false);
 				connectFormSubmitted(newRegionMenuItem);
 			}
 

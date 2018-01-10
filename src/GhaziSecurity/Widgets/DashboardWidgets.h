@@ -1,6 +1,7 @@
 #ifndef GS_DASHBOARD_WIDGETS_H
 #define GS_DASHBOARD_WIDGETS_H
 
+#include "Common.h"
 #include "Utilities/ReloadableWidget.h"
 
 #include <Wt/WTemplate.h>

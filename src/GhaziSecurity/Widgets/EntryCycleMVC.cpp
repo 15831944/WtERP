@@ -50,10 +50,10 @@ namespace GS
 		model->setValue(firstEntryAfterCycleField, cycle.firstEntryAfterCycle ? 1 : 0);
 	}
 
-	template<class Dbo>
-	void EntryCycleFormModel::updateCycleFromModel(Wt::WFormModel *model, Wt::Dbo::ptr<Dbo> ptr, bool newCycle)
+	template<class CycleDbo>
+	void EntryCycleFormModel::updateCycleFromModel(Wt::WFormModel *model, Dbo::ptr<CycleDbo> ptr, bool newCycle)
 	{
-		ptr.modify()->entityPtr = Wt::any_cast<Wt::Dbo::ptr<Entity>>(model->value(EntryCycleFormModel::entityField));
+		ptr.modify()->entityPtr = Wt::any_cast<Dbo::ptr<Entity>>(model->value(EntryCycleFormModel::entityField));
 		ptr.modify()->startDate = Wt::any_cast<Wt::WDate>(model->value(EntryCycleFormModel::startDateField));
 		ptr.modify()->endDate = Wt::any_cast<Wt::WDate>(model->value(EntryCycleFormModel::endDateField));
 		ptr.modify()->interval = CycleInterval(Wt::any_cast<int>(model->value(EntryCycleFormModel::intervalField)));
@@ -63,19 +63,19 @@ namespace GS
 		ptr.modify()->firstEntryAfterCycle = Wt::any_cast<int>(model->value(EntryCycleFormModel::firstEntryAfterCycleField)) == 1;
 	}
 
-	std::unique_ptr<Wt::WWidget> EntryCycleFormModel::createFormWidget(Wt::WFormModel *model, EntryCycleView *view, Wt::WFormModel::Field field)
+	unique_ptr<Wt::WWidget> EntryCycleFormModel::createFormWidget(Wt::WFormModel *model, EntryCycleView *view, Wt::WFormModel::Field field)
 	{
 		if(field == entityField)
 		{
-			auto findEntityEdit = std::make_unique<FindEntityEdit>();
-			auto findEntityValidator = std::make_shared<FindEntityValidator>(findEntityEdit.get(), true);
+			auto findEntityEdit = make_unique<FindEntityEdit>();
+			auto findEntityValidator = make_shared<FindEntityValidator>(findEntityEdit.get(), true);
 			findEntityValidator->setModifyPermissionRequired(true);
 			model->setValidator(EntryCycleFormModel::entityField, findEntityValidator);
 			return findEntityEdit;
 		}
 		if(field == startDateField)
 		{
-			auto startDateEdit = std::make_unique<Wt::WDateEdit>();
+			auto startDateEdit = make_unique<Wt::WDateEdit>();
 			startDateEdit->validator()->setMandatory(true);
 			model->setValidator(EntryCycleFormModel::startDateField, startDateEdit->validator());
 			startDateEdit->changed().connect(std::bind(&EntryCycleFormModel::updateEndDateValidator, model, view, true));
@@ -83,15 +83,15 @@ namespace GS
 		}
 		if(field == endDateField)
 		{
-			auto endDateEdit = std::make_unique<Wt::WDateEdit>();
+			auto endDateEdit = make_unique<Wt::WDateEdit>();
 			endDateEdit->setPlaceholderText(tr("EmptyEndDate"));
-			auto endDateValidator = std::make_shared<CycleEndDateValidator>(model);
+			auto endDateValidator = make_shared<CycleEndDateValidator>(model);
 			model->setValidator(EntryCycleFormModel::endDateField, endDateValidator);
 			return endDateEdit;
 		}
 		if(field == intervalField)
 		{
-			auto intervalCombo = std::make_unique<Wt::WComboBox>();
+			auto intervalCombo = make_unique<Wt::WComboBox>();
 			intervalCombo->insertItem(DailyInterval, tr("Days"));
 			intervalCombo->insertItem(WeeklyInterval, tr("Weeks"));
 			intervalCombo->insertItem(MonthlyInterval, tr("Months"));
@@ -103,8 +103,8 @@ namespace GS
 		}
 		if(field == amountField)
 		{
-			auto amountEdit = std::make_unique<Wt::WLineEdit>();
-			auto amountValidator = std::make_shared<Wt::WDoubleValidator>();
+			auto amountEdit = make_unique<Wt::WLineEdit>();
+			auto amountValidator = make_shared<Wt::WDoubleValidator>();
 			amountValidator->setBottom(0);
 			amountValidator->setMandatory(true);
 			model->setValidator(EntryCycleFormModel::amountField, amountValidator);
@@ -112,8 +112,8 @@ namespace GS
 		}
 		if(field == nIntervalsField)
 		{
-			auto nIntervalsEdit = std::make_unique<Wt::WLineEdit>();
-			auto nIntervalsValidator = std::make_shared<Wt::WIntValidator>();
+			auto nIntervalsEdit = make_unique<Wt::WLineEdit>();
+			auto nIntervalsValidator = make_shared<Wt::WIntValidator>();
 			nIntervalsValidator->setBottom(1);
 			nIntervalsValidator->setMandatory(true);
 			model->setValidator(EntryCycleFormModel::nIntervalsField, nIntervalsValidator);
@@ -123,7 +123,7 @@ namespace GS
 		}
 		if(field == firstEntryAfterCycleField)
 		{
-			auto firstEntryOnEdit = std::make_unique<Wt::WComboBox>();
+			auto firstEntryOnEdit = make_unique<Wt::WComboBox>();
 			firstEntryOnEdit->insertItem(0, tr("OnStartingDate"));
 			firstEntryOnEdit->insertItem(1, Wt::WString());
 			firstEntryOnEdit->changed().connect(std::bind(&EntryCycleFormModel::updateEndDateValidator, model, view, true));
@@ -151,7 +151,7 @@ namespace GS
 		Wt::WString nIntervalsStr = Wt::asString(model->value(EntryCycleFormModel::nIntervalsField));
 		int FEAC = Wt::any_cast<int>(model->value(EntryCycleFormModel::firstEntryAfterCycleField));
 
-		auto endDateValidator = std::static_pointer_cast<Wt::WDateValidator>(model->validator(EntryCycleFormModel::endDateField));
+		auto endDateValidator = static_pointer_cast<Wt::WDateValidator>(model->validator(EntryCycleFormModel::endDateField));
 		if(!startDate.isValid())
 		{
 			endDateValidator->setBottom(Wt::WDate());
@@ -226,7 +226,7 @@ namespace GS
 	}
 
 	//EXPENSE CYCLE MODEL
-	ExpenseCycleFormModel::ExpenseCycleFormModel(ExpenseCycleView *view, Wt::Dbo::ptr<ExpenseCycle> cyclePtr /*= Wt::Dbo::ptr<ExpenseCycle>()*/)
+	ExpenseCycleFormModel::ExpenseCycleFormModel(ExpenseCycleView *view, Dbo::ptr<ExpenseCycle> cyclePtr /*= Dbo::ptr<ExpenseCycle>()*/)
 		: RecordFormModel(view, cyclePtr), _view(view)
 	{
 		EntryCycleFormModel::addFields(this);
@@ -237,7 +237,7 @@ namespace GS
 		}
 	}
 
-	std::unique_ptr<Wt::WWidget> ExpenseCycleFormModel::createFormWidget(Wt::WFormModel::Field field)
+	unique_ptr<Wt::WWidget> ExpenseCycleFormModel::createFormWidget(Wt::WFormModel::Field field)
 	{
 		if(auto w = EntryCycleFormModel::createFormWidget(this, _view, field))
 			return w;
@@ -280,17 +280,17 @@ namespace GS
 	}
 
 	//EXPENSE CYCLE VIEW
-	ExpenseCycleView::ExpenseCycleView(Wt::Dbo::ptr<ExpenseCycle> cyclePtr)
+	ExpenseCycleView::ExpenseCycleView(Dbo::ptr<ExpenseCycle> cyclePtr)
 		: EntryCycleView(tr("GS.Admin.ExpenseCycleView")), _tempPtr(cyclePtr)
 	{ }
 
 	void ExpenseCycleView::initView()
 	{
-		_model = std::make_shared<ExpenseCycleFormModel>(this, _tempPtr);
+		_model = make_shared<ExpenseCycleFormModel>(this, _tempPtr);
 		addFormModel("expense", _model);
 	}
 
-	std::unique_ptr<Wt::WWidget> ExpenseCycleView::createFormWidget(Wt::WFormModel::Field field)
+	unique_ptr<Wt::WWidget> ExpenseCycleView::createFormWidget(Wt::WFormModel::Field field)
 	{
 		if(auto result = EntryCycleView::createFormWidget(field))
 			return result;
@@ -312,7 +312,7 @@ namespace GS
 	}
 
 	//INCOME CYCLE MODEL
-	IncomeCycleFormModel::IncomeCycleFormModel(IncomeCycleView *view, Wt::Dbo::ptr<IncomeCycle> cyclePtr /*= Wt::Dbo::ptr<IncomeCycle>()*/)
+	IncomeCycleFormModel::IncomeCycleFormModel(IncomeCycleView *view, Dbo::ptr<IncomeCycle> cyclePtr /*= Dbo::ptr<IncomeCycle>()*/)
 		: RecordFormModel(view, cyclePtr), _view(view)
 	{
 		EntryCycleFormModel::addFields(this);
@@ -325,7 +325,7 @@ namespace GS
 
 	}
 
-	std::unique_ptr<Wt::WWidget> IncomeCycleFormModel::createFormWidget(Wt::WFormModel::Field field)
+	unique_ptr<Wt::WWidget> IncomeCycleFormModel::createFormWidget(Wt::WFormModel::Field field)
 	{
 		if(auto w = EntryCycleFormModel::createFormWidget(this, _view, field))
 			return w;
@@ -367,17 +367,17 @@ namespace GS
 	}
 
 	//INCOME CYCLE VIEW
-	IncomeCycleView::IncomeCycleView(Wt::Dbo::ptr<IncomeCycle> cyclePtr)
+	IncomeCycleView::IncomeCycleView(Dbo::ptr<IncomeCycle> cyclePtr)
 		: EntryCycleView(tr("GS.Admin.IncomeCycleView")), _tempPtr(cyclePtr)
 	{ }
 
 	void IncomeCycleView::initView()
 	{
-		_model = std::make_shared<IncomeCycleFormModel>(this, _tempPtr);
+		_model = make_shared<IncomeCycleFormModel>(this, _tempPtr);
 		addFormModel("income", _model);
 	}
 
-	std::unique_ptr<Wt::WWidget> IncomeCycleView::createFormWidget(Wt::WFormModel::Field field)
+	unique_ptr<Wt::WWidget> IncomeCycleView::createFormWidget(Wt::WFormModel::Field field)
 	{
 		return EntryCycleView::createFormWidget(field);
 	}
@@ -414,14 +414,14 @@ namespace GS
 
 	void EntryCycleList::initFilters()
 	{
-		filtersTemplate()->addFilterModel(std::make_shared<WLineEditFilterModel>(tr("ID"), "id"));
-		filtersTemplate()->addFilterModel(std::make_shared<RangeFilterModel>(tr("Amount"), "amount")); filtersTemplate()->addFilter(2);
+		filtersTemplate()->addFilterModel(make_shared<WLineEditFilterModel>(tr("ID"), "id"));
+		filtersTemplate()->addFilterModel(make_shared<RangeFilterModel>(tr("Amount"), "amount")); filtersTemplate()->addFilter(2);
 	}
 
 	void IncomeCycleList::initModel()
 	{
-		std::shared_ptr<QueryModelType> model;
-		_model = model = std::make_shared<QueryModelType>();
+		shared_ptr<QueryModelType> model;
+		_model = model = make_shared<QueryModelType>();
 
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
@@ -446,13 +446,13 @@ namespace GS
 		addColumn(ViewAmount, model->addColumn("c.amount"), tr("RecurringAmount"), AmountColumnWidth);
 		addColumn(ViewExtra, model->addColumn("COUNT(a.id)"), tr("ClientAssignments"), ExtraColumnWidth);
 
-		_proxyModel = std::make_shared<EntryCycleListProxyModel<IncomeCycleList>>(IncomeCycle::viewInternalPath(""), _model);
+		_proxyModel = make_shared<EntryCycleListProxyModel<IncomeCycleList>>(IncomeCycle::viewInternalPath(""), _model);
 	}
 
 	void ExpenseCycleList::initModel()
 	{
-		std::shared_ptr<QueryModelType> model;
-		_model = model = std::make_shared<QueryModelType>();
+		shared_ptr<QueryModelType> model;
+		_model = model = make_shared<QueryModelType>();
 
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
@@ -477,7 +477,7 @@ namespace GS
 		addColumn(ViewAmount, model->addColumn("c.amount"), tr("RecurringAmount"), AmountColumnWidth);
 		addColumn(ViewExtra, model->addColumn("COUNT(a.id)"), tr("EmployeeAssignments"), ExtraColumnWidth);
 
-		_proxyModel = std::make_shared<EntryCycleListProxyModel<ExpenseCycleList>>(ExpenseCycle::viewInternalPath(""), _model);
+		_proxyModel = make_shared<EntryCycleListProxyModel<ExpenseCycleList>>(ExpenseCycle::viewInternalPath(""), _model);
 	}
 
 // 	Wt::any IncomeCycleListProxyModel::data(const Wt::WModelIndex &idx, Wt::ItemDataRole role /*= Wt::ItemDataRole::Display*/) const
@@ -531,7 +531,7 @@ namespace GS
 				return tr("GS.LinkIcon");
 			else if(role == Wt::ItemDataRole::Link)
 			{
-				const typename FilteredList::ResultType &res = std::static_pointer_cast<Wt::Dbo::QueryModel<typename FilteredList::ResultType>>(sourceModel())->resultRow(idx.row());
+				const typename FilteredList::ResultType &res = static_pointer_cast<Dbo::QueryModel<typename FilteredList::ResultType>>(sourceModel())->resultRow(idx.row());
 				long long id = std::get<FilteredList::ResId>(res);
 				return Wt::WLink(Wt::LinkType::InternalPath, _pathPrefix + boost::lexical_cast<std::string>(id));
 			}
@@ -542,7 +542,7 @@ namespace GS
 			return Wt::WBatchEditProxyModel::data(idx, role);
 		int viewIndex = Wt::any_cast<int>(viewIndexData);
 
-		const typename FilteredList::ResultType &res = std::static_pointer_cast<Wt::Dbo::QueryModel<typename FilteredList::ResultType>>(sourceModel())->resultRow(idx.row());
+		const typename FilteredList::ResultType &res = static_pointer_cast<Dbo::QueryModel<typename FilteredList::ResultType>>(sourceModel())->resultRow(idx.row());
 
 		if(viewIndex == EntryCycleList::ViewAmount && role == Wt::ItemDataRole::Display)
 		{
@@ -566,7 +566,7 @@ namespace GS
 		}
 		if(viewIndex == EntryCycleList::ViewEntity && role == Wt::ItemDataRole::Link)
 		{
-			const typename FilteredList::ResultType &res = std::static_pointer_cast<Wt::Dbo::QueryModel<typename FilteredList::ResultType>>(sourceModel())->resultRow(idx.row());
+			const typename FilteredList::ResultType &res = static_pointer_cast<Dbo::QueryModel<typename FilteredList::ResultType>>(sourceModel())->resultRow(idx.row());
 			return Wt::WLink(Wt::LinkType::InternalPath, Entity::viewInternalPath(std::get<FilteredList::ResEntityId>(res)));
 		}
 

@@ -12,13 +12,13 @@
 namespace GS
 {
 
-	TaskScheduler::TaskScheduler(WServer *server, Wt::Dbo::Session &session)
+	TaskScheduler::TaskScheduler(WServer *server, Dbo::Session &session)
 		: dboSession(session), _server(server), _entitiesDatabase(dboSession), _accountsDatabase(dboSession)
 	{
-		Wt::Dbo::Transaction t(dboSession);
+		Dbo::Transaction t(dboSession);
 		//Recalculate balance update query
 		{
-			_recalculateBalanceCall = std::make_unique<Wt::Dbo::Call>(dboSession.execute("UPDATE " + std::string(Account::tableName()) + " SET balance = "
+			_recalculateBalanceCall = make_unique<Dbo::Call>(dboSession.execute("UPDATE " + std::string(Account::tableName()) + " SET balance = "
 				"COALESCE((SELECT SUM(dE.amount) FROM " + AccountEntry::tableName() + " dE WHERE dE.debit_account_id = " + Account::tableName() + ".id), 0) - COALESCE((SELECT SUM(cE.amount) FROM " + AccountEntry::tableName() + " cE WHERE cE.credit_account_id = " + Account::tableName() + ".id), 0)"
 				", \"version\" = \"version\" + 1"));
 			t.rollback();
@@ -104,7 +104,7 @@ namespace GS
 	void TaskScheduler::recalculateAccountBalances(bool scheduleNext)
 	{
 		Wt::log("gs-info") << "TaskScheduler: Recalculating account balances";
-		Wt::Dbo::Transaction t(dboSession);
+		Dbo::Transaction t(dboSession);
 		try
 		{
 			_recalculateBalanceCall->run();
@@ -134,7 +134,7 @@ namespace GS
 
 	steady_clock::duration TaskScheduler::_createPendingCycleEntries(bool scheduleNext)
 	{
-		Wt::Dbo::Transaction t(dboSession);
+		Dbo::Transaction t(dboSession);
 		steady_clock::duration nextEntryDuration = hours(6);
 
 		try
@@ -148,8 +148,8 @@ namespace GS
 			IncomeTupleCollection incomeCollection = _incomeCycleQuery;
 			for(auto &tuple : incomeCollection)
 			{
-				Wt::Dbo::ptr<IncomeCycle> cyclePtr;
-				Wt::Dbo::ptr<AccountEntry> lastEntryPtr;
+				Dbo::ptr<IncomeCycle> cyclePtr;
+				Dbo::ptr<AccountEntry> lastEntryPtr;
 				std::tie(cyclePtr, lastEntryPtr) = tuple;
 
 				_accountsDatabase.createPendingCycleEntry(cyclePtr, lastEntryPtr, currentDt, &nextEntryDuration);
@@ -162,8 +162,8 @@ namespace GS
 			ExpenseTupleCollection expenseCollection = _expenseCycleQuery;
 			for(auto &tuple : expenseCollection)
 			{
-				Wt::Dbo::ptr<ExpenseCycle> cyclePtr;
-				Wt::Dbo::ptr<AccountEntry> lastEntryPtr;
+				Dbo::ptr<ExpenseCycle> cyclePtr;
+				Dbo::ptr<AccountEntry> lastEntryPtr;
 				std::tie(cyclePtr, lastEntryPtr) = tuple;
 
 				_accountsDatabase.createPendingCycleEntry(cyclePtr, lastEntryPtr, currentDt, &nextEntryDuration);
@@ -184,7 +184,7 @@ namespace GS
 	void TaskScheduler::checkAbnormalRecords(bool scheduleNext)
 	{
 		Wt::log("gs-info") << "TaskScheduler: Checking for abnormal database entries";
-		Wt::Dbo::Transaction t(dboSession);
+		Dbo::Transaction t(dboSession);
 		try
 		{
 			{

@@ -219,7 +219,7 @@ namespace GS
 			res.second->resetValidation();
 	}
 
-	std::unique_ptr<Wt::WWidget> RecordFormView::createFormWidget(Wt::WFormModel::Field field)
+	unique_ptr<Wt::WWidget> RecordFormView::createFormWidget(Wt::WFormModel::Field field)
 	{
 		for(const auto &res : _modelVector)
 		{
@@ -309,13 +309,13 @@ namespace GS
 			t.commit();
 			afterSubmitHandler();
 		}
-		catch(const Wt::Dbo::StaleObjectException &)
+		catch(const Dbo::StaleObjectException &)
 		{
 			app->dboSession().rereadAll();
 			app->showStaleObjectError();
 			nothingSaved = true;
 		}
-		catch(const Wt::Dbo::Exception &e)
+		catch(const Dbo::Exception &e)
 		{
 			Wt::log("error") << "RecordFormView::submit(): (View: " + viewName() + ") Dbo error(" << e.code() << "): " << e.what();
 			app->showDbBackendError(e.code());
@@ -330,7 +330,7 @@ namespace GS
 			submitted().emit();
 	}
 
-	void RecordFormView::addFormModel(ModelKey key, std::shared_ptr<AbstractRecordFormModel> model)
+	void RecordFormView::addFormModel(ModelKey key, shared_ptr<AbstractRecordFormModel> model)
 	{
 		if(!model)
 			return;

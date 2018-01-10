@@ -7,7 +7,7 @@
 namespace GS
 {
 
-	PermissionsDatabase::PermissionsDatabase(Wt::Dbo::Session &session)
+	PermissionsDatabase::PermissionsDatabase(Dbo::Session &session)
 		: dboSession(session)
 	{
 		fetchAll();
@@ -23,18 +23,18 @@ namespace GS
 		_PermissionItemMap permissionitemmap;
 
 		//Fetch em all
-		Wt::Dbo::Transaction t(dboSession);
+		Dbo::Transaction t(dboSession);
 
-		typedef std::tuple<long long, long long> PermissionLinkTuple; //by, to
-		typedef Wt::Dbo::collection<PermissionLinkTuple> PermissionLinkCollection;
+		typedef tuple<long long, long long> PermissionLinkTuple; //by, to
+		typedef Dbo::collection<PermissionLinkTuple> PermissionLinkCollection;
 		PermissionCollection permissionCollection = dboSession.find<Permission>();
 		PermissionLinkCollection permissionLinkCollection = dboSession.query<PermissionLinkTuple>("SELECT by_id, to_id FROM linked_permission");
 		DefaultPermissionCollection defaultPermissionCollection = dboSession.find<DefaultPermission>();
 
 		//Permission ptrs
-		for(const Wt::Dbo::ptr<Permission> &ptr : permissionCollection)
+		for(const Dbo::ptr<Permission> &ptr : permissionCollection)
 		{
-			permissionitemmap[ptr.id()].permissionPtr = std::make_shared<PermissionDdo>(ptr);
+			permissionitemmap[ptr.id()].permissionPtr = make_shared<PermissionDdo>(ptr);
 		}
 
 		//Linked permission ptrs
@@ -55,7 +55,7 @@ namespace GS
 		}
 
 		//Default permissions
-		for(const Wt::Dbo::ptr<DefaultPermission> &ptr : defaultPermissionCollection)
+		for(const Dbo::ptr<DefaultPermission> &ptr : defaultPermissionCollection)
 		{
 			const auto &item = permissionitemmap[ptr->permissionPtr.id()];
 			if(ptr->loginStates & DefaultPermission::LoggedOut)
@@ -108,7 +108,7 @@ namespace GS
 		return itr->second.permissionPtr;
 	}
 
-	PermissionMap PermissionsDatabase::getUserPermissions(Wt::Dbo::ptr<User> userPtr, Wt::Auth::LoginState loginState, Wt::Dbo::Session *altSession /*= nullptr*/)
+	PermissionMap PermissionsDatabase::getUserPermissions(Dbo::ptr<User> userPtr, Wt::Auth::LoginState loginState, Dbo::Session *altSession /*= nullptr*/)
 	{
 		if(!altSession)
 			altSession = &dboSession;
@@ -127,9 +127,9 @@ namespace GS
 		else
 			granted = _logggedInPermissions;
 
-		Wt::Dbo::Transaction t(*altSession);
+		Dbo::Transaction t(*altSession);
 		UserPermissionCollection collection = userPtr->userPermissionCollection;
-		for(const Wt::Dbo::ptr<UserPermission> &ptr : collection)
+		for(const Dbo::ptr<UserPermission> &ptr : collection)
 		{
 			_PermissionItemMap::const_iterator itr = _permissionItemMap.find(ptr.id().permissionPtr.id());
 			if(itr == _permissionItemMap.end())

@@ -1,6 +1,7 @@
 #ifndef GS_ENTITYVIEW_WIDGET_H
 #define GS_ENTITYVIEW_WIDGET_H
 
+#include "Common.h"
 #include "Dbo/Dbos.h"
 #include "Utilities/RecordFormView.h"
 
@@ -30,8 +31,8 @@ namespace GS
 	public:
 		static const Field nameField;
 
-		EntityFormModel(EntityView *view, Wt::Dbo::ptr<Entity> entityPtr = Wt::Dbo::ptr<Entity>());
-		virtual std::unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
+		EntityFormModel(EntityView *view, Dbo::ptr<Entity> entityPtr = Dbo::ptr<Entity>());
+		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
 	protected:
@@ -58,8 +59,8 @@ namespace GS
 		static const Field cnicUploadField;
 		static const Field cnicUpload2Field;
 
-		PersonFormModel(EntityView *view, Wt::Dbo::ptr<Person> personPtr = Wt::Dbo::ptr<Person>());
-		virtual std::unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
+		PersonFormModel(EntityView *view, Dbo::ptr<Person> personPtr = Dbo::ptr<Person>());
+		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
 	protected:
@@ -77,8 +78,8 @@ namespace GS
 		static const Field experienceField;
 		static const Field addQualificationsField;
 
-		EmployeeFormModel(EntityView *view, Wt::Dbo::ptr<Employee> employeePtr = Wt::Dbo::ptr<Employee>());
-		virtual std::unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
+		EmployeeFormModel(EntityView *view, Dbo::ptr<Employee> employeePtr = Dbo::ptr<Employee>());
+		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
 	protected:
@@ -95,8 +96,8 @@ namespace GS
 		static const Field armyNumberField;
 		static const Field rankField;
 
-		PersonnelFormModel(EntityView *view, Wt::Dbo::ptr<Personnel> personnelPtr = Wt::Dbo::ptr<Personnel>());
-		virtual std::unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
+		PersonnelFormModel(EntityView *view, Dbo::ptr<Personnel> personnelPtr = Dbo::ptr<Personnel>());
+		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
 	protected:
@@ -107,8 +108,8 @@ namespace GS
 	class BusinessFormModel : public ChildRecordFormModel<Business>
 	{
 	public:
-		BusinessFormModel(EntityView *view, Wt::Dbo::ptr<Business> businessPtr = Wt::Dbo::ptr<Business>());
-		virtual std::unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
+		BusinessFormModel(EntityView *view, Dbo::ptr<Business> businessPtr = Dbo::ptr<Business>());
+		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
 	protected:
@@ -121,8 +122,8 @@ namespace GS
 		static const Wt::WFormModel::Field entityField;
 		static const Wt::WFormModel::Field numberField;
 
-		ContactNumberFormModel(ContactNumberView *view, Wt::Dbo::ptr<ContactNumber> contactNumberPtr = Wt::Dbo::ptr<ContactNumber>());
-		virtual std::unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
+		ContactNumberFormModel(ContactNumberView *view, Dbo::ptr<ContactNumber> contactNumberPtr = Dbo::ptr<ContactNumber>());
+		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
 	protected:
@@ -132,16 +133,16 @@ namespace GS
 	class ContactNumberView : public RecordFormView
 	{
 	public:
-		ContactNumberView(Wt::Dbo::ptr<ContactNumber> contactNumberPtr);
+		ContactNumberView(Dbo::ptr<ContactNumber> contactNumberPtr);
 		ContactNumberView();
 		virtual void initView() override;
 
-		Wt::Dbo::ptr<ContactNumber> contactNumberPtr() const { return _model->recordPtr(); }
-		std::shared_ptr<ContactNumberFormModel> model() const { return _model; }
+		Dbo::ptr<ContactNumber> contactNumberPtr() const { return _model->recordPtr(); }
+		shared_ptr<ContactNumberFormModel> model() const { return _model; }
 
 	protected:
-		std::shared_ptr<ContactNumberFormModel> _model;
-		Wt::Dbo::ptr<ContactNumber> _tempPtr;
+		shared_ptr<ContactNumberFormModel> _model;
+		Dbo::ptr<ContactNumber> _tempPtr;
 	};
 
 	//ContactNumbersFormModel
@@ -152,8 +153,8 @@ namespace GS
 
 	protected:
 		virtual bool saveChanges() override;
-		virtual std::unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
-		virtual std::tuple<std::unique_ptr<RecordFormView>, std::shared_ptr<ModelType>> createRecordView(Wt::Dbo::ptr<Dbo> recordPtr) override;
+		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
+		virtual tuple<unique_ptr<RecordFormView>, shared_ptr<ModelType>> createRecordView(Dbo::ptr<RecordDbo> recordPtr) override;
 
 		EntityView *_view = nullptr;
 	};
@@ -166,8 +167,8 @@ namespace GS
 
 	protected:
 		virtual bool saveChanges() override;
-		virtual std::unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
-		virtual std::tuple<std::unique_ptr<RecordFormView>, std::shared_ptr<ModelType>> createRecordView(Wt::Dbo::ptr<Dbo> recordPtr) override;
+		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
+		virtual tuple<unique_ptr<RecordFormView>, shared_ptr<ModelType>> createRecordView(Dbo::ptr<RecordDbo> recordPtr) override;
 
 		EntityView *_view = nullptr;
 	};
@@ -177,20 +178,20 @@ namespace GS
 	{
 	public:
 		EntityView(Entity::Type type = Entity::InvalidType);
-		EntityView(Wt::Dbo::ptr<Entity> entityPtr);
+		EntityView(Dbo::ptr<Entity> entityPtr);
 		virtual void initView() override;
 
 		void selectEntityType(Entity::Type type);
 		void setSpecificType(Entity::SpecificType type);
-		void addEmployeeModel(Wt::Dbo::ptr<Employee> employeePtr = Wt::Dbo::ptr<Employee>());
-		void addPersonnelModel(Wt::Dbo::ptr<Personnel> personnelPtr = Wt::Dbo::ptr<Personnel>());
+		void addEmployeeModel(Dbo::ptr<Employee> employeePtr = Dbo::ptr<Employee>());
+		void addPersonnelModel(Dbo::ptr<Personnel> personnelPtr = Dbo::ptr<Personnel>());
 
 		Entity::Type entityType() const { return _type; }
-		Wt::Dbo::ptr<Entity> entityPtr() const { return _entityModel->recordPtr(); }
+		Dbo::ptr<Entity> entityPtr() const { return _entityModel->recordPtr(); }
 
 		virtual Wt::WString viewName() const override { return _entityModel->valueText(EntityFormModel::nameField); }
 		virtual std::string viewInternalPath() const override { return entityPtr() ? Entity::viewInternalPath(entityPtr().id()) : ""; }
-		virtual std::unique_ptr<RecordFormView> createFormView() override { return std::make_unique<EntityView>(); }
+		virtual unique_ptr<RecordFormView> createFormView() override { return make_unique<EntityView>(); }
 
 	protected:
 		virtual void submit() override;
@@ -201,18 +202,18 @@ namespace GS
 		ExpenseCycleList *_expenseCycles = nullptr;
 		IncomeCycleList *_incomeCycles = nullptr;
 
-		std::shared_ptr<EntityFormModel> _entityModel;
-		std::shared_ptr<PersonFormModel> _personModel;
-		std::shared_ptr<EmployeeFormModel> _employeeModel;
-		std::shared_ptr<PersonnelFormModel> _personnelModel;
-		std::shared_ptr<ContactNumbersManagerModel> _contactNumbersModel;
-		std::shared_ptr<LocationsManagerModel> _locationsModel;
-		std::shared_ptr<BusinessFormModel> _businessModel;
+		shared_ptr<EntityFormModel> _entityModel;
+		shared_ptr<PersonFormModel> _personModel;
+		shared_ptr<EmployeeFormModel> _employeeModel;
+		shared_ptr<PersonnelFormModel> _personnelModel;
+		shared_ptr<ContactNumbersManagerModel> _contactNumbersModel;
+		shared_ptr<LocationsManagerModel> _locationsModel;
+		shared_ptr<BusinessFormModel> _businessModel;
 
 		Entity::Type _type = Entity::InvalidType;
 		Entity::Type _defaultType = Entity::InvalidType;
 		Entity::SpecificType _specificType = Entity::UnspecificType;
-		Wt::Dbo::ptr<Entity> _tempPtr;
+		Dbo::ptr<Entity> _tempPtr;
 
 	private:
 		friend class EntityFormModel;

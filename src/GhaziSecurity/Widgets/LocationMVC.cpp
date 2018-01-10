@@ -10,12 +10,10 @@
 
 namespace GS
 {
-	using namespace std::placeholders;
-
 	const Wt::WFormModel::Field CountryFormModel::codeField = "code";
 	const Wt::WFormModel::Field CountryFormModel::nameField = "name";
 
-	CountryFormModel::CountryFormModel(CountryView *view, Wt::Dbo::ptr<Country> countryPtr)
+	CountryFormModel::CountryFormModel(CountryView *view, Dbo::ptr<Country> countryPtr)
 		: RecordFormModel(view, countryPtr), _view(view)
 	{
 		addField(codeField);
@@ -29,13 +27,13 @@ namespace GS
 		}
 	}
 
-	std::unique_ptr<Wt::WWidget> CountryFormModel::createFormWidget(Field field)
+	unique_ptr<Wt::WWidget> CountryFormModel::createFormWidget(Field field)
 	{
 		if(field == codeField)
 		{
-			auto code = std::make_unique<Wt::WLineEdit>();
+			auto code = make_unique<Wt::WLineEdit>();
 			code->setMaxLength(3);
-			auto validator = std::make_shared<CountryCodeValidator>(true);
+			auto validator = make_shared<CountryCodeValidator>(true);
 			if(isRecordPersisted())
 				validator->setAllowedCode(_recordPtr->code);
 			setValidator(codeField, validator);
@@ -44,9 +42,9 @@ namespace GS
 		}
 		if(field == nameField)
 		{
-			auto name = std::make_unique<Wt::WLineEdit>();
+			auto name = make_unique<Wt::WLineEdit>();
 			name->setMaxLength(70);
-			auto nameValidator = std::make_shared<Wt::WLengthValidator>(0, 70);
+			auto nameValidator = make_shared<Wt::WLengthValidator>(0, 70);
 			nameValidator->setMandatory(true);
 			setValidator(nameField, nameValidator);
 			return name;
@@ -77,12 +75,12 @@ namespace GS
 		t.commit();
 
 		app->dboSession().flush();
-		auto codeValidator = std::static_pointer_cast<CountryCodeValidator>(validator(codeField));
+		auto codeValidator = static_pointer_cast<CountryCodeValidator>(validator(codeField));
 		codeValidator->setAllowedCode(_recordPtr->code);
 		return true;
 	}
 
-	CountryView::CountryView(Wt::Dbo::ptr<Country> countryPtr)
+	CountryView::CountryView(Dbo::ptr<Country> countryPtr)
 		: RecordFormView(tr("GS.Admin.CountryView")), _tempPtr(countryPtr)
 	{ }
 
@@ -92,7 +90,7 @@ namespace GS
 
 	void CountryView::initView()
 	{
-		_model = std::make_shared<CountryFormModel>(this, _tempPtr);
+		_model = make_shared<CountryFormModel>(this, _tempPtr);
 		addFormModel("country", _model);
 	}
 
@@ -118,7 +116,7 @@ namespace GS
 			if(rows != 0)
 				return Result(Wt::ValidationState::Invalid, tr("CountryCodeExists"));
 		}
-		catch(Wt::Dbo::Exception &e)
+		catch(Dbo::Exception &e)
 		{
 			Wt::log("error") << "CountryCodeValidator::validate(): Dbo error(" << e.code() << "): " << e.what();
 			app->showDbBackendError(e.code());
@@ -131,7 +129,7 @@ namespace GS
 	const Wt::WFormModel::Field CityFormModel::countryField = "country";
 	const Wt::WFormModel::Field CityFormModel::nameField = "name";
 
-	CityFormModel::CityFormModel(CityView *view, Wt::Dbo::ptr<City> cityPtr /*= Wt::Dbo::ptr<City>()*/)
+	CityFormModel::CityFormModel(CityView *view, Dbo::ptr<City> cityPtr /*= Dbo::ptr<City>()*/)
 		: RecordFormModel(view, cityPtr), _view(view)
 	{
 		addField(countryField);
@@ -145,12 +143,12 @@ namespace GS
 		}
 	}
 
-	std::unique_ptr<Wt::WWidget> CityFormModel::createFormWidget(Field field)
+	unique_ptr<Wt::WWidget> CityFormModel::createFormWidget(Field field)
 	{
 		if(field == countryField)
 		{
-			auto country = std::make_unique<QueryProxyModelCB<CountryProxyModel>>(APP->countryProxyModel());
-			auto countryValidator = std::make_shared<QueryProxyModelCBValidator<CountryProxyModel>>(country.get());
+			auto country = make_unique<QueryProxyModelCB<CountryProxyModel>>(APP->countryProxyModel());
+			auto countryValidator = make_shared<QueryProxyModelCBValidator<CountryProxyModel>>(country.get());
 			countryValidator->setErrorString(tr("MustSelectCountry"));
 			setValidator(countryField, countryValidator);
 			country->changed().connect(country.get(), std::bind(&Wt::WComboBox::validate, country.get()));
@@ -158,9 +156,9 @@ namespace GS
 		}
 		if(field == nameField)
 		{
-			auto name = std::make_unique<Wt::WLineEdit>();
+			auto name = make_unique<Wt::WLineEdit>();
 			name->setMaxLength(70);
-			auto nameValidator = std::make_shared<Wt::WLengthValidator>(0, 70);
+			auto nameValidator = make_shared<Wt::WLengthValidator>(0, 70);
 			nameValidator->setMandatory(true);
 			setValidator(nameField, nameValidator);
 			return name;
@@ -182,7 +180,7 @@ namespace GS
 			//_recordPtr.modify()->setCreatedByValues();
 		}
 
-		_recordPtr.modify()->countryPtr = Wt::any_cast<Wt::Dbo::ptr<Country>>(value(countryField));
+		_recordPtr.modify()->countryPtr = Wt::any_cast<Dbo::ptr<Country>>(value(countryField));
 		_recordPtr.modify()->name = valueText(nameField).toUTF8();
 
 		if(app->cityQueryModel())
@@ -192,7 +190,7 @@ namespace GS
 		return true;
 	}
 
-	CityView::CityView(Wt::Dbo::ptr<City> cityPtr /*= Wt::Dbo::ptr<City>()*/)
+	CityView::CityView(Dbo::ptr<City> cityPtr /*= Dbo::ptr<City>()*/)
 		: RecordFormView(tr("GS.Admin.CityView")), _tempPtr(cityPtr)
 	{ }
 
@@ -202,7 +200,7 @@ namespace GS
 
 	void CityView::initView()
 	{
-		_model = std::make_shared<CityFormModel>(this, _tempPtr);
+		_model = make_shared<CityFormModel>(this, _tempPtr);
 		addFormModel("city", _model);
 	}
 
@@ -229,7 +227,7 @@ namespace GS
 		}
 	}
 
-	CountryProxyModel::CountryProxyModel(std::shared_ptr<QueryModel> sourceModel)
+	CountryProxyModel::CountryProxyModel(shared_ptr<QueryModel> sourceModel)
 	{
 		setSourceModel(sourceModel);
 		addAdditionalRows();
@@ -252,9 +250,9 @@ namespace GS
 		}
 	}
 
-	CityProxyModel::CityProxyModel(std::shared_ptr<QueryModel> sourceModel)
+	CityProxyModel::CityProxyModel(shared_ptr<QueryModel> sourceModel)
 	{
-		_filterModel = std::make_shared<CityFilterModel>();
+		_filterModel = make_shared<CityFilterModel>();
 		_filterModel->setSourceModel(sourceModel);
 
 		setSourceModel(_filterModel);
@@ -284,7 +282,7 @@ namespace GS
 	const Wt::WFormModel::Field LocationFormModel::cityField = "city";
 	const Wt::WFormModel::Field LocationFormModel::addressField = "address";
 
-	LocationFormModel::LocationFormModel(LocationView *view, Wt::Dbo::ptr<Location> locationPtr /*= Wt::Dbo::ptr<Location>()*/)
+	LocationFormModel::LocationFormModel(LocationView *view, Dbo::ptr<Location> locationPtr /*= Dbo::ptr<Location>()*/)
 		: RecordFormModel(view, locationPtr), _view(view)
 	{
 		addField(entityField);
@@ -302,17 +300,17 @@ namespace GS
 		}
 	}
 
-	std::unique_ptr<Wt::WWidget> LocationFormModel::createFormWidget(Field field)
+	unique_ptr<Wt::WWidget> LocationFormModel::createFormWidget(Field field)
 	{
 		if(field == addressField)
 		{
-			auto addressEdit = std::make_unique<Wt::WLineEdit>();
+			auto addressEdit = make_unique<Wt::WLineEdit>();
 			return addressEdit;
 		}
 		if(field == entityField)
 		{
-			auto w = std::make_unique<FindEntityEdit>();
-			auto validator = std::make_shared<FindEntityValidator>(w.get(), false);
+			auto w = make_unique<FindEntityEdit>();
+			auto validator = make_shared<FindEntityValidator>(w.get(), false);
 			validator->setModifyPermissionRequired(true);
 			setValidator(entityField, validator);
 			return w;
@@ -329,8 +327,8 @@ namespace GS
 		TRANSACTION(app);
 
 		auto address = valueText(addressField).toUTF8();
-		auto countryPtr = Wt::any_cast<Wt::Dbo::ptr<Country>>(value(countryField));
-		auto cityPtr = Wt::any_cast<Wt::Dbo::ptr<City>>(value(cityField));
+		auto countryPtr = Wt::any_cast<Dbo::ptr<Country>>(value(countryField));
+		auto cityPtr = Wt::any_cast<Dbo::ptr<City>>(value(cityField));
 
 		if(!_recordPtr)
 		{
@@ -341,7 +339,7 @@ namespace GS
 			_recordPtr.modify()->setCreatedByValues();
 		}
 
-		_recordPtr.modify()->entityPtr = Wt::any_cast<Wt::Dbo::ptr<Entity>>(value(entityField));
+		_recordPtr.modify()->entityPtr = Wt::any_cast<Dbo::ptr<Entity>>(value(entityField));
 		_recordPtr.modify()->address = address;
 		_recordPtr.modify()->countryPtr = countryPtr;
 		_recordPtr.modify()->cityPtr = cityPtr;
@@ -351,7 +349,7 @@ namespace GS
 	}
 
 	//LocationView
-	LocationView::LocationView(Wt::Dbo::ptr<Location> locationPtr)
+	LocationView::LocationView(Dbo::ptr<Location> locationPtr)
 		: RecordFormView(tr("GS.Admin.LocationView")), _tempPtr(locationPtr)
 	{
 		bindEmpty("index");
@@ -359,20 +357,20 @@ namespace GS
 
 	void LocationView::initView()
 	{
-		_model = std::make_shared<LocationFormModel>(this, _tempPtr);
+		_model = make_shared<LocationFormModel>(this, _tempPtr);
 		addFormModel("location", _model);
 
 		WApplication *app = WApplication::instance();
 		app->initCountryQueryModel();
 		app->initCityQueryModel();
 
-		auto cntCombo = std::make_unique<QueryProxyModelCB<CountryProxyModel>>(app->countryProxyModel());
+		auto cntCombo = make_unique<QueryProxyModelCB<CountryProxyModel>>(app->countryProxyModel());
 		_countryCombo = cntCombo.get();
 		_countryCombo->changed().connect(this, std::bind(&LocationView::handleCountryChanged, this, true));
 		setFormWidget(LocationFormModel::countryField, std::move(cntCombo));
 
-		_cityProxyModel = std::make_shared<CityProxyModel>(app->cityQueryModel());
-		auto citCombo = std::make_unique<QueryProxyModelCB<CityProxyModel>>(_cityProxyModel);
+		_cityProxyModel = make_shared<CityProxyModel>(app->cityQueryModel());
+		auto citCombo = make_unique<QueryProxyModelCB<CityProxyModel>>(_cityProxyModel);
 		_cityCombo = citCombo.get();
 		_cityCombo->changed().connect(this, &LocationView::handleCityChanged);
 		setFormWidget(LocationFormModel::cityField, std::move(citCombo));
@@ -393,13 +391,13 @@ namespace GS
 			return;
 		}
 
-		auto cityProxyModel = std::static_pointer_cast<CityProxyModel>(_cityCombo->model());
+		auto cityProxyModel = static_pointer_cast<CityProxyModel>(_cityCombo->model());
 		Wt::WString countryCode = Wt::asString(_countryCombo->model()->index(_countryCombo->currentIndex(), 1).data());
 		cityProxyModel->filterModel()->setCountryCode(countryCode.toUTF8());
 
 		if(resetCity)
 		{
-			model()->setValue(LocationFormModel::cityField, Wt::Dbo::ptr<City>());
+			model()->setValue(LocationFormModel::cityField, Dbo::ptr<City>());
 			updateViewField(model().get(), LocationFormModel::cityField);
 		}
 	}
@@ -419,7 +417,7 @@ namespace GS
 		if(_dialog)
 			return;
 
-		_dialog = addChild(std::make_unique<Wt::WDialog>(tr("AddCountry")));
+		_dialog = addChild(make_unique<Wt::WDialog>(tr("AddCountry")));
 		_dialog->setClosable(true);
 		_dialog->setTransient(true);
 		_dialog->rejectWhenEscapePressed(true);
@@ -429,7 +427,7 @@ namespace GS
 		_dialog->finished().connect(this, std::bind([this](Wt::DialogCode code) {
 			if(code == Wt::DialogCode::Rejected)
 			{
-				model()->setValue(LocationFormModel::countryField, Wt::Dbo::ptr<Country>());
+				model()->setValue(LocationFormModel::countryField, Dbo::ptr<Country>());
 				updateViewField(model().get(), LocationFormModel::countryField);
 				handleCountryChanged(true);
 			}
@@ -453,7 +451,7 @@ namespace GS
 			return;
 
 		updateModel();
-		_dialog = addChild(std::make_unique<Wt::WDialog>(tr("AddCity")));
+		_dialog = addChild(make_unique<Wt::WDialog>(tr("AddCity")));
 		_dialog->setClosable(true);
 		_dialog->setTransient(true);
 		_dialog->rejectWhenEscapePressed(true);
@@ -463,7 +461,7 @@ namespace GS
 		_dialog->finished().connect(this, std::bind([this](Wt::DialogCode code) {
 			if(code == Wt::DialogCode::Rejected)
 			{
-				model()->setValue(LocationFormModel::cityField, Wt::Dbo::ptr<City>());
+				model()->setValue(LocationFormModel::cityField, Dbo::ptr<City>());
 				updateViewField(model().get(), LocationFormModel::cityField);
 			}
 			_dialog->removeFromParent();
@@ -492,17 +490,17 @@ namespace GS
 
 	void LocationList::initFilters()
 	{
-		filtersTemplate()->addFilterModel(std::make_shared<WLineEditFilterModel>(tr("ID"), "l.id", std::bind(&FiltersTemplate::initIdEdit, _1)));
-		filtersTemplate()->addFilterModel(std::make_shared<NameFilterModel>(tr("Address"), "l.address")); filtersTemplate()->addFilter(2);
-		filtersTemplate()->addFilterModel(std::make_shared<NameFilterModel>(tr("Country"), "cnt.name"));
-		filtersTemplate()->addFilterModel(std::make_shared<NameFilterModel>(tr("City"), "city.name"));
-		filtersTemplate()->addFilterModel(std::make_shared<NameFilterModel>(tr("Entity"), "e.name"));
+		filtersTemplate()->addFilterModel(make_shared<WLineEditFilterModel>(tr("ID"), "l.id", std::bind(&FiltersTemplate::initIdEdit, _1)));
+		filtersTemplate()->addFilterModel(make_shared<NameFilterModel>(tr("Address"), "l.address")); filtersTemplate()->addFilter(2);
+		filtersTemplate()->addFilterModel(make_shared<NameFilterModel>(tr("Country"), "cnt.name"));
+		filtersTemplate()->addFilterModel(make_shared<NameFilterModel>(tr("City"), "city.name"));
+		filtersTemplate()->addFilterModel(make_shared<NameFilterModel>(tr("Entity"), "e.name"));
 	}
 
 	void LocationList::initModel()
 	{
-		std::shared_ptr<QueryModelType> model;
-		_model = model = std::make_shared<QueryModelType>();
+		shared_ptr<QueryModelType> model;
+		_model = model = make_shared<QueryModelType>();
 
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
@@ -519,7 +517,7 @@ namespace GS
 		addColumn(ViewCityName, model->addColumn("city.name"), tr("City"), CityColumnWidth);
 		addColumn(ViewEntityName, model->addColumn("e.name"), tr("Entity"), EntityColumnWidth);
 
-		//_proxyModel = std::make_shared<LocationListProxyModel>(_model);
+		//_proxyModel = make_shared<LocationListProxyModel>(_model);
 	}
 
 }

@@ -1,14 +1,15 @@
 #ifndef GS_WAPPLICATION_H
 #define GS_WAPPLICATION_H
 
+#include "Common.h"
+#include "Dbo/Dbos.h"
+#include "Dbo/EntitiesDatabase.h"
+#include "Dbo/AccountsDatabase.h"
+
 #include <Wt/WApplication.h>
 #include <Wt/Auth/Login.h>
 #include <Wt/Auth/Dbo/UserDatabase.h>
 #include <Wt/WDialog.h>
-
-#include "Dbo/Dbos.h"
-#include "Dbo/EntitiesDatabase.h"
-#include "Dbo/AccountsDatabase.h"
 
 namespace GS
 {
@@ -26,12 +27,12 @@ namespace GS
 	class AuthWidget;
 	class AdminPageWidget;
 
-	typedef Wt::Dbo::QueryModel<Wt::Dbo::ptr<Location>> LocationQueryModel;
-	typedef Wt::Dbo::QueryModel<Wt::Dbo::ptr<Country>> CountryQueryModel;
-	typedef Wt::Dbo::QueryModel<Wt::Dbo::ptr<City>> CityQueryModel;
-	typedef Wt::Dbo::QueryModel<Wt::Dbo::ptr<EmployeePosition>> PositionQueryModel;
-	typedef Wt::Dbo::QueryModel<Wt::Dbo::ptr<ClientService>> ServiceQueryModel;
-	typedef Wt::Dbo::QueryModel<Wt::Dbo::ptr<Region>> RegionQueryModel;
+	typedef Dbo::QueryModel<Dbo::ptr<Location>> LocationQueryModel;
+	typedef Dbo::QueryModel<Dbo::ptr<Country>> CountryQueryModel;
+	typedef Dbo::QueryModel<Dbo::ptr<City>> CityQueryModel;
+	typedef Dbo::QueryModel<Dbo::ptr<EmployeePosition>> PositionQueryModel;
+	typedef Dbo::QueryModel<Dbo::ptr<ClientService>> ServiceQueryModel;
+	typedef Dbo::QueryModel<Dbo::ptr<Region>> RegionQueryModel;
 
 	class AuthLogin : public Wt::Auth::Login
 	{
@@ -44,8 +45,8 @@ namespace GS
 		};
 
 		AuthLogin();
-		Wt::Dbo::ptr<AuthInfo> authInfoPtr() const { return _authInfoPtr; };
-		Wt::Dbo::ptr<User> userPtr() const { return _authInfoPtr ? _authInfoPtr->user() : Wt::Dbo::ptr<User>(); }
+		Dbo::ptr<AuthInfo> authInfoPtr() const { return _authInfoPtr; };
+		Dbo::ptr<User> userPtr() const { return _authInfoPtr ? _authInfoPtr->user() : Dbo::ptr<User>(); }
 
 		bool hasPermission(long long permissionId) { return checkPermission(permissionId) == Permitted; }
 		PermissionResult checkPermission(long long permissionId);
@@ -58,7 +59,7 @@ namespace GS
 		bool canAccessAdminPanel() { return loggedIn() && hasPermission(Permissions::AccessAdminPanel); }
 
 		template<class QueryResult>
-		void setPermissionConditionsToQuery(Wt::Dbo::Query<QueryResult> &query, bool resultsIfLoggedOut = false, const std::string &fieldPrefix = "", bool modifyPermissionRequired = false);
+		void setPermissionConditionsToQuery(Dbo::Query<QueryResult> &query, bool resultsIfLoggedOut = false, const std::string &fieldPrefix = "", bool modifyPermissionRequired = false);
 
 	protected:
 		enum class IdOptions
@@ -73,7 +74,7 @@ namespace GS
 		void handleBeforeLoginChanged();
 		PermissionMap _permissions;
 		PermissionResult _recordCreatePermission;
-		Wt::Dbo::ptr<AuthInfo> _authInfoPtr;
+		Dbo::ptr<AuthInfo> _authInfoPtr;
 	};
 
 	class WApplication : public Wt::WApplication
@@ -82,9 +83,9 @@ namespace GS
 		WApplication(const Wt::WEnvironment& env);
 
 		static WApplication *instance() { return dynamic_cast<WApplication*>(Wt::WApplication::instance()); }
-		static std::unique_ptr<WApplication> createApplication(const Wt::WEnvironment &env) { return std::make_unique<WApplication>(env); }
+		static unique_ptr<WApplication> createApplication(const Wt::WEnvironment &env) { return make_unique<WApplication>(env); }
 
-		Wt::Dbo::Session &dboSession() { return _dboSession; }
+		Dbo::Session &dboSession() { return _dboSession; }
 		AuthLogin &authLogin() { return _login; }
 		UserDatabase &userDatabase() { return _userDatabase; }
 		EntitiesDatabase &entitiesDatabase() { return _entitiesDatabase; }
@@ -115,23 +116,23 @@ namespace GS
 		void initFindLocationSuggestion();
 
 		//QueryModels
-		std::shared_ptr<CountryQueryModel> countryQueryModel() const { return _countryQueryModel; }
-		std::shared_ptr<CountryProxyModel> countryProxyModel() const { return _countryProxyModel; }
+		shared_ptr<CountryQueryModel> countryQueryModel() const { return _countryQueryModel; }
+		shared_ptr<CountryProxyModel> countryProxyModel() const { return _countryProxyModel; }
 		void initCountryQueryModel();
 
-		std::shared_ptr<CityQueryModel> cityQueryModel() const { return _cityQueryModel; }
+		shared_ptr<CityQueryModel> cityQueryModel() const { return _cityQueryModel; }
 		void initCityQueryModel();
 
-		std::shared_ptr<PositionQueryModel> positionQueryModel() const { return _positionQueryModel; }
-		std::shared_ptr<PositionProxyModel> positionProxyModel() const { return _positionProxyModel; }
+		shared_ptr<PositionQueryModel> positionQueryModel() const { return _positionQueryModel; }
+		shared_ptr<PositionProxyModel> positionProxyModel() const { return _positionProxyModel; }
 		void initPositionQueryModel();
 
-		std::shared_ptr<ServiceQueryModel> serviceQueryModel() const { return _serviceQueryModel; }
-		std::shared_ptr<ServiceProxyModel> serviceProxyModel() const { return _serviceProxyModel; }
+		shared_ptr<ServiceQueryModel> serviceQueryModel() const { return _serviceQueryModel; }
+		shared_ptr<ServiceProxyModel> serviceProxyModel() const { return _serviceProxyModel; }
 		void initServiceQueryModel();
 
-		std::shared_ptr<RegionQueryModel> regionQueryModel() const { return _regionQueryModel; }
-		std::shared_ptr<RegionProxyModel> regionProxyModel() const { return _regionProxyModel; }
+		shared_ptr<RegionQueryModel> regionQueryModel() const { return _regionQueryModel; }
+		shared_ptr<RegionProxyModel> regionProxyModel() const { return _regionProxyModel; }
 		void initRegionQueryModel();
 
 	protected:
@@ -148,10 +149,10 @@ namespace GS
 		void handlePasswordPromptFinished(Wt::DialogCode code, const std::string &rejectInternalPath);
 
 		template<class PageClass>
-		PageClass *addMenuItem(Wt::WMenu *menu, const Wt::WString &title, std::unique_ptr<PageClass> pageContents)
+		PageClass *addMenuItem(Wt::WMenu *menu, const Wt::WString &title, unique_ptr<PageClass> pageContents)
 		{
 			PageClass *ret = pageContents.get();
-			auto menuItem = std::make_unique<Wt::WMenuItem>(title, std::move(pageContents));
+			auto menuItem = make_unique<Wt::WMenuItem>(title, std::move(pageContents));
 			menuItem->setPathComponent(ret->basePathComponent());
 			menu->addItem(std::move(menuItem));
 			return ret;
@@ -180,7 +181,7 @@ namespace GS
 		AttendanceAdminPage *_attendanceAdminPage = nullptr;
 		UsersAdminPage *_usersAdminPage = nullptr;
 
-		std::unique_ptr<Wt::WDialog> _errorDialog;
+		unique_ptr<Wt::WDialog> _errorDialog;
 		Wt::WText *_errorDialogText = nullptr;
 
 		Wt::WSuggestionPopup *_findEntitySuggestion = nullptr;
@@ -188,18 +189,18 @@ namespace GS
 		Wt::WSuggestionPopup *_findLocationSuggestion = nullptr;
 
 		//Models
-		std::shared_ptr<CountryQueryModel> _countryQueryModel;
-		std::shared_ptr<CountryProxyModel> _countryProxyModel;
-		std::shared_ptr<CityQueryModel> _cityQueryModel;
-		std::shared_ptr<PositionQueryModel> _positionQueryModel;
-		std::shared_ptr<PositionProxyModel> _positionProxyModel;
-		std::shared_ptr<ServiceQueryModel> _serviceQueryModel;
-		std::shared_ptr<ServiceProxyModel> _serviceProxyModel;
-		std::shared_ptr<RegionQueryModel> _regionQueryModel;
-		std::shared_ptr<RegionProxyModel> _regionProxyModel;
+		shared_ptr<CountryQueryModel> _countryQueryModel;
+		shared_ptr<CountryProxyModel> _countryProxyModel;
+		shared_ptr<CityQueryModel> _cityQueryModel;
+		shared_ptr<PositionQueryModel> _positionQueryModel;
+		shared_ptr<PositionProxyModel> _positionProxyModel;
+		shared_ptr<ServiceQueryModel> _serviceQueryModel;
+		shared_ptr<ServiceProxyModel> _serviceProxyModel;
+		shared_ptr<RegionQueryModel> _regionQueryModel;
+		shared_ptr<RegionProxyModel> _regionProxyModel;
 		
 		//Session related
-		Wt::Dbo::Session _dboSession;
+		Dbo::Session _dboSession;
 		AuthLogin _login;
 
 		//Some databases
@@ -212,7 +213,7 @@ namespace GS
 
 	//TEMPLATE FUNCTIONS
 	template<class QueryResult>
-	void AuthLogin::setPermissionConditionsToQuery(Wt::Dbo::Query<QueryResult> &query, bool resultsIfLoggedOut /*= false*/, const std::string &fieldPrefix /*= ""*/, bool modifyPermissionRequired /*= false*/)
+	void AuthLogin::setPermissionConditionsToQuery(Dbo::Query<QueryResult> &query, bool resultsIfLoggedOut /*= false*/, const std::string &fieldPrefix /*= ""*/, bool modifyPermissionRequired /*= false*/)
 	{
 		if(modifyPermissionRequired && !hasPermission(Permissions::ModifyRecord))
 		{
@@ -220,7 +221,7 @@ namespace GS
 			return;
 		}
 
-		Wt::Dbo::ptr<User> selfUser = userPtr();
+		Dbo::ptr<User> selfUser = userPtr();
 		if(selfUser)
 		{
 			IdOptions regionIdOptions = IdOptions::Default;
