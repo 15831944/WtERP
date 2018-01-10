@@ -255,6 +255,9 @@ namespace GS
 
 	long long WApplication::getUsableIdFromPathPrefix(const std::string &pathPrefix, AdminPageWidget *adminPageWidget, const std::string &pathComponentPrefix)
 	{
+		if(!adminPageWidget)
+			return -1;
+
 		std::string path = internalPath();
 		Wt::Utils::append(path, '/');
 
