@@ -1,12 +1,12 @@
 #include "Utilities/FilteredList.h"
 
-#include <Wt/WCheckBox>
-#include <Wt/WComboBox>
-#include <Wt/WTableView>
-#include <Wt/WPushButton>
-#include <Wt/WIntValidator>
-#include <Wt/WDoubleValidator>
-#include <Wt/WAbstractProxyModel>
+#include <Wt/WCheckBox.h>
+#include <Wt/WComboBox.h>
+#include <Wt/WTableView.h>
+#include <Wt/WPushButton.h>
+#include <Wt/WIntValidator.h>
+#include <Wt/WDoubleValidator.h>
+#include <Wt/WAbstractProxyModel.h>
 
 #include <boost/tokenizer.hpp>
 
@@ -21,9 +21,11 @@ namespace GS
 			_enabled = false;
 	}
 
-	Wt::WWidget *AbstractFilterWidgetModel::createWidget()
+	std::unique_ptr<Wt::WCheckBox> AbstractFilterWidgetModel::createCheckbox()
 	{
-		return _cb = new Wt::WCheckBox();
+		auto cb = std::make_unique<Wt::WCheckBox>();
+		_cb = cb.get();
+		return cb;
 	}
 
 	void WLineEditFilterModel::updateModel()
@@ -62,7 +64,7 @@ namespace GS
 		AbstractFilterWidgetModel::updateModel();
 
 		if(_edit)
-			_value = boost::any_cast<int>(_edit->model()->index(_edit->currentIndex(), 0).data(Wt::UserRole));
+			_value = Wt::any_cast<int>(_edit->model()->index(_edit->currentIndex(), 0).data(Wt::ItemDataRole::User));
 		else
 			_value = 0;
 
@@ -70,37 +72,27 @@ namespace GS
 			_enabled = false;
 	}
 
-	Wt::WWidget *WLineEditFilterModel::createWidget()
+	std::unique_ptr<Wt::WWidget> WLineEditFilterModel::createWidget()
 	{
-		if(_edit)
-			return nullptr;
-
-		_edit = new Wt::WLineEdit();
+		auto edit = std::make_unique<Wt::WLineEdit>();
+		_edit = edit.get();
 		if(_function) _function(_edit);
-
-		AbstractFilterWidgetModel::createWidget();
-		return _edit;
+		return edit;
 	}
 
-	Wt::WWidget *WComboBoxFilterModel::createWidget()
+	std::unique_ptr<Wt::WWidget> WComboBoxFilterModel::createWidget()
 	{
-		if(_edit)
-			return nullptr;
-
-		_edit = new Wt::WComboBox();
+		auto edit = std::make_unique<Wt::WComboBox>();
+		_edit = edit.get();
 		if(_function) _function(_edit);
-
-		AbstractFilterWidgetModel::createWidget();
-		return _edit;
+		return edit;
 	}
 
-	Wt::WWidget *NameFilterModel::createWidget()
+	std::unique_ptr<Wt::WWidget> NameFilterModel::createWidget()
 	{
-		if(!WLineEditFilterModel::createWidget())
-			return nullptr;
-
+		auto edit = WLineEditFilterModel::createWidget();
 		_edit->setMaxLength(70);
-		return _edit;
+		return edit;
 	}
 
 	std::string NameFilterModel::sqlCondition()
@@ -124,37 +116,31 @@ namespace GS
 		return vec;
 	}
 
-	FiltersTemplate::FiltersTemplate(AbstractFilteredList *filteredList, Wt::WContainerWidget *parent /*= nullptr*/)
-		: Wt::WTemplate(tr("GS.FiltersTemplate"), parent), _filteredList(filteredList)
+	FiltersTemplate::FiltersTemplate(AbstractFilteredList *filteredList)
+		: Wt::WTemplate(tr("GS.FiltersTemplate")), _filteredList(filteredList)
 	{
-		_filtersComboBox = new Wt::WComboBox();
+		_filtersComboBox = bindNew<Wt::WComboBox>("filters-combo");
 		_filtersComboBox->addItem(tr("SelectFilter"));
 
-		auto addFilter = new Wt::WPushButton(tr("Add"));
+		auto addFilter = bindNew<Wt::WPushButton>("add-filter", tr("Add"));
 		addFilter->clicked().connect(this, &FiltersTemplate::handleAddFilter);
 
-		auto applyFilters = new Wt::WPushButton(tr("ApplyFilters"));
+		auto applyFilters = bindNew<Wt::WPushButton>("apply-filter", tr("ApplyFilters"));
 		applyFilters->clicked().connect(this, &FiltersTemplate::handleApplyFilters);
 
-		_filterWidgetsContainer = new Wt::WContainerWidget();
-
-		bindWidget("filters-combo", _filtersComboBox);
-		bindWidget("add-filter", addFilter);
-		bindWidget("apply-filter", applyFilters);
-		bindWidget("filters-container", _filterWidgetsContainer);
+		_filterWidgetsContainer = bindNew<Wt::WContainerWidget>("filters-container");
 	}
 
 	AbstractFilteredList::AbstractFilteredList()
 	{
 		setTemplateText(tr("GS.FilteredListView"));
 
-		_tableView = new Wt::WTableView();
+		_tableView = bindNew<Wt::WTableView>("table-view");
 		_tableView->setSelectable(true);
 		_tableView->setHeaderHeight(40);
 		_tableView->setRowHeight(30);
 		_tableView->setMaximumSize(Wt::WLength::Auto, 600);
 		_tableView->setAlternatingRowColors(true);
-		bindWidget("table-view", _tableView);
 	}
 
 	void AbstractFilteredList::load()
@@ -176,7 +162,7 @@ namespace GS
 				if(diff > 0)
 				{
 					//_tableView->setColumnWidth(_proxyModel->columnCount() - 1, 40);
-					_tableView->setColumnAlignment(_proxyModel->columnCount() - 1, Wt::AlignCenter);
+					_tableView->setColumnAlignment(_proxyModel->columnCount() - 1, Wt::AlignmentFlag::Center);
 				}
 
 				while(diff > 0)
@@ -199,7 +185,7 @@ namespace GS
 			return;
 
 		setCondition("filters-enabled", true);
-		bindWidget("filters", _filtersTemplate = new FiltersTemplate(this));
+		_filtersTemplate = bindNew<FiltersTemplate>("filters", this);
 		if(loaded())
 			initFilters();
 	}
@@ -209,17 +195,17 @@ namespace GS
 		auto model = _tableView->model();
 		for(int i = 0; i < model->columnCount(); ++i)
 		{
-			boost::any width = model->headerData(i, Wt::Horizontal, Wt::WidthRole);
+			Wt::any width = model->headerData(i, Wt::Orientation::Horizontal, Wt::ItemDataRole::Width);
 			if(!width.empty())
-				_tableView->setColumnWidth(i, Wt::WLength(boost::any_cast<int>(width)));
+				_tableView->setColumnWidth(i, Wt::WLength(Wt::any_cast<int>(width)));
 		}
 	}
 
 	void AbstractFilteredList::addColumn(int viewIndex, int column, const Wt::WString &header, int width)
 	{
-		_model->setHeaderData(column, Wt::Horizontal, header);
-		_model->setHeaderData(column, Wt::Horizontal, viewIndex, Wt::ViewIndexRole);
-		_model->setHeaderData(column, Wt::Horizontal, width, Wt::WidthRole);
+		_model->setHeaderData(column, Wt::Orientation::Horizontal, header);
+		_model->setHeaderData(column, Wt::Orientation::Horizontal, viewIndex, Wt::ItemDataRole::ViewIndex);
+		_model->setHeaderData(column, Wt::Orientation::Horizontal, width, Wt::ItemDataRole::Width);
 
 		_viewIndexToColumnMap[viewIndex] = column;
 	}
@@ -230,12 +216,11 @@ namespace GS
 		return fitr == _viewIndexToColumnMap.end() ? -1 : fitr->second;
 	}
 
-	void FiltersTemplate::addFilterModel(AbstractFilterWidgetModel *model)
+	void FiltersTemplate::addFilterModel(std::shared_ptr<AbstractFilterWidgetModel> model)
 	{
 		if(!model)
 			return;
 
-		Wt::WObject::addChild(model);
 		_filtersComboBox->addItem(model->filterTitle());
 		_modelVector.push_back(model);
 	}
@@ -255,20 +240,19 @@ namespace GS
 		if(!newWidget)
 			return;
 
-		Wt::WTemplate *filterTemplate = new Wt::WTemplate();
-		if(auto rangeEdit = dynamic_cast<RangeEdit*>(newWidget))
+		 Wt::WTemplate *filterTemplate = _filterWidgetsContainer->addNew<Wt::WTemplate>();
+		if(auto rangeEdit = dynamic_cast<RangeEdit*>(newWidget.get()))
 		{
 			filterTemplate->setTemplateText(tr("GS.ListRangeFilterView"));
-			filterTemplate->bindWidget("operatorCombo", rangeEdit->operatorCombo());
+			filterTemplate->bindWidget("operatorCombo", rangeEdit->createOperatorCombo());
 		}
 		else
 			filterTemplate->setTemplateText(tr("GS.ListFilterView"));
 
-		model->checkbox()->setChecked(true);
-		filterTemplate->bindWidget("checkbox", model->checkbox());
+		filterTemplate->bindWidget("checkbox", model->createCheckbox());
 		filterTemplate->bindString("title", model->filterTitle());
-		filterTemplate->bindWidget("widget", newWidget);
-		_filterWidgetsContainer->addWidget(filterTemplate);
+		filterTemplate->bindWidget("widget", std::move(newWidget));
+		model->checkbox()->setChecked(true);
 	}
 
 	void FiltersTemplate::handleApplyFilters()
@@ -293,24 +277,27 @@ namespace GS
 
 	void FiltersTemplate::initIdEdit(Wt::WLineEdit *edit)
 	{
-		edit->setValidator(new Wt::WIntValidator());
+		edit->setValidator(std::make_shared<Wt::WIntValidator>());
 		edit->setMaxLength(20);
 	}
 
-	RangeEdit::RangeEdit(Wt::WContainerWidget *parent /*= nullptr*/)
-		: Wt::WLineEdit(parent)
+	RangeEdit::RangeEdit()
 	{
 		setTextSize(30);
+		setValidator(std::make_shared<Wt::WDoubleValidator>());
+	}
 
-		auto lineEditValidator = new Wt::WDoubleValidator(this);
-		setValidator(lineEditValidator);
-
-		_operatorCombo = new Wt::WComboBox();
+	std::unique_ptr<Wt::WComboBox> RangeEdit::createOperatorCombo()
+	{
+		auto combo = std::make_unique<Wt::WComboBox>();
+		_operatorCombo = combo.get();
 		_operatorCombo->insertItem(Equal, "=");
 		_operatorCombo->insertItem(LessThan, "<");
 		_operatorCombo->insertItem(LessThanEqual, "<=");
 		_operatorCombo->insertItem(GreaterThan, ">");
 		_operatorCombo->insertItem(GreaterThanEqual, ">=");
+
+		return combo;
 	}
 
 	void RangeFilterModel::updateModel()
@@ -345,16 +332,12 @@ namespace GS
 		}
 	}
 
-	Wt::WWidget *RangeFilterModel::createWidget()
+	std::unique_ptr<Wt::WWidget> RangeFilterModel::createWidget()
 	{
-		if(_edit)
-			return nullptr;
-
-		_edit = new RangeEdit();
+		auto edit = std::make_unique<RangeEdit>();
+		_edit = edit.get();
 		if(_function) _function(_edit);
-
-		AbstractFilterWidgetModel::createWidget();
-		return _edit;
+		return edit;
 	}
 
 }

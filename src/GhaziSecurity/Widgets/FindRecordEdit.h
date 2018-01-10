@@ -3,11 +3,11 @@
 
 #include "Application/WApplication.h"
 
-#include <Wt/WTemplate>
-#include <Wt/WLineEdit>
-#include <Wt/WCompositeWidget>
-#include <Wt/WSuggestionPopup>
-#include <Wt/Dbo/QueryModel>
+#include <Wt/WTemplate.h>
+#include <Wt/WLineEdit.h>
+#include <Wt/WCompositeWidget.h>
+#include <Wt/WSuggestionPopup.h>
+#include <Wt/Dbo/QueryModel.h>
 
 namespace GS
 {
@@ -20,7 +20,7 @@ namespace GS
 	class FindRecordEditTemplate : public Wt::WTemplate
 	{
 	public:
-		FindRecordEditTemplate(Wt::WLineEdit *edit, Wt::WContainerWidget *parent = nullptr);
+		FindRecordEditTemplate(std::unique_ptr<Wt::WLineEdit> edit);
 		virtual void setDisabled(bool disabled) override;
 
 	protected:
@@ -33,12 +33,12 @@ namespace GS
 	public:
 		AbstractFindRecordEdit();
 		virtual void load() override;
-		virtual void setValuePtr(boost::any ptrData) = 0;
-		virtual boost::any valueAny() const = 0;
+		virtual void setValuePtr(Wt::any ptrData) = 0;
+		virtual Wt::any valueAny() const = 0;
 
 		FindRecordEditTemplate *containerTemplate() const { return _containerTemplate; }
 		Wt::WLineEdit *lineEdit() const { return _lineEdit; }
-		Wt::Signal<void> &valueChanged() { return _valueChanged; }
+		Wt::Signal<> &valueChanged() { return _valueChanged; }
 
 	protected:
 		virtual void propagateSetEnabled(bool enabled) override;
@@ -48,7 +48,7 @@ namespace GS
 		Wt::WLineEdit *_lineEdit = nullptr;
 		FindRecordEditTemplate *_containerTemplate = nullptr;
 		Wt::WSuggestionPopup *_suggestionPopup = nullptr;
-		Wt::Signal<void> _valueChanged;
+		Wt::Signal<> _valueChanged;
 	};
 
 	//FindRecordEdit
@@ -56,11 +56,11 @@ namespace GS
 	class FindRecordEdit : public AbstractFindRecordEdit
 	{
 	public:
-		virtual void setValuePtr(boost::any ptrData) override { setValuePtr(ptrData.empty() ? Wt::Dbo::ptr<Value>() : boost::any_cast<Wt::Dbo::ptr<Value>>(ptrData)); }
+		virtual void setValuePtr(Wt::any ptrData) override { setValuePtr(ptrData.empty() ? Wt::Dbo::ptr<Value>() : Wt::cpp17::any_cast<Wt::Dbo::ptr<Value>>(ptrData)); }
 		void setValuePtr(Wt::Dbo::ptr<Value> ptr);
 
 		Wt::Dbo::ptr<Value> valuePtr() const { return _valuePtr; }
-		virtual boost::any valueAny() const override { return valuePtr(); }
+		virtual Wt::any valueAny() const override { return valuePtr(); }
 		void setIdColumn(int column) { _idColumn = column; }
 		int idColumn() const { return _idColumn; }
 
@@ -79,7 +79,7 @@ namespace GS
 	class FindEntitySuggestionPopup : public Wt::WSuggestionPopup
 	{
 	public:
-		FindEntitySuggestionPopup(Wt::WObject *parent = nullptr);
+		FindEntitySuggestionPopup();
 
 	protected:
 		void handleFilterModel(const Wt::WString &str, Wt::WFormWidget *edit);
@@ -104,6 +104,7 @@ namespace GS
 		Entity::Type _entityType;
 		Entity::SpecificType _specificType;
 		Wt::WDialog *_newDialog = nullptr;
+		Wt::WDialog *_listDialog = nullptr;
 
 	private:
 		friend class FindEntityValidator;
@@ -114,7 +115,7 @@ namespace GS
 	{
 	public:
 		FindEntityValidator(FindEntityEdit *findEdit, bool mandatory = false)
-			: Wt::WValidator(mandatory, findEdit), _findEdit(findEdit)
+			: Wt::WValidator(mandatory), _findEdit(findEdit)
 		{ }
 		virtual Result validate(const Wt::WString &input) const override;
 		void setModifyPermissionRequired(bool required) { _modifyPermissionRequired = required; }
@@ -133,7 +134,7 @@ namespace GS
 	{
 	public:
 		enum ResultColumns { Name, Id, Type, EntityName };
-		FindAccountSuggestionPopup(Wt::WObject *parent = nullptr);
+		FindAccountSuggestionPopup();
 
 	protected:
 		void handleFilterModel(const Wt::WString &str, Wt::WFormWidget *edit);
@@ -154,6 +155,7 @@ namespace GS
 
 		Account::Type _accountType;
 		Wt::WDialog *_newDialog = nullptr;
+		Wt::WDialog *_listDialog = nullptr;
 
 	private:
 		friend class FindAccountValidator;
@@ -164,7 +166,7 @@ namespace GS
 	{
 	public:
 		FindAccountValidator(FindAccountEdit *findEdit, bool mandatory = false)
-			: Wt::WValidator(mandatory, findEdit), _findEdit(findEdit)
+			: Wt::WValidator(mandatory), _findEdit(findEdit)
 		{ }
 		virtual Result validate(const Wt::WString &input) const override;
 		void setModifyPermissionRequired(bool required) { _modifyPermissionRequired = required; }
@@ -183,10 +185,10 @@ namespace GS
 	{
 	public:
 		enum ResultColumns { Id, Address, CountryName, CityName, EntityName };
-		FindLocationSuggestionPopup(Wt::WObject *parent = nullptr);
+		FindLocationSuggestionPopup();
 
 	protected:
-		typedef boost::tuple<long long, std::string, std::string, std::string, std::string> ResultTuple;
+		typedef std::tuple<long long, std::string, std::string, std::string, std::string> ResultTuple;
 		void handleFilterModel(const Wt::WString &str, Wt::WFormWidget *edit);
 	};
 
@@ -204,6 +206,7 @@ namespace GS
 		void handleListSelectionChanged(long long id);
 
 		Wt::WDialog *_newDialog = nullptr;
+		Wt::WDialog *_listDialog = nullptr;
 
 	private:
 		friend class FindLocationValidator;
@@ -214,7 +217,7 @@ namespace GS
 	{
 	public:
 		FindLocationValidator(FindLocationEdit *findEdit, bool mandatory = false)
-			: Wt::WValidator(mandatory, findEdit), _findEdit(findEdit)
+			: Wt::WValidator(mandatory), _findEdit(findEdit)
 		{ }
 		virtual Result validate(const Wt::WString &input) const override;
 		void setModifyPermissionRequired(bool required) { _modifyPermissionRequired = required; }
@@ -224,30 +227,6 @@ namespace GS
 		FindLocationEdit *_findEdit;
 		bool _modifyPermissionRequired = false;
 	};
-
-	//OLD CRAP
-// 	//FindEntityModel
-// 	typedef boost::tuple<std::string, long long, Entity::Type> _FEMTuple;
-// 	class FindEntityModel : public Wt::Dbo::QueryModel<_FEMTuple>
-// 	{
-// 	public:
-// 		enum ResultColumns { Name, Id, Type };
-// 
-// 		FindEntityModel(Wt::WObject *parent = nullptr) : Wt::Dbo::QueryModel<_FEMTuple>(parent) { }
-// 		virtual boost::any data(const Wt::WModelIndex &idx, int role = Wt::DisplayRole) const override;
-// 	};
-
-// 	//FindAccountModel
-// 	typedef boost::tuple<std::string, long long, Account::Type, std::string> _FAMTuple;
-// 	class FindAccountModel : public Wt::Dbo::QueryModel<_FAMTuple>
-// 	{
-// 	public:
-// 		enum ResultColumns { Name, Id, Type, EntityName };
-// 
-// 		FindAccountModel(Wt::WObject *parent = nullptr);
-// 		virtual boost::any data(const Wt::WModelIndex &idx, int role = Wt::DisplayRole) const override;
-// 	};
-
 }
 
 #endif

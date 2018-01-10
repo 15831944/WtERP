@@ -3,9 +3,9 @@
 
 #include "Utilities/ReloadableWidget.h"
 
-#include <Wt/WTemplate>
-#include <Wt/WText>
-#include <Wt/Dbo/Query>
+#include <Wt/WTemplate.h>
+#include <Wt/WText.h>
+#include <Wt/Dbo/Query.h>
 
 namespace GS
 {

@@ -6,15 +6,15 @@
 #include "Widgets/HRMVC.h"
 #include "Widgets/FindRecordEdit.h"
 
-#include <Wt/WLineEdit>
-#include <Wt/WPushButton>
-#include <Wt/WDialog>
-#include <Wt/WComboBox>
-#include <Wt/WDateEdit>
-#include <Wt/WIntValidator>
-#include <Wt/WDoubleValidator>
-#include <Wt/WTableView>
-#include <Wt/WLengthValidator>
+#include <Wt/WLineEdit.h>
+#include <Wt/WPushButton.h>
+#include <Wt/WDialog.h>
+#include <Wt/WComboBox.h>
+#include <Wt/WDateEdit.h>
+#include <Wt/WIntValidator.h>
+#include <Wt/WDoubleValidator.h>
+#include <Wt/WTableView.h>
+#include <Wt/WLengthValidator.h>
 
 namespace GS
 {
@@ -53,58 +53,58 @@ namespace GS
 	template<class Dbo>
 	void EntryCycleFormModel::updateCycleFromModel(Wt::WFormModel *model, Wt::Dbo::ptr<Dbo> ptr, bool newCycle)
 	{
-		ptr.modify()->entityPtr = boost::any_cast<Wt::Dbo::ptr<Entity>>(model->value(EntryCycleFormModel::entityField));
-		ptr.modify()->startDate = boost::any_cast<Wt::WDate>(model->value(EntryCycleFormModel::startDateField));
-		ptr.modify()->endDate = boost::any_cast<Wt::WDate>(model->value(EntryCycleFormModel::endDateField));
-		ptr.modify()->interval = CycleInterval(boost::any_cast<int>(model->value(EntryCycleFormModel::intervalField)));
+		ptr.modify()->entityPtr = Wt::any_cast<Wt::Dbo::ptr<Entity>>(model->value(EntryCycleFormModel::entityField));
+		ptr.modify()->startDate = Wt::any_cast<Wt::WDate>(model->value(EntryCycleFormModel::startDateField));
+		ptr.modify()->endDate = Wt::any_cast<Wt::WDate>(model->value(EntryCycleFormModel::endDateField));
+		ptr.modify()->interval = CycleInterval(Wt::any_cast<int>(model->value(EntryCycleFormModel::intervalField)));
 		ptr.modify()->nIntervals = Wt::WLocale::currentLocale().toInt(model->valueText(EntryCycleFormModel::nIntervalsField));
 		if(newCycle)
 			ptr.modify()->_amountInCents = Money(model->valueText(EntryCycleFormModel::amountField).toUTF8(), DEFAULT_CURRENCY).valueInCents();
-		ptr.modify()->firstEntryAfterCycle = boost::any_cast<int>(model->value(EntryCycleFormModel::firstEntryAfterCycleField)) == 1;
+		ptr.modify()->firstEntryAfterCycle = Wt::any_cast<int>(model->value(EntryCycleFormModel::firstEntryAfterCycleField)) == 1;
 	}
 
-	Wt::WWidget *EntryCycleFormModel::createFormWidget(Wt::WFormModel *model, EntryCycleView *view, Wt::WFormModel::Field field)
+	std::unique_ptr<Wt::WWidget> EntryCycleFormModel::createFormWidget(Wt::WFormModel *model, EntryCycleView *view, Wt::WFormModel::Field field)
 	{
 		if(field == entityField)
 		{
-			FindEntityEdit *findEntityEdit = new FindEntityEdit();
-			FindEntityValidator *findEntityValidator = new FindEntityValidator(findEntityEdit, true);
+			auto findEntityEdit = std::make_unique<FindEntityEdit>();
+			auto findEntityValidator = std::make_shared<FindEntityValidator>(findEntityEdit.get(), true);
 			findEntityValidator->setModifyPermissionRequired(true);
 			model->setValidator(EntryCycleFormModel::entityField, findEntityValidator);
 			return findEntityEdit;
 		}
 		if(field == startDateField)
 		{
-			auto startDateEdit = new Wt::WDateEdit();
+			auto startDateEdit = std::make_unique<Wt::WDateEdit>();
 			startDateEdit->validator()->setMandatory(true);
 			model->setValidator(EntryCycleFormModel::startDateField, startDateEdit->validator());
-			startDateEdit->changed().connect(boost::bind(&EntryCycleFormModel::updateEndDateValidator, model, view, true));
+			startDateEdit->changed().connect(std::bind(&EntryCycleFormModel::updateEndDateValidator, model, view, true));
 			return startDateEdit;
 		}
 		if(field == endDateField)
 		{
-			auto endDateEdit = new Wt::WDateEdit();
-			endDateEdit->setPlaceholderText(Wt::WString::tr("EmptyEndDate"));
-			auto endDateValidator = new CycleEndDateValidator(model);
+			auto endDateEdit = std::make_unique<Wt::WDateEdit>();
+			endDateEdit->setPlaceholderText(tr("EmptyEndDate"));
+			auto endDateValidator = std::make_shared<CycleEndDateValidator>(model);
 			model->setValidator(EntryCycleFormModel::endDateField, endDateValidator);
 			return endDateEdit;
 		}
 		if(field == intervalField)
 		{
-			auto intervalCombo = new Wt::WComboBox();
-			intervalCombo->insertItem(DailyInterval, Wt::WString::tr("Days"));
-			intervalCombo->insertItem(WeeklyInterval, Wt::WString::tr("Weeks"));
-			intervalCombo->insertItem(MonthlyInterval, Wt::WString::tr("Months"));
-			intervalCombo->insertItem(YearlyInterval, Wt::WString::tr("Years"));
+			auto intervalCombo = std::make_unique<Wt::WComboBox>();
+			intervalCombo->insertItem(DailyInterval, tr("Days"));
+			intervalCombo->insertItem(WeeklyInterval, tr("Weeks"));
+			intervalCombo->insertItem(MonthlyInterval, tr("Months"));
+			intervalCombo->insertItem(YearlyInterval, tr("Years"));
 			intervalCombo->setCurrentIndex(MonthlyInterval);
 			intervalCombo->changed().connect(view, &EntryCycleView::handleIntervalChanged);
-			intervalCombo->changed().connect(boost::bind(&EntryCycleFormModel::updateEndDateValidator, model, view, true));
+			intervalCombo->changed().connect(std::bind(&EntryCycleFormModel::updateEndDateValidator, model, view, true));
 			return intervalCombo;
 		}
 		if(field == amountField)
 		{
-			auto amountEdit = new Wt::WLineEdit();
-			auto amountValidator = new Wt::WDoubleValidator();
+			auto amountEdit = std::make_unique<Wt::WLineEdit>();
+			auto amountValidator = std::make_shared<Wt::WDoubleValidator>();
 			amountValidator->setBottom(0);
 			amountValidator->setMandatory(true);
 			model->setValidator(EntryCycleFormModel::amountField, amountValidator);
@@ -112,21 +112,21 @@ namespace GS
 		}
 		if(field == nIntervalsField)
 		{
-			auto nIntervalsEdit = new Wt::WLineEdit();
-			auto nIntervalsValidator = new Wt::WIntValidator();
+			auto nIntervalsEdit = std::make_unique<Wt::WLineEdit>();
+			auto nIntervalsValidator = std::make_shared<Wt::WIntValidator>();
 			nIntervalsValidator->setBottom(1);
 			nIntervalsValidator->setMandatory(true);
 			model->setValidator(EntryCycleFormModel::nIntervalsField, nIntervalsValidator);
 			nIntervalsEdit->changed().connect(view, &EntryCycleView::handleIntervalChanged);
-			nIntervalsEdit->changed().connect(boost::bind(&EntryCycleFormModel::updateEndDateValidator, model, view, true));
+			nIntervalsEdit->changed().connect(std::bind(&EntryCycleFormModel::updateEndDateValidator, model, view, true));
 			return nIntervalsEdit;
 		}
 		if(field == firstEntryAfterCycleField)
 		{
-			auto firstEntryOnEdit = new Wt::WComboBox();
-			firstEntryOnEdit->insertItem(0, Wt::WString::tr("OnStartingDate"));
+			auto firstEntryOnEdit = std::make_unique<Wt::WComboBox>();
+			firstEntryOnEdit->insertItem(0, tr("OnStartingDate"));
 			firstEntryOnEdit->insertItem(1, Wt::WString());
-			firstEntryOnEdit->changed().connect(boost::bind(&EntryCycleFormModel::updateEndDateValidator, model, view, true));
+			firstEntryOnEdit->changed().connect(std::bind(&EntryCycleFormModel::updateEndDateValidator, model, view, true));
 			return firstEntryOnEdit;
 		}
 		return nullptr;
@@ -142,16 +142,16 @@ namespace GS
 			view->updateModelField(model, EntryCycleFormModel::firstEntryAfterCycleField);
 		}
 
-		const boost::any &startDateVal = model->value(EntryCycleFormModel::startDateField);
+		const Wt::any &startDateVal = model->value(EntryCycleFormModel::startDateField);
 		if(startDateVal.empty())
 			return;
 
-		Wt::WDate startDate = boost::any_cast<Wt::WDate>(startDateVal);
-		CycleInterval interval = (CycleInterval)boost::any_cast<int>(model->value(EntryCycleFormModel::intervalField));
+		Wt::WDate startDate = Wt::any_cast<Wt::WDate>(startDateVal);
+		CycleInterval interval = (CycleInterval)Wt::any_cast<int>(model->value(EntryCycleFormModel::intervalField));
 		Wt::WString nIntervalsStr = Wt::asString(model->value(EntryCycleFormModel::nIntervalsField));
-		int FEAC = boost::any_cast<int>(model->value(EntryCycleFormModel::firstEntryAfterCycleField));
+		int FEAC = Wt::any_cast<int>(model->value(EntryCycleFormModel::firstEntryAfterCycleField));
 
-		Wt::WDateValidator *endDateValidator = dynamic_cast<Wt::WDateValidator*>(model->validator(EntryCycleFormModel::endDateField));
+		auto endDateValidator = std::static_pointer_cast<Wt::WDateValidator>(model->validator(EntryCycleFormModel::endDateField));
 		if(!startDate.isValid())
 		{
 			endDateValidator->setBottom(Wt::WDate());
@@ -164,7 +164,7 @@ namespace GS
 			try
 			{
 				int nIntervals = Wt::WLocale::currentLocale().toInt(nIntervalsStr);
-				endDateBottom.setGregorianDate(addCycleInterval(boost::posix_time::ptime(endDateBottom.toGregorianDate()), interval, nIntervals).date());
+				endDateBottom = addCycleInterval(Wt::WDateTime(endDateBottom), interval, nIntervals).date();
 			}
 			catch(const boost::bad_lexical_cast &) {}
 		}
@@ -199,15 +199,15 @@ namespace GS
 		if(!nIntervalsEdit || !intervalCombo)
 			return;
 
-		if(!nIntervalsEdit->valueText().empty() && nIntervalsEdit->validate() == Wt::WValidator::Valid)
+		if(!nIntervalsEdit->valueText().empty() && nIntervalsEdit->validate() == Wt::ValidationState::Valid)
 		{
 			int nIntervals = Wt::WLocale::currentLocale().toInt(nIntervalsEdit->valueText());
 			switch(intervalCombo->currentIndex())
 			{
-			case DailyInterval: firstEntryOnEdit->setItemText(1, Wt::WString::trn("AfterNDays", nIntervals).arg(nIntervalsEdit->valueText())); break;
-			case WeeklyInterval: firstEntryOnEdit->setItemText(1, Wt::WString::trn("AfterNWeeks", nIntervals).arg(nIntervalsEdit->valueText())); break;
-			case MonthlyInterval: firstEntryOnEdit->setItemText(1, Wt::WString::trn("AfterNMonths", nIntervals).arg(nIntervalsEdit->valueText())); break;
-			case YearlyInterval: firstEntryOnEdit->setItemText(1, Wt::WString::trn("AfterNYears", nIntervals).arg(nIntervalsEdit->valueText())); break;
+			case DailyInterval: firstEntryOnEdit->setItemText(1, trn("AfterNDays", nIntervals).arg(nIntervalsEdit->valueText())); break;
+			case WeeklyInterval: firstEntryOnEdit->setItemText(1, trn("AfterNWeeks", nIntervals).arg(nIntervalsEdit->valueText())); break;
+			case MonthlyInterval: firstEntryOnEdit->setItemText(1, trn("AfterNMonths", nIntervals).arg(nIntervalsEdit->valueText())); break;
+			case YearlyInterval: firstEntryOnEdit->setItemText(1, trn("AfterNYears", nIntervals).arg(nIntervalsEdit->valueText())); break;
 			default: firstEntryOnEdit->setItemText(1, tr("AfterTheInterval")); break;
 			}
 		}
@@ -220,7 +220,7 @@ namespace GS
 			|| _model->value(EntryCycleFormModel::startDateField).empty()
 			|| _model->value(EntryCycleFormModel::firstEntryAfterCycleField).empty())
 		{
-			return Result(Invalid, Wt::WString::tr("Error"));
+			return Result(Wt::ValidationState::Invalid, tr("Error"));
 		}
 		return Wt::WDateValidator::validate(input);
 	}
@@ -237,7 +237,7 @@ namespace GS
 		}
 	}
 
-	Wt::WWidget *ExpenseCycleFormModel::createFormWidget(Wt::WFormModel::Field field)
+	std::unique_ptr<Wt::WWidget> ExpenseCycleFormModel::createFormWidget(Wt::WFormModel::Field field)
 	{
 		if(auto w = EntryCycleFormModel::createFormWidget(this, _view, field))
 			return w;
@@ -256,7 +256,7 @@ namespace GS
 		bool newCycle = false;
 		if(!_recordPtr)
 		{
-			_recordPtr = app->dboSession().add(new ExpenseCycle());
+			_recordPtr = app->dboSession().add(std::make_unique<ExpenseCycle>());
 			_recordPtr.modify()->setCreatedByValues();
 			newCycle = true;
 		}
@@ -264,7 +264,7 @@ namespace GS
 		EntryCycleFormModel::updateCycleFromModel(this, _recordPtr, newCycle);
 
 		if(newCycle && _recordPtr->firstEntryAfterCycle == false)
-			app->accountsDatabase().createPendingCycleEntry(_recordPtr, Wt::Dbo::ptr<AccountEntry>(), boost::posix_time::microsec_clock::local_time());
+			app->accountsDatabase().createPendingCycleEntry(_recordPtr, nullptr, Wt::WDateTime::currentDateTime());
 
 		_recordPtr.flush();
 		t.commit();
@@ -275,8 +275,8 @@ namespace GS
 	{
 		setReadOnly(EntryCycleFormModel::startDateField, true);
 
-		_view->bindWidget("entries", new AccountEntryList(recordPtr()));
-		_view->bindWidget("employeeAssignments", new EmployeeAssignmentList(recordPtr()));
+		_view->bindNew<AccountEntryList>("entries", recordPtr());
+		_view->bindNew<EmployeeAssignmentList>("employeeAssignments", recordPtr());
 	}
 
 	//EXPENSE CYCLE VIEW
@@ -286,11 +286,11 @@ namespace GS
 
 	void ExpenseCycleView::initView()
 	{
-		_model = new ExpenseCycleFormModel(this, _tempPtr);
+		_model = std::make_shared<ExpenseCycleFormModel>(this, _tempPtr);
 		addFormModel("expense", _model);
 	}
 
-	Wt::WWidget *ExpenseCycleView::createFormWidget(Wt::WFormModel::Field field)
+	std::unique_ptr<Wt::WWidget> ExpenseCycleView::createFormWidget(Wt::WFormModel::Field field)
 	{
 		if(auto result = EntryCycleView::createFormWidget(field))
 			return result;
@@ -325,7 +325,7 @@ namespace GS
 
 	}
 
-	Wt::WWidget *IncomeCycleFormModel::createFormWidget(Wt::WFormModel::Field field)
+	std::unique_ptr<Wt::WWidget> IncomeCycleFormModel::createFormWidget(Wt::WFormModel::Field field)
 	{
 		if(auto w = EntryCycleFormModel::createFormWidget(this, _view, field))
 			return w;
@@ -344,7 +344,7 @@ namespace GS
 		bool newCycle = false;
 		if(!_recordPtr)
 		{
-			_recordPtr = app->dboSession().add(new IncomeCycle());
+			_recordPtr = app->dboSession().add(std::make_unique<IncomeCycle>());
 			_recordPtr.modify()->setCreatedByValues();
 			newCycle = true;
 		}
@@ -352,7 +352,7 @@ namespace GS
 		EntryCycleFormModel::updateCycleFromModel(this, _recordPtr, newCycle);
 
 		if(newCycle && _recordPtr->firstEntryAfterCycle == false)
-			app->accountsDatabase().createPendingCycleEntry(_recordPtr, Wt::Dbo::ptr<AccountEntry>(), boost::posix_time::microsec_clock::local_time());
+			app->accountsDatabase().createPendingCycleEntry(_recordPtr, nullptr, Wt::WDateTime::currentDateTime());
 
 		t.commit();
 		return true;
@@ -362,8 +362,8 @@ namespace GS
 	{
 		setReadOnly(EntryCycleFormModel::startDateField, true);
 
-		_view->bindWidget("entries", new AccountEntryList(recordPtr()));
-		_view->bindWidget("clientAssignments", new ClientAssignmentList(recordPtr()));
+		_view->bindNew<AccountEntryList>("entries", recordPtr());
+		_view->bindNew<ClientAssignmentList>("clientAssignments", recordPtr());
 	}
 
 	//INCOME CYCLE VIEW
@@ -373,16 +373,13 @@ namespace GS
 
 	void IncomeCycleView::initView()
 	{
-		_model = new IncomeCycleFormModel(this, _tempPtr);
+		_model = std::make_shared<IncomeCycleFormModel>(this, _tempPtr);
 		addFormModel("income", _model);
 	}
 
-	Wt::WWidget *IncomeCycleView::createFormWidget(Wt::WFormModel::Field field)
+	std::unique_ptr<Wt::WWidget> IncomeCycleView::createFormWidget(Wt::WFormModel::Field field)
 	{
-		if(auto result = EntryCycleView::createFormWidget(field))
-			return result;
-
-		return nullptr;
+		return EntryCycleView::createFormWidget(field);
 	}
 
 	Wt::WString IncomeCycleView::viewName() const
@@ -411,24 +408,24 @@ namespace GS
 		{
 			int timestampColumn = viewIndexToColumn(ViewCreatedOn);
 			if(timestampColumn != -1)
-				_tableView->sortByColumn(timestampColumn, Wt::DescendingOrder);
+				_tableView->sortByColumn(timestampColumn, Wt::SortOrder::Descending);
 		}
 	}
 
 	void EntryCycleList::initFilters()
 	{
-		filtersTemplate()->addFilterModel(new WLineEditFilterModel(tr("ID"), "id"));
-		filtersTemplate()->addFilterModel(new RangeFilterModel(tr("Amount"), "amount")); filtersTemplate()->addFilter(2);
+		filtersTemplate()->addFilterModel(std::make_shared<WLineEditFilterModel>(tr("ID"), "id"));
+		filtersTemplate()->addFilterModel(std::make_shared<RangeFilterModel>(tr("Amount"), "amount")); filtersTemplate()->addFilter(2);
 	}
 
 	void IncomeCycleList::initModel()
 	{
-		QueryModelType *model;
-		_model = model = new QueryModelType(this);
+		std::shared_ptr<QueryModelType> model;
+		_model = model = std::make_shared<QueryModelType>();
 
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
-			"SELECT c.id, c.timestamp, e.name, c.startDate, c.endDate, c.amount, COUNT(a.id), c.interval, c.nIntervals, e.id e_id "
+			"SELECT c.id, c.timestamp, e.name, c.startDate, c.endDate, c.amount, COUNT(a.id), c.interval, c.nIntervals, e.id "
 			"FROM " + std::string(IncomeCycle::tableName()) + " c "
 			"INNER JOIN " + std::string(Entity::tableName()) + " e ON (e.id = c.entity_id) "
 			"LEFT JOIN " + ClientAssignment::tableName() + " a ON (a.incomecycle_id = c.id)").groupBy("c.id");
@@ -437,9 +434,7 @@ namespace GS
 		if(_entityPtr.id() != -1)
 			_baseQuery.where("c.entity_id = ?").bind(_entityPtr.id());
 
-		Wt::Dbo::Query<ResultType> query(_baseQuery); //must copy the query first
-		model->setQuery(query);
-
+		model->setQuery(generateQuery());
 		addColumn(ViewId, model->addColumn("c.id"), tr("ID"), IdColumnWidth);
 		addColumn(ViewCreatedOn, model->addColumn("c.timestamp"), tr("CreatedOn"), DateTimeColumnWidth);
 
@@ -451,17 +446,17 @@ namespace GS
 		addColumn(ViewAmount, model->addColumn("c.amount"), tr("RecurringAmount"), AmountColumnWidth);
 		addColumn(ViewExtra, model->addColumn("COUNT(a.id)"), tr("ClientAssignments"), ExtraColumnWidth);
 
-		_proxyModel = new EntryCycleListProxyModel<IncomeCycleList>(IncomeCycle::viewInternalPath(""), _model, _model);
+		_proxyModel = std::make_shared<EntryCycleListProxyModel<IncomeCycleList>>(IncomeCycle::viewInternalPath(""), _model);
 	}
 
 	void ExpenseCycleList::initModel()
 	{
-		QueryModelType *model;
-		_model = model = new QueryModelType(this);
+		std::shared_ptr<QueryModelType> model;
+		_model = model = std::make_shared<QueryModelType>();
 
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
-			"SELECT c.id, c.timestamp, e.name, c.startDate, c.endDate, c.amount, COUNT(a.id), c.interval, c.nIntervals, e.id e_id "
+			"SELECT c.id, c.timestamp, e.name, c.startDate, c.endDate, c.amount, COUNT(a.id), c.interval, c.nIntervals, e.id "
 			"FROM " + std::string(ExpenseCycle::tableName()) + " c "
 			"INNER JOIN " + std::string(Entity::tableName()) + " e ON (e.id = c.entity_id) "
 			"LEFT JOIN " + EmployeeAssignment::tableName() + " a ON (a.expensecycle_id = c.id)").groupBy("c.id");
@@ -470,9 +465,7 @@ namespace GS
 		if(_entityPtr.id() != -1)
 			_baseQuery.where("c.entity_id = ?").bind(_entityPtr.id());
 
-		Wt::Dbo::Query<ResultType> query(_baseQuery); //must copy the query first
-		model->setQuery(query);
-
+		model->setQuery(generateQuery());
 		addColumn(ViewId, model->addColumn("c.id"), tr("ID"), IdColumnWidth);
 		addColumn(ViewCreatedOn, model->addColumn("c.timestamp"), tr("CreatedOn"), DateTimeColumnWidth);
 
@@ -484,15 +477,15 @@ namespace GS
 		addColumn(ViewAmount, model->addColumn("c.amount"), tr("RecurringAmount"), AmountColumnWidth);
 		addColumn(ViewExtra, model->addColumn("COUNT(a.id)"), tr("EmployeeAssignments"), ExtraColumnWidth);
 
-		_proxyModel = new EntryCycleListProxyModel<ExpenseCycleList>(ExpenseCycle::viewInternalPath(""), _model, _model);
+		_proxyModel = std::make_shared<EntryCycleListProxyModel<ExpenseCycleList>>(ExpenseCycle::viewInternalPath(""), _model);
 	}
 
-// 	boost::any IncomeCycleListProxyModel::data(const Wt::WModelIndex &idx, int role /*= Wt::DisplayRole*/) const
+// 	Wt::any IncomeCycleListProxyModel::data(const Wt::WModelIndex &idx, Wt::ItemDataRole role /*= Wt::ItemDataRole::Display*/) const
 // 	{
 // 		return EntryCycleListProxyModel::data(idx, role);
 // 	}
 // 
-// 	boost::any ExpenseCycleListProxyModel::data(const Wt::WModelIndex &idx, int role /*= Wt::DisplayRole*/) const
+// 	Wt::any ExpenseCycleListProxyModel::data(const Wt::WModelIndex &idx, Wt::ItemDataRole role /*= Wt::ItemDataRole::Display*/) const
 // 	{
 // 		return EntryCycleListProxyModel::data(idx, role);
 // 	}
@@ -509,11 +502,11 @@ namespace GS
 	}
 
 	template<class FilteredList>
-	boost::any EntryCycleListProxyModel<FilteredList>::headerData(int section, Wt::Orientation orientation /*= Wt::Horizontal*/, int role /*= Wt::DisplayRole*/) const
+	Wt::any EntryCycleListProxyModel<FilteredList>::headerData(int section, Wt::Orientation orientation /*= Wt::Orientation::Horizontal*/, Wt::ItemDataRole role /*= Wt::ItemDataRole::Display*/) const
 	{
 		if(section == _linkColumn)
 		{
-			if(role == Wt::WidthRole)
+			if(role == Wt::ItemDataRole::Width)
 				return 40;
 			return Wt::WAbstractItemModel::headerData(section, orientation, role);
 		}
@@ -525,66 +518,66 @@ namespace GS
 	Wt::WFlags<Wt::ItemFlag> EntryCycleListProxyModel<FilteredList>::flags(const Wt::WModelIndex &index) const
 	{
 		if(index.column() == _linkColumn)
-			return Wt::ItemIsXHTMLText;
+			return Wt::ItemFlag::XHTMLText;
 		return Wt::WBatchEditProxyModel::flags(index);
 	}
 
 	template<class FilteredList>
-	boost::any EntryCycleListProxyModel<FilteredList>::data(const Wt::WModelIndex &idx, int role /*= Wt::DisplayRole*/) const
+	Wt::any EntryCycleListProxyModel<FilteredList>::data(const Wt::WModelIndex &idx, Wt::ItemDataRole role) const
 	{
 		if(_linkColumn != -1 && idx.column() == _linkColumn)
 		{
-			if(role == Wt::DisplayRole)
-				return Wt::WString::tr("GS.LinkIcon");
-			else if(role == Wt::LinkRole)
+			if(role == Wt::ItemDataRole::Display)
+				return tr("GS.LinkIcon");
+			else if(role == Wt::ItemDataRole::Link)
 			{
-				const typename FilteredList::ResultType &res = dynamic_cast<Wt::Dbo::QueryModel<typename FilteredList::ResultType>*>(sourceModel())->resultRow(idx.row());
-				long long id = boost::get<FilteredList::ResId>(res);
-				return Wt::WLink(Wt::WLink::InternalPath, _pathPrefix + boost::lexical_cast<std::string>(id));
+				const typename FilteredList::ResultType &res = std::static_pointer_cast<Wt::Dbo::QueryModel<typename FilteredList::ResultType>>(sourceModel())->resultRow(idx.row());
+				long long id = std::get<FilteredList::ResId>(res);
+				return Wt::WLink(Wt::LinkType::InternalPath, _pathPrefix + boost::lexical_cast<std::string>(id));
 			}
 		}
 
-		boost::any viewIndexData = headerData(idx.column(), Wt::Horizontal, Wt::ViewIndexRole);
+		Wt::any viewIndexData = headerData(idx.column(), Wt::Orientation::Horizontal, Wt::ItemDataRole::ViewIndex);
 		if(viewIndexData.empty())
 			return Wt::WBatchEditProxyModel::data(idx, role);
-		int viewIndex = boost::any_cast<int>(viewIndexData);
+		int viewIndex = Wt::any_cast<int>(viewIndexData);
 
-		const typename FilteredList::ResultType &res = dynamic_cast<Wt::Dbo::QueryModel<typename FilteredList::ResultType>*>(sourceModel())->resultRow(idx.row());
+		const typename FilteredList::ResultType &res = std::static_pointer_cast<Wt::Dbo::QueryModel<typename FilteredList::ResultType>>(sourceModel())->resultRow(idx.row());
 
-		if(viewIndex == EntryCycleList::ViewAmount && role == Wt::DisplayRole)
+		if(viewIndex == EntryCycleList::ViewAmount && role == Wt::ItemDataRole::Display)
 		{
-			return rsEveryNIntervals(Money(boost::get<FilteredList::ResAmount>(res), DEFAULT_CURRENCY),
-				boost::get<FilteredList::ResInterval>(res),
-				boost::get<FilteredList::ResNIntervals>(res));
+			return rsEveryNIntervals(Money(std::get<FilteredList::ResAmount>(res), DEFAULT_CURRENCY),
+				std::get<FilteredList::ResInterval>(res),
+				std::get<FilteredList::ResNIntervals>(res));
 		}
 
-		if(viewIndex == EntryCycleList::ViewStartDate && role == Wt::DisplayRole)
+		if(viewIndex == EntryCycleList::ViewStartDate && role == Wt::ItemDataRole::Display)
 		{
-			const Wt::WDate &date = boost::get<FilteredList::ResStartDate>(res);
-			if(date.isValid() && date > Wt::WDate(boost::gregorian::day_clock::local_day()))
-				return Wt::WString::tr("XNotStarted").arg(boost::get<FilteredList::ResStartDate>(res).toString(Wt::WLocale::currentLocale().dateFormat()));
+			const Wt::WDate &date = std::get<FilteredList::ResStartDate>(res);
+			if(date.isValid() && date > Wt::WDate::currentServerDate())
+				return tr("XNotStarted").arg(std::get<FilteredList::ResStartDate>(res).toString(Wt::WLocale::currentLocale().dateFormat()));
 		}
 
-		if(viewIndex == EntryCycleList::ViewEndDate && role == Wt::DisplayRole)
+		if(viewIndex == EntryCycleList::ViewEndDate && role == Wt::ItemDataRole::Display)
 		{
-			const Wt::WDate &date = boost::get<FilteredList::ResEndDate>(res);
-			if(date.isValid() && Wt::WDate(boost::gregorian::day_clock::local_day()) >= date)
-				return Wt::WString::tr("XEnded").arg(date.toString(Wt::WLocale::currentLocale().dateFormat()));
+			const Wt::WDate &date = std::get<FilteredList::ResEndDate>(res);
+			if(date.isValid() && Wt::WDate::currentServerDate() >= date)
+				return tr("XEnded").arg(date.toString(Wt::WLocale::currentLocale().dateFormat()));
 		}
-		if(viewIndex == EntryCycleList::ViewEntity && role == Wt::LinkRole)
+		if(viewIndex == EntryCycleList::ViewEntity && role == Wt::ItemDataRole::Link)
 		{
-			const typename FilteredList::ResultType &res = dynamic_cast<Wt::Dbo::QueryModel<typename FilteredList::ResultType>*>(sourceModel())->resultRow(idx.row());
-			return Wt::WLink(Wt::WLink::InternalPath, Entity::viewInternalPath(boost::get<FilteredList::ResEntityId>(res)));
+			const typename FilteredList::ResultType &res = std::static_pointer_cast<Wt::Dbo::QueryModel<typename FilteredList::ResultType>>(sourceModel())->resultRow(idx.row());
+			return Wt::WLink(Wt::LinkType::InternalPath, Entity::viewInternalPath(std::get<FilteredList::ResEntityId>(res)));
 		}
 
-		if(role == Wt::StyleClassRole)
+		if(role == Wt::ItemDataRole::StyleClass)
 		{
-			const Wt::WDate &startDate = boost::get<FilteredList::ResStartDate>(res);
-			if(startDate.isValid() && startDate > Wt::WDate(boost::gregorian::day_clock::local_day()))
+			const Wt::WDate &startDate = std::get<FilteredList::ResStartDate>(res);
+			if(startDate.isValid() && startDate > Wt::WDate::currentServerDate())
 				return "text-info";
 
-			const Wt::WDate &endDate = boost::get<FilteredList::ResEndDate>(res);
-			if(endDate.isValid() && Wt::WDate(boost::gregorian::day_clock::local_day()) >= endDate)
+			const Wt::WDate &endDate = std::get<FilteredList::ResEndDate>(res);
+			if(endDate.isValid() && Wt::WDate::currentServerDate() >= endDate)
 				return "text-muted";
 		}
 

@@ -3,23 +3,23 @@
 
 #include "Dbo/Dbos.h"
 #include "Dbo/AccountsDatabase.h"
-#include <Wt/Dbo/Session>
-#include <Wt/Dbo/ptr_tuple>
+#include <Wt/Dbo/Session.h>
 
 namespace GS
 {
+	using namespace std::chrono;
+
 	class WServer;
 
 	class TaskScheduler
 	{
 	public:
 		TaskScheduler(WServer *server, Wt::Dbo::Session &session);
-		~TaskScheduler();
 
 	protected:
-		typedef Wt::Dbo::ptr_tuple<IncomeCycle, AccountEntry>::type IncomeCycleTuple;
+		typedef std::tuple<Wt::Dbo::ptr<IncomeCycle>, Wt::Dbo::ptr<AccountEntry>> IncomeCycleTuple;
 		typedef Wt::Dbo::collection<IncomeCycleTuple> IncomeTupleCollection;
-		typedef Wt::Dbo::ptr_tuple<ExpenseCycle, AccountEntry>::type ExpenseCycleTuple;
+		typedef std::tuple<Wt::Dbo::ptr<ExpenseCycle>, Wt::Dbo::ptr<AccountEntry>> ExpenseCycleTuple;
 		typedef Wt::Dbo::collection<ExpenseCycleTuple> ExpenseTupleCollection;
 
 		//void createSelfEntityAndAccount(bool scheduleNext);
@@ -28,7 +28,7 @@ namespace GS
 		void createPendingCycleEntries(bool scheduleNext);
 		void checkAbnormalRecords(bool scheduleNext);
 		
-		boost::posix_time::time_duration _createPendingCycleEntries(bool scheduleNext);
+		steady_clock::duration _createPendingCycleEntries(bool scheduleNext);
 
 		Wt::Dbo::Query<long long> _accountCheckAbnormal;
 		Wt::Dbo::Query<long long> _locationCheckAbnormal;
@@ -38,7 +38,7 @@ namespace GS
 		Wt::Dbo::Query<Wt::Dbo::ptr<AccountEntry>> _entryCheckAbnormal;
 		Wt::Dbo::Query<IncomeCycleTuple> _incomeCycleQuery;
 		Wt::Dbo::Query<ExpenseCycleTuple> _expenseCycleQuery;
-		Wt::Dbo::Call *_recalculateBalanceCall = nullptr;
+		std::unique_ptr<Wt::Dbo::Call> _recalculateBalanceCall;
 
 		Wt::Dbo::Session &dboSession;
 		EntitiesDatabase _entitiesDatabase;

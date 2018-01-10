@@ -6,8 +6,8 @@
 #include "Utilities/RecordFormView.h"
 #include "Widgets/FindRecordEdit.h"
 
-#include <Wt/Dbo/QueryModel>
-#include <Wt/WBatchEditProxyModel>
+#include <Wt/Dbo/QueryModel.h>
+#include <Wt/WBatchEditProxyModel.h>
 
 namespace GS
 {
@@ -18,9 +18,9 @@ namespace GS
 	class UserListProxyModel : public Wt::WBatchEditProxyModel
 	{
 	public:
-		UserListProxyModel(Wt::WAbstractItemModel *model, Wt::WObject *parent = nullptr);
-		virtual boost::any data(const Wt::WModelIndex &idx, int role = Wt::DisplayRole) const override;
-		virtual boost::any headerData(int section, Wt::Orientation orientation = Wt::Horizontal, int role = Wt::DisplayRole) const override;
+		UserListProxyModel(std::shared_ptr<Wt::WAbstractItemModel> model);
+		virtual Wt::any data(const Wt::WModelIndex &idx, Wt::ItemDataRole role = Wt::ItemDataRole::Display) const override;
+		virtual Wt::any headerData(int section, Wt::Orientation orientation = Wt::Orientation::Horizontal, Wt::ItemDataRole role = Wt::ItemDataRole::Display) const override;
 		virtual Wt::WFlags<Wt::ItemFlag> flags(const Wt::WModelIndex &index) const override;
 
 	protected:
@@ -28,7 +28,7 @@ namespace GS
 		int _linkColumn = -1;
 	};
 
-	class UserList : public QueryModelFilteredList<boost::tuple<long long, std::string, std::string, std::string>>
+	class UserList : public QueryModelFilteredList<std::tuple<long long, std::string, std::string, std::string>>
 	{
 	public:
 		enum ResultColumns { ResId, ResLoginName, ResEmail, ResRegionName };
@@ -42,7 +42,8 @@ namespace GS
 	class RegionProxyModel : public QueryProxyModel<Wt::Dbo::ptr<Region>>
 	{
 	public:
-		RegionProxyModel(Wt::Dbo::QueryModel<Wt::Dbo::ptr<Region>> *sourceModel, Wt::WObject *parent = nullptr);
+		typedef Wt::Dbo::QueryModel<Wt::Dbo::ptr<Region>> QueryModel;
+		RegionProxyModel(std::shared_ptr<QueryModel> sourceModel);
 
 	protected:
 		void addAdditionalRows();
@@ -51,7 +52,7 @@ namespace GS
 	class LoginNameValidator : public Wt::WValidator
 	{
 	public:
-		LoginNameValidator(Wt::WObject *parent = nullptr) : Wt::WValidator(true, parent) { }
+		LoginNameValidator() : Wt::WValidator(true) { }
 		virtual Result validate(const Wt::WString &input) const override;
 		int minLoginNameLength() const { return _minLoginNameLength; }
 		void setMinLoginNameLength(int length) { _minLoginNameLength = length; }
@@ -79,7 +80,7 @@ namespace GS
 		Permissions::GSPermissions permissionIndexToId(int idx) const { return idx < PermissionCBValues ? _permissionIdxToId[idx] : Permissions::RegionalUser; }
 
 		UserFormModel(UserView *view, Wt::Dbo::ptr<AuthInfo> autoInfoPtr = Wt::Dbo::ptr<AuthInfo>());
-		virtual Wt::WWidget *createFormWidget(Field field) override;
+		virtual std::unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 		virtual bool validateField(Field field);
 		Wt::Dbo::ptr<AuthInfo> authInfoPtr() const { return _authInfoPtr; }
@@ -105,14 +106,14 @@ namespace GS
 		virtual void initView() override;
 
 		Wt::Dbo::ptr<AuthInfo> authInfoPtr() const { return _model->authInfoPtr(); }
-		UserFormModel *model() const { return _model; }
+		std::shared_ptr<UserFormModel> model() const { return _model; }
 
 		virtual Wt::WString viewName() const override;
 		virtual std::string viewInternalPath() const override { return authInfoPtr() ? User::viewInternalPath(authInfoPtr().id()) : ""; }
-		virtual RecordFormView *createFormView() override { return new UserView(); }
+		virtual std::unique_ptr<RecordFormView> createFormView() override { return std::make_unique<UserView>(); }
 
 	protected:
-		UserFormModel *_model = nullptr;
+		std::shared_ptr<UserFormModel> _model;
 		Wt::Dbo::ptr<AuthInfo> _tempPtr;
 	};
 
@@ -120,9 +121,9 @@ namespace GS
 	class RegionListProxyModel : public Wt::WBatchEditProxyModel
 	{
 	public:
-		RegionListProxyModel(Wt::WAbstractItemModel *model, Wt::WObject *parent = nullptr);
-		virtual boost::any data(const Wt::WModelIndex &idx, int role = Wt::DisplayRole) const override;
-		virtual boost::any headerData(int section, Wt::Orientation orientation = Wt::Horizontal, int role = Wt::DisplayRole) const override;
+		RegionListProxyModel(std::shared_ptr<Wt::WAbstractItemModel> model);
+		virtual Wt::any data(const Wt::WModelIndex &idx, Wt::ItemDataRole role = Wt::ItemDataRole::Display) const override;
+		virtual Wt::any headerData(int section, Wt::Orientation orientation = Wt::Orientation::Horizontal, Wt::ItemDataRole role = Wt::ItemDataRole::Display) const override;
 		virtual Wt::WFlags<Wt::ItemFlag> flags(const Wt::WModelIndex &index) const override;
 
 	protected:
@@ -130,7 +131,7 @@ namespace GS
 		int _linkColumn = -1;
 	};
 
-	class RegionList : public QueryModelFilteredList<boost::tuple<long long, std::string>>
+	class RegionList : public QueryModelFilteredList<std::tuple<long long, std::string>>
 	{
 	public:
 		enum ResultColumns { ResId, ResName };
@@ -147,7 +148,7 @@ namespace GS
 		static const Wt::WFormModel::Field nameField;
 
 		RegionFormModel(RegionView *view, Wt::Dbo::ptr<Region> regionPtr = Wt::Dbo::ptr<Region>());
-		virtual Wt::WWidget *createFormWidget(Field field) override;
+		virtual std::unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
 		virtual AuthLogin::PermissionResult checkViewPermission() const override;
@@ -165,14 +166,14 @@ namespace GS
 		virtual void initView() override;
 
 		Wt::Dbo::ptr<Region> regionPtr() const { return _model->recordPtr(); }
-		RegionFormModel *model() const { return _model; }
+		std::shared_ptr<RegionFormModel> model() const { return _model; }
 
 		virtual Wt::WString viewName() const override;
 		virtual std::string viewInternalPath() const override { return regionPtr() ? Region::viewInternalPath(regionPtr().id()) : ""; }
-		virtual RecordFormView *createFormView() override { return new RegionView(); }
+		virtual std::unique_ptr<RecordFormView> createFormView() override { return std::make_unique<RegionView>(); }
 
 	protected:
-		RegionFormModel *_model = nullptr;
+		std::shared_ptr<RegionFormModel> _model;
 		Wt::Dbo::ptr<Region> _tempPtr;
 	};
 

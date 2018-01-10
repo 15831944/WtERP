@@ -6,10 +6,10 @@
 #include "Utilities/RecordFormView.h"
 #include "Utilities/FilteredList.h"
 
-#include <Wt/Dbo/QueryModel>
-#include <Wt/WSortFilterProxyModel>
-#include <Wt/WTemplateFormView>
-#include <Wt/WLengthValidator>
+#include <Wt/Dbo/QueryModel.h>
+#include <Wt/WSortFilterProxyModel.h>
+#include <Wt/WTemplateFormView.h>
+#include <Wt/WLengthValidator.h>
 
 namespace GS
 {
@@ -22,7 +22,8 @@ namespace GS
 	class CountryProxyModel : public QueryProxyModel<Wt::Dbo::ptr<Country>>
 	{
 	public:
-		CountryProxyModel(Wt::Dbo::QueryModel<Wt::Dbo::ptr<Country>> *sourceModel, Wt::WObject *parent = nullptr);
+		typedef Wt::Dbo::QueryModel<Wt::Dbo::ptr<Country>> QueryModel;
+		CountryProxyModel(std::shared_ptr<QueryModel> sourceModel);
 
 	protected:
 		void addAdditionalRows();
@@ -32,7 +33,7 @@ namespace GS
 	class CityFilterModel : public Wt::WSortFilterProxyModel
 	{
 	public:
-		CityFilterModel(Wt::WObject *parent = nullptr);
+		CityFilterModel();
 		virtual bool filterAcceptRow(int sourceRow, const Wt::WModelIndex &sourceParent) const override;
 
 		void setCountryCode(const std::string code);
@@ -45,12 +46,13 @@ namespace GS
 	class CityProxyModel : public QueryProxyModel<Wt::Dbo::ptr<City>>
 	{
 	public:
-		CityProxyModel(Wt::Dbo::QueryModel<Wt::Dbo::ptr<City>> *sourceModel, Wt::WObject *parent = nullptr);
-		CityFilterModel *filterModel() const { return _filterModel; }
+		typedef Wt::Dbo::QueryModel<Wt::Dbo::ptr<City>> QueryModel;
+		CityProxyModel(std::shared_ptr<QueryModel> sourceModel);
+		std::shared_ptr<CityFilterModel> filterModel() const { return _filterModel; }
 
 	protected:
 		void addAdditionalRows();
-		CityFilterModel *_filterModel = nullptr;
+		std::shared_ptr<CityFilterModel> _filterModel = nullptr;
 	};
 
 	class CountryFormModel : public RecordFormModel<Country>
@@ -60,7 +62,7 @@ namespace GS
 		static const Wt::WFormModel::Field nameField;
 
 		CountryFormModel(CountryView *view, Wt::Dbo::ptr<Country> countryPtr = Wt::Dbo::ptr<Country>());
-		virtual Wt::WWidget *createFormWidget(Field field) override;
+		virtual std::unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
 	protected:
@@ -75,18 +77,18 @@ namespace GS
 		virtual void initView() override;
 
 		Wt::Dbo::ptr<Country> countryPtr() const { return _model->recordPtr(); }
-		CountryFormModel *model() const { return _model; }
+		std::shared_ptr<CountryFormModel> model() const { return _model; }
 
 	protected:
-		CountryFormModel *_model = nullptr;
+		std::shared_ptr<CountryFormModel> _model;
 		Wt::Dbo::ptr<Country> _tempPtr;
 	};
 
 	class CountryCodeValidator : public Wt::WLengthValidator
 	{
 	public:
-		CountryCodeValidator(bool mandatory = false, const Wt::WString &allowedName = "", Wt::WObject *parent = nullptr)
-			: Wt::WLengthValidator(0, 3, parent), _allowedCode(allowedName)
+		CountryCodeValidator(bool mandatory = false, const Wt::WString &allowedName = "")
+			: Wt::WLengthValidator(0, 3), _allowedCode(allowedName)
 		{
 			setMandatory(mandatory);
 		}
@@ -104,7 +106,7 @@ namespace GS
 		static const Wt::WFormModel::Field nameField;
 
 		CityFormModel(CityView *view, Wt::Dbo::ptr<City> cityPtr = Wt::Dbo::ptr<City>());
-		virtual Wt::WWidget *createFormWidget(Field field) override;
+		virtual std::unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
 	protected:
@@ -119,10 +121,10 @@ namespace GS
 		virtual void initView() override;
 
 		Wt::Dbo::ptr<City> cityPtr() const { return _model->recordPtr(); }
-		CityFormModel *model() const { return _model; }
+		std::shared_ptr<CityFormModel> model() const { return _model; }
 
 	protected:
-		CityFormModel *_model = nullptr;
+		std::shared_ptr<CityFormModel> _model = nullptr;
 		Wt::Dbo::ptr<City> _tempPtr;
 	};
 
@@ -135,7 +137,7 @@ namespace GS
 		static const Field addressField;
 
 		LocationFormModel(LocationView *view, Wt::Dbo::ptr<Location> locationPtr = Wt::Dbo::ptr<Location>());
-		virtual Wt::WWidget *createFormWidget(Field field) override;
+		virtual std::unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
 	protected:
@@ -150,12 +152,12 @@ namespace GS
 
 		void handleCountryChanged(bool resetCity);
 		void handleCityChanged();
-		Wt::WDialog *createAddCountryDialog();
-		Wt::WDialog *createAddCityDialog();
+		void showAddCountryDialog();
+		void showAddCityDialog();
 
 		QueryProxyModelCB<CountryProxyModel> *countryCombo() const { return _countryCombo; }
 		QueryProxyModelCB<CityProxyModel> *cityCombo() const { return _cityCombo; }
-		LocationFormModel *model() const { return _model; }
+		std::shared_ptr<LocationFormModel> model() const { return _model; }
 		Wt::Dbo::ptr<Location> locationPtr() const { return _model->recordPtr(); }
 		using RecordFormView::updateView;
 
@@ -164,18 +166,18 @@ namespace GS
 
 		QueryProxyModelCB<CountryProxyModel> *_countryCombo = nullptr;
 		QueryProxyModelCB<CityProxyModel> *_cityCombo = nullptr;
-		CityProxyModel *_cityProxyModel = nullptr;
-		LocationFormModel *_model = nullptr;
+		Wt::WDialog *_dialog = nullptr;
+		std::shared_ptr<CityProxyModel> _cityProxyModel;
+		std::shared_ptr<LocationFormModel> _model;
 		Wt::Dbo::ptr<Location> _tempPtr;
 	};
 
 	//LocationList
-	class LocationList : public QueryModelFilteredList<boost::tuple<long long, std::string, std::string, std::string, std::string>>
+	class LocationList : public QueryModelFilteredList<std::tuple<long long, std::string, std::string, std::string, std::string>>
 	{
 	public:
 		enum ResultColumns { ResId, ResAddress, ResCountryName, ResCityName, ResEntityName };
 		enum ViewColumns { ViewId, ViewAddress, ViewCountryName, ViewCityName, ViewEntityName };
-		LocationList();
 
 	protected:
 		virtual void initFilters() override;

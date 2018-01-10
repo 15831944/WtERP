@@ -1,7 +1,8 @@
 #ifndef WW_DBO_CONFIGURATION_H
 #define WW_DBO_CONFIGURATION_H
 
-#include <Wt/Dbo/Dbo>
+#include <Wt/Dbo/Dbo.h>
+#include <boost/optional.hpp>
 
 namespace WW
 {

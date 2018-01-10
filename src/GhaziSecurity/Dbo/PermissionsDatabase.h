@@ -4,11 +4,13 @@
 #include <map>
 #include "Dbo/Dbos.h"
 
-#include <Wt/Auth/Login>
-#include <boost/thread/shared_mutex.hpp>
+#include <Wt/Auth/Login.h>
+#include <shared_mutex>
 
 namespace GS
 {
+	using namespace std::chrono;
+
 	class PermissionsDatabase
 	{
 	private:
@@ -17,7 +19,7 @@ namespace GS
 			PermissionSPtr permissionPtr;
 			PermissionMap linkedPermissions;
 		};
-		typedef std::map< long long, PermissionItem > _PermissionItemMap;
+		typedef std::map<long long, PermissionItem> _PermissionItemMap;
 
 	public:
 		PermissionsDatabase(Wt::Dbo::Session &session);
@@ -35,11 +37,11 @@ namespace GS
 		PermissionMap _disabledLoginPermissions;
 		PermissionMap _logggedInPermissions;
 
-		boost::posix_time::time_duration _loadDuration;
+		milliseconds _loadDuration;
 		Wt::Dbo::Session &dboSession;
 
 	private:
-		mutable boost::shared_mutex _mutex;
+		mutable std::shared_mutex _mutex;
 	};
 }
 

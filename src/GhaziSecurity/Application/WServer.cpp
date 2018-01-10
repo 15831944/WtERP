@@ -4,32 +4,39 @@
 #include "Dbo/PermissionsDatabase.h"
 #include "Utilities/TaskScheduler.h"
 
-#include <Wt/WMessageResourceBundle>
-#include <Wt/Dbo/FixedSqlConnectionPool>
-#include <Wt/Dbo/backend/MySQL>
-#include <Wt/Dbo/backend/Sqlite3>
-#include <Wt/Dbo/Exception>
+#include <Wt/WMessageResourceBundle.h>
+#include <Wt/Dbo/FixedSqlConnectionPool.h>
+#include <Wt/Dbo/backend/MySQL.h>
+#include <Wt/Dbo/backend/Sqlite3.h>
+#include <Wt/Dbo/Exception.h>
 
-#include <Wt/Auth/HashFunction>
-#include <Wt/Auth/PasswordStrengthValidator>
-#include <Wt/Auth/PasswordVerifier>
-#include <Wt/Auth/GoogleService>
-#include <Wt/Auth/FacebookService>
-#include <Wt/Auth/Dbo/UserDatabase>
+#include <Wt/Auth/HashFunction.h>
+#include <Wt/Auth/PasswordStrengthValidator.h>
+#include <Wt/Auth/PasswordVerifier.h>
+#include <Wt/Auth/GoogleService.h>
+#include <Wt/Auth/FacebookService.h>
+#include <Wt/Auth/Dbo/UserDatabase.h>
+
 
 namespace GS
 {
+using namespace std::chrono;
 
 WServer::WServer(int argc, char *argv[], const std::string &wtConfigurationFile)
 	: Wt::WServer(argv[0], wtConfigurationFile), _passwordService(_authService)
 {
-	_ptBeforeLoad = boost::posix_time::microsec_clock::local_time();
+	_tpBeforeLoad = steady_clock::now();
 	setServerConfiguration(argc, argv, WTHTTP_CONFIGURATION);
+}
+
+WServer::~WServer()
+{
+
 }
 
 void WServer::initialize()
 {
-	auto resolver = new Wt::WMessageResourceBundle();
+	auto resolver = std::make_shared<Wt::WMessageResourceBundle>();
 	resolver->use(appRoot() + "strings", false); //CHECK_BEFORE_RELEASE
 	setLocalizedStrings(resolver);
 
@@ -44,7 +51,7 @@ void WServer::initialize()
 		if(!readConfigurationProperty("DbBackend", dbBackend))
 			dbBackend = "SQLite";
 
-		Wt::Dbo::SqlConnection *sqlConnection;
+		std::unique_ptr<Wt::Dbo::SqlConnection> sqlConnection;
 		if(dbBackend == "MySQL")
 		{
 			std::string host, portStr, db, user, password;
@@ -58,13 +65,13 @@ void WServer::initialize()
 			if(!portStr.empty())
 				port = boost::lexical_cast<unsigned int>(portStr);
 
-			sqlConnection = new Wt::Dbo::backend::MySQL(db, user, password, host, port);
+			sqlConnection = std::make_unique<Wt::Dbo::backend::MySQL>(db, user, password, host, port);
 		}
 		else if(dbBackend == "SQLite")
 		{
 			std::string db = ":memory:";
 			readConfigurationProperty("SQLiteDb", db);
-			sqlConnection = new Wt::Dbo::backend::Sqlite3(db);
+			sqlConnection = std::make_unique<Wt::Dbo::backend::Sqlite3>(db);
 		}
 		else
 		{
@@ -72,7 +79,7 @@ void WServer::initialize()
 		}
 
 		sqlConnection->setProperty("show-queries", "true");
-		_sqlPool = new Wt::Dbo::FixedSqlConnectionPool(sqlConnection, 1);
+		_sqlPool = std::make_unique<Wt::Dbo::FixedSqlConnectionPool>(std::move(sqlConnection), 1);
 
 		log("success") << "Successfully connected to database";
 	}
@@ -140,75 +147,47 @@ void WServer::initialize()
 		{
 			Wt::Dbo::Transaction tr(_dboSession);
 
-			//Countries and cities
-			auto pakistan = new Country("PK");
-			pakistan->name = "Pakistan";
-			auto pakistanPtr = _dboSession.add(pakistan);
-
-			auto karachi = new City(pakistanPtr);
-			karachi->name = "Karachi";
-			_dboSession.add(karachi);
-
-			auto hyderabad = new City(pakistanPtr);
-			hyderabad->name = "Hyderabad";
-			_dboSession.add(hyderabad);
-
-			auto sukhur = new City(pakistanPtr);
-			sukhur->name = "Sukhur";
-			_dboSession.add(sukhur);
-
-			auto Quetta = new City(pakistanPtr);
-			Quetta->name = "Quetta";
-			_dboSession.add(Quetta);
-
-			auto Multan = new City(pakistanPtr);
-			Multan->name = "Multan";
-			_dboSession.add(Multan);
-
-			auto Lahore = new City(pakistanPtr);
-			Lahore->name = "Lahore";
-			_dboSession.add(Lahore);
-
-			auto Islamabad = new City(pakistanPtr);
-			Islamabad->name = "Islamabad";
-			_dboSession.add(Islamabad);
-
-			auto Peshawar = new City(pakistanPtr);
-			Peshawar->name = "Peshawar";
-			_dboSession.add(Peshawar);
-
-			auto Faisalabad = new City(pakistanPtr);
-			Faisalabad->name = "Faisalabad";
-			_dboSession.add(Faisalabad);
+			//Countries
+			auto pakistan = _dboSession.add(std::make_unique<Country>("PK", "Pakistan"));
+			//Cities
+			auto karachi = _dboSession.add(std::make_unique<City>(pakistan, "Karachi"));
+			auto hyderabad = _dboSession.add(std::make_unique<City>(pakistan, "Hyderabad"));
+			auto sukhur = _dboSession.add(std::make_unique<City>(pakistan, "Sukhur"));
+			auto Quetta = _dboSession.add(std::make_unique<City>(pakistan, "Quetta"));
+			auto Multan = _dboSession.add(std::make_unique<City>(pakistan, "Multan"));
+			auto Lahore = _dboSession.add(std::make_unique<City>(pakistan, "Lahore"));
+			auto Islamabad = _dboSession.add(std::make_unique<City>(pakistan, "Islamabad"));
+			auto Peshawar = _dboSession.add(std::make_unique<City>(pakistan, "Peshawar"));
+			auto Faisalabad = _dboSession.add(std::make_unique<City>(pakistan, "Faisalabad"));
 
 			//Permissions
-			auto accessAdminPanel = _dboSession.add(new Permission(Permissions::AccessAdminPanel, "Access Admin Panel"));
+			auto accessAdminPanel = _dboSession.add(std::make_unique<Permission>(Permissions::AccessAdminPanel, "Access Admin Panel"));
 
-			auto createRecord = _dboSession.add(new Permission(Permissions::CreateRecord, "Create records"));
-			auto modifyRecord = _dboSession.add(new Permission(Permissions::ModifyRecord, "Modify records"));
-			auto removeRecord = _dboSession.add(new Permission(Permissions::RemoveRecord, "Remove records"));
+			auto createRecord = _dboSession.add(std::make_unique<Permission>(Permissions::CreateRecord, "Create records"));
+			auto modifyRecord = _dboSession.add(std::make_unique<Permission>(Permissions::ModifyRecord, "Modify records"));
+			auto removeRecord = _dboSession.add(std::make_unique<Permission>(Permissions::RemoveRecord, "Remove records"));
 
-			auto viewUser = _dboSession.add(new Permission(Permissions::ViewUser, "View users"));
-			auto createUser = _dboSession.add(new Permission(Permissions::CreateUser, "Create users"));
-			auto modifyUser = _dboSession.add(new Permission(Permissions::ModifyUser, "Modify users"));
-			auto modifyUserPermission = _dboSession.add(new Permission(Permissions::ModifyUserPermission, "Modify user permissions"));
-			auto removeUser = _dboSession.add(new Permission(Permissions::RemoveUser, "Remove users"));
+			auto viewUser = _dboSession.add(std::make_unique<Permission>(Permissions::ViewUser, "View users"));
+			auto createUser = _dboSession.add(std::make_unique<Permission>(Permissions::CreateUser, "Create users"));
+			auto modifyUser = _dboSession.add(std::make_unique<Permission>(Permissions::ModifyUser, "Modify users"));
+			auto modifyUserPermission = _dboSession.add(std::make_unique<Permission>(Permissions::ModifyUserPermission, "Modify user permissions"));
+			auto removeUser = _dboSession.add(std::make_unique<Permission>(Permissions::RemoveUser, "Remove users"));
 
-			auto viewUnassignedUserRecord = _dboSession.add(new Permission(Permissions::ViewUnassignedUserRecord, "View records not assigned to any user"));
-			auto viewOtherUserRecord = _dboSession.add(new Permission(Permissions::ViewOtherUserRecord, "View records created by other users"));
-			auto modifyOtherUserRecord = _dboSession.add(new Permission(Permissions::ModifyOtherUserRecord, "Modify records created by other users"));
-			auto removeOtherUserRecord = _dboSession.add(new Permission(Permissions::RemoveOtherUserRecord, "Remove records created by other users"));
+			auto viewUnassignedUserRecord = _dboSession.add(std::make_unique<Permission>(Permissions::ViewUnassignedUserRecord, "View records not assigned to any user"));
+			auto viewOtherUserRecord = _dboSession.add(std::make_unique<Permission>(Permissions::ViewOtherUserRecord, "View records created by other users"));
+			auto modifyOtherUserRecord = _dboSession.add(std::make_unique<Permission>(Permissions::ModifyOtherUserRecord, "Modify records created by other users"));
+			auto removeOtherUserRecord = _dboSession.add(std::make_unique<Permission>(Permissions::RemoveOtherUserRecord, "Remove records created by other users"));
 
-			auto viewUnassignedRegionRecord = _dboSession.add(new Permission(Permissions::ViewUnassignedRegionRecord, "View records not assigned to any region"));
-			auto viewOtherRegionRecord = _dboSession.add(new Permission(Permissions::ViewOtherRegionRecord, "View records created by other regions"));
-			auto modifyOtherRegionRecord = _dboSession.add(new Permission(Permissions::ModifyOtherRegionRecord, "Modify records created by other regions"));
-			auto removeOtherRegionRecord = _dboSession.add(new Permission(Permissions::RemoveOtherRegionRecord, "Remove records created by other regions"));
+			auto viewUnassignedRegionRecord = _dboSession.add(std::make_unique<Permission>(Permissions::ViewUnassignedRegionRecord, "View records not assigned to any region"));
+			auto viewOtherRegionRecord = _dboSession.add(std::make_unique<Permission>(Permissions::ViewOtherRegionRecord, "View records created by other regions"));
+			auto modifyOtherRegionRecord = _dboSession.add(std::make_unique<Permission>(Permissions::ModifyOtherRegionRecord, "Modify records created by other regions"));
+			auto removeOtherRegionRecord = _dboSession.add(std::make_unique<Permission>(Permissions::RemoveOtherRegionRecord, "Remove records created by other regions"));
 
-			auto viewRegion = _dboSession.add(new Permission(Permissions::ViewRegion, "View regions"));
-			auto createRegion = _dboSession.add(new Permission(Permissions::CreateRegion, "Create regions"));
-			auto modifyRegion = _dboSession.add(new Permission(Permissions::ModifyRegion, "Modify regions"));
+			auto viewRegion = _dboSession.add(std::make_unique<Permission>(Permissions::ViewRegion, "View regions"));
+			auto createRegion = _dboSession.add(std::make_unique<Permission>(Permissions::CreateRegion, "Create regions"));
+			auto modifyRegion = _dboSession.add(std::make_unique<Permission>(Permissions::ModifyRegion, "Modify regions"));
 
-			auto globalAdministrator = _dboSession.add(new Permission(Permissions::GlobalAdministrator, "Global administrator permissions"));
+			auto globalAdministrator = _dboSession.add(std::make_unique<Permission>(Permissions::GlobalAdministrator, "Global administrator permissions"));
 			globalAdministrator.modify()->linkedToCollection.insert(accessAdminPanel);
 			globalAdministrator.modify()->linkedToCollection.insert(createRecord);
 			globalAdministrator.modify()->linkedToCollection.insert(modifyRecord);
@@ -230,7 +209,7 @@ void WServer::initialize()
 			globalAdministrator.modify()->linkedToCollection.insert(createRegion);
 			globalAdministrator.modify()->linkedToCollection.insert(modifyRegion);
 
-			auto regionalAdministrator = _dboSession.add(new Permission(Permissions::RegionalAdministrator, "Regional administrator permissions"));
+			auto regionalAdministrator = _dboSession.add(std::make_unique<Permission>(Permissions::RegionalAdministrator, "Regional administrator permissions"));
 			regionalAdministrator.modify()->linkedToCollection.insert(accessAdminPanel);
 			regionalAdministrator.modify()->linkedToCollection.insert(createRecord);
 			regionalAdministrator.modify()->linkedToCollection.insert(modifyRecord);
@@ -246,7 +225,7 @@ void WServer::initialize()
 			regionalAdministrator.modify()->linkedToCollection.insert(removeOtherUserRecord);
 			regionalAdministrator.modify()->linkedToCollection.insert(viewUnassignedRegionRecord);
 
-			auto regionalUser = _dboSession.add(new Permission(Permissions::RegionalUser, "Regional user permissions"));
+			auto regionalUser = _dboSession.add(std::make_unique<Permission>(Permissions::RegionalUser, "Regional user permissions"));
 			regionalUser.modify()->linkedToCollection.insert(accessAdminPanel);
 			regionalUser.modify()->linkedToCollection.insert(createRecord);
 			regionalUser.modify()->linkedToCollection.insert(modifyRecord);
@@ -267,31 +246,31 @@ void WServer::initialize()
 				authUser.setIdentity(Wt::Auth::Identity::LoginName, "admin");
 				server->getPasswordService().updatePassword(authUser, "changeme");
 				authInfoPtr = userDatabase.find(authUser);
-				userPtr = _dboSession.add(new User());
+				userPtr = _dboSession.add(std::make_unique<User>());
 				authInfoPtr.modify()->setUser(userPtr);
-				_dboSession.add(new UserPermission(userPtr, globalAdministrator));
+				_dboSession.add(std::make_unique<UserPermission>(userPtr, globalAdministrator));
 
 // 				authUser = userDatabase.registerNew();
 // 				authUser.setIdentity(Wt::Auth::Identity::LoginName, "regionaladmin");
 // 				server->getPasswordService().updatePassword(authUser, "changeme");
 // 				authInfoPtr = userDatabase.find(authUser);
-// 				userPtr = _dboSession.add(new User());
+// 				userPtr = _dboSession.add(std::make_unique<User>());
 // 				authInfoPtr.modify()->setUser(userPtr);
-// 				_dboSession.add(new UserPermission(userPtr, regionalAdministrator));
+// 				_dboSession.add(std::make_unique<UserPermission>(userPtr, regionalAdministrator));
 // 
 // 				authUser = userDatabase.registerNew();
 // 				authUser.setIdentity(Wt::Auth::Identity::LoginName, "regionaluser");
 // 				server->getPasswordService().updatePassword(authUser, "changeme");
 // 				authInfoPtr = userDatabase.find(authUser);
-// 				userPtr = _dboSession.add(new User());
+// 				userPtr = _dboSession.add(std::make_unique<User>());
 // 				authInfoPtr.modify()->setUser(userPtr);
-// 				_dboSession.add(new UserPermission(userPtr, regionalUser));
+// 				_dboSession.add(std::make_unique<UserPermission>(userPtr, regionalUser));
 // 
 // 				authUser = userDatabase.registerNew();
 // 				authUser.setIdentity(Wt::Auth::Identity::LoginName, "test");
 // 				server->getPasswordService().updatePassword(authUser, "changeme");
 // 				authInfoPtr = userDatabase.find(authUser);
-// 				userPtr = _dboSession.add(new User());
+// 				userPtr = _dboSession.add(std::make_unique<User>());
 // 				authInfoPtr.modify()->setUser(userPtr);
 			}
 
@@ -312,7 +291,7 @@ void WServer::initialize()
 	//Load configurations
 	try
 	{
-		_configs = new WW::ConfigurationsDatabase(_dboSession);
+		_configs = std::make_unique<WW::ConfigurationsDatabase>(_dboSession);
 	}
 	catch(const Wt::Dbo::Exception &e)
 	{
@@ -328,7 +307,7 @@ void WServer::initialize()
 	//Load configurations
 	try
 	{
-		_permissionsDatabase = new PermissionsDatabase(_dboSession);
+		_permissionsDatabase = std::make_unique<PermissionsDatabase>(_dboSession);
 	}
 	catch(const Wt::Dbo::Exception &e)
 	{
@@ -342,9 +321,9 @@ void WServer::initialize()
 	}
 
 	//Start task scheduler
-	_taskScheduler = new TaskScheduler(this, _dboSession);
+	_taskScheduler = std::make_unique<TaskScheduler>(this, _dboSession);
 
-	//Register boost::any traits
+	//Register Wt::any traits
 	Wt::registerType<Money>();
 	Wt::registerType<Entity::Type>();
 	Wt::registerType<Account::Type>();
@@ -353,27 +332,15 @@ void WServer::initialize()
 	//Wt::registerType<Wt::Dbo::ptr<Entity>>();
 }
 
-WServer::~WServer()
-{
-	for(OAuthServiceMap::size_type i = 0; i < _oAuthServices.size(); ++i)
-		delete _oAuthServices[i];
-
-	delete _taskScheduler;
-	delete _configs;
-	delete _permissionsDatabase;
-	delete _sqlPool; //Also deletes SQLConnections
-	delete localizedStrings();
-}
-
 bool WServer::start()
 {
 	if(Wt::WServer::start())
 	{
 		//Load Finish Time
-		_ptStart = boost::posix_time::microsec_clock::local_time();
+		_tpStart = steady_clock::now();
 
 		log("success") << "Server successfully started! Time taken to start: "
-			<< boost::posix_time::time_duration(_ptStart - _ptBeforeLoad).total_milliseconds()
+			<< duration_cast<milliseconds>(_tpStart - _tpBeforeLoad).count()
 			<< " ms";
 		return true;
 	}
@@ -384,24 +351,24 @@ void WServer::configureAuth()
 {
 	_authService.setAuthTokensEnabled(true, "authtoken");
 	_authService.setAuthTokenValidity(24 * 60);
-	_authService.setIdentityPolicy(Wt::Auth::LoginNameIdentity);
+	_authService.setIdentityPolicy(Wt::Auth::IdentityPolicy::LoginName);
 	_authService.setEmailVerificationEnabled(false);
 
 	//Hash and throttling
-	Wt::Auth::PasswordVerifier *verifier = new Wt::Auth::PasswordVerifier();
-	verifier->addHashFunction(new Wt::Auth::BCryptHashFunction(7));
-	_passwordService.setVerifier(verifier);
+	auto verifier = std::make_unique<Wt::Auth::PasswordVerifier>();
+	verifier->addHashFunction(std::make_unique<Wt::Auth::BCryptHashFunction>(7));
+	_passwordService.setVerifier(std::move(verifier));
 	_passwordService.setAttemptThrottlingEnabled(true);
 
 	//Password strength
-	Wt::Auth::PasswordStrengthValidator *strengthValidator = new Wt::Auth::PasswordStrengthValidator();
-	strengthValidator->setMinimumLength(Wt::Auth::PasswordStrengthValidator::OneCharClass, 6);
-	_passwordService.setStrengthValidator(strengthValidator);
+	auto strengthValidator = std::make_unique<Wt::Auth::PasswordStrengthValidator>();
+	strengthValidator->setMinimumLength(Wt::Auth::PasswordStrengthType::OneCharClass, 6);
+	_passwordService.setStrengthValidator(std::move(strengthValidator));
 
 // 	if(Wt::Auth::GoogleService::configured() && configurations()->getBool("GoogleOAuth", ModuleDatabase::Authentication, false))
-// 		_oAuthServices.push_back(new Wt::Auth::GoogleService(_authService));
+// 		_oAuthServices.push_back(std::make_unique<Wt::Auth::GoogleService>(_authService));
 // 	if(Wt::Auth::FacebookService::configured() && configurations()->getBool("FacebookOAuth", ModuleDatabase::Authentication, false))
-// 		_oAuthServices.push_back(new Wt::Auth::FacebookService(_authService));
+// 		_oAuthServices.push_back(std::make_unique<Wt::Auth::FacebookService>(_authService));
 }
 
 

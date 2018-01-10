@@ -5,13 +5,15 @@
 namespace GS
 {
 
-	AuthWidget::AuthWidget(Wt::WContainerWidget *parent)
-		: Wt::Auth::AuthWidget(SERVER->getAuthService(), APP->userDatabase(), APP->authLogin(), parent)
+	AuthWidget::AuthWidget()
+		: Wt::Auth::AuthWidget(SERVER->getAuthService(), APP->userDatabase(), APP->authLogin())
 	{
 		WServer *server = SERVER;
 
 		model()->addPasswordAuth(&server->getPasswordService());
-		model()->addOAuth(server->getOAuthServices());
+		for(const auto &oauthPtr : server->getOAuthServices())
+			model()->addOAuth(oauthPtr.get());
+
 		setRegistrationEnabled(false);
 		processEnvironment();
 	}

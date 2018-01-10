@@ -2,7 +2,7 @@
 #include "Application/WApplication.h"
 #include "Dbo/AccountsDatabase.h"
 
-#include <Wt/WText>
+#include <Wt/WText.h>
 
 namespace GS
 {
@@ -11,101 +11,92 @@ namespace GS
 	{
 		setTemplateText(tr("GS.Admin.Dashboard.Overview"));
 
-		auto totalEntities = new RecordCountTemplate([]() -> long long {
+		auto totalEntities = bindNew<RecordCountTemplate>("totalEntities", []() -> long long {
 			return APP->dboSession().find<Entity>().resultList().size();
 		});
-		bindWidget("totalEntities", totalEntities);
-		bindWidget("persons", new RecordCountTemplate([]() -> long long {
+
+		bindNew<RecordCountTemplate>("persons", []() -> long long {
 			return APP->dboSession().find<Entity>().where("type = ?").bind(Entity::PersonType).resultList().size();
-		}, totalEntities));
-		bindWidget("businesses", new RecordCountTemplate([]() -> long long {
+		}, totalEntities);
+		bindNew<RecordCountTemplate>("businesses", []() -> long long {
 			return APP->dboSession().find<Entity>().where("type = ?").bind(Entity::BusinessType).resultList().size();
-		}, totalEntities));
-		bindWidget("employees", new RecordCountTemplate([]() -> long long {
-			Wt::WDate currentDate = Wt::WDate(boost::gregorian::day_clock::local_day());
+		}, totalEntities);
+		bindNew<RecordCountTemplate>("employees", []() -> long long {
+			Wt::WDate currentDate = Wt::WDate::currentServerDate();
 			return APP->dboSession().query<long long>(
 				"SELECT COUNT(DISTINCT a.entity_id) FROM " + std::string(EmployeeAssignment::tableName()) + " a"
 				).where("? >= startDate AND (endDate IS null OR ? < endDate)").bind(currentDate).bind(currentDate);
-		}, totalEntities));
-		bindWidget("personnel", new RecordCountTemplate([]() -> long long {
-			Wt::WDate currentDate = Wt::WDate(boost::gregorian::day_clock::local_day());
+		}, totalEntities);
+		bindNew<RecordCountTemplate>("personnel", []() -> long long {
+			Wt::WDate currentDate = Wt::WDate::currentServerDate();
 			return APP->dboSession().query<long long>(
 				"SELECT COUNT(DISTINCT a.entity_id) FROM " + std::string(EmployeeAssignment::tableName()) + " a "
 				"INNER JOIN " + EmployeePosition::tableName() + " p ON (p.id = a.employeeposition_id AND p.type = " + boost::lexical_cast<std::string>(EmployeePosition::PersonnelType) + ")"
 				).where("? >= startDate AND (endDate IS null OR ? < endDate)").bind(currentDate).bind(currentDate);
-		}, totalEntities));
-		bindWidget("clients", new RecordCountTemplate([]() -> long long {
-			Wt::WDate currentDate = Wt::WDate(boost::gregorian::day_clock::local_day());
+		}, totalEntities);
+		bindNew<RecordCountTemplate>("clients", []() -> long long {
+			Wt::WDate currentDate = Wt::WDate::currentServerDate();
 			return APP->dboSession().query<long long>(
 				"SELECT COUNT(DISTINCT a.entity_id) FROM " + std::string(ClientAssignment::tableName()) + " a"
 				).where("? >= startDate AND (endDate IS null OR ? < endDate)").bind(currentDate).bind(currentDate);
-		}, totalEntities));
+		}, totalEntities);
 
-		auto clientAssignments = new RecordMultiCountTemplate([]() -> long long {
-			Wt::WDate currentDate = Wt::WDate(boost::gregorian::day_clock::local_day());
+		auto clientAssignments = bindNew<RecordMultiCountTemplate>("clientAssignments", []() -> long long {
+			Wt::WDate currentDate = Wt::WDate::currentServerDate();
 			return APP->dboSession().find<ClientAssignment>().where("? >= startDate").bind(currentDate).resultList().size();
-		},
-			[]() -> long long {
-			Wt::WDate currentDate = Wt::WDate(boost::gregorian::day_clock::local_day());
+		}, []() -> long long {
+			Wt::WDate currentDate = Wt::WDate::currentServerDate();
 			return APP->dboSession().find<ClientAssignment>().where("? >= startDate AND (endDate IS null OR ? < endDate)").bind(currentDate).bind(currentDate)
 				.resultList().size();
 		});
 		clientAssignments->setLeftStr(tr("NActive"));
 		clientAssignments->setRightStr(tr("NNotStarted"));
-		bindWidget("clientAssignments", clientAssignments);
 
-		auto employeeAssignments = new RecordMultiCountTemplate([]() -> long long {
-			Wt::WDate currentDate = Wt::WDate(boost::gregorian::day_clock::local_day());
+		auto employeeAssignments = bindNew<RecordMultiCountTemplate>("employeeAssignments", []() -> long long {
+			Wt::WDate currentDate = Wt::WDate::currentServerDate();
 			return APP->dboSession().find<EmployeeAssignment>().where("? >= startDate").bind(currentDate).resultList().size();
-		},
-			[]() -> long long {
-			Wt::WDate currentDate = Wt::WDate(boost::gregorian::day_clock::local_day());
+		}, []() -> long long {
+			Wt::WDate currentDate = Wt::WDate::currentServerDate();
 			return APP->dboSession().find<EmployeeAssignment>().where("? >= startDate AND (endDate IS null OR ? < endDate)").bind(currentDate).bind(currentDate)
 				.resultList().size();
 		});
 		employeeAssignments->setLeftStr(tr("NActive"));
 		employeeAssignments->setRightStr(tr("NNotStarted"));
-		bindWidget("employeeAssignments", employeeAssignments);
 
-		auto totalAccounts = new RecordCountTemplate([]() -> long long {
+		auto totalAccounts = bindNew<RecordCountTemplate>("totalAccounts", []() -> long long {
 			return APP->dboSession().find<Account>().resultList().size();
 		});
-		bindWidget("totalAccounts", totalAccounts);
-		bindWidget("entityAccounts", new RecordCountTemplate([]() -> long long {
+		auto entityAccounts = bindNew<RecordCountTemplate>("entityAccounts", []() -> long long {
 			return APP->dboSession().query<long long>(
 				"SELECT COUNT(1) FROM " + std::string(Account::tableName()) + " acc INNER JOIN " + Entity::tableName() + " e ON (e.bal_account_id = acc.id OR e.pnl_account_id = acc.id)"
 			);
-		}, totalAccounts));
+		}, totalAccounts);
 
-		auto recurringIncomes = new RecordMultiCountTemplate([]() -> long long {
-			Wt::WDate currentDate = Wt::WDate(boost::gregorian::day_clock::local_day());
+		auto recurringIncomes = bindNew<RecordMultiCountTemplate>("recurringIncomes", []() -> long long {
+			Wt::WDate currentDate = Wt::WDate::currentServerDate();
 			return APP->dboSession().find<IncomeCycle>().where("? >= startDate").bind(currentDate).resultList().size();
-		},
-		[]() -> long long {
-			Wt::WDate currentDate = Wt::WDate(boost::gregorian::day_clock::local_day());
+		}, []() -> long long {
+			Wt::WDate currentDate = Wt::WDate::currentServerDate();
 			return APP->dboSession().find<IncomeCycle>().where("? >= startDate AND (endDate IS null OR ? < endDate)").bind(currentDate).bind(currentDate)
 				.resultList().size();
 		});
 		recurringIncomes->setLeftStr(tr("NActive"));
 		recurringIncomes->setRightStr(tr("NNotStarted"));
-		bindWidget("recurringIncomes", recurringIncomes);
 
-		auto recurringExpenses = new RecordMultiCountTemplate([]() -> long long {
-			Wt::WDate currentDate = Wt::WDate(boost::gregorian::day_clock::local_day());
+		auto recurringExpenses = bindNew<RecordMultiCountTemplate>("recurringExpenses", []() -> long long {
+			Wt::WDate currentDate = Wt::WDate::currentServerDate();
 			return APP->dboSession().find<ExpenseCycle>().where("? >= startDate").bind(currentDate).resultList().size();
-		},
-		[]() -> long long {
-			Wt::WDate currentDate = Wt::WDate(boost::gregorian::day_clock::local_day());
+		}, []() -> long long {
+			Wt::WDate currentDate = Wt::WDate::currentServerDate();
 			return APP->dboSession().find<ExpenseCycle>().where("? >= startDate AND (endDate IS null OR ? < endDate)").bind(currentDate).bind(currentDate)
 				.resultList().size();
 		});
 		recurringExpenses->setLeftStr(tr("NActive"));
 		recurringExpenses->setRightStr(tr("NNotStarted"));
-		bindWidget("recurringExpenses", recurringExpenses);
 
-		bindWidget("cashAccount", new CashAccountBalance());
-		bindWidget("receivables", new ReceivablesBalance());
-		bindWidget("payables", new PayablesBalance());
+		bindNew<CashAccountBalance>("cashAccount");
+		bindNew<ReceivablesBalance>("receivables");
+		bindNew<PayablesBalance>("payables");
 	}
 
 	void DashboardOverviewTemplate::load()
@@ -130,10 +121,10 @@ namespace GS
 		: _queryFunction(queryFunction), _relativeTo(relativeTo)
 	{
 		setTemplateText(tr("GS.RecordCountTemplate.ProgressBar"));
-		auto container = new Wt::WContainerWidget();
-		container->setWidth(Wt::WLength(100, Wt::WLength::Percentage));
-		_text = new Wt::WText(tr("Loading..."), container);
-		bindWidget("progress-bar", container);
+		auto container = std::make_unique<Wt::WContainerWidget>();
+		container->setWidth(Wt::WLength(100, Wt::LengthUnit::Percentage));
+		_text = container->addNew<Wt::WText>(tr("Loading..."));
+		bindWidget("progress-bar", std::move(container));
 	}
 
 	void RecordCountTemplate::load()
@@ -158,20 +149,20 @@ namespace GS
 					_relativeTo->load();
 
 				if(_relativeTo->currentCount() == -1)
-					resolveWidget("progress-bar")->setWidth(Wt::WLength(100, Wt::WLength::Percentage));
+					resolveWidget("progress-bar")->setWidth(Wt::WLength(100,  Wt::LengthUnit::Percentage));
 				else
 				{
 					double width = std::min(static_cast<double>(_currentCount) / _relativeTo->currentCount() * 100, 100.);
-					resolveWidget("progress-bar")->setWidth(Wt::WLength(width, Wt::WLength::Percentage));
+					resolveWidget("progress-bar")->setWidth(Wt::WLength(width,  Wt::LengthUnit::Percentage));
 				}
 			}
 			else
-				resolveWidget("progress-bar")->setWidth(Wt::WLength(100, Wt::WLength::Percentage));
+				resolveWidget("progress-bar")->setWidth(Wt::WLength(100,  Wt::LengthUnit::Percentage));
 		}
 		catch(const Wt::Dbo::Exception &e)
 		{
 			Wt::log("error") << "RecordCountTemplate::reload(): Dbo error(" << e.code() << "): " << e.what();
-			resolveWidget("progress-bar")->setWidth(Wt::WLength(100, Wt::WLength::Percentage));
+			resolveWidget("progress-bar")->setWidth(Wt::WLength(100,  Wt::LengthUnit::Percentage));
 			_currentCount = -1;
 			_text->setText(tr("CouldNotLoad"));
 		}
@@ -181,10 +172,10 @@ namespace GS
 		: RecordCountTemplate(leftQueryFunction), _totalCountFunction(totalQueryFunction)
 	{
 		setTemplateText(tr("GS.RecordCountTemplate.MultiProgressBar"));
-		auto rightContainer = new Wt::WContainerWidget();
+		auto rightContainer = std::make_unique<Wt::WContainerWidget>();
 		rightContainer->setWidth(0);
-		_rightText = new Wt::WText(tr("Loading..."), rightContainer);
-		bindWidget("progress-bar-right", rightContainer);
+		_rightText = rightContainer->addNew<Wt::WText>(tr("Loading..."));
+		bindWidget("progress-bar-right", std::move(rightContainer));
 	}
 
 	void RecordMultiCountTemplate::reload()
@@ -199,8 +190,8 @@ namespace GS
 				_currentCount = 0;
 				_text->setText(_leftStr.arg(0));
 				_rightText->setText(_rightStr.arg(0));
-				resolveWidget("progress-bar")->setWidth(Wt::WLength(50, Wt::WLength::Percentage));
-				resolveWidget("progress-bar-right")->setWidth(Wt::WLength(50, Wt::WLength::Percentage));
+				resolveWidget("progress-bar")->setWidth(Wt::WLength(50,  Wt::LengthUnit::Percentage));
+				resolveWidget("progress-bar-right")->setWidth(Wt::WLength(50,  Wt::LengthUnit::Percentage));
 				return;
 			}
 
@@ -209,15 +200,15 @@ namespace GS
 			_rightText->setText(_rightStr.arg(_totalCount - _currentCount));
 
 			double leftWidth = static_cast<double>(_currentCount) / _totalCount * 100;
-			resolveWidget("progress-bar")->setWidth(Wt::WLength(leftWidth, Wt::WLength::Percentage));
-			resolveWidget("progress-bar-right")->setWidth(Wt::WLength(100 - leftWidth, Wt::WLength::Percentage));
+			resolveWidget("progress-bar")->setWidth(Wt::WLength(leftWidth,  Wt::LengthUnit::Percentage));
+			resolveWidget("progress-bar-right")->setWidth(Wt::WLength(100 - leftWidth,  Wt::LengthUnit::Percentage));
 		}
 		catch(const Wt::Dbo::Exception &e)
 		{
 			Wt::log("error") << "RecordMultiCountTemplate::reload(): Dbo error(" << e.code() << "): " << e.what();
 			_totalCount = -1;
 			_currentCount = -1;
-			resolveWidget("progress-bar")->setWidth(Wt::WLength(100, Wt::WLength::Percentage));
+			resolveWidget("progress-bar")->setWidth(Wt::WLength(100,  Wt::LengthUnit::Percentage));
 			resolveWidget("progress-bar-right")->setWidth(0);
 			_text->setText(tr("CouldNotLoad"));
 			_rightText->setText("");

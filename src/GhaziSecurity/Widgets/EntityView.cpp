@@ -8,21 +8,21 @@
 #include "Widgets/EntryCycleMVC.h"
 #include "Widgets/FindRecordEdit.h"
 
-#include <Wt/WLabel>
-#include <Wt/WBreak>
-#include <Wt/WMenu>
-#include <Wt/WPushButton>
-#include <Wt/WLineEdit>
-#include <Wt/WDateEdit>
-#include <Wt/WTextArea>
-#include <Wt/WPopupMenu>
-#include <Wt/WComboBox>
-#include <Wt/WCheckBox>
-#include <Wt/WFileUpload>
-#include <Wt/WImage>
-#include <Wt/WIntValidator>
+#include <Wt/WLabel.h>
+#include <Wt/WBreak.h>
+#include <Wt/WMenu.h>
+#include <Wt/WPushButton.h>
+#include <Wt/WLineEdit.h>
+#include <Wt/WDateEdit.h>
+#include <Wt/WTextArea.h>
+#include <Wt/WPopupMenu.h>
+#include <Wt/WComboBox.h>
+#include <Wt/WCheckBox.h>
+#include <Wt/WFileUpload.h>
+#include <Wt/WImage.h>
+#include <Wt/WIntValidator.h>
 
-#include <Wt/Dbo/QueryModel>
+#include <Wt/Dbo/QueryModel.h>
 
 #include <boost/algorithm/string.hpp>
 
@@ -43,13 +43,13 @@ namespace GS
 		}
 	}
 
-	Wt::WWidget *EntityFormModel::createFormWidget(Field field)
+	std::unique_ptr<Wt::WWidget> EntityFormModel::createFormWidget(Field field)
 	{
 		if(field == nameField)
 		{
-			auto w = new Wt::WLineEdit();
+			auto w = std::make_unique<Wt::WLineEdit>();
 			w->setMaxLength(70);
-			auto validator = new Wt::WLengthValidator(0, 70);
+			auto validator = std::make_shared<Wt::WLengthValidator>(0, 70);
 			validator->setMandatory(true);
 			setValidator(field, validator);
 			return w;
@@ -67,11 +67,11 @@ namespace GS
 
 		if(!_recordPtr)
 		{
-			_recordPtr = app->dboSession().add(new Entity());
+			_recordPtr = app->dboSession().add(std::make_unique<Entity>());
 			_recordPtr.modify()->setCreatedByValues();
 		}
 
-		_recordPtr.modify()->specificTypeMask = 0;
+		_recordPtr.modify()->specificTypeMask = Wt::WFlags<Entity::SpecificType>();
 		_recordPtr.modify()->name = valueText(nameField).toUTF8();
 
 		t.commit();
@@ -80,11 +80,8 @@ namespace GS
 
 	void EntityFormModel::persistedHandler()
 	{
-		_view->_expenseCycles = new ExpenseCycleList(recordPtr());
-		_view->bindWidget("expenseCycles", _view->_expenseCycles);
-
-		_view->_incomeCycles = new IncomeCycleList(recordPtr());
-		_view->bindWidget("incomeCycles", _view->_incomeCycles);
+		_view->_expenseCycles = _view->bindNew<ExpenseCycleList>("expenseCycles", recordPtr());
+		_view->_incomeCycles = _view->bindNew<IncomeCycleList>("incomeCycles", recordPtr());
 	}
 
 	//PERSON MODEL
@@ -142,105 +139,105 @@ namespace GS
 		}
 	}
 
-	Wt::WWidget *PersonFormModel::createFormWidget(Field field)
+	std::unique_ptr<Wt::WWidget> PersonFormModel::createFormWidget(Field field)
 	{
 		if(field == dobField)
 		{
-			auto w = new Wt::WDateEdit();
+			auto w = std::make_unique<Wt::WDateEdit>();
 			w->setPlaceholderText(WApplication::instance()->locale().dateFormat());
-			auto validator = new Wt::WDateValidator();
-			validator->setTop(Wt::WDate(boost::gregorian::day_clock::local_day()));
+			auto validator = std::make_shared<Wt::WDateValidator>();
+			validator->setTop(Wt::WDate::currentServerDate());
 			setValidator(field, validator);
 			return w;
 		}
 		if(field == cnicField)
 		{
-			auto w = new Wt::WLineEdit();
+			auto w = std::make_unique<Wt::WLineEdit>();
 			w->setInputMask("99999-9999999-9");
 			return w;
 		}
 		if(field == motherTongueField)
 		{
-			auto w = new Wt::WLineEdit();
+			auto w = std::make_unique<Wt::WLineEdit>();
 			w->setMaxLength(70);
-			setValidator(field, new Wt::WLengthValidator(0, 70));
+			setValidator(field, std::make_shared<Wt::WLengthValidator>(0, 70));
 			return w;
 		}
 		if(field == identificationMarkField)
 		{
-			auto w = new Wt::WLineEdit();
+			auto w = std::make_unique<Wt::WLineEdit>();
 			w->setMaxLength(255);
-			setValidator(field, new Wt::WLengthValidator(0, 255));
+			setValidator(field, std::make_shared<Wt::WLengthValidator>(0, 255));
 			return w;
 		}
 		if(field == heightField)
 		{
-			auto w = new HeightEdit();
+			auto w = std::make_unique<HeightEdit>();
 			w->setLabelBuddy(_view);
 			return w;
 		}
 		if(field == bloodTypeField)
 		{
-			auto w = new Wt::WComboBox();
-			w->insertItem(UnknownBT, Wt::boost_any_traits<BloodType>::asString(UnknownBT, ""));
-			w->insertItem(OPositive, Wt::boost_any_traits<BloodType>::asString(OPositive, ""));
-			w->insertItem(ONegative, Wt::boost_any_traits<BloodType>::asString(ONegative, ""));
-			w->insertItem(APositive, Wt::boost_any_traits<BloodType>::asString(APositive, ""));
-			w->insertItem(ANegative, Wt::boost_any_traits<BloodType>::asString(ANegative, ""));
-			w->insertItem(BPositive, Wt::boost_any_traits<BloodType>::asString(BPositive, ""));
-			w->insertItem(BNegative, Wt::boost_any_traits<BloodType>::asString(BNegative, ""));
-			w->insertItem(ABPositive, Wt::boost_any_traits<BloodType>::asString(ABPositive, ""));
-			w->insertItem(ABNegative, Wt::boost_any_traits<BloodType>::asString(ABNegative, ""));
+			auto w = std::make_unique<Wt::WComboBox>();
+			w->insertItem(UnknownBT, Wt::any_traits<BloodType>::asString(UnknownBT, ""));
+			w->insertItem(OPositive, Wt::any_traits<BloodType>::asString(OPositive, ""));
+			w->insertItem(ONegative, Wt::any_traits<BloodType>::asString(ONegative, ""));
+			w->insertItem(APositive, Wt::any_traits<BloodType>::asString(APositive, ""));
+			w->insertItem(ANegative, Wt::any_traits<BloodType>::asString(ANegative, ""));
+			w->insertItem(BPositive, Wt::any_traits<BloodType>::asString(BPositive, ""));
+			w->insertItem(BNegative, Wt::any_traits<BloodType>::asString(BNegative, ""));
+			w->insertItem(ABPositive, Wt::any_traits<BloodType>::asString(ABPositive, ""));
+			w->insertItem(ABNegative, Wt::any_traits<BloodType>::asString(ABNegative, ""));
 			return w;
 		}
 		if(field == marriedField)
 		{
-			auto w = new Wt::WComboBox();
-			w->insertItem(UnknownMS, Wt::boost_any_traits<MaritalStatus>::asString(UnknownMS, ""));
-			w->insertItem(Married, Wt::boost_any_traits<MaritalStatus>::asString(Married, ""));
-			w->insertItem(Unmarried, Wt::boost_any_traits<MaritalStatus>::asString(Unmarried, ""));
+			auto w = std::make_unique<Wt::WComboBox>();
+			w->insertItem(UnknownMS, Wt::any_traits<MaritalStatus>::asString(UnknownMS, ""));
+			w->insertItem(Married, Wt::any_traits<MaritalStatus>::asString(Married, ""));
+			w->insertItem(Unmarried, Wt::any_traits<MaritalStatus>::asString(Unmarried, ""));
 			return w;
 		}
 		if(field == nextOfKinField)
 		{
-			auto w = new FindEntityEdit(Entity::PersonType);
-			setValidator(field, new FindEntityValidator(w, false));
+			auto w = std::make_unique<FindEntityEdit>(Entity::PersonType);
+			setValidator(field, std::make_shared<FindEntityValidator>(w.get(), false));
 			return w;
 		}
 		if(field == fatherField)
 		{
-			auto w = new FindEntityEdit(Entity::PersonType);
-			setValidator(field, new FindEntityValidator(w, false));
+			auto w = std::make_unique<FindEntityEdit>(Entity::PersonType);
+			setValidator(field, std::make_shared<FindEntityValidator>(w.get(), false));
 			return w;
 		}
 		if(field == motherField)
 		{
-			auto w = new FindEntityEdit(Entity::PersonType);
-			setValidator(field, new FindEntityValidator(w, false));
+			auto w = std::make_unique<FindEntityEdit>(Entity::PersonType);
+			setValidator(field, std::make_shared<FindEntityValidator>(w.get(), false));
 			return w;
 		}
 		if(field == remarksField)
 		{
-			auto w = new Wt::WTextArea();
+			auto w = std::make_unique<Wt::WTextArea>();
 			w->setRows(3);
 			return w;
 		}
 		if(field == profileUploadField)
 		{
-			auto w = new ImageUpload(Wt::WString::tr("ClickToUploadProfile"), Wt::WString::tr("ClickToChangeProfile"));
+			auto w = std::make_unique<ImageUpload>(tr("ClickToUploadProfile"), tr("ClickToChangeProfile"));
 			w->setPlaceholderImageLink(Wt::WLink("images/profile-placeholder.png"));
 			w->setThumbnailHeight(160);
 			return w;
 		}
 		if(field == cnicUploadField)
 		{
-			auto w = new ImageUpload(Wt::WString::tr("ClickToUploadCNIC"), Wt::WString::tr("ClickToChangeCNIC"));
+			auto w = std::make_unique<ImageUpload>(tr("ClickToUploadCNIC"), tr("ClickToChangeCNIC"));
 			w->setThumbnailHeight(160);
 			return w;
 		}
 		if(field == cnicUpload2Field)
 		{
-			auto w = new ImageUpload(Wt::WString::tr("ClickToUploadCNIC"), Wt::WString::tr("ClickToChangeCNIC"));
+			auto w = std::make_unique<ImageUpload>(tr("ClickToUploadCNIC"), tr("ClickToChangeCNIC"));
 			w->setThumbnailHeight(160);
 			return w;
 		}
@@ -255,12 +252,12 @@ namespace GS
 		WApplication *app = APP;
 		TRANSACTION(app);
 		if(!_recordPtr)
-			_recordPtr = app->dboSession().add(new Person());
+			_recordPtr = app->dboSession().add(std::make_unique<Person>());
 		if(!_recordPtr->entityPtr())
 			_recordPtr.modify()->_entityPtr = _view->entityPtr();
 		_recordPtr->entityPtr().modify()->type = Entity::PersonType;
 
-		_recordPtr.modify()->dateOfBirth = boost::any_cast<Wt::WDate>(value(dobField));
+		_recordPtr.modify()->dateOfBirth = Wt::any_cast<Wt::WDate>(value(dobField));
 
 		std::string cnicNumber = valueText(cnicField).toUTF8();
 		boost::erase_all(cnicNumber, "-");
@@ -268,13 +265,13 @@ namespace GS
 
 		_recordPtr.modify()->motherTongue = valueText(motherTongueField).toUTF8();
 		_recordPtr.modify()->identificationMark = valueText(identificationMarkField).toUTF8();
-		_recordPtr.modify()->height = boost::any_cast<float>(value(heightField));
-		_recordPtr.modify()->bloodType = BloodType(boost::any_cast<int>(value(bloodTypeField)));
-		_recordPtr.modify()->maritalStatus = MaritalStatus(boost::any_cast<int>(value(marriedField)));
+		_recordPtr.modify()->height = Wt::any_cast<float>(value(heightField));
+		_recordPtr.modify()->bloodType = BloodType(Wt::any_cast<int>(value(bloodTypeField)));
+		_recordPtr.modify()->maritalStatus = MaritalStatus(Wt::any_cast<int>(value(marriedField)));
 
-		auto nextOfKinEntity = boost::any_cast<Wt::Dbo::ptr<Entity>>(value(nextOfKinField));
-		auto fatherEntity = boost::any_cast<Wt::Dbo::ptr<Entity>>(value(fatherField));
-		auto motherEntity = boost::any_cast<Wt::Dbo::ptr<Entity>>(value(motherField));
+		auto nextOfKinEntity = Wt::any_cast<Wt::Dbo::ptr<Entity>>(value(nextOfKinField));
+		auto fatherEntity = Wt::any_cast<Wt::Dbo::ptr<Entity>>(value(fatherField));
+		auto motherEntity = Wt::any_cast<Wt::Dbo::ptr<Entity>>(value(motherField));
 		_recordPtr.modify()->nextOfKinOfPtr = nextOfKinEntity ? nextOfKinEntity->personWPtr : Wt::Dbo::ptr<Person>();
 		_recordPtr.modify()->fatherPersonPtr = fatherEntity ? fatherEntity->personWPtr : Wt::Dbo::ptr<Person>();
 		_recordPtr.modify()->motherPersonPtr = motherEntity ? motherEntity->personWPtr : Wt::Dbo::ptr<Person>();
@@ -336,28 +333,28 @@ namespace GS
 		}
 	}
 
-	Wt::WWidget *EmployeeFormModel::createFormWidget(Field field)
+	std::unique_ptr<Wt::WWidget> EmployeeFormModel::createFormWidget(Field field)
 	{
 		if(field == companyNumberField || field == gradeField)
 		{
-			auto w = new Wt::WLineEdit();
+			auto w = std::make_unique<Wt::WLineEdit>();
 			w->setMaxLength(35);
-			setValidator(field, new Wt::WLengthValidator(0, 35));
+			setValidator(field, std::make_shared<Wt::WLengthValidator>(0, 35));
 			return w;
 		}
 		if(field == recruitmentDateField)
 		{
-			auto w = new Wt::WDateEdit();
+			auto w = std::make_unique<Wt::WDateEdit>();
 			w->setPlaceholderText(WApplication::instance()->locale().dateFormat());
-			w->setDate(Wt::WDate(boost::gregorian::day_clock::local_day()));
-			auto validator = new Wt::WDateValidator();
+			w->setDate(Wt::WDate::currentServerDate());
+			auto validator = std::make_shared<Wt::WDateValidator>();
 			validator->setMandatory(true);
 			setValidator(field, validator);
 			return w;
 		}
 		if(field == experienceField || field == addQualificationsField || field == educationField)
 		{
-			auto w = new Wt::WTextArea();
+			auto w = std::make_unique<Wt::WTextArea>();
 			w->setRows(3);
 			return w;
 		}
@@ -372,14 +369,14 @@ namespace GS
 		WApplication *app = WApplication::instance();
 		TRANSACTION(app);
 		if(!_recordPtr)
-			_recordPtr = app->dboSession().add(new Employee());
+			_recordPtr = app->dboSession().add(std::make_unique<Employee>());
 		if(!_recordPtr->personPtr())
 			_recordPtr.modify()->_personPtr = _view->_personModel->recordPtr();
 
 		_recordPtr->personPtr()->entityPtr().modify()->specificTypeMask |= Entity::EmployeeType;
 		_recordPtr.modify()->companyNumber = valueText(companyNumberField).toUTF8();
 		_recordPtr.modify()->grade = valueText(gradeField).toUTF8();
-		_recordPtr.modify()->recruitmentDate = boost::any_cast<Wt::WDate>(value(recruitmentDateField));
+		_recordPtr.modify()->recruitmentDate = Wt::any_cast<Wt::WDate>(value(recruitmentDateField));
 		_recordPtr.modify()->education = valueText(educationField).toUTF8();
 		_recordPtr.modify()->experience = valueText(experienceField).toUTF8();
 		_recordPtr.modify()->addtionalQualifications = valueText(addQualificationsField).toUTF8();
@@ -415,30 +412,30 @@ namespace GS
 		}
 	}
 
-	Wt::WWidget * PersonnelFormModel::createFormWidget(Field field)
+	std::unique_ptr<Wt::WWidget> PersonnelFormModel::createFormWidget(Field field)
 	{
 		if(field == policeStationField)
 		{
-			auto w = new Wt::WLineEdit();
+			auto w = std::make_unique<Wt::WLineEdit>();
 			w->setMaxLength(70);
-			setValidator(field, new Wt::WLengthValidator(0, 70));
+			setValidator(field, std::make_shared<Wt::WLengthValidator>(0, 70));
 			return w;
 		}
 		if(field == policeVerifiedField)
 		{
-			return new Wt::WCheckBox();
+			return std::make_unique<Wt::WCheckBox>();
 		}
 		if(field == trainingCoursesField)
 		{
-			auto w = new Wt::WTextArea();
+			auto w = std::make_unique<Wt::WTextArea>();
 			w->setRows(3);
 			return w;
 		}
 		if(field == armyNumberField || field == rankField)
 		{
-			auto w = new Wt::WLineEdit();
+			auto w = std::make_unique<Wt::WLineEdit>();
 			w->setMaxLength(35);
-			setValidator(field, new Wt::WLengthValidator(0, 35));
+			setValidator(field, std::make_shared<Wt::WLengthValidator>(0, 35));
 			return w;
 		}
 		return ChildRecordFormModel::createFormWidget(field);
@@ -452,13 +449,13 @@ namespace GS
 		WApplication *app = APP;
 		TRANSACTION(app);
 		if(!_recordPtr)
-			_recordPtr = app->dboSession().add(new Personnel());
+			_recordPtr = app->dboSession().add(std::make_unique<Personnel>());
 		if(!_recordPtr->employeePtr())
 			_recordPtr.modify()->_employeePtr = _view->_employeeModel->recordPtr();
 
 		_recordPtr->employeePtr()->personPtr()->entityPtr().modify()->specificTypeMask |= Entity::PersonnelType;
 		_recordPtr.modify()->policeStation = valueText(policeStationField).toUTF8();
-		_recordPtr.modify()->policeVerified = boost::any_cast<bool>(value(policeVerifiedField));
+		_recordPtr.modify()->policeVerified = Wt::any_cast<bool>(value(policeVerifiedField));
 		_recordPtr.modify()->armyNumber = valueText(armyNumberField).toUTF8();
 		_recordPtr.modify()->rank = valueText(rankField).toUTF8();
 		_recordPtr.modify()->trainingCourses = valueText(trainingCoursesField).toUTF8();
@@ -473,7 +470,7 @@ namespace GS
 	ContactNumbersManagerModel::ContactNumbersManagerModel(EntityView *view, PtrCollection collection)
 		: MultipleRecordModel(view, collection), _view(view)
 	{
-		const PtrVector &vec = boost::any_cast<PtrVector>(value(field));
+		const PtrVector &vec = Wt::any_cast<PtrVector>(value(field));
 		if(vec.empty())
 		{
 			PtrVector newVec;
@@ -491,28 +488,30 @@ namespace GS
 		return MultipleRecordModel::saveChanges();
 	}
 
-	RecordViewsContainer *ContactNumbersManagerModel::createFormWidget(Field f)
+	std::unique_ptr<Wt::WWidget> ContactNumbersManagerModel::createFormWidget(Field f)
 	{
-		auto w = MultipleRecordModel::createFormWidget(f);
-		if(w && f == field)
+		if(f == field)
 		{
-			auto btn = new ShowEnabledButton();
+			auto w = MultipleRecordModel::createContainer();
+			auto btn = _view->bindNew<ShowEnabledButton>("add-contact-number");
 			btn->setStyleClass("fa fa-plus");
-			btn->clicked().connect(w, &RecordViewsContainer::addRecordView);
-			_view->bindWidget("add-contact-number", btn);
+			btn->clicked().connect(w.get(), std::bind(&RecordViewsContainer::addRecordView, w.get()));
+			return w;
 		}
-		return w;
+		return nullptr;
 	}
 
-	std::tuple<RecordFormView*, ContactNumbersManagerModel::ModelType*> ContactNumbersManagerModel::createRecordView(Wt::Dbo::ptr<Dbo> recordPtr)
+	std::tuple<std::unique_ptr<RecordFormView>, std::shared_ptr<ContactNumbersManagerModel::ModelType>> ContactNumbersManagerModel::createRecordView(Wt::Dbo::ptr<Dbo> recordPtr)
 	{
-		auto view = new ContactNumberView(recordPtr);
+		auto view = std::make_unique<ContactNumberView>(recordPtr);
 		view->load();
 		view->model()->setVisible(ContactNumberFormModel::entityField, false);
 		view->model()->setReadOnly(ContactNumberFormModel::entityField, true);
 		view->model()->setValue(ContactNumberFormModel::entityField, _view->entityPtr());
-		view->updateViewField(view->model(), ContactNumberFormModel::entityField);
-		return std::make_tuple(view, view->model());
+		view->updateViewField(view->model().get(), ContactNumberFormModel::entityField);
+
+		auto model = view->model();
+		return std::make_tuple(std::move(view), model);
 	}
 
 	//LOCATIONS MANAGER MODEL
@@ -521,7 +520,7 @@ namespace GS
 	LocationsManagerModel::LocationsManagerModel(EntityView *view, PtrCollection collection)
 		: MultipleRecordModel(view, collection), _view(view)
 	{
-		const PtrVector &vec = boost::any_cast<PtrVector>(value(field));
+		const PtrVector &vec = Wt::any_cast<PtrVector>(value(field));
 		if(vec.empty())
 		{
 			PtrVector newVec;
@@ -533,36 +532,36 @@ namespace GS
 	bool LocationsManagerModel::saveChanges()
 	{
 		for(const auto &model : _modelVector)
-		{
 			model->setValue(LocationFormModel::entityField, _view->entityPtr());
-		}
+
 		return MultipleRecordModel::saveChanges();
 	}
 
-	RecordViewsContainer *LocationsManagerModel::createFormWidget(Field f)
+	std::unique_ptr<Wt::WWidget> LocationsManagerModel::createFormWidget(Field f)
 	{
-		auto w = MultipleRecordModel::createFormWidget(f);
-		if(w && f == field)
+		if(f == field)
 		{
-			auto btn = new ShowEnabledButton();
+			auto w = MultipleRecordModel::createContainer();
+			auto btn = _view->bindNew<ShowEnabledButton>("add-location");
 			btn->setStyleClass("fa fa-plus");
-			btn->clicked().connect(w, &RecordViewsContainer::addRecordView);
-			_view->bindWidget("add-location", btn);
+			btn->clicked().connect(w.get(), std::bind(&RecordViewsContainer::addRecordView, w.get()));
+			return w;
 		}
-		return w;
+		return nullptr;
 	}
 
-	std::tuple<RecordFormView*, LocationsManagerModel::ModelType*> LocationsManagerModel::createRecordView(Wt::Dbo::ptr<Dbo> recordPtr)
+	std::tuple<std::unique_ptr<RecordFormView>, std::shared_ptr<LocationsManagerModel::ModelType>> LocationsManagerModel::createRecordView(Wt::Dbo::ptr<Dbo> recordPtr)
 	{
-		auto view = new LocationView(recordPtr);
+		auto view = std::make_unique<LocationView>(recordPtr);
 		view->load();
-		view->setTemplateText(Wt::WString::tr("GS.Admin.LocationView.Content"));
+		view->setTemplateText(tr("GS.Admin.LocationView.Content"));
 		view->model()->setVisible(LocationFormModel::entityField, false);
 		view->model()->setReadOnly(LocationFormModel::entityField, true);
 		view->model()->setValue(LocationFormModel::entityField, _view->entityPtr());
-		view->updateViewField(view->model(), LocationFormModel::entityField);
+		view->updateViewField(view->model().get(), LocationFormModel::entityField);
 
-		return std::make_tuple(view, view->model());
+		auto model = view->model();
+		return std::make_tuple(std::move(view), model);
 	}
 
 	//BUSINESS MODEL
@@ -570,7 +569,7 @@ namespace GS
 		: ChildRecordFormModel(view->_entityModel, view, businessPtr), _view(view)
 	{ }
 
-	Wt::WWidget *BusinessFormModel::createFormWidget(Field field)
+	std::unique_ptr<Wt::WWidget> BusinessFormModel::createFormWidget(Field field)
 	{
 		return ChildRecordFormModel::createFormWidget(field);
 	}
@@ -584,7 +583,7 @@ namespace GS
 		TRANSACTION(app);
 
 		if(!_recordPtr)
-			_recordPtr = app->dboSession().add(new Business());
+			_recordPtr = app->dboSession().add(std::make_unique<Business>());
 		if(!_recordPtr->entityPtr())
 			_recordPtr.modify()->_entityPtr = _view->entityPtr();
 		_recordPtr->entityPtr().modify()->type = Entity::BusinessType;
@@ -604,7 +603,7 @@ namespace GS
 
 	void EntityView::initView()
 	{
-		_entityModel = new EntityFormModel(this, _tempPtr);
+		_entityModel = std::make_shared<EntityFormModel>(this, _tempPtr);
 		addFormModel("entity", _entityModel);
 
 		if(entityPtr())
@@ -623,7 +622,7 @@ namespace GS
 					personnelPtr = employeePtr->personnelWPtr;
 
 				if(personPtr)
-					addFormModel("person", _personModel = new PersonFormModel(this, personPtr));
+					addFormModel("person", _personModel = std::make_shared<PersonFormModel>(this, personPtr));
 				if(employeePtr)
 					addEmployeeModel(employeePtr);
 				if(personnelPtr)
@@ -634,7 +633,7 @@ namespace GS
 				_type = _defaultType = Entity::BusinessType;
 				Wt::Dbo::ptr<Business> businessPtr = entityPtr()->businessWPtr;
 				if(businessPtr)
-					addFormModel("business", _businessModel = new BusinessFormModel(this, businessPtr));
+					addFormModel("business", _businessModel = std::make_shared<BusinessFormModel>(this, businessPtr));
 			}
 		}
 
@@ -646,11 +645,11 @@ namespace GS
 			break;
 		case Entity::PersonType:
 			setCondition("is-person", true);
-			if(!_personModel) addFormModel("person", _personModel = new PersonFormModel(this));
+			if(!_personModel) addFormModel("person", _personModel = std::make_shared<PersonFormModel>(this));
 			break;
 		case Entity::BusinessType:
 			setCondition("is-business", true);
-			if(!_businessModel) addFormModel("business", _businessModel = new BusinessFormModel(this));
+			if(!_businessModel) addFormModel("business", _businessModel = std::make_shared<BusinessFormModel>(this));
 			break;
 		default:
 			throw std::exception("NewEntityTemplate: Invalid EntityType");
@@ -658,32 +657,24 @@ namespace GS
 		}
 		setCondition("type-selection", !conditionValue("type-chosen"));
 
-		_selectPerson = new Wt::WPushButton(tr("Person"));
-		_selectPerson->clicked().connect(boost::bind(&EntityView::selectEntityType, this, Entity::PersonType));
-		bindWidget("selectPerson", _selectPerson);
+		_selectPerson = bindNew<Wt::WPushButton>("selectPerson", tr("Person"));
+		_selectPerson->clicked().connect(this, std::bind(&EntityView::selectEntityType, this, Entity::PersonType));
 
-		_selectBusiness = new Wt::WPushButton(tr("Business"));
-		_selectBusiness->clicked().connect(boost::bind(&EntityView::selectEntityType, this, Entity::BusinessType));
-		bindWidget("selectBusiness", _selectBusiness);
+		_selectBusiness = bindNew<Wt::WPushButton>("selectBusiness", tr("Business"));
+		_selectBusiness->clicked().connect(this, std::bind(&EntityView::selectEntityType, this, Entity::BusinessType));
 
-		auto addEmployee = new ShowEnabledButton(tr("AddEmployeeLabel"));
-		addEmployee->clicked().connect(boost::bind(&EntityView::setSpecificType, this, Entity::EmployeeType));
-		bindWidget("add-employee", addEmployee);
+		auto addEmployee = bindNew<ShowEnabledButton>("add-employee", tr("AddEmployeeLabel"));
+		addEmployee->clicked().connect(this, std::bind(&EntityView::setSpecificType, this, Entity::EmployeeType));
 		if(_employeeModel)
-		{
 			addEmployee->disable();
-		}
 
-		auto addPersonnel = new ShowEnabledButton(tr("AddPersonnelLabel"));
-		addPersonnel->clicked().connect(boost::bind(&EntityView::setSpecificType, this, Entity::PersonnelType));
-		bindWidget("add-personnel", addPersonnel);
+		auto addPersonnel = bindNew<ShowEnabledButton>("add-personnel", tr("AddPersonnelLabel"));
+		addPersonnel->clicked().connect(this, std::bind(&EntityView::setSpecificType, this, Entity::PersonnelType));
 		if(_personnelModel)
-		{
 			addPersonnel->disable();
-		}
 
-		addFormModel("contactnumbers", _contactNumbersModel = new ContactNumbersManagerModel(this, entityPtr() ? entityPtr()->contactNumberCollection : ContactNumberCollection()));
-		addFormModel("locations", _locationsModel = new LocationsManagerModel(this, entityPtr() ? entityPtr()->locationCollection : LocationCollection()));
+		addFormModel("contactnumbers", _contactNumbersModel = std::make_shared<ContactNumbersManagerModel>(this, entityPtr() ? entityPtr()->contactNumberCollection : ContactNumberCollection()));
+		addFormModel("locations", _locationsModel = std::make_shared<LocationsManagerModel>(this, entityPtr() ? entityPtr()->locationCollection : LocationCollection()));
 		
 		bindEmpty("expenseCycles");
 		setCondition("show-expenseCycles", false);
@@ -700,14 +691,14 @@ namespace GS
 		case Entity::PersonType:
 			setCondition("is-person", true);
 			setCondition("is-business", false);
-			if(!_personModel) addFormModel("person", _personModel = new PersonFormModel(this));
+			if(!_personModel) addFormModel("person", _personModel = std::make_shared<PersonFormModel>(this));
 			_selectPerson->addStyleClass("btn-primary");
 			_selectBusiness->removeStyleClass("btn-primary");
 			break;
 		case Entity::BusinessType:
 			setCondition("is-business", true);
 			setCondition("is-person", false);
-			if(!_businessModel) addFormModel("business", _businessModel = new BusinessFormModel(this));
+			if(!_businessModel) addFormModel("business", _businessModel = std::make_shared<BusinessFormModel>(this));
 			_selectBusiness->addStyleClass("btn-primary");
 			_selectPerson->removeStyleClass("btn-primary");
 			break;
@@ -727,16 +718,16 @@ namespace GS
 		if(type == Entity::EmployeeType)
 		{
 			addEmployeeModel();
-			updateModel(_employeeModel);
-			updateView(_employeeModel);
+			updateModel(_employeeModel.get());
+			updateView(_employeeModel.get());
 		}
 		if(type == Entity::PersonnelType)
 		{
 			addPersonnelModel();
-			updateModel(_employeeModel);
-			updateView(_employeeModel);
-			updateModel(_personnelModel);
-			updateView(_personnelModel);
+			updateModel(_employeeModel.get());
+			updateView(_employeeModel.get());
+			updateModel(_personnelModel.get());
+			updateView(_personnelModel.get());
 		}
 	}
 
@@ -746,30 +737,26 @@ namespace GS
 			return;
 
 		if(!_personModel)
-			addFormModel("person", _personModel = new PersonFormModel(this));
+			addFormModel("person", _personModel = std::make_shared<PersonFormModel>(this));
 
-		addFormModel("employee", _employeeModel = new EmployeeFormModel(this, employeePtr));
+		addFormModel("employee", _employeeModel = std::make_shared<EmployeeFormModel>(this, employeePtr));
 
 		if(auto btn = resolveWidget("add-employee"))
-		{
 			btn->disable();
-		}
 	}
 
 	void EntityView::addPersonnelModel(Wt::Dbo::ptr<Personnel> personnelPtr)
-{
+	{
 		if(_personnelModel || _type != Entity::PersonType)
 			return;
 
 		if(!_employeeModel)
 			addEmployeeModel();
 
-		addFormModel("personnel", _personnelModel = new PersonnelFormModel(this, personnelPtr));
+		addFormModel("personnel", _personnelModel = std::make_shared<PersonnelFormModel>(this, personnelPtr));
 
 		if(auto btn = resolveWidget("add-personnel"))
-		{
 			btn->disable();
-		}
 	}
 
 	void EntityView::submit()
@@ -785,28 +772,24 @@ namespace GS
 		setCondition("type-selection", false);
 	}
 
-	HeightEdit::HeightEdit(Wt::WContainerWidget *parent)
-		: Wt::WTemplate(tr("GS.HeightEdit"), parent)
+	HeightEdit::HeightEdit()
+		: Wt::WTemplate(tr("GS.HeightEdit"))
 	{
-		Wt::WPushButton *unitSelect = new Wt::WPushButton();
-		Wt::WPopupMenu *unitMenu = new Wt::WPopupMenu();
-		unitMenu->addItem("cm")->clicked().connect(boost::bind(&HeightEdit::selectUnit, this, cm));
-		unitMenu->addItem("ft")->clicked().connect(boost::bind(&HeightEdit::selectUnit, this, ft));
-		unitSelect->setMenu(unitMenu);
+		Wt::WPushButton *unitSelect = bindNew<Wt::WPushButton>("unit-select");
+		auto unitMenu = std::make_unique<Wt::WPopupMenu>();
+		unitMenu->addItem("cm")->clicked().connect(this, std::bind(&HeightEdit::selectUnit, this, cm));
+		unitMenu->addItem("ft")->clicked().connect(this, std::bind(&HeightEdit::selectUnit, this, ft));
+		unitSelect->setMenu(std::move(unitMenu));
 
-		Wt::WLineEdit *cmEdit = new Wt::WLineEdit();
-		cmEdit->setValidator(new Wt::WIntValidator());
+		Wt::WLineEdit *cmEdit = bindNew<Wt::WLineEdit>("cm-edit");
+		cmEdit->setValidator(std::make_shared<Wt::WIntValidator>());
 
-		Wt::WLineEdit *ftEdit = new Wt::WLineEdit();
-		ftEdit->setValidator(new Wt::WIntValidator());
+		Wt::WLineEdit *ftEdit = bindNew<Wt::WLineEdit>("ft-edit");
+		ftEdit->setValidator(std::make_shared<Wt::WIntValidator>());
 
-		Wt::WLineEdit *inEdit = new Wt::WLineEdit();
-		inEdit->setValidator(new Wt::WIntValidator());
+		Wt::WLineEdit *inEdit = bindNew<Wt::WLineEdit>("in-edit");
+		inEdit->setValidator(std::make_shared<Wt::WIntValidator>());
 
-		bindWidget("unit-select", unitSelect);
-		bindWidget("cm-edit", cmEdit);
-		bindWidget("ft-edit", ftEdit);
-		bindWidget("in-edit", inEdit);
 		setUnit(ft);
 	}
 
@@ -839,12 +822,12 @@ namespace GS
 			if(ftEdit->valueText().empty())
 				return -1;
 
-			float ftVal = locale.toFloat(ftEdit->valueText());
-			float inVal = 0;
+			double ftVal = locale.toDouble(ftEdit->valueText());
+			double inVal = 0;
 			if(!inEdit->valueText().empty())
-				inVal = locale.toFloat(inEdit->valueText());
+				inVal = locale.toDouble(inEdit->valueText());
 
-			return ftVal * 30.48f + inVal * 2.54f;
+			return static_cast<float>(ftVal * 30.48 + inVal * 2.54);
 		}
 		else
 		{
@@ -852,7 +835,7 @@ namespace GS
 			if(cmEdit->valueText().empty())
 				return -1;
 
-			return locale.toFloat(cmEdit->valueText());
+			return static_cast<float>(locale.toDouble(cmEdit->valueText()));
 		}
 	}
 
@@ -915,17 +898,16 @@ namespace GS
 		}
 	}
 
-	Wt::WWidget *ContactNumberFormModel::createFormWidget(Field field)
+	std::unique_ptr<Wt::WWidget> ContactNumberFormModel::createFormWidget(Field field)
 	{
 		if(field == numberField)
 		{
-			Wt::WLineEdit *number = new Wt::WLineEdit();
-			return number;
+			return std::make_unique<Wt::WLineEdit>();
 		}
 		if(field == entityField)
 		{
-			auto w = new FindEntityEdit();
-			auto validator = new FindEntityValidator(w, false);
+			auto w = std::make_unique<FindEntityEdit>();
+			auto validator = std::make_shared<FindEntityValidator>(w.get(), false);
 			validator->setModifyPermissionRequired(true);
 			setValidator(entityField, validator);
 			return w;
@@ -949,7 +931,7 @@ namespace GS
 			{
 				return false;
 			}
-			_recordPtr = app->dboSession().add(new ContactNumber());
+			_recordPtr = app->dboSession().add(std::make_unique<ContactNumber>());
 			//_recordPtr.modify()->setCreatedByValues();
 		}
 		else
@@ -962,7 +944,7 @@ namespace GS
 			}
 		}
 
-		_recordPtr.modify()->entityPtr = boost::any_cast<Wt::Dbo::ptr<Entity>>(value(entityField));
+		_recordPtr.modify()->entityPtr = Wt::any_cast<Wt::Dbo::ptr<Entity>>(value(entityField));
 		_recordPtr.modify()->nationalNumber = number.toUTF8();
 
 		t.commit();
@@ -979,7 +961,7 @@ namespace GS
 
 	void ContactNumberView::initView()
 	{
-		_model = new ContactNumberFormModel(this, _tempPtr);
+		_model = std::make_shared<ContactNumberFormModel>(this, _tempPtr);
 		addFormModel("contactnumber", _model);
 	}
 
@@ -995,7 +977,7 @@ namespace GS
 // 				if(boost::starts_with(s, "label="))
 // 				{
 // 					if(auto lw = tw->resolve<Wt::WLabel*>("label"))
-// 						lw->setText(Wt::WString::tr(s.substr(6)));
+// 						lw->setText(tr(s.substr(6)));
 // 				}
 // 			}
 // 		}

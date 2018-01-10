@@ -1,28 +1,16 @@
 #ifndef WW_DBODATABASE_CONFIGURATION_H
 #define WW_DBODATABASE_CONFIGURATION_H
 
-#include <unordered_map>
+#include "Common.h"
 #include "Dbo/Configuration.h"
 
-#include <boost/thread/shared_mutex.hpp>
-
-// namespace std
-// {
-// 	template<typename A, typename B>
-// 	struct hash<std::pair<A, B>>
-// 	{
-// 		size_t operator()(const std::pair<A, B> &v) const
-// 		{
-// 			std::size_t seed = 0;
-// 			boost::hash_combine(seed, v.first);
-// 			boost::hash_combine(seed, v.second);
-// 			return seed;
-// 		}
-// 	};
-// }
+#include <unordered_map>
+#include <shared_mutex>
 
 namespace WW
 {
+	using namespace std::chrono;
+
 	class ConfigurationsDatabase
 	{
 	protected:
@@ -70,12 +58,12 @@ namespace WW
 		LongIntMap _longIntMap;
 		StringMap _stringMap;
 
-		boost::posix_time::time_duration _loadDuration;
+		milliseconds _loadDuration;
 		std::size_t _count = 0;
 		Wt::Dbo::Session &dboSession;
 
 	private:
-		mutable boost::shared_mutex _mutex;
+		mutable std::shared_mutex _mutex;
 	};
 }
 

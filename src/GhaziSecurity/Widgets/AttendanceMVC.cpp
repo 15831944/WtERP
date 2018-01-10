@@ -1,44 +1,43 @@
 #include "Widgets/AttendanceMVC.h"
-#include <Wt/WLengthValidator>
-#include <Wt/WDateEdit>
-#include <Wt/WTimeEdit>
-#include <Wt/WTableView>
+#include <Wt/WLengthValidator.h>
+#include <Wt/WDateEdit.h>
+#include <Wt/WTimeEdit.h>
+#include <Wt/WTableView.h>
 
 namespace GS
 {
+	using namespace std::placeholders;
 
 	void AttendanceDeviceList::initFilters()
 	{
-		filtersTemplate()->addFilterModel(new WLineEditFilterModel(tr("ID"), "d.id", std::bind(&FiltersTemplate::initIdEdit, std::placeholders::_1))); filtersTemplate()->addFilter(1);
+		filtersTemplate()->addFilterModel(std::make_shared<WLineEditFilterModel>(tr("ID"), "d.id", std::bind(&FiltersTemplate::initIdEdit, _1)));
+		filtersTemplate()->addFilter(1);
 	}
 
 	void AttendanceDeviceList::initModel()
 	{
-		QueryModelType *model;
-		_model = model = new QueryModelType(this);
+		std::shared_ptr<QueryModelType> model;
+		_model = model = std::make_shared<QueryModelType>();
 
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
-			"SELECT d.id d_id, d.hostName, cnt.name cnt_name, city.name city_name, l.address FROM "
+			"SELECT d.id, d.hostName, cnt.name, city.name, l.address FROM "
 			+ std::string(AttendanceDevice::tableName()) + " d "
 			"LEFT JOIN " + Location::tableName() + " l ON (l.id = d.location_id) "
 			"LEFT JOIN " + Country::tableName() + " cnt ON (cnt.code = l.country_code) "
 			"LEFT JOIN " + City::tableName() + " city ON (city.id = l.city_id)");
 
-		Wt::Dbo::Query<ResultType> query(_baseQuery); //must copy the query first
-		model->setQuery(query);
-
-		addColumn(ViewId, model->addColumn("d.id d_id"), tr("ID"), IdColumnWidth);
+		model->setQuery(generateQuery());
+		addColumn(ViewId, model->addColumn("d.id"), tr("ID"), IdColumnWidth);
 		addColumn(ViewHostName, model->addColumn("d.hostName"), tr("Hostname"), 200);
-		addColumn(ViewCountry, model->addColumn("cnt.name cnt_name"), tr("Country"), 150);
-		addColumn(ViewCity, model->addColumn("city.name city_name"), tr("City"), 150);
+		addColumn(ViewCountry, model->addColumn("cnt.name"), tr("Country"), 150);
+		addColumn(ViewCity, model->addColumn("city.name"), tr("City"), 150);
 		addColumn(ViewAddress, model->addColumn("l.address"), tr("Address"), 300);
 
-		_proxyModel = new AttendanceDeviceListProxyModel(_model, _model);
+		_proxyModel = std::make_shared<AttendanceDeviceListProxyModel>(_model);
 	}
 
-	AttendanceDeviceListProxyModel::AttendanceDeviceListProxyModel(Wt::WAbstractItemModel *model, Wt::WObject *parent /*= nullptr*/)
-		: Wt::WBatchEditProxyModel(parent)
+	AttendanceDeviceListProxyModel::AttendanceDeviceListProxyModel(std::shared_ptr<Wt::WAbstractItemModel> model)
 	{
 		setSourceModel(model);
 		addAdditionalColumns();
@@ -57,15 +56,15 @@ namespace GS
 	Wt::WFlags<Wt::ItemFlag> AttendanceDeviceListProxyModel::flags(const Wt::WModelIndex &index) const
 	{
 		if(index.column() == _linkColumn)
-			return Wt::ItemIsXHTMLText;
+			return Wt::ItemFlag::XHTMLText;
 		return Wt::WBatchEditProxyModel::flags(index);
 	}
 
-	boost::any AttendanceDeviceListProxyModel::headerData(int section, Wt::Orientation orientation /*= Wt::Horizontal*/, int role /*= Wt::DisplayRole*/) const
+	Wt::any AttendanceDeviceListProxyModel::headerData(int section, Wt::Orientation orientation, Wt::ItemDataRole role) const
 	{
 		if(section == _linkColumn)
 		{
-			if(role == Wt::WidthRole)
+			if(role == Wt::ItemDataRole::Width)
 				return 40;
 			return Wt::WAbstractItemModel::headerData(section, orientation, role);
 		}
@@ -73,17 +72,17 @@ namespace GS
 		return Wt::WBatchEditProxyModel::headerData(section, orientation, role);
 	}
 
-	boost::any AttendanceDeviceListProxyModel::data(const Wt::WModelIndex &idx, int role /*= Wt::DisplayRole*/) const
+	Wt::any AttendanceDeviceListProxyModel::data(const Wt::WModelIndex &idx, Wt::ItemDataRole role) const
 	{
 		if(_linkColumn != -1 && idx.column() == _linkColumn)
 		{
-			if(role == Wt::DisplayRole)
-				return Wt::WString::tr("GS.LinkIcon");
-			else if(role == Wt::LinkRole)
+			if(role == Wt::ItemDataRole::Display)
+				return tr("GS.LinkIcon");
+			else if(role == Wt::ItemDataRole::Link)
 			{
-				const AttendanceDeviceList::ResultType &res = dynamic_cast<Wt::Dbo::QueryModel<AttendanceDeviceList::ResultType>*>(sourceModel())->resultRow(idx.row());
-				long long id = boost::get<AttendanceDeviceList::ResId>(res);
-				return Wt::WLink(Wt::WLink::InternalPath, AttendanceDevice::viewInternalPath(id));
+				const AttendanceDeviceList::ResultType &res = std::static_pointer_cast<Wt::Dbo::QueryModel<AttendanceDeviceList::ResultType>>(sourceModel())->resultRow(idx.row());
+				long long id = std::get<AttendanceDeviceList::ResId>(res);
+				return Wt::WLink(Wt::LinkType::InternalPath, AttendanceDevice::viewInternalPath(id));
 			}
 		}
 		return Wt::WBatchEditProxyModel::data(idx, role);
@@ -106,21 +105,21 @@ namespace GS
 		}
 	}
 
-	Wt::WWidget *AttendanceDeviceFormModel::createFormWidget(Field field)
+	std::unique_ptr<Wt::WWidget> AttendanceDeviceFormModel::createFormWidget(Field field)
 	{
 		if(field == hostNameField)
 		{
-			Wt::WLineEdit *hostName = new Wt::WLineEdit();
+			auto hostName = std::make_unique<Wt::WLineEdit>();
 			hostName->setMaxLength(255);
-			Wt::WLengthValidator *validator = new Wt::WLengthValidator(0, 255);
+			auto validator = std::make_shared<Wt::WLengthValidator>(0, 255);
 			validator->setMandatory(true);
 			setValidator(hostNameField, validator);
 			return hostName;
 		}
 		if(field == locationField)
 		{
-			FindLocationEdit *findLocationEdit = new FindLocationEdit();
-			FindLocationValidator *findLocationValidator = new FindLocationValidator(findLocationEdit, true);
+			auto findLocationEdit = std::make_unique<FindLocationEdit>();
+			auto findLocationValidator = std::make_shared<FindLocationValidator>(findLocationEdit.get(), true);
 			setValidator(locationField, findLocationValidator);
 			return findLocationEdit;
 		}
@@ -136,10 +135,10 @@ namespace GS
 		TRANSACTION(app);
 
 		if(!_recordPtr)
-			_recordPtr = app->dboSession().add(new AttendanceDevice());
+			_recordPtr = app->dboSession().add(std::make_unique<AttendanceDevice>());
 
 		_recordPtr.modify()->hostName = valueText(hostNameField).toUTF8();
-		_recordPtr.modify()->locationPtr = boost::any_cast<Wt::Dbo::ptr<Location>>(value(locationField));
+		_recordPtr.modify()->locationPtr = Wt::any_cast<Wt::Dbo::ptr<Location>>(value(locationField));
 		return true;
 	}
 
@@ -149,7 +148,7 @@ namespace GS
 
 	void AttendanceDeviceView::initView()
 	{
-		_model = new AttendanceDeviceFormModel(this, _tempPtr);
+		_model = std::make_shared<AttendanceDeviceFormModel>(this, _tempPtr);
 		addFormModel("attendance-device", _model);
 	}
 
@@ -182,48 +181,48 @@ namespace GS
 		}
 	}
 
-	Wt::WWidget * AttendanceEntryFormModel::createFormWidget(Field field)
+	std::unique_ptr<Wt::WWidget> AttendanceEntryFormModel::createFormWidget(Field field)
 	{
 		if(field == entityField)
 		{
-			FindEntityEdit *findEntityEdit = new FindEntityEdit();
-			FindEntityValidator *findEntityValidator = new FindEntityValidator(findEntityEdit, true);
+			auto findEntityEdit = std::make_unique<FindEntityEdit>();
+			auto findEntityValidator = std::make_shared<FindEntityValidator>(findEntityEdit.get(), true);
 			findEntityValidator->setModifyPermissionRequired(true);
 			setValidator(entityField, findEntityValidator);
 			return findEntityEdit;
 		}
 		if(field == locationField)
 		{
-			FindLocationEdit *findLocationEdit = new FindLocationEdit();
-			FindLocationValidator *findLocationValidator = new FindLocationValidator(findLocationEdit, false);
+			auto findLocationEdit = std::make_unique<FindLocationEdit>();
+			auto findLocationValidator = std::make_shared<FindLocationValidator>(findLocationEdit.get(), false);
 			setValidator(locationField, findLocationValidator);
 			return findLocationEdit;
 		}
 		if(field == dateInField)
 		{
-			auto edit = new Wt::WDateEdit();
-			edit->changed().connect(boost::bind(&AttendanceEntryFormModel::updateTimestampOutValidator, this, true));
+			auto edit = std::make_unique<Wt::WDateEdit>();
+			edit->changed().connect(this, std::bind(&AttendanceEntryFormModel::updateTimestampOutValidator, this, true));
 			edit->validator()->setMandatory(true);
 			setValidator(field, edit->validator());
 			return edit;
 		}
 		if(field == timeInField)
 		{
-			auto edit = new Wt::WTimeEdit();
-			edit->changed().connect(boost::bind(&AttendanceEntryFormModel::updateTimestampOutValidator, this, true));
+			auto edit = std::make_unique<Wt::WTimeEdit>();
+			edit->changed().connect(this, std::bind(&AttendanceEntryFormModel::updateTimestampOutValidator, this, true));
 			edit->validator()->setMandatory(true);
 			setValidator(field, edit->validator());
 			return edit;
 		}
 		if(field == dateOutField)
 		{
-			auto edit = new Wt::WDateEdit();
+			auto edit = std::make_unique<Wt::WDateEdit>();
 			setValidator(field, edit->validator());
 			return edit;
 		}
 		if(field == timeOutField)
 		{
-			auto edit = new Wt::WTimeEdit();
+			auto edit = std::make_unique<Wt::WTimeEdit>();
 			setValidator(field, edit->validator());
 			return edit;
 		}
@@ -239,12 +238,12 @@ namespace GS
 		TRANSACTION(app);
 
 		if(!_recordPtr)
-			_recordPtr = app->dboSession().add(new AttendanceEntry());
+			_recordPtr = app->dboSession().add(std::make_unique<AttendanceEntry>());
 
-		_recordPtr.modify()->entityPtr = boost::any_cast<Wt::Dbo::ptr<Entity>>(value(entityField));
-		_recordPtr.modify()->locationPtr = boost::any_cast<Wt::Dbo::ptr<Location>>(value(locationField));
-		_recordPtr.modify()->timestampIn = Wt::WDateTime(boost::any_cast<Wt::WDate>(value(dateInField)), boost::any_cast<Wt::WTime>(value(timeInField)));
-		Wt::WDateTime out(boost::any_cast<Wt::WDate>(value(dateOutField)), boost::any_cast<Wt::WTime>(value(timeOutField)));
+		_recordPtr.modify()->entityPtr = Wt::any_cast<Wt::Dbo::ptr<Entity>>(value(entityField));
+		_recordPtr.modify()->locationPtr = Wt::any_cast<Wt::Dbo::ptr<Location>>(value(locationField));
+		_recordPtr.modify()->timestampIn = Wt::WDateTime(Wt::any_cast<Wt::WDate>(value(dateInField)), Wt::any_cast<Wt::WTime>(value(timeInField)));
+		Wt::WDateTime out(Wt::any_cast<Wt::WDate>(value(dateOutField)), Wt::any_cast<Wt::WTime>(value(timeOutField)));
 		_recordPtr.modify()->timestampOut = out.isValid() ? out : Wt::WDateTime();
 		return true;
 	}
@@ -257,25 +256,25 @@ namespace GS
 			_view->updateModelField(this, AttendanceEntryFormModel::timeInField);
 		}
 
-		const boost::any &dateInVal = value(AttendanceEntryFormModel::dateInField);
-		const boost::any &timeInVal = value(AttendanceEntryFormModel::timeInField);
+		const Wt::any &dateInVal = value(AttendanceEntryFormModel::dateInField);
+		const Wt::any &timeInVal = value(AttendanceEntryFormModel::timeInField);
 		if(dateInVal.empty() || timeInVal.empty())
 			return;
 
-		Wt::WDateTime timestampIn = Wt::WDateTime(boost::any_cast<Wt::WDate>(value(dateInField)), boost::any_cast<Wt::WTime>(value(timeInField)));
-		Wt::WDateValidator *dateOutValidator = dynamic_cast<Wt::WDateValidator*>(validator(AttendanceEntryFormModel::dateInField));
-		Wt::WTimeValidator *timeOutValidator = dynamic_cast<Wt::WTimeValidator*>(validator(AttendanceEntryFormModel::timeInField));
+		Wt::WDateTime timestampIn = Wt::WDateTime(Wt::any_cast<Wt::WDate>(value(dateInField)), Wt::any_cast<Wt::WTime>(value(timeInField)));
+		std::shared_ptr<Wt::WDateValidator> dateOutValidator = std::dynamic_pointer_cast<Wt::WDateValidator>(validator(AttendanceEntryFormModel::dateInField));
+		std::shared_ptr<Wt::WTimeValidator> timeOutValidator = std::dynamic_pointer_cast<Wt::WTimeValidator>(validator(AttendanceEntryFormModel::timeInField));
 		dateOutValidator->setBottom(timestampIn.date());
 		timeOutValidator->setBottom(timestampIn.time());
 	}
 
-	AttendanceEntryView::AttendanceEntryView(Wt::Dbo::ptr<AttendanceEntry> attendanceEntryPtr /*= Wt::Dbo::ptr<AttendanceEntry>()*/)
+	AttendanceEntryView::AttendanceEntryView(Wt::Dbo::ptr<AttendanceEntry> attendanceEntryPtr)
 		: RecordFormView(tr("GS.Admin.AttendanceEntryView")), _tempPtr(attendanceEntryPtr)
 	{ }
 
 	void AttendanceEntryView::initView()
 	{
-		_model = new AttendanceEntryFormModel(this, _tempPtr);
+		_model = std::make_shared<AttendanceEntryFormModel>(this, _tempPtr);
 		addFormModel("attendance-entry", _model);
 	}
 
@@ -311,45 +310,43 @@ namespace GS
 		{
 			int timestampColumn = viewIndexToColumn(ViewTimestampIn);
 			if(timestampColumn != -1)
-				_tableView->sortByColumn(timestampColumn, Wt::DescendingOrder);
+				_tableView->sortByColumn(timestampColumn, Wt::SortOrder::Descending);
 		}
 	}
 
 	void AttendanceEntryList::initFilters()
 	{
-		filtersTemplate()->addFilterModel(new WLineEditFilterModel(tr("ID"), "a.id", std::bind(&FiltersTemplate::initIdEdit, std::placeholders::_1))); filtersTemplate()->addFilter(1);
+		filtersTemplate()->addFilterModel(std::make_shared<WLineEditFilterModel>(tr("ID"), "a.id", std::bind(&FiltersTemplate::initIdEdit, std::placeholders::_1)));
+		filtersTemplate()->addFilter(1);
 	}
 
 	void AttendanceEntryList::initModel()
 	{
-		QueryModelType *model;
-		_model = model = new QueryModelType(this);
+		std::shared_ptr<QueryModelType> model;
+		_model = model = std::make_shared<QueryModelType>();
 
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
-			"SELECT a.id a_id, e.name e_name, a.timestampIn, a.timestampOut, cnt.name cnt_name, city.name city_name, l.address FROM "
+			"SELECT a.id, e.name, a.timestampIn, a.timestampOut, cnt.name, city.name, l.address FROM "
 			+ std::string(AttendanceEntry::tableName()) + " a "
 			"INNER JOIN " + Entity::tableName() + " e ON (e.id = a.entity_id) "
 			"LEFT JOIN " + Location::tableName() + " l ON (l.id = a.location_id) "
 			"LEFT JOIN " + Country::tableName() + " cnt ON (cnt.code = l.country_code) "
 			"LEFT JOIN " + City::tableName() + " city ON (city.id = l.city_id)");
 
-		Wt::Dbo::Query<ResultType> query(_baseQuery); //must copy the query first
-		model->setQuery(query);
-
-		addColumn(ViewId, model->addColumn("a.id a_id"), tr("ID"), IdColumnWidth);
-		addColumn(ViewEntity, model->addColumn("e.name e_name"), tr("Entity"), 200);
+		model->setQuery(generateQuery());
+		addColumn(ViewId, model->addColumn("a.id"), tr("ID"), IdColumnWidth);
+		addColumn(ViewEntity, model->addColumn("e.name"), tr("Entity"), 200);
 		addColumn(ViewTimestampIn, model->addColumn("a.timestampIn"), tr("TimeIn"), DateTimeColumnWidth);
 		addColumn(ViewTimestampOut, model->addColumn("a.timestampOut"), tr("TimeOut"), DateTimeColumnWidth);
-		addColumn(ViewCountry, model->addColumn("cnt.name cnt_name"), tr("Country"), 150);
-		addColumn(ViewCity, model->addColumn("city.name city_name"), tr("City"), 150);
+		addColumn(ViewCountry, model->addColumn("cnt.name"), tr("Country"), 150);
+		addColumn(ViewCity, model->addColumn("city.name"), tr("City"), 150);
 		addColumn(ViewAddress, model->addColumn("l.address"), tr("Address"), 300);
 
-		_proxyModel = new AttendanceEntryListProxyModel(_model, _model);
+		_proxyModel = std::make_shared<AttendanceEntryListProxyModel>(_model);
 	}
 
-	AttendanceEntryListProxyModel::AttendanceEntryListProxyModel(Wt::WAbstractItemModel *model, Wt::WObject *parent /*= nullptr*/)
-		: Wt::WBatchEditProxyModel(parent)
+	AttendanceEntryListProxyModel::AttendanceEntryListProxyModel(std::shared_ptr<Wt::WAbstractItemModel> model)
 	{
 		setSourceModel(model);
 		addAdditionalColumns();
@@ -368,15 +365,15 @@ namespace GS
 	Wt::WFlags<Wt::ItemFlag> AttendanceEntryListProxyModel::flags(const Wt::WModelIndex &index) const
 	{
 		if(index.column() == _linkColumn)
-			return Wt::ItemIsXHTMLText;
+			return Wt::ItemFlag::XHTMLText;
 		return Wt::WBatchEditProxyModel::flags(index);
 	}
 
-	boost::any AttendanceEntryListProxyModel::headerData(int section, Wt::Orientation orientation /*= Wt::Horizontal*/, int role /*= Wt::DisplayRole*/) const
+	Wt::any AttendanceEntryListProxyModel::headerData(int section, Wt::Orientation orientation, Wt::ItemDataRole role) const
 	{
 		if(section == _linkColumn)
 		{
-			if(role == Wt::WidthRole)
+			if(role == Wt::ItemDataRole::Width)
 				return 40;
 			return Wt::WAbstractItemModel::headerData(section, orientation, role);
 		}
@@ -384,17 +381,17 @@ namespace GS
 		return Wt::WBatchEditProxyModel::headerData(section, orientation, role);
 	}
 
-	boost::any AttendanceEntryListProxyModel::data(const Wt::WModelIndex &idx, int role /*= Wt::DisplayRole*/) const
+	Wt::any AttendanceEntryListProxyModel::data(const Wt::WModelIndex &idx, Wt::ItemDataRole role) const
 	{
 		if(_linkColumn != -1 && idx.column() == _linkColumn)
 		{
-			if(role == Wt::DisplayRole)
-				return Wt::WString::tr("GS.LinkIcon");
-			else if(role == Wt::LinkRole)
+			if(role == Wt::ItemDataRole::Display)
+				return tr("GS.LinkIcon");
+			else if(role == Wt::ItemDataRole::Link)
 			{
-				const AttendanceEntryList::ResultType &res = dynamic_cast<Wt::Dbo::QueryModel<AttendanceEntryList::ResultType>*>(sourceModel())->resultRow(idx.row());
-				long long id = boost::get<AttendanceEntryList::ResId>(res);
-				return Wt::WLink(Wt::WLink::InternalPath, AttendanceEntry::viewInternalPath(id));
+				const AttendanceEntryList::ResultType &res = std::static_pointer_cast<Wt::Dbo::QueryModel<AttendanceEntryList::ResultType>>(sourceModel())->resultRow(idx.row());
+				long long id = std::get<AttendanceEntryList::ResId>(res);
+				return Wt::WLink(Wt::LinkType::InternalPath, AttendanceEntry::viewInternalPath(id));
 			}
 		}
 		return Wt::WBatchEditProxyModel::data(idx, role);

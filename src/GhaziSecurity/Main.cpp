@@ -14,13 +14,13 @@ int main(int argc, char *argv[])
 		Server.initialize();
 
 		//Configuration
-		Server.addEntryPoint(Wt::Application, GS::WApplication::createApplication);
+		Server.addEntryPoint(Wt::EntryPointType::Application, GS::WApplication::createApplication);
 
 		//Start Server
 		if(Server.start())
 		{
 			//And wait till a shutdown signal is given
-			int sig = GS::WServer::waitForShutdown(argv[0]);
+			int sig = GS::WServer::waitForShutdown();
 			Wt::log("gs-info") << "Shutdown (Signal = " << sig << ")";
 			Server.stop();
 		}
@@ -28,11 +28,13 @@ int main(int argc, char *argv[])
 	catch(Wt::WServer::Exception &e)
 	{
 		Wt::log("fatal") << "Error starting the server: " << e.what();
-		exit(EXIT_FAILURE);
+		return EXIT_FAILURE;
 	}
 	catch(std::exception &e)
 	{
 		Wt::log("fatal") << "Server exception error: " << e.what();
-		exit(EXIT_FAILURE);
+		return EXIT_FAILURE;
 	}
+
+	return EXIT_SUCCESS;
 }

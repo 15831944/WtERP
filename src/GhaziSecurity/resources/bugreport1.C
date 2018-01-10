@@ -1,11 +1,11 @@
-#include <Wt/WApplication>
-#include <Wt/WContainerWidget>
-#include <Wt/WDateEdit>
-#include <Wt/WPushButton>
-#include <Wt/WText>
-#include <Wt/WDialog>
-#include <Wt/WTemplateFormView>
-#include <Wt/WFormModel>
+#include <Wt/WApplication.h>
+#include <Wt/WContainerWidget.h>
+#include <Wt/WDateEdit.h>
+#include <Wt/WPushButton.h>
+#include <Wt/WText.h>
+#include <Wt/WDialog.h>
+#include <Wt/WTemplateFormView.h>
+#include <Wt/WFormModel.h>
 
 using namespace Wt;
 

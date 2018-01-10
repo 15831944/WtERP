@@ -4,10 +4,10 @@
 #include "Widgets/ImageUpload.h"
 #include "Widgets/AccountMVC.h"
 
-#include <Wt/WDateEdit>
-#include <Wt/WTimeEdit>
-#include <Wt/WComboBox>
-#include <Wt/WPushButton>
+#include <Wt/WDateEdit.h>
+#include <Wt/WTimeEdit.h>
+#include <Wt/WComboBox.h>
+#include <Wt/WPushButton.h>
 
 namespace GS
 {
@@ -19,20 +19,20 @@ namespace GS
 
 		if(auto dateEdit = dynamic_cast<Wt::WDateEdit*>(edit))
 		{
-			const boost::any &v = model->value(field);
+			const Wt::any &v = model->value(field);
 			if(v.empty())
 				dateEdit->setDate(Wt::WDate());
 			else
-				dateEdit->setDate(boost::any_cast<Wt::WDate>(v));
+				dateEdit->setDate(Wt::any_cast<Wt::WDate>(v));
 			return true;
 		}
 		if(auto timeEdit = dynamic_cast<Wt::WTimeEdit*>(edit))
 		{
-			const boost::any &v = model->value(field);
+			const Wt::any &v = model->value(field);
 			if(v.empty())
 				timeEdit->setTime(Wt::WTime());
 			else
-				timeEdit->setTime(boost::any_cast<Wt::WTime>(v));
+				timeEdit->setTime(Wt::any_cast<Wt::WTime>(v));
 			return true;
 		}
 		if(auto proxyModelComboBox = dynamic_cast<AbstractQueryProxyModelCB*>(edit))
@@ -42,20 +42,20 @@ namespace GS
 		}
 		else if(auto comboBox = dynamic_cast<Wt::WComboBox*>(edit))
 		{
-			const boost::any &v = model->value(field);
+			const Wt::any &v = model->value(field);
 			if(!v.empty())
-				comboBox->setCurrentIndex(boost::any_cast<int>(v));
+				comboBox->setCurrentIndex(Wt::any_cast<int>(v));
 			return true;
 		}
 		if(auto findRecordEdit = dynamic_cast<AbstractFindRecordEdit*>(edit))
 		{
-			const boost::any &v = model->value(field);
+			const Wt::any &v = model->value(field);
 			findRecordEdit->setValuePtr(v);
 			return true;
 		}
 		if(auto viewsContainer = dynamic_cast<RecordViewsContainer*>(edit))
 		{
-			const boost::any &v = model->value(field);
+			const Wt::any &v = model->value(field);
 
 			if(v.empty())
 				viewsContainer->reset();
@@ -66,19 +66,19 @@ namespace GS
 		}
 		if(auto imageUpload = dynamic_cast<ImageUpload*>(edit))
 		{
-			const boost::any &v = model->value(field);
+			const Wt::any &v = model->value(field);
 			if(!v.empty())
-				imageUpload->setImageInfo(boost::any_cast<UploadedImage>(v));
+				imageUpload->setImageInfo(Wt::any_cast<UploadedImage>(v));
 
 			return true;
 		}
 		if(auto heightEdit = dynamic_cast<HeightEdit*>(edit))
 		{
-			const boost::any &v = model->value(field);
+			const Wt::any &v = model->value(field);
 			if(v.empty())
 				heightEdit->setValueInCm(-1);
 			else
-				heightEdit->setValueInCm(boost::any_cast<float>(v));
+				heightEdit->setValueInCm(Wt::any_cast<float>(v));
 			return true;
 		}
 		return false;
@@ -192,16 +192,14 @@ namespace GS
 		for(const auto &res : _modelVector)
 		{
 			if(conditionValue("m:" + std::string(res.first) + "-view"))
-				updateView(res.second);
+				updateView(res.second.get());
 		}
 	}
 
 	void RecordFormView::updateModel()
 	{
 		for(const auto &res : _modelVector)
-		{
-			updateModel(res.second);
-		}
+			updateModel(res.second.get());
 	}
 
 	bool RecordFormView::validateAll()
@@ -218,12 +216,10 @@ namespace GS
 	void RecordFormView::resetValidationAll()
 	{
 		for(const auto &res : _modelVector)
-		{
 			res.second->resetValidation();
-		}
 	}
 
-	Wt::WWidget *RecordFormView::createFormWidget(Wt::WFormModel::Field field)
+	std::unique_ptr<Wt::WWidget> RecordFormView::createFormWidget(Wt::WFormModel::Field field)
 	{
 		for(const auto &res : _modelVector)
 		{
@@ -239,9 +235,8 @@ namespace GS
 		{
 			_viewFlags.set();
 
-			_submitBtn = new ShowEnabledButton(tr("Submit"));
+			_submitBtn = bindNew<ShowEnabledButton>("submitBtn", tr("Submit"));
 			_submitBtn->clicked().connect(this, &RecordFormView::handleSubmitted);
-			bindWidget("submitBtn", _submitBtn);
 
 			initView();
 			for(const auto &val : _modelVector)
@@ -256,10 +251,8 @@ namespace GS
 
 	void RecordFormView::render(Wt::WFlags<Wt::RenderFlag> flags)
 	{
-		if(canOptimizeUpdates() && flags & Wt::RenderFull)
-		{
+		if(canOptimizeUpdates() && flags.test(Wt::RenderFlag::Full))
 			updateView();
-		}
 	}
 
 	void RecordFormView::handleSubmitted()
@@ -337,7 +330,7 @@ namespace GS
 			submitted().emit();
 	}
 
-	void RecordFormView::addFormModel(ModelKey key, AbstractRecordFormModel *model)
+	void RecordFormView::addFormModel(ModelKey key, std::shared_ptr<AbstractRecordFormModel> model)
 	{
 		if(!model)
 			return;

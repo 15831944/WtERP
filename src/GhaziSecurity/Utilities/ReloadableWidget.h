@@ -1,7 +1,7 @@
 #ifndef GS_RELOADABLEWIDGET_UTILITY_H
 #define GS_RELOADABLEWIDGET_UTILITY_H
 
-#include <Wt/WGlobal>
+#include <Wt/WGlobal.h>
 
 namespace GS
 {
@@ -28,17 +28,14 @@ namespace GS
 		virtual void render(Wt::WFlags<Wt::RenderFlag> flags) override
 		{
 			isNotStateless();
-			if(canOptimizeUpdates() && (flags & Wt::RenderFull) == 0)
+			if(canOptimizeUpdates() && !flags.test(Wt::RenderFlag::Full))
 			{
 				bool visible = isVisible();
 				if(visible && !_wasVisible)
-				{
 					reload();
-				}
 
 				_wasVisible = visible;
 			}
-
 			Base::render(flags);
 		}
 

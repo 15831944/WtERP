@@ -4,8 +4,8 @@
 #include "Dbo/ConfigurationsDatabase.h"
 #include "Widgets/EntityView.h"
 
-#include <Wt/WIOService>
-#include <Wt/Dbo/SqlConnectionPool>
+#include <Wt/WIOService.h>
+#include <Wt/Dbo/SqlConnectionPool.h>
 
 #include <boost/format.hpp>
 
@@ -18,7 +18,7 @@ namespace GS
 		Wt::Dbo::Transaction t(dboSession);
 		//Recalculate balance update query
 		{
-			_recalculateBalanceCall = new Wt::Dbo::Call(dboSession.execute("UPDATE " + std::string(Account::tableName()) + " SET balance = "
+			_recalculateBalanceCall = std::make_unique<Wt::Dbo::Call>(dboSession.execute("UPDATE " + std::string(Account::tableName()) + " SET balance = "
 				"COALESCE((SELECT SUM(dE.amount) FROM " + AccountEntry::tableName() + " dE WHERE dE.debit_account_id = " + Account::tableName() + ".id), 0) - COALESCE((SELECT SUM(cE.amount) FROM " + AccountEntry::tableName() + " cE WHERE cE.credit_account_id = " + Account::tableName() + ".id), 0)"
 				", \"version\" = \"version\" + 1"));
 			t.rollback();
@@ -82,11 +82,6 @@ namespace GS
 		_isConstructing = false;
 	}
 
-	TaskScheduler::~TaskScheduler()
-	{
-		delete _recalculateBalanceCall;
-	}
-
 	void TaskScheduler::createDefaultAccounts(bool scheduleNext)
 	{
 		Wt::log("gs-info") << "TaskScheduler: Checking default accounts in database";
@@ -103,8 +98,7 @@ namespace GS
 
 		//Repeat every 24 hours
 		if(scheduleNext)
-			_server->ioService().schedule(static_cast<int>(boost::posix_time::hours(24).total_milliseconds()),
-				boost::bind(&TaskScheduler::createDefaultAccounts, this, true));
+			_server->ioService().schedule(hours(24), std::bind(&TaskScheduler::createDefaultAccounts, this, true));
 	}
 
 	void TaskScheduler::recalculateAccountBalances(bool scheduleNext)
@@ -125,30 +119,27 @@ namespace GS
 
 		//Repeat
 		if(scheduleNext)
-			_server->ioService().schedule(static_cast<int>(boost::posix_time::hours(24).total_milliseconds()),
-				boost::bind(&TaskScheduler::recalculateAccountBalances, this, true));
+			_server->ioService().schedule(hours(24), std::bind(&TaskScheduler::recalculateAccountBalances, this, true));
 	}
 
 	void TaskScheduler::createPendingCycleEntries(bool scheduleNext)
 	{
 		Wt::log("gs-info") << "TaskScheduler: Checking for pending EntryCycle entries";
-		boost::posix_time::time_duration nextEntryDuration = _createPendingCycleEntries(scheduleNext);
+		steady_clock::duration nextEntryDuration = _createPendingCycleEntries(scheduleNext);
 
 		//Repeat
 		if(scheduleNext)
-			_server->ioService().schedule(static_cast<int>(nextEntryDuration.total_milliseconds()),
-				boost::bind(&TaskScheduler::createPendingCycleEntries, this, true));
+			_server->ioService().schedule(nextEntryDuration, std::bind(&TaskScheduler::createPendingCycleEntries, this, true));
 	}
 
-	boost::posix_time::time_duration TaskScheduler::_createPendingCycleEntries(bool scheduleNext)
+	steady_clock::duration TaskScheduler::_createPendingCycleEntries(bool scheduleNext)
 	{
 		Wt::Dbo::Transaction t(dboSession);
-		boost::posix_time::time_duration nextEntryDuration = boost::posix_time::hours(6);
+		steady_clock::duration nextEntryDuration = hours(6);
 
 		try
 		{
-			auto currentPTime = boost::posix_time::microsec_clock::local_time();
-			Wt::WDateTime currentDt(currentPTime);
+			Wt::WDateTime currentDt = Wt::WDateTime::currentDateTime();
 
 			//Income cycle
 			_incomeCycleQuery.reset();
@@ -159,9 +150,9 @@ namespace GS
 			{
 				Wt::Dbo::ptr<IncomeCycle> cyclePtr;
 				Wt::Dbo::ptr<AccountEntry> lastEntryPtr;
-				boost::tie(cyclePtr, lastEntryPtr) = tuple;
+				std::tie(cyclePtr, lastEntryPtr) = tuple;
 
-				_accountsDatabase.createPendingCycleEntry(cyclePtr, lastEntryPtr, currentPTime, &nextEntryDuration);
+				_accountsDatabase.createPendingCycleEntry(cyclePtr, lastEntryPtr, currentDt, &nextEntryDuration);
 			}
 
 			//Expense cycle
@@ -173,9 +164,9 @@ namespace GS
 			{
 				Wt::Dbo::ptr<ExpenseCycle> cyclePtr;
 				Wt::Dbo::ptr<AccountEntry> lastEntryPtr;
-				boost::tie(cyclePtr, lastEntryPtr) = tuple;
+				std::tie(cyclePtr, lastEntryPtr) = tuple;
 
-				_accountsDatabase.createPendingCycleEntry(cyclePtr, lastEntryPtr, currentPTime, &nextEntryDuration);
+				_accountsDatabase.createPendingCycleEntry(cyclePtr, lastEntryPtr, currentDt, &nextEntryDuration);
 			}
 
 			t.commit();
@@ -241,8 +232,7 @@ namespace GS
 
 		//Repeat every 24 hours
 		if(scheduleNext)
-			_server->ioService().schedule(static_cast<int>(boost::posix_time::hours(24).total_milliseconds()),
-				boost::bind(&TaskScheduler::checkAbnormalRecords, this, true));
+			_server->ioService().schedule(hours(24), std::bind(&TaskScheduler::checkAbnormalRecords, this, true));
 	}
 
 }

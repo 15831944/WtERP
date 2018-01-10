@@ -1,14 +1,14 @@
 #ifndef GS_WSERVER_H
 #define GS_WSERVER_H
 
-#include <Wt/WServer>
+#include <Wt/WServer.h>
 
-#include <Wt/Auth/AuthService>
-#include <Wt/Auth/PasswordService>
-#include <Wt/Auth/OAuthService>
+#include <Wt/Auth/AuthService.h>
+#include <Wt/Auth/PasswordService.h>
+#include <Wt/Auth/OAuthService.h>
 
-#include <Wt/Dbo/SqlConnectionPool>
-#include <Wt/Dbo/Session>
+#include <Wt/Dbo/SqlConnectionPool.h>
+#include <Wt/Dbo/Session.h>
 
 namespace WW
 {
@@ -17,25 +17,27 @@ namespace WW
 
 namespace GS
 {
+	using namespace std::chrono;
+
 	class WApplication;
 	class TaskScheduler;
 	class PermissionsDatabase;
 
-	typedef std::vector<const Wt::Auth::OAuthService*> OAuthServiceMap;
+	typedef std::vector<std::unique_ptr<const Wt::Auth::OAuthService>> OAuthServiceMap;
 
 	class WServer : public Wt::WServer
 	{
 	public:
 		WServer(int argc, char *argv[], const std::string &wtConfigurationFile = "");
+		virtual ~WServer() override;;
 		void initialize();
-		virtual ~WServer() override;
 
 		static WServer *instance() { return dynamic_cast<WServer*>(Wt::WServer::instance()); }
 		bool start();
 
-		Wt::Dbo::SqlConnectionPool *sqlPool() const { return _sqlPool; }
-		WW::ConfigurationsDatabase *configs() const { return _configs; }
-		PermissionsDatabase *permissionsDatabase() const { return _permissionsDatabase; }
+		Wt::Dbo::SqlConnectionPool &sqlPool() const { return *_sqlPool; }
+		WW::ConfigurationsDatabase &configs() const { return *_configs; }
+		PermissionsDatabase &permissionsDatabase() const { return *_permissionsDatabase; }
 
 		const Wt::Auth::AuthService &getAuthService() const { return _authService; }
 		const Wt::Auth::PasswordService &getPasswordService() const { return _passwordService; }
@@ -45,17 +47,17 @@ namespace GS
 		void configureAuth();
 
 		Wt::Dbo::Session _dboSession;
-		Wt::Dbo::SqlConnectionPool *_sqlPool = nullptr;
-		WW::ConfigurationsDatabase *_configs = nullptr;
-		PermissionsDatabase *_permissionsDatabase = nullptr;
-		TaskScheduler *_taskScheduler = nullptr;
+		std::unique_ptr<Wt::Dbo::SqlConnectionPool> _sqlPool;
+		std::unique_ptr<WW::ConfigurationsDatabase> _configs;
+		std::unique_ptr<PermissionsDatabase> _permissionsDatabase;
+		std::unique_ptr<TaskScheduler> _taskScheduler;
 
 		Wt::Auth::AuthService _authService;
 		Wt::Auth::PasswordService _passwordService;
 		OAuthServiceMap _oAuthServices;
 
-		boost::posix_time::ptime _ptBeforeLoad;
-		boost::posix_time::ptime _ptStart;
+		steady_clock::time_point _tpBeforeLoad;
+		steady_clock::time_point _tpStart;
 	};
 }
 

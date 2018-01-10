@@ -2,8 +2,8 @@
 #define GS_IMAGEUPLOAD_WIDGET_H
 
 #include "Dbo/Dbos.h"
-#include <Wt/WTemplate>
-#include <Wt/WLink>
+#include <Wt/WTemplate.h>
+#include <Wt/WLink.h>
 
 namespace Magick
 {
@@ -25,7 +25,7 @@ namespace GS
 	class ImageUpload : public Wt::WTemplate
 	{
 	public:
-		ImageUpload(Wt::WString actionUpload, Wt::WString actionChange, Wt::WContainerWidget *parent = nullptr);
+		ImageUpload(Wt::WString actionUpload, Wt::WString actionChange);
 		void setPlaceholderImageLink(const Wt::WLink &link);
 		void setThumbnailHeight(unsigned int height) { _thumbnailHeight = height; }
 		void handleUploaded();
@@ -47,8 +47,9 @@ namespace GS
 		Wt::WString _actionChange;
 		Wt::WFileUpload *_fileUpload = nullptr;
 		Wt::WImage *_image = nullptr;
-		Wt::WFileResource *_imageResource = nullptr;
-		Wt::WResource *_thumbnailResource = nullptr;
+		std::unique_ptr<Wt::WImage> _tempImage;
+		std::shared_ptr<Wt::WFileResource> _imageResource;
+		std::shared_ptr<Wt::WResource> _thumbnailResource;
 		Wt::WDialog *_dialog = nullptr;
 		unsigned int _thumbnailHeight = 128;
 		UploadedImage _imageInfo;

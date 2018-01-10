@@ -1,10 +1,10 @@
 #ifndef GS_WAPPLICATION_H
 #define GS_WAPPLICATION_H
 
-#include <Wt/WApplication>
-#include <Wt/Auth/Login>
-#include <Wt/Auth/Dbo/UserDatabase>
-#include <Wt/WDialog>
+#include <Wt/WApplication.h>
+#include <Wt/Auth/Login.h>
+#include <Wt/Auth/Dbo/UserDatabase.h>
+#include <Wt/WDialog.h>
 
 #include "Dbo/Dbos.h"
 #include "Dbo/EntitiesDatabase.h"
@@ -12,6 +12,8 @@
 
 namespace GS
 {
+	using namespace std::chrono;
+
 	class CountryProxyModel;
 	class EntitiesAdminPage;
 	class DashboardAdminPage;
@@ -78,10 +80,9 @@ namespace GS
 	{
 	public:
 		WApplication(const Wt::WEnvironment& env);
-		virtual ~WApplication() override;
 
 		static WApplication *instance() { return dynamic_cast<WApplication*>(Wt::WApplication::instance()); }
-		static WApplication *createApplication(const Wt::WEnvironment &env) { return new WApplication(env); }
+		static std::unique_ptr<WApplication> createApplication(const Wt::WEnvironment &env) { return std::make_unique<WApplication>(env); }
 
 		Wt::Dbo::Session &dboSession() { return _dboSession; }
 		AuthLogin &authLogin() { return _login; }
@@ -100,9 +101,9 @@ namespace GS
 		AccountsAdminPage *accountsAdminPage() const { return _accountsAdminPage; }
 
 		//Error handling
-		Wt::WDialog *errorDialog() const { return _errorDialog; }
+		Wt::WDialog *errorDialog() const { return _errorDialog.get(); }
 		void showErrorDialog(const Wt::WString &message);
-		void showStaleObjectError() { showErrorDialog(Wt::WString::tr("StaleObjectError")); }
+		void showStaleObjectError() { showErrorDialog(tr("StaleObjectError")); }
 		void showDbBackendError(const std::string &code);
 
 		//SuggestionPopups
@@ -114,23 +115,23 @@ namespace GS
 		void initFindLocationSuggestion();
 
 		//QueryModels
-		CountryQueryModel *countryQueryModel() const { return _countryQueryModel; }
-		CountryProxyModel *countryProxyModel() const { return _countryProxyModel; }
+		std::shared_ptr<CountryQueryModel> countryQueryModel() const { return _countryQueryModel; }
+		std::shared_ptr<CountryProxyModel> countryProxyModel() const { return _countryProxyModel; }
 		void initCountryQueryModel();
 
-		CityQueryModel *cityQueryModel() const { return _cityQueryModel; }
+		std::shared_ptr<CityQueryModel> cityQueryModel() const { return _cityQueryModel; }
 		void initCityQueryModel();
 
-		PositionQueryModel *positionQueryModel() const { return _positionQueryModel; }
-		PositionProxyModel *positionProxyModel() const { return _positionProxyModel; }
+		std::shared_ptr<PositionQueryModel> positionQueryModel() const { return _positionQueryModel; }
+		std::shared_ptr<PositionProxyModel> positionProxyModel() const { return _positionProxyModel; }
 		void initPositionQueryModel();
 
-		ServiceQueryModel *serviceQueryModel() const { return _serviceQueryModel; }
-		ServiceProxyModel *serviceProxyModel() const { return _serviceProxyModel; }
+		std::shared_ptr<ServiceQueryModel> serviceQueryModel() const { return _serviceQueryModel; }
+		std::shared_ptr<ServiceProxyModel> serviceProxyModel() const { return _serviceProxyModel; }
 		void initServiceQueryModel();
 
-		RegionQueryModel *regionQueryModel() const { return _regionQueryModel; }
-		RegionProxyModel *regionProxyModel() const { return _regionProxyModel; }
+		std::shared_ptr<RegionQueryModel> regionQueryModel() const { return _regionQueryModel; }
+		std::shared_ptr<RegionProxyModel> regionProxyModel() const { return _regionProxyModel; }
 		void initRegionQueryModel();
 
 	protected:
@@ -144,7 +145,17 @@ namespace GS
 		void lazyLoadDeniedPermissionWidget();
 
 		Wt::WDialog *createPasswordPromptDialog();
-		void handlePasswordPromptFinished(Wt::WDialog::DialogCode code, const std::string &rejectInternalPath);
+		void handlePasswordPromptFinished(Wt::DialogCode code, const std::string &rejectInternalPath);
+
+		template<class PageClass>
+		PageClass *addMenuItem(Wt::WMenu *menu, const Wt::WString &title, std::unique_ptr<PageClass> pageContents)
+		{
+			PageClass *ret = pageContents.get();
+			auto menuItem = std::make_unique<Wt::WMenuItem>(title, std::move(pageContents));
+			menuItem->setPathComponent(ret->basePathComponent());
+			menu->addItem(std::move(menuItem));
+			return ret;
+		}
 
 		//Widgets
 		Wt::WStackedWidget *_mainStack = nullptr;
@@ -169,7 +180,7 @@ namespace GS
 		AttendanceAdminPage *_attendanceAdminPage = nullptr;
 		UsersAdminPage *_usersAdminPage = nullptr;
 
-		Wt::WDialog *_errorDialog = nullptr;
+		std::unique_ptr<Wt::WDialog> _errorDialog;
 		Wt::WText *_errorDialogText = nullptr;
 
 		Wt::WSuggestionPopup *_findEntitySuggestion = nullptr;
@@ -177,15 +188,15 @@ namespace GS
 		Wt::WSuggestionPopup *_findLocationSuggestion = nullptr;
 
 		//Models
-		CountryQueryModel *_countryQueryModel = nullptr;
-		CountryProxyModel *_countryProxyModel = nullptr;
-		CityQueryModel *_cityQueryModel = nullptr;
-		PositionQueryModel *_positionQueryModel = nullptr;
-		PositionProxyModel *_positionProxyModel = nullptr;
-		ServiceQueryModel *_serviceQueryModel = nullptr;
-		ServiceProxyModel *_serviceProxyModel = nullptr;
-		RegionQueryModel *_regionQueryModel = nullptr;
-		RegionProxyModel *_regionProxyModel = nullptr;
+		std::shared_ptr<CountryQueryModel> _countryQueryModel;
+		std::shared_ptr<CountryProxyModel> _countryProxyModel;
+		std::shared_ptr<CityQueryModel> _cityQueryModel;
+		std::shared_ptr<PositionQueryModel> _positionQueryModel;
+		std::shared_ptr<PositionProxyModel> _positionProxyModel;
+		std::shared_ptr<ServiceQueryModel> _serviceQueryModel;
+		std::shared_ptr<ServiceProxyModel> _serviceProxyModel;
+		std::shared_ptr<RegionQueryModel> _regionQueryModel;
+		std::shared_ptr<RegionProxyModel> _regionProxyModel;
 		
 		//Session related
 		Wt::Dbo::Session _dboSession;
@@ -196,7 +207,7 @@ namespace GS
 		EntitiesDatabase _entitiesDatabase;
 		AccountsDatabase _accountsDatabase;
 
-		boost::posix_time::ptime _startTime;
+		system_clock::time_point _startTime;
 	};
 
 	//TEMPLATE FUNCTIONS

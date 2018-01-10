@@ -4,10 +4,10 @@
 #include "Application/WApplication.h"
 #include "Utilities/ReloadableWidget.h"
 
-#include <Wt/WObject>
-#include <Wt/WString>
-#include <Wt/WTemplate>
-#include <Wt/WLineEdit>
+#include <Wt/WObject.h>
+#include <Wt/WString.h>
+#include <Wt/WTemplate.h>
+#include <Wt/WLineEdit.h>
 
 #define IdColumnWidth 80
 #define DateColumnWidth 120
@@ -25,15 +25,19 @@ namespace GS
 		virtual void updateModel();
 		virtual std::string value() = 0;
 		virtual std::string sqlCondition() = 0;
-		virtual Wt::WWidget *createWidget();
 		virtual std::vector<std::string> boundValues() { return std::vector<std::string>(1, value()); }
+
+		std::unique_ptr<Wt::WCheckBox> createCheckbox();
+		virtual std::unique_ptr<Wt::WWidget> createWidget() = 0;
+
 		Wt::WString filterTitle() const { return _filterTitle; };
 		Wt::WCheckBox *checkbox() const { return _cb; }
+
 		bool enabled() const { return _enabled; }
 
 	protected:
-		AbstractFilterWidgetModel(const Wt::WString &filterTitle, const std::string &columnName, Wt::WObject *parent = nullptr)
-			: Wt::WObject(parent), _columnName(columnName), _filterTitle(filterTitle)
+		AbstractFilterWidgetModel(const Wt::WString &filterTitle, const std::string &columnName)
+			: _columnName(columnName), _filterTitle(filterTitle)
 		{ }
 		Wt::WString _filterTitle;
 		std::string _columnName;
@@ -45,15 +49,15 @@ namespace GS
 	{
 	public:
 		typedef std::function<void(Wt::WLineEdit*)> FuncType;
-		WLineEditFilterModel(const Wt::WString &filterTitle, const std::string &columnName, const FuncType &f = FuncType(), Wt::WObject *parent = nullptr)
-			: AbstractFilterWidgetModel(filterTitle, columnName, parent), _function(f)
+		WLineEditFilterModel(const Wt::WString &filterTitle, const std::string &columnName, const FuncType &f = FuncType())
+			: AbstractFilterWidgetModel(filterTitle, columnName), _function(f)
 		{ }
 		//virtual void updateView() override { _edit->setValueText(_value); }
 		virtual void updateModel() override;
 		virtual std::string value() override { return _value.toUTF8(); }
 		virtual std::string sqlCondition() override { return _columnName + " = ?"; }
 		Wt::WLineEdit *edit() const { return _edit; }
-		virtual Wt::WWidget *createWidget() override;
+		virtual std::unique_ptr<Wt::WWidget> createWidget() override;
 
 	protected:
 		Wt::WLineEdit *_edit = nullptr;
@@ -65,15 +69,15 @@ namespace GS
 	{
 	public:
 		typedef std::function<void(Wt::WComboBox*)> FuncType;
-		WComboBoxFilterModel(const Wt::WString &filterTitle, const std::string &columnName, const FuncType &f = FuncType(), Wt::WObject *parent = nullptr)
-			: AbstractFilterWidgetModel(filterTitle, columnName, parent), _function(f)
+		WComboBoxFilterModel(const Wt::WString &filterTitle, const std::string &columnName, const FuncType &f = FuncType())
+			: AbstractFilterWidgetModel(filterTitle, columnName), _function(f)
 		{ }
 		//virtual void updateView() override { _edit->setCurrentIndex(_value); }
 		virtual void updateModel() override;
 		virtual std::string value() override;
 		virtual std::string sqlCondition() override { return _columnName + " = ?"; }
 		Wt::WComboBox *edit() const { return _edit; }
-		virtual Wt::WWidget *createWidget() override;
+		virtual std::unique_ptr<Wt::WWidget> createWidget() override;
 
 	protected:
 		Wt::WComboBox *_edit = nullptr;
@@ -84,8 +88,8 @@ namespace GS
 	class BitmaskFilterModel : public WComboBoxFilterModel
 	{
 	public:
-		BitmaskFilterModel(const Wt::WString &filterTitle, const std::string &columnName, const FuncType &f = FuncType(), Wt::WObject *parent = nullptr)
-			: WComboBoxFilterModel(filterTitle, columnName, f, parent)
+		BitmaskFilterModel(const Wt::WString &filterTitle, const std::string &columnName, const FuncType &f = FuncType())
+			: WComboBoxFilterModel(filterTitle, columnName, f)
 		{ }
 		virtual std::string sqlCondition() override { return _columnName + " & ?"; }
 		virtual void updateModel() override;
@@ -94,12 +98,12 @@ namespace GS
 	class NameFilterModel : public WLineEditFilterModel
 	{
 	public:
-		NameFilterModel(const Wt::WString &filterTitle, const std::string &columnName, const FuncType &f = FuncType(), Wt::WObject *parent = nullptr)
-			: WLineEditFilterModel(filterTitle, columnName, f, parent)
+		NameFilterModel(const Wt::WString &filterTitle, const std::string &columnName, const FuncType &f = FuncType())
+			: WLineEditFilterModel(filterTitle, columnName, f)
 		{ }
 		virtual std::string sqlCondition() override;
 		virtual std::vector<std::string> boundValues() override;
-		virtual Wt::WWidget *createWidget() override;
+		virtual std::unique_ptr<Wt::WWidget> createWidget() override;
 	};
 
 	class RangeEdit : public Wt::WLineEdit
@@ -114,7 +118,8 @@ namespace GS
 			GreaterThanEqual
 		};
 
-		RangeEdit(Wt::WContainerWidget *parent = nullptr);
+		RangeEdit();
+		std::unique_ptr<Wt::WComboBox> createOperatorCombo();
 		Wt::WComboBox *operatorCombo() const { return _operatorCombo; }
 
 	protected:
@@ -125,15 +130,15 @@ namespace GS
 	{
 	public:
 		typedef std::function<void(RangeEdit*)> FuncType;
-		RangeFilterModel(const Wt::WString &filterTitle, const std::string &columnName, const FuncType &f = FuncType(), Wt::WObject *parent = nullptr)
-			: AbstractFilterWidgetModel(filterTitle, columnName, parent), _function(f)
+		RangeFilterModel(const Wt::WString &filterTitle, const std::string &columnName, const FuncType &f = FuncType())
+			: AbstractFilterWidgetModel(filterTitle, columnName), _function(f)
 		{ }
 		virtual void updateModel() override;
 		virtual std::string value() override { return _value.toUTF8(); }
 		RangeEdit::Operators sqlOperator() const { return _operator; }
 		virtual std::string sqlCondition() override;
 		RangeEdit *edit() const { return _edit; }
-		virtual Wt::WWidget *createWidget() override;
+		virtual std::unique_ptr<Wt::WWidget> createWidget() override;
 
 	protected:
 		RangeEdit *_edit = nullptr;
@@ -145,12 +150,12 @@ namespace GS
 	class FiltersTemplate : public Wt::WTemplate
 	{
 	public:
-		typedef std::vector<AbstractFilterWidgetModel*> FilterModelVector;
+		typedef std::vector<std::shared_ptr<AbstractFilterWidgetModel>> FilterModelVector;
 
-		FiltersTemplate(AbstractFilteredList *filteredList, Wt::WContainerWidget *parent = nullptr);
+		FiltersTemplate(AbstractFilteredList *filteredList);
 		Wt::WContainerWidget *filterWidgetsContainer() const { return _filterWidgetsContainer; }
 
-		void addFilterModel(AbstractFilterWidgetModel *model);
+		void addFilterModel(std::shared_ptr<AbstractFilterWidgetModel> model);
 		void addFilter(int filtersComboIndex);
 
 		static void initIdEdit(Wt::WLineEdit *edit);
@@ -183,8 +188,8 @@ namespace GS
 		
 		Wt::WTableView *tableView() const { return _tableView; }
 		FiltersTemplate *filtersTemplate() const { return _filtersTemplate; }
-		Wt::WAbstractItemModel *model() const { return _model; }
-		Wt::WAbstractProxyModel *proxyModel() const { return _proxyModel; }
+		std::shared_ptr<Wt::WAbstractItemModel> model() const { return _model; }
+		std::shared_ptr<Wt::WAbstractProxyModel> proxyModel() const { return _proxyModel; }
 
 	protected:
 		AbstractFilteredList();
@@ -198,8 +203,8 @@ namespace GS
 
 		Wt::WTableView *_tableView = nullptr;
 		FiltersTemplate *_filtersTemplate = nullptr;
-		Wt::WAbstractItemModel *_model = nullptr;
-		Wt::WAbstractProxyModel *_proxyModel = nullptr;
+		std::shared_ptr<Wt::WAbstractItemModel> _model;
+		std::shared_ptr<Wt::WAbstractProxyModel> _proxyModel;
 	};
 
 	template<typename T>
@@ -209,11 +214,12 @@ namespace GS
 		typedef typename T ResultType;
 		typedef Wt::Dbo::QueryModel<ResultType> QueryModelType;
 
-		QueryModelType *queryModel() const { return dynamic_cast<QueryModelType*>(_model); }
+		std::shared_ptr<QueryModelType> queryModel() const { return std::dynamic_pointer_cast<QueryModelType>(_model); }
 		virtual void reload() override;
 
 	protected:
 		virtual void applyFilter(const std::string &sqlCondition) override;
+		virtual Wt::Dbo::Query<ResultType> generateQuery() const { return _baseQuery; }
 
 		Wt::Dbo::Query<ResultType> _baseQuery;
 	};
@@ -222,7 +228,7 @@ namespace GS
 	class ListSelectionDialog : public Wt::WDialog
 	{
 	public:
-		ListSelectionDialog(const Wt::WString &title, Wt::WObject *parent = nullptr);
+		ListSelectionDialog(const Wt::WString &title);
 		FilteredList *listWidget() const { return _listWidget; }
 		Wt::Signal<IdType> &selected() { return _selected; }
 
@@ -234,22 +240,20 @@ namespace GS
 	};
 
 	template<class FilteredList, typename IdType>
-	ListSelectionDialog<FilteredList, IdType>::ListSelectionDialog(const Wt::WString &title, Wt::WObject *parent)
-		: Wt::WDialog(title, parent), _selected(this)
+	ListSelectionDialog<FilteredList, IdType>::ListSelectionDialog(const Wt::WString &title)
+		: Wt::WDialog(title)
 	{
+		resize(Wt::WLength(85,  Wt::LengthUnit::Percentage), Wt::WLength(95,  Wt::LengthUnit::Percentage));
 		setClosable(true);
-		resize(Wt::WLength(85, Wt::WLength::Percentage), Wt::WLength(95, Wt::WLength::Percentage));
 		setTransient(true);
 		rejectWhenEscapePressed(true);
-		setDeleteWhenHidden(true);
-		contents()->setOverflow(Wt::WContainerWidget::OverflowAuto);
+		contents()->setOverflow(Wt::Overflow::Auto);
 
-		_listWidget = new FilteredList();
+		_listWidget = contents()->addNew<FilteredList>();
 		_listWidget->enableFilters();
-		_listWidget->tableView()->setSelectionMode(Wt::SingleSelection);
-		_listWidget->tableView()->setSelectionBehavior(Wt::SelectRows);
-		_listWidget->tableView()->selectionChanged().connect(boost::bind(&ListSelectionDialog::handleSelected, this));
-		contents()->addWidget(_listWidget);
+		_listWidget->tableView()->setSelectionMode(Wt::SelectionMode::Single);
+		_listWidget->tableView()->setSelectionBehavior(Wt::SelectionBehavior::Rows);
+		_listWidget->tableView()->selectionChanged().connect(this, &ListSelectionDialog::handleSelected);
 	}
 
 	template<class FilteredList, typename IdType>
@@ -273,14 +277,14 @@ namespace GS
 			}
 		}
 
-		auto queryModel = dynamic_cast<Wt::Dbo::QueryModel<FilteredList::ResultType>*>(_listWidget->model());
-		if(index.model() != queryModel)
+		auto queryModel = std::static_pointer_cast<Wt::Dbo::QueryModel<FilteredList::ResultType>>(_listWidget->model());
+		if(index.model() != queryModel.get())
 		{
 			Wt::log("error") << "ListSelectionDialog::handleSelected(): index.model() != queryModel";
 			return;
 		}
 
-		_selected.emit(boost::get<FilteredList::ResId>(queryModel->resultRow(index.row())));
+		_selected.emit(std::get<FilteredList::ResId>(queryModel->resultRow(index.row())));
 		accept();
 	}
 
@@ -291,7 +295,7 @@ namespace GS
 		try
 		{
 			if(loaded())
-				queryModel()->reload();
+				queryModel()->setQuery(generateQuery(), true);
 			else
 				load();
 		}
@@ -330,7 +334,7 @@ namespace GS
 		{
 			model->setQuery(query, true);
 		}
-		catch(Wt::Dbo::Exception &e)
+		catch(const Wt::Dbo::Exception &e)
 		{
 			Wt::log("error") << "QueryModelFilteredList::applyFilter(): Dbo error(" << e.code() << "): " << e.what();
 			app->showDbBackendError(e.code());

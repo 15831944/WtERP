@@ -20,7 +20,8 @@ namespace GS
 	class PositionProxyModel : public QueryProxyModel<Wt::Dbo::ptr<EmployeePosition>>
 	{
 	public:
-		PositionProxyModel(Wt::Dbo::QueryModel<Wt::Dbo::ptr<EmployeePosition>> *sourceModel, Wt::WObject *parent = nullptr);
+		typedef Wt::Dbo::QueryModel<Wt::Dbo::ptr<EmployeePosition>> QueryModel;
+		PositionProxyModel(std::shared_ptr<QueryModel> sourceModel);
 
 	protected:
 		void addAdditionalRows();
@@ -34,7 +35,7 @@ namespace GS
 		static const Wt::WFormModel::Field typeField;
 
 		PositionFormModel(PositionView *view, Wt::Dbo::ptr<EmployeePosition> positionPtr = Wt::Dbo::ptr<EmployeePosition>());
-		virtual Wt::WWidget *createFormWidget(Field field) override;
+		virtual std::unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
 	protected:
@@ -49,10 +50,10 @@ namespace GS
 		virtual void initView() override;
 
 		Wt::Dbo::ptr<EmployeePosition> positionPtr() const { return _model->recordPtr(); }
-		Wt::WFormModel *model() const { return _model; }
+		std::shared_ptr<Wt::WFormModel> model() const { return _model; }
 
 	protected:
-		PositionFormModel *_model = nullptr;
+		std::shared_ptr<PositionFormModel> _model;
 		Wt::Dbo::ptr<EmployeePosition> _tempPtr;
 	};
 
@@ -60,7 +61,8 @@ namespace GS
 	class ServiceProxyModel : public QueryProxyModel<Wt::Dbo::ptr<ClientService>>
 	{
 	public:
-		ServiceProxyModel(Wt::Dbo::QueryModel<Wt::Dbo::ptr<ClientService>> *sourceModel, Wt::WObject *parent = nullptr);
+		typedef Wt::Dbo::QueryModel<Wt::Dbo::ptr<ClientService>> QueryModel;
+		ServiceProxyModel(std::shared_ptr<QueryModel> sourceModel);
 
 	protected:
 		void addAdditionalRows();
@@ -73,7 +75,7 @@ namespace GS
 		static const Wt::WFormModel::Field titleField;
 
 		ServiceFormModel(ServiceView *view, Wt::Dbo::ptr<ClientService> servicePtr = Wt::Dbo::ptr<ClientService>());
-		virtual Wt::WWidget *createFormWidget(Field field) override;
+		virtual std::unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
 	protected:
@@ -87,10 +89,10 @@ namespace GS
 		virtual void initView() override;
 
 		Wt::Dbo::ptr<ClientService> servicePtr() const { return _model->recordPtr(); }
-		ServiceFormModel *model() const { return _model; }
+		std::shared_ptr<ServiceFormModel> model() const { return _model; }
 
 	protected:
-		ServiceFormModel *_model = nullptr;
+		std::shared_ptr<ServiceFormModel> _model;
 		Wt::Dbo::ptr<ClientService> _tempPtr;
 	};
 
@@ -107,7 +109,7 @@ namespace GS
 		static const Field positionField;
 
 		EmployeeAssignmentFormModel(EmployeeAssignmentView *view, Wt::Dbo::ptr<EmployeeAssignment> employeeAssignmentPtr = Wt::Dbo::ptr<EmployeeAssignment>());
-		virtual Wt::WWidget *createFormWidget(Wt::WFormModel::Field field) override;
+		virtual std::unique_ptr<Wt::WWidget> createFormWidget(Wt::WFormModel::Field field) override;
 		virtual bool saveChanges() override;
 
 		void showExpenseCycleDialog();
@@ -119,8 +121,10 @@ namespace GS
 
 		void handleExpenseCycleSelected(long long id);
 		void handleClientAssignmentSelected(long long id);
+		void handleDialogFinished();
 
 		EmployeeAssignmentView *_view = nullptr;
+		Wt::WDialog *_dialog = nullptr;
 
 	private:
 		friend class EmployeeAssignmentView;
@@ -136,15 +140,15 @@ namespace GS
 		using RecordFormView::updateModel;
 
 		void handlePositionChanged();
-		Wt::WDialog *createAddPositionDialog();
+		void showAddPositionDialog();
 		QueryProxyModelCB<PositionProxyModel> *positionCombo() const { return _positionCombo; }
 
 		virtual Wt::WString viewName() const override;
 		virtual std::string viewInternalPath() const override { return employeeAssignmentPtr() && employeeAssignmentPtr()->entityPtr ? EmployeeAssignment::viewInternalPath(employeeAssignmentPtr().id()) : ""; }
-		virtual RecordFormView *createFormView() override { return new EmployeeAssignmentView(); }
+		virtual std::unique_ptr<RecordFormView> createFormView() override { return std::make_unique<EmployeeAssignmentView>(); }
 
 		Wt::Dbo::ptr<EmployeeAssignment> employeeAssignmentPtr() const { return _model->recordPtr(); }
-		EmployeeAssignmentFormModel *model() const { return _model; }
+		std::shared_ptr<EmployeeAssignmentFormModel> model() const { return _model; }
 
 	protected:
 		virtual void initView() override;
@@ -152,7 +156,8 @@ namespace GS
 		virtual void updateModel(Wt::WFormModel *model) override;
 
 		QueryProxyModelCB<PositionProxyModel> *_positionCombo = nullptr;
-		EmployeeAssignmentFormModel *_model = nullptr;
+		Wt::WDialog *_dialog = nullptr;
+		std::shared_ptr<EmployeeAssignmentFormModel> _model;
 		Wt::Dbo::ptr<EmployeeAssignment> _tempPtr;
 
 	private:
@@ -171,7 +176,7 @@ namespace GS
 		static const Field serviceField;
 
 		ClientAssignmentFormModel(ClientAssignmentView *view, Wt::Dbo::ptr<ClientAssignment> clientAssignmentPtr = Wt::Dbo::ptr<ClientAssignment>());
-		virtual Wt::WWidget *createFormWidget(Wt::WFormModel::Field field) override;
+		virtual std::unique_ptr<Wt::WWidget> createFormWidget(Wt::WFormModel::Field field) override;
 		virtual bool saveChanges() override;
 
 		void showIncomeCycleDialog();
@@ -181,8 +186,10 @@ namespace GS
 		void updateEndDateValidator(bool update);
 
 		void handleIncomeCycleSelected(long long id);
+		void handleDialogFinished();
 
 		ClientAssignmentView *_view = nullptr;
+		Wt::WDialog *_dialog = nullptr;
 
 	private:
 		friend class ClientAssignmentView;
@@ -199,22 +206,23 @@ namespace GS
 		using RecordFormView::updateModel;
 
 		void handleServiceChanged();
-		Wt::WDialog *createAddServiceDialog();
+		void showAddServiceDialog();
 		QueryProxyModelCB<ServiceProxyModel> *serviceCombo() const { return _serviceCombo; }
 
 		virtual Wt::WString viewName() const override;
 		virtual std::string viewInternalPath() const override { return clientAssignmentPtr() && clientAssignmentPtr()->entityPtr ? ClientAssignment::viewInternalPath(clientAssignmentPtr().id()) : ""; }
-		virtual RecordFormView *createFormView() override { return new ClientAssignmentView(); }
+		virtual std::unique_ptr<RecordFormView> createFormView() override { return std::make_unique<ClientAssignmentView>(); }
 
 		Wt::Dbo::ptr<ClientAssignment> clientAssignmentPtr() const { return _model->recordPtr(); }
-		ClientAssignmentFormModel *model() const { return _model; }
+		std::shared_ptr<ClientAssignmentFormModel> model() const { return _model; }
 
 	protected:
 		virtual void updateView(Wt::WFormModel *model) override;
 		virtual void updateModel(Wt::WFormModel *model) override;
 
 		QueryProxyModelCB<ServiceProxyModel> *_serviceCombo = nullptr;
-		ClientAssignmentFormModel *_model = nullptr;
+		Wt::WDialog *_dialog = nullptr;
+		std::shared_ptr<ClientAssignmentFormModel> _model;
 		Wt::Dbo::ptr<ClientAssignment> _tempPtr;
 
 	private:
@@ -222,7 +230,7 @@ namespace GS
 	};
 
 	//EmployeeAssignmentList
-	class EmployeeAssignmentList : public QueryModelFilteredList<boost::tuple<long long, Wt::WDateTime, std::string, Wt::WDate, Wt::WDate, std::string, std::string, std::string>>
+	class EmployeeAssignmentList : public QueryModelFilteredList<std::tuple<long long, Wt::WDateTime, std::string, Wt::WDate, Wt::WDate, std::string, std::string, std::string>>
 	{
 	public:
 		EmployeeAssignmentList(Wt::Dbo::ptr<Entity> entityPtr = Wt::Dbo::ptr<Entity>()) : _entityPtr(entityPtr) { }
@@ -244,9 +252,9 @@ namespace GS
 	class EmployeeAssignmentListProxyModel : public Wt::WBatchEditProxyModel
 	{
 	public:
-		EmployeeAssignmentListProxyModel(Wt::WAbstractItemModel *model, Wt::WObject *parent = nullptr);
-		virtual boost::any data(const Wt::WModelIndex &idx, int role = Wt::DisplayRole) const override;
-		virtual boost::any headerData(int section, Wt::Orientation orientation = Wt::Horizontal, int role = Wt::DisplayRole) const override;
+		EmployeeAssignmentListProxyModel(std::shared_ptr<Wt::WAbstractItemModel> model);
+		virtual Wt::any data(const Wt::WModelIndex &idx, Wt::ItemDataRole role = Wt::ItemDataRole::Display) const override;
+		virtual Wt::any headerData(int section, Wt::Orientation orientation = Wt::Orientation::Horizontal, Wt::ItemDataRole role = Wt::ItemDataRole::Display) const override;
 		virtual Wt::WFlags<Wt::ItemFlag> flags(const Wt::WModelIndex &index) const override;
 
 	protected:
@@ -255,7 +263,7 @@ namespace GS
 	};
 
 	//ClientAssignmentList
-	class ClientAssignmentList : public QueryModelFilteredList<boost::tuple<long long, Wt::WDateTime, std::string, Wt::WDate, Wt::WDate, long long>>
+	class ClientAssignmentList : public QueryModelFilteredList<std::tuple<long long, Wt::WDateTime, std::string, Wt::WDate, Wt::WDate, long long>>
 	{
 	public:
 		enum ResultColumns { ResId, ResTimestamp, ResEntityName, ResStartDate, ResEndDate, ResEmployeesAssigned };
@@ -274,89 +282,15 @@ namespace GS
 	class ClientAssignmentListProxyModel : public Wt::WBatchEditProxyModel
 	{
 	public:
-		ClientAssignmentListProxyModel(Wt::WAbstractItemModel *model, Wt::WObject *parent = nullptr);
-		virtual boost::any data(const Wt::WModelIndex &idx, int role = Wt::DisplayRole) const override;
-		virtual boost::any headerData(int section, Wt::Orientation orientation = Wt::Horizontal, int role = Wt::DisplayRole) const override;
+		ClientAssignmentListProxyModel(std::shared_ptr<Wt::WAbstractItemModel> model);
+		virtual Wt::any data(const Wt::WModelIndex &idx, Wt::ItemDataRole role = Wt::ItemDataRole::Display) const override;
+		virtual Wt::any headerData(int section, Wt::Orientation orientation = Wt::Orientation::Horizontal, Wt::ItemDataRole role = Wt::ItemDataRole::Display) const override;
 		virtual Wt::WFlags<Wt::ItemFlag> flags(const Wt::WModelIndex &index) const override;
 
 	protected:
 		void addAdditionalColumns();
 		int _linkColumn = -1;
 	};
-
-// 	class MultipleViewTemplate : public Wt::WTemplate, public SubmittableRecordWidget
-// 	{
-// 	public:
-// 		MultipleViewTemplate(Wt::WContainerWidget *parent = nullptr) : Wt::WTemplate(parent), SubmittableRecordWidget(this) { init(); }
-// 		MultipleViewTemplate(const Wt::WString &text, Wt::WContainerWidget *parent = nullptr) : Wt::WTemplate(text, parent), SubmittableRecordWidget(this) { init(); }
-// 
-// 		virtual Wt::WString viewName() const override;
-// 		virtual std::string viewInternalPath() const override;
-// 
-// 	protected:
-// 		bool canSubmitAdditionalViews() const { return _mainView->model()->isRecordPersisted(); }
-// 		RecordFormView *_mainView = nullptr;
-// 
-// 	private:
-// 		void init();
-// 	};
-// 
-// 	class EmployeeExpenseView : public MultipleViewTemplate
-// 	{
-// 	public:
-// 		EmployeeExpenseView(bool isEmployeeAssignment);
-// 		EmployeeExpenseView(Wt::Dbo::ptr<EmployeeAssignment> employeeAssignmentPtr);
-// 		EmployeeExpenseView(Wt::Dbo::ptr<ExpenseCycle> expenseCyclePtr);
-// 		virtual void load() override;
-// 		void updateFromViewCounts();
-// 		virtual SubmittableRecordWidget *createFormView() override { return new EmployeeExpenseView(_isEmployeeAssignment); }
-// 
-// 	protected:
-// 		void handleMainViewSubmitted();
-// 		EmployeeAssignmentView *addAssignment(Wt::Dbo::ptr<EmployeeAssignment> employeeAssignmentPtr);
-// 		ExpenseCycleView *addCycle(Wt::Dbo::ptr<ExpenseCycle> expenseCyclePtr);
-// 		void handleAddCycle();
-// 		void handleAddAssignment();
-// 
-// 		bool canAddCycle() const { return !_cycleView; }
-// 		bool canAddAssignment() const;
-// 
-// 		bool _isEmployeeAssignment;
-// 		Wt::Dbo::ptr<EmployeeAssignment> _tempAssignment;
-// 		Wt::Dbo::ptr<ExpenseCycle> _tempCycle;
-// 		Wt::WContainerWidget *_assignments = nullptr;
-// 		Wt::WContainerWidget *_cycles = nullptr;
-// 		EntryCycleView *_cycleView = nullptr;
-// 	};
-// 
-// 	class ClientIncomeView : public MultipleViewTemplate
-// 	{
-// 	public:
-// 		ClientIncomeView(bool isClientAssignment);
-// 		ClientIncomeView(Wt::Dbo::ptr<ClientAssignment> employeeAssignmentPtr);
-// 		ClientIncomeView(Wt::Dbo::ptr<IncomeCycle> incomeCyclePtr);
-// 		virtual void load() override;
-// 		void updateFromViewCounts();
-// 		virtual SubmittableRecordWidget *createFormView() override { return new ClientIncomeView(_isClientAssignment); }
-// 
-// 	protected:
-// 		void handleMainViewSubmitted();
-// 		ClientAssignmentView *addAssignment(Wt::Dbo::ptr<ClientAssignment> employeeAssignmentPtr);
-// 		IncomeCycleView *addCycle(Wt::Dbo::ptr<IncomeCycle> incomeCyclePtr);
-// 		void handleAddCycle();
-// 		void handleAddAssignment();
-// 
-// 		bool canAddCycle() const { return !_cycleView; }
-// 		bool canAddAssignment() const;
-// 
-// 		bool _isClientAssignment;
-// 		Wt::Dbo::ptr<ClientAssignment> _tempAssignment;
-// 		Wt::Dbo::ptr<IncomeCycle> _tempCycle;
-// 		Wt::WContainerWidget *_assignments = nullptr;
-// 		Wt::WContainerWidget *_cycles = nullptr;
-// 		EntryCycleView *_cycleView = nullptr;
-// 	};
-
 }
 
 #endif

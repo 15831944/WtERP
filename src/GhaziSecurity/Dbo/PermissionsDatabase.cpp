@@ -1,8 +1,8 @@
 #include "Dbo/PermissionsDatabase.h"
 
-#include <Wt/WLogger>
-#include <boost/thread/lock_types.hpp>
-#include <boost/thread/lock_guard.hpp>
+#include <Wt/WLogger.h>
+#include <mutex>
+#include <shared_mutex>
 
 namespace GS
 {
@@ -15,9 +15,9 @@ namespace GS
 
 	void PermissionsDatabase::fetchAll()
 	{
-		boost::lock_guard<boost::shared_mutex> lock(_mutex);
+		std::lock_guard<std::shared_mutex> lock(_mutex);
 		//Time at start
-		boost::posix_time::ptime ptStart = boost::posix_time::microsec_clock::local_time();
+		steady_clock::time_point tpStart = steady_clock::now();
 
 		//Insert into temporary objects first
 		_PermissionItemMap permissionitemmap;
@@ -25,7 +25,7 @@ namespace GS
 		//Fetch em all
 		Wt::Dbo::Transaction t(dboSession);
 
-		typedef boost::tuple<long long, long long> PermissionLinkTuple; //by, to
+		typedef std::tuple<long long, long long> PermissionLinkTuple; //by, to
 		typedef Wt::Dbo::collection<PermissionLinkTuple> PermissionLinkCollection;
 		PermissionCollection permissionCollection = dboSession.find<Permission>();
 		PermissionLinkCollection permissionLinkCollection = dboSession.query<PermissionLinkTuple>("SELECT by_id, to_id FROM linked_permission");
@@ -34,14 +34,14 @@ namespace GS
 		//Permission ptrs
 		for(const Wt::Dbo::ptr<Permission> &ptr : permissionCollection)
 		{
-			permissionitemmap[ptr.id()].permissionPtr = PermissionSPtr(new PermissionDdo(ptr));
+			permissionitemmap[ptr.id()].permissionPtr = std::make_shared<PermissionDdo>(ptr);
 		}
 
 		//Linked permission ptrs
 		for(const PermissionLinkTuple &tuple : permissionLinkCollection)
 		{
 			//0: BY, 1: TO
-			permissionitemmap[boost::get<1>(tuple)].linkedPermissions[boost::get<0>(tuple)] = permissionitemmap[boost::get<1>(tuple)].permissionPtr;
+			permissionitemmap[std::get<1>(tuple)].linkedPermissions[std::get<0>(tuple)] = permissionitemmap[std::get<1>(tuple)].permissionPtr;
 		}
 
 		//Link all descendants in the (implicit) permission hierarchy and make each item's linkedPermissions flat
@@ -79,10 +79,10 @@ namespace GS
 		_permissionItemMap.swap(permissionitemmap);
 
 		//Time at end
-		boost::posix_time::ptime ptEnd = boost::posix_time::microsec_clock::local_time();
-		_loadDuration = ptEnd - ptStart;
+		steady_clock::time_point tpEnd = steady_clock::now();
+		_loadDuration = duration_cast<milliseconds>(tpEnd - tpStart);
 
-		Wt::log("gs-info") << "PermissionsDatabase: " << _permissionItemMap.size() << " permissions successfully loaded in " << _loadDuration.total_milliseconds() << " ms";
+		Wt::log("gs-info") << "PermissionsDatabase: " << _permissionItemMap.size() << " permissions successfully loaded in " << _loadDuration.count() << " ms";
 	}
 
 	void PermissionsDatabase::linkAllDescendants(long long parentPermissionId, const _PermissionItemMap &sourceMap, PermissionMap &linkedPermissionMap)
@@ -100,7 +100,7 @@ namespace GS
 
 	PermissionCPtr PermissionsDatabase::getPermissionPtr(long long permissionId) const
 	{
-		boost::shared_lock<boost::shared_mutex> lock(_mutex);
+		std::shared_lock<std::shared_mutex> lock(_mutex);
 		_PermissionItemMap::const_iterator itr = _permissionItemMap.find(permissionId);
 		if(itr == _permissionItemMap.end())
 			return PermissionCPtr();
@@ -113,16 +113,16 @@ namespace GS
 		if(!altSession)
 			altSession = &dboSession;
 
-		boost::shared_lock<boost::shared_mutex> lock(_mutex);
+		std::shared_lock<std::shared_mutex> lock(_mutex);
 
 		//Return default logged out permissions if not logged in
-		if(!userPtr || loginState == Wt::Auth::LoggedOut)
+		if(!userPtr || loginState == Wt::Auth::LoginState::LoggedOut)
 			return _loggedOutPermissions;
 
 		//Default permissions
 		PermissionMap granted;
 		std::set<long long> denied;
-		if(loginState == Wt::Auth::DisabledLogin)
+		if(loginState == Wt::Auth::LoginState::Disabled)
 			granted = _disabledLoginPermissions;
 		else
 			granted = _logggedInPermissions;

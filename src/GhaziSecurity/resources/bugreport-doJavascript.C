@@ -1,6 +1,6 @@
-#include <Wt/WApplication>
-#include <Wt/WPushButton>
-#include <Wt/WTimeEdit>
+#include <Wt/WApplication.h>
+#include <Wt/WPushButton.h>
+#include <Wt/WTimeEdit.h>
 
 using namespace Wt;
 

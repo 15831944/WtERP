@@ -6,6 +6,8 @@
 
 namespace GS
 {
+	using namespace std::chrono;
+
 	class AccountsDatabase
 	{
 	public:
@@ -13,8 +15,8 @@ namespace GS
 		void createEntityAccountsIfNotFound(Wt::Dbo::ptr<Entity> entityPtr);
 
 		Wt::Dbo::ptr<AccountEntry> createAccountEntry(const Money &amount, Wt::Dbo::ptr<Account> debitAccountPtr, Wt::Dbo::ptr<Account> creditAccountPtr);
-		void createPendingCycleEntry(Wt::Dbo::ptr<IncomeCycle> cyclePtr, Wt::Dbo::ptr<AccountEntry> lastEntryPtr, boost::posix_time::ptime currentPTime, boost::posix_time::time_duration *nextEntryDuration = nullptr);
-		void createPendingCycleEntry(Wt::Dbo::ptr<ExpenseCycle> cyclePtr, Wt::Dbo::ptr<AccountEntry> lastEntryPtr, boost::posix_time::ptime currentPTime, boost::posix_time::time_duration *nextEntryDuration = nullptr);
+		void createPendingCycleEntry(Wt::Dbo::ptr<IncomeCycle> cyclePtr, Wt::Dbo::ptr<AccountEntry> lastEntryPtr, const Wt::WDateTime &currentDt, steady_clock::duration *nextEntryDuration = nullptr);
+		void createPendingCycleEntry(Wt::Dbo::ptr<ExpenseCycle> cyclePtr, Wt::Dbo::ptr<AccountEntry> lastEntryPtr, const Wt::WDateTime &currentDt, steady_clock::duration *nextEntryDuration = nullptr);
 		
 		Wt::Dbo::ptr<Account> findOrCreateCashAccount(bool loadLazy = false);
 
@@ -35,8 +37,9 @@ namespace GS
 		Wt::Dbo::ptr<AccountEntry> _createPendingCycleEntry(
 			const EntryCycle &cycle,
 			Wt::Dbo::ptr<AccountEntry> lastEntryPtr,
-			boost::posix_time::ptime currentPTime,
-			boost::posix_time::time_duration *nextEntryDuration);
+			const Wt::WDateTime &currentDt,
+			steady_clock::duration *nextEntryDuration
+		);
 
 		void updateAccountBalances(Wt::Dbo::ptr<AccountEntry> accountEntryPtr);
 	};

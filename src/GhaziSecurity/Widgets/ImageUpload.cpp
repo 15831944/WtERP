@@ -2,14 +2,14 @@
 #include "Application/WApplication.h"
 #include "Application/WServer.h"
 
-#include <Wt/WFileUpload>
-#include <Wt/WImage>
-#include <Wt/WPushButton>
-#include <Wt/WText>
-#include <Wt/WDialog>
+#include <Wt/WFileUpload.h>
+#include <Wt/WImage.h>
+#include <Wt/WPushButton.h>
+#include <Wt/WText.h>
+#include <Wt/WDialog.h>
 
-#include <Wt/WMemoryResource>
-#include <Wt/WFileResource>
+#include <Wt/WMemoryResource.h>
+#include <Wt/WFileResource.h>
 #include <web/Configuration.h>
 
 #include <boost/filesystem.hpp>
@@ -22,13 +22,13 @@ namespace GS
 		: temporary(false), filePtr(ptr), fileName(ptr->pathToFile()), mimeType(ptr->mimeType), extension(ptr->extension)
 	{ }
 
-	ImageUpload::ImageUpload(Wt::WString actionUpload, Wt::WString actionChange, Wt::WContainerWidget *parent /*= nullptr*/)
-		: Wt::WTemplate(tr("GS.ImageUpload"), parent), _actionUpload(actionUpload), _actionChange(actionChange)
+	ImageUpload::ImageUpload(Wt::WString actionUpload, Wt::WString actionChange)
+		: Wt::WTemplate(tr("GS.ImageUpload")), _actionUpload(actionUpload), _actionChange(actionChange)
 	{
 		setStyleClass("image-upload");
-		bindWidget("input", _fileUpload = new Wt::WFileUpload());
+		_fileUpload = bindNew<Wt::WFileUpload>("input");
 		bindEmpty("image");
-		bindWidget("action", new Wt::WText(_actionUpload));
+		bindNew<Wt::WText>("action", _actionUpload);
 
 		bool enabled = isEnabled();
 		setCondition("is-enabled", enabled);
@@ -37,17 +37,17 @@ namespace GS
 		else
 			bindEmpty("label-for");
 
-		_image = new Wt::WImage(Wt::WLink());
+		_tempImage = std::make_unique<Wt::WImage>(Wt::WLink());
+		_image = _tempImage.get();
 
 		_fileUpload->setFilters("image/*");
 		_fileUpload->changed().connect(this, &ImageUpload::handleChanged);
 		_fileUpload->uploaded().connect(this, &ImageUpload::handleUploaded);
 		_fileUpload->fileTooLarge().connect(this, &ImageUpload::handleFileTooLarge);
 
-		auto btn = new Wt::WPushButton();
+		auto btn = bindNew<Wt::WPushButton>("button");
 		btn->setStyleClass("fa fa-external-link");
 		btn->clicked().connect(this, &ImageUpload::viewImage);
-		bindWidget("button", btn);
 	}
 
 	void ImageUpload::handleUploaded()
@@ -71,11 +71,10 @@ namespace GS
 			Magick::Blob blob;
 			createThumbnail(fileInfo.spoolFileName(), &blob);
 
-			Wt::WMemoryResource *thumnailResource = new Wt::WMemoryResource("image/jpeg", this);
-			thumnailResource->setData((const unsigned char*)blob.data(), static_cast<int>(blob.length()));
-			_image->setImageLink(Wt::WLink(thumnailResource));
-			delete _thumbnailResource;
-			_thumbnailResource = thumnailResource;
+			auto memoryResource = std::make_shared<Wt::WMemoryResource>("image/jpeg");
+			memoryResource->setData((const unsigned char*)blob.data(), static_cast<int>(blob.length()));
+			_image->setImageLink(Wt::WLink(memoryResource));
+			_thumbnailResource = memoryResource;
 
 			_imageInfo.fileName = fileInfo.spoolFileName();
 			_imageInfo.mimeType = fileInfo.contentType();
@@ -119,13 +118,13 @@ namespace GS
 			return;
 
 		_image->setImageLink(link);
-		bindWidget("image", _image);
+		bindWidget("image", std::move(_tempImage));
 	}
 
 	void ImageUpload::lazyBindImage()
 	{
 		if(!resolveWidget("image"))
-			bindWidget("image", _image);
+			bindWidget("image", std::move(_tempImage));
 	}
 
 	void ImageUpload::viewImage()
@@ -135,20 +134,20 @@ namespace GS
 		
 		if(!_dialog)
 		{
-			_dialog = new Wt::WDialog(this);
+			_dialog = addChild(std::make_unique<Wt::WDialog>());
 			_dialog->setClosable(true);
-			_dialog->resize(Wt::WLength(95, Wt::WLength::Percentage), Wt::WLength(95, Wt::WLength::Percentage));
+			_dialog->resize(Wt::WLength(95,  Wt::LengthUnit::Percentage), Wt::WLength(95,  Wt::LengthUnit::Percentage));
 			_dialog->rejectWhenEscapePressed(true);
 			_dialog->setTransient(true);
-			_dialog->contents()->setOverflow(Wt::WContainerWidget::OverflowAuto);
+			_dialog->contents()->setOverflow(Wt::Overflow::Auto);
 
 			if(!_imageResource)
-				_imageResource = new Wt::WFileResource(this);
+				_imageResource = std::make_shared<Wt::WFileResource>();
 			_imageResource->setFileName(_imageInfo.fileName);
 			_imageResource->setMimeType(_imageInfo.mimeType);
 
-			Wt::WImage *img = new Wt::WImage(_dialog->contents());
-			img->setImageLink(_imageResource);
+			auto img = _dialog->contents()->addNew<Wt::WImage>();
+			img->setImageLink(Wt::WLink(_imageResource));
 		}
 
 		_dialog->show();
@@ -169,19 +168,16 @@ namespace GS
 			return;
 		}
 
-		auto thumbFileResource = dynamic_cast<Wt::WFileResource*>(_thumbnailResource);
+		auto thumbFileResource = std::dynamic_pointer_cast<Wt::WFileResource>(_thumbnailResource);
 		if(!thumbFileResource)
-		{
-			delete _thumbnailResource;
-			_thumbnailResource = thumbFileResource = new Wt::WFileResource(this);
-		}
+			_thumbnailResource = thumbFileResource = std::make_shared<Wt::WFileResource>();
 
 		boost::filesystem::path path(_imageInfo.fileName);
 		boost::filesystem::path thumbnailPath = path.parent_path() / path.stem().concat("_thumb.jpg");
 
 		thumbFileResource->setFileName(thumbnailPath.string());
 		thumbFileResource->setMimeType(_imageInfo.mimeType);
-		_image->setImageLink(thumbFileResource);
+		_image->setImageLink(Wt::WLink(thumbFileResource));
 		setCondition("has-image", true);
 		resolve<Wt::WText*>("action")->setText(_actionChange);
 		lazyBindImage();
@@ -197,7 +193,7 @@ namespace GS
 		TRANSACTION(app);
 
 		if(!_imageInfo.filePtr)
-			_imageInfo.filePtr = app->dboSession().add(new UploadedFile);
+			_imageInfo.filePtr = app->dboSession().add(std::make_unique<UploadedFile>());
 
 		_imageInfo.filePtr.modify()->description = description;
 		_imageInfo.filePtr.modify()->extension = _imageInfo.extension;
@@ -218,9 +214,9 @@ namespace GS
 			boost::filesystem::remove(_imageInfo.fileName);
 			_fileUpload->uploadedFiles().back().stealSpoolFile();
 
-			auto thumbnailResource = dynamic_cast<Wt::WMemoryResource*>(_thumbnailResource);
+			auto thumbMemoryResource = std::static_pointer_cast<Wt::WMemoryResource>(_thumbnailResource);
 			std::ofstream thumbnailStream(thumbnailFilePath.string(), std::ofstream::binary | std::ofstream::trunc);
-			auto thumbnailData = thumbnailResource->data();
+			auto thumbnailData = thumbMemoryResource->data();
 			thumbnailStream.write((const char*)&thumbnailData[0], thumbnailData.size() * sizeof(unsigned char));
 			thumbnailStream.close();
 
@@ -230,9 +226,8 @@ namespace GS
 			if(_imageResource)
 				_imageResource->setFileName(newFilePath.string());
 
-			delete _thumbnailResource;
-			Wt::WFileResource *thumbFileResource;
-			_thumbnailResource = thumbFileResource = new Wt::WFileResource(this);
+			std::shared_ptr<Wt::WFileResource> thumbFileResource;
+			_thumbnailResource = thumbFileResource = std::make_shared<Wt::WFileResource>();
 			thumbFileResource->setFileName(thumbnailFilePath.string());
 			thumbFileResource->setMimeType("image/jpeg");
 			_image->setImageLink(Wt::WLink(_thumbnailResource));
@@ -243,7 +238,7 @@ namespace GS
 			_imageInfo.filePtr.remove();
 			_imageInfo = UploadedImage();
 			_image->setImageLink(_placeholderLink);
-			APP->showErrorDialog(tr("ImageRelocationError"));
+			app->showErrorDialog(tr("ImageRelocationError"));
 			return false;
 		}
 

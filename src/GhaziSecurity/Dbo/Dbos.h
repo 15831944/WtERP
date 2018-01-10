@@ -1,14 +1,16 @@
 #ifndef GS_DBOS_H
 #define GS_DBOS_H
 
-#include "Utilities/Common.h"
-#include <Wt/Dbo/Dbo>
-#include <Wt/Auth/Dbo/AuthInfo>
-#include <Wt/WDate>
-#include <Wt/WBoostAny>
-#include <Wt/Dbo/WtSqlTraits>
-#include <Wt/Dbo/SqlTraits>
-#include <Wt/Payment/Money>
+#include "Common.h"
+#include <Wt/Dbo/Dbo.h>
+#include <Wt/Auth/Dbo/AuthInfo.h>
+#include <Wt/WDate.h>
+#include <Wt/WAny.h>
+#include <Wt/Dbo/WtSqlTraits.h>
+#include <Wt/Dbo/SqlTraits.h>
+#include <Wt/Payment/Money.h>
+
+#include <boost/lexical_cast.hpp>
 
 #define TRANSACTION(app) Wt::Dbo::Transaction t(app->dboSession())
 
@@ -258,7 +260,7 @@ namespace GS
 	public:
 		Wt::Dbo::ptr<User> creatorUserPtr;
 		Wt::Dbo::ptr<Region> regionPtr;
-		Wt::WDateTime timestamp = Wt::WDateTime(boost::posix_time::microsec_clock::local_time());
+		Wt::WDateTime timestamp = Wt::WDateTime::currentDateTime();
 
 		void setCreatedByValues(bool setRegion = true);
 
@@ -524,9 +526,9 @@ namespace GS
 		{
 			switch(type)
 			{
-			case PersonType: return Wt::WString::tr("person");
-			case BusinessType: return Wt::WString::tr("business");
-			default: return Wt::WString::tr("entity");
+			case PersonType: return tr("person");
+			case BusinessType: return tr("business");
+			default: return tr("entity");
 			}
 		}
 
@@ -819,7 +821,7 @@ namespace GS
 		CityCollection cityCollection;
 		
 		Country() = default;
-		Country(const std::string &code) : code(code) { }
+		Country(const std::string &code, const std::string &name = "") : code(code), name(name) { }
 
 		template<class Action>
 		void persist(Action& a)
@@ -840,7 +842,7 @@ namespace GS
 		std::string name;
 
 		City() = default;
-		City(Wt::Dbo::ptr<Country> countryPtr) : countryPtr(countryPtr) { }
+		City(Wt::Dbo::ptr<Country> countryPtr, const std::string &name = "") : countryPtr(countryPtr), name(name) { }
 
 		template<class Action>
 		void persist(Action& a)
@@ -1034,7 +1036,6 @@ namespace GS
 			: _amountInCents(amount.valueInCents()), _debitAccountPtr(debitAccountPtr), _creditAccountPtr(creditAccountPtr)
 		{ }
 		AccountEntry(const AccountEntry &) = default;
-		AccountEntry(AccountEntry &&) = default;
 
 		long long _amountInCents = 0;
 		Wt::Dbo::ptr<Account> _debitAccountPtr;
@@ -1052,6 +1053,7 @@ namespace GS
 		};
 
 		AccountEntry() = default;
+		AccountEntry(AccountEntry &&) = default;
 		static std::string newInternalPath() { return "/" ADMIN_PATHC "/" ACCOUNTS_PATHC "/" NEW_ACCOUNTENTRY_PATHC; }
 		static std::string viewInternalPath(long long id) { return viewInternalPath(boost::lexical_cast<std::string>(id)); }
 		static std::string viewInternalPath(const std::string &idStr) { return "/" ADMIN_PATHC "/" ACCOUNTS_PATHC "/" ACCOUNTENTRY_PREFIX + idStr; }
@@ -1150,7 +1152,7 @@ namespace GS
 		MonthlyInterval = 2,
 		YearlyInterval = 3
 	};
-	boost::posix_time::ptime addCycleInterval(boost::posix_time::ptime pTime, CycleInterval interval, int nIntervals);
+	Wt::WDateTime addCycleInterval(const Wt::WDateTime &dt, CycleInterval interval, int nIntervals);
 	Wt::WString rsEveryNIntervals(const Money &amount, CycleInterval interval, int nIntervals);
 
 	class EntryCycle : public BaseAdminRecord
@@ -1650,7 +1652,7 @@ namespace Wt
 	using namespace GS;
 
 	template<>
-	struct boost_any_traits<Money>
+	struct any_traits<Money>
 	{
 		static Wt::WString asString(const Money &value, const Wt::WString &) { return WLocale::currentLocale().toString(value); }
 		static double asNumber(const Money &v) { return v.valueDbl(); }
@@ -1658,47 +1660,47 @@ namespace Wt
 	};
 
 	template<>
-	struct boost_any_traits<Entity::Type> : public boost_any_traits<int>
+	struct any_traits<Entity::Type> : public any_traits<int>
 	{
 		static Wt::WString asString(const Entity::Type &value, const Wt::WString &)
 		{
 			switch(value)
 			{
-			case Entity::PersonType: return Wt::WString::tr("Person");
-			case Entity::BusinessType: return Wt::WString::tr("Business");
-			default: return Wt::WString::tr("Unknown");
+			case Entity::PersonType: return tr("Person");
+			case Entity::BusinessType: return tr("Business");
+			default: return tr("Unknown");
 			}
 		}
 	};
 
 	template<>
-	struct boost_any_traits<Account::Type> : public boost_any_traits<int>
+	struct any_traits<Account::Type> : public any_traits<int>
 	{
 		static Wt::WString asString(const Account::Type &value, const Wt::WString &)
 		{
 			switch(value)
 			{
-			case Account::EntityBalanceAccount: return Wt::WString::tr("EntityBalanceAccount");
-			case Account::EntityPnlAccount: return Wt::WString::tr("EntityPnlAccount");
-			case Account::Asset: return Wt::WString::tr("Asset");
-			case Account::Liability: return Wt::WString::tr("Liability");
-			default: return Wt::WString::tr("Unknown");
+			case Account::EntityBalanceAccount: return tr("EntityBalanceAccount");
+			case Account::EntityPnlAccount: return tr("EntityPnlAccount");
+			case Account::Asset: return tr("Asset");
+			case Account::Liability: return tr("Liability");
+			default: return tr("Unknown");
 			}
 		}
 	};
 
 	template<>
-	struct boost_any_traits<Wt::WFlags<Entity::SpecificType>> : public boost_any_traits<int>
+	struct any_traits<Wt::WFlags<Entity::SpecificType>> : public any_traits<int>
 	{
 		static Wt::WString asString(const Wt::WFlags<Entity::SpecificType> &value, const Wt::WString &)
 		{
 			std::string result;
 			if(value & Entity::EmployeeType)
-				result += Wt::WString::tr("Employee").toUTF8() + ", ";
+				result += tr("Employee").toUTF8() + ", ";
 			if(value & Entity::PersonnelType)
-				result += Wt::WString::tr("Personnel").toUTF8() + ", ";
+				result += tr("Personnel").toUTF8() + ", ";
 			if(value & Entity::ClientType)
-				result += Wt::WString::tr("Client").toUTF8() + ", ";
+				result += tr("Client").toUTF8() + ", ";
 
 			result = result.substr(0, result.size() - 2);
 			return Wt::WString::fromUTF8(result);
@@ -1706,7 +1708,7 @@ namespace Wt
 	};
 
 	template<>
-	struct boost_any_traits<BloodType> : public boost_any_traits<int>
+	struct any_traits<BloodType> : public any_traits<int>
 	{
 		static Wt::WString asString(const BloodType &value, const Wt::WString &)
 		{
@@ -1720,79 +1722,79 @@ namespace Wt
 			case BNegative: return "B-";
 			case ABPositive: return "AB+";
 			case ABNegative: return "AB-";
-			default: return Wt::WString::tr("Unknown");
+			default: return tr("Unknown");
 			}
 		}
 	};
 
 	template<>
-	struct boost_any_traits<MaritalStatus> : public boost_any_traits<int>
+	struct any_traits<MaritalStatus> : public any_traits<int>
 	{
 		static Wt::WString asString(const MaritalStatus &value, const Wt::WString &)
 		{
 			switch(value)
 			{
-			case Married: return Wt::WString::tr("Married");
-			case Unmarried: return Wt::WString::tr("Unmarried");
-			default: return Wt::WString::tr("Unknown");
+			case Married: return tr("Married");
+			case Unmarried: return tr("Unmarried");
+			default: return tr("Unknown");
 			}
 		}
 	};
 
 	template<>
-	struct boost_any_traits<CycleInterval> : public boost_any_traits<int>
+	struct any_traits<CycleInterval> : public any_traits<int>
 	{
 		static Wt::WString asString(const CycleInterval &value, const Wt::WString &)
 		{
 			switch(value)
 			{
-			case DailyInterval: return Wt::WString::tr("Daily");
-			case WeeklyInterval: return Wt::WString::tr("Weekly");
-			case MonthlyInterval: return Wt::WString::tr("Monthly");
-			case YearlyInterval: return Wt::WString::tr("Yearly");
+			case DailyInterval: return tr("Daily");
+			case WeeklyInterval: return tr("Weekly");
+			case MonthlyInterval: return tr("Monthly");
+			case YearlyInterval: return tr("Yearly");
 			default: return "";
 			}
 		}
 	};
 
 	template<>
-	struct boost_any_traits<IncomeCycle::Purpose> : public boost_any_traits<int>
+	struct any_traits<IncomeCycle::Purpose> : public any_traits<int>
 	{
 		static Wt::WString asString(const IncomeCycle::Purpose &value, const Wt::WString &)
 		{
 			switch(value)
 			{
-			case IncomeCycle::UnspecifiedPurpose: return Wt::WString::tr("UnspecificPurpose");
-			case IncomeCycle::Services: return Wt::WString::tr("Services");
-			default: return Wt::WString::tr("Unknown");
+			case IncomeCycle::UnspecifiedPurpose: return tr("UnspecificPurpose");
+			case IncomeCycle::Services: return tr("Services");
+			default: return tr("Unknown");
 			}
 		}
 	};
 
 	template<>
-	struct boost_any_traits<ExpenseCycle::Purpose> : public boost_any_traits<int>
+	struct any_traits<ExpenseCycle::Purpose> : public any_traits<int>
 	{
 		static Wt::WString asString(const ExpenseCycle::Purpose &value, const Wt::WString &)
 		{
 			switch(value)
 			{
-			case ExpenseCycle::UnspecifiedPurpose: return Wt::WString::tr("UnspecificPurpose");
-			case ExpenseCycle::Salary: return Wt::WString::tr("Salary");
-			default: return Wt::WString::tr("Unknown");
+			case ExpenseCycle::UnspecifiedPurpose: return tr("UnspecificPurpose");
+			case ExpenseCycle::Salary: return tr("Salary");
+			default: return tr("Unknown");
 			}
 		}
 	};
 
 	template<>
-	struct boost_any_traits<EmployeePosition::Type> : public boost_any_traits<int>
+	struct any_traits<EmployeePosition::Type> : public any_traits<int>
 	{
 		static Wt::WString asString(const EmployeePosition::Type &value, const Wt::WString &)
 		{
 			switch(value)
 			{
-			case EmployeePosition::OtherType: return Wt::WString::tr("Other");
-			case EmployeePosition::PersonnelType: return Wt::WString::tr("PersonnelPosition");
-			default: return Wt::WString::tr("Unknown");
+			case EmployeePosition::OtherType: return tr("Other");
+			case EmployeePosition::PersonnelType: return tr("PersonnelPosition");
+			default: return tr("Unknown");
 			}
 		}
 	};
@@ -1814,7 +1816,6 @@ namespace Wt
 			}
 		};
 	}
-	
 }
 
 #endif

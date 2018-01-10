@@ -4,15 +4,15 @@
 #include "Application/WServer.h"
 #include "Dbo/ConfigurationsDatabase.h"
 
-#include <Wt/WTableView>
-#include <Wt/WPushButton>
-#include <Wt/WComboBox>
-#include <Wt/WSuggestionPopup>
-#include <Wt/WDialog>
-#include <Wt/WTextArea>
-#include <Wt/WDoubleValidator>
+#include <Wt/WTableView.h>
+#include <Wt/WPushButton.h>
+#include <Wt/WComboBox.h>
+#include <Wt/WSuggestionPopup.h>
+#include <Wt/WDialog.h>
+#include <Wt/WTextArea.h>
+#include <Wt/WDoubleValidator.h>
 
-#include <Wt/Dbo/QueryModel>
+#include <Wt/Dbo/QueryModel.h>
 
 namespace GS
 {
@@ -29,37 +29,34 @@ namespace GS
 
 	void AccountList::initFilters()
 	{
-		filtersTemplate()->addFilterModel(new WLineEditFilterModel(tr("ID"), "acc.id", std::bind(&FiltersTemplate::initIdEdit, std::placeholders::_1)));
-		filtersTemplate()->addFilterModel(new NameFilterModel(tr("Name"), "acc.name")); filtersTemplate()->addFilter(2);
-		filtersTemplate()->addFilterModel(new RangeFilterModel(tr("Balance"), "acc.balance"));
-		//filtersTemplate()->addFilterModel(new BitmaskFilterModel(tr("Recurring?"), "entryCycle", std::bind(&FiltersTemplate::initEntryCycleEdit, std::placeholders::_1)));
+		filtersTemplate()->addFilterModel(std::make_shared<WLineEditFilterModel>(tr("ID"), "acc.id", std::bind(&FiltersTemplate::initIdEdit, std::placeholders::_1)));
+		filtersTemplate()->addFilterModel(std::make_shared<NameFilterModel>(tr("Name"), "acc.name")); filtersTemplate()->addFilter(2);
+		filtersTemplate()->addFilterModel(std::make_shared<RangeFilterModel>(tr("Balance"), "acc.balance"));
+		//filtersTemplate()->addFilterModel(std::make_shared<BitmaskFilterModel>(tr("Recurring?"), "entryCycle", std::bind(&FiltersTemplate::initEntryCycleEdit, std::placeholders::_1)));
 	}
 
 	void AccountList::initModel()
 	{
-		QueryModelType *model;
-		_model = model = new QueryModelType(this);
+		std::shared_ptr<QueryModelType> model;
+		_model = model = std::make_shared<QueryModelType>();
 		
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
-			"SELECT acc.id, acc.name, acc.type, e.id e_id, acc.balance, e.name e_name FROM " + std::string(Account::tableName()) + " acc "
+			"SELECT acc.id, acc.name, acc.type, e.id, acc.balance, e.name FROM " + std::string(Account::tableName()) + " acc "
 			"LEFT JOIN " + Entity::tableName() + " e ON (e.bal_account_id = acc.id OR e.pnl_account_id = acc.id)");
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "acc.");
 
-		Wt::Dbo::Query<ResultType> query(_baseQuery); //must copy the query first
-		model->setQuery(query);
-
+		model->setQuery(generateQuery());
 		addColumn(ViewId, model->addColumn("acc.id"), tr("ID"), IdColumnWidth);
 		addColumn(ViewName, model->addColumn("acc.name"), tr("Name"), AccountNameColumnWidth);
 		addColumn(ViewType, model->addColumn("acc.type"), tr("Type"), TypeColumnWidth);
-		addColumn(ViewEntity, model->addColumn("e.id e_id"), tr("Entity"), EntityColumnWidth);
+		addColumn(ViewEntity, model->addColumn("e.id"), tr("Entity"), EntityColumnWidth);
 		addColumn(ViewBalance, model->addColumn("acc.balance"), tr("BalanceRs"), BalanceColumnWidth);
 
-		_proxyModel = new AccountListProxyModel(_model, _model);
+		_proxyModel = std::make_shared<AccountListProxyModel>(_model);
 	}
 
-	AccountListProxyModel::AccountListProxyModel(Wt::WAbstractItemModel *model, Wt::WObject *parent /*= nullptr*/)
-		: Wt::WBatchEditProxyModel(parent)
+	AccountListProxyModel::AccountListProxyModel(std::shared_ptr<Wt::WAbstractItemModel> model)
 	{
 		setSourceModel(model);
 		addAdditionalColumns();
@@ -78,15 +75,15 @@ namespace GS
 	Wt::WFlags<Wt::ItemFlag> AccountListProxyModel::flags(const Wt::WModelIndex &index) const
 	{
 		if(index.column() == _linkColumn)
-			return Wt::ItemIsXHTMLText;
+			return Wt::ItemFlag::XHTMLText;
 		return Wt::WBatchEditProxyModel::flags(index);
 	}
 
-	boost::any AccountListProxyModel::headerData(int section, Wt::Orientation orientation /*= Wt::Horizontal*/, int role /*= Wt::DisplayRole*/) const
+	Wt::any AccountListProxyModel::headerData(int section, Wt::Orientation orientation, Wt::ItemDataRole role) const
 	{
 		if(section == _linkColumn)
 		{
-			if(role == Wt::WidthRole)
+			if(role == Wt::ItemDataRole::Width)
 				return 40;
 			return Wt::WAbstractItemModel::headerData(section, orientation, role);
 		}
@@ -94,62 +91,62 @@ namespace GS
 		return Wt::WBatchEditProxyModel::headerData(section, orientation, role);
 	}
 
-	boost::any AccountListProxyModel::data(const Wt::WModelIndex &idx, int role /*= Wt::DisplayRole*/) const
+	Wt::any AccountListProxyModel::data(const Wt::WModelIndex &idx, Wt::ItemDataRole role) const
 	{
 		if(_linkColumn != -1 && idx.column() == _linkColumn)
 		{
-			if(role == Wt::DisplayRole)
-				return Wt::WString::tr("GS.LinkIcon");
-			else if(role == Wt::LinkRole)
+			if(role == Wt::ItemDataRole::Display)
+				return tr("GS.LinkIcon");
+			else if(role == Wt::ItemDataRole::Link)
 			{
-				const AccountList::ResultType &res = dynamic_cast<Wt::Dbo::QueryModel<AccountList::ResultType>*>(sourceModel())->resultRow(idx.row());
-				long long id = boost::get<AccountList::ResId>(res);
-				return Wt::WLink(Wt::WLink::InternalPath, Account::viewInternalPath(id));
+				const AccountList::ResultType &res = std::static_pointer_cast<Wt::Dbo::QueryModel<AccountList::ResultType>>(sourceModel())->resultRow(idx.row());
+				long long id = std::get<AccountList::ResId>(res);
+				return Wt::WLink(Wt::LinkType::InternalPath, Account::viewInternalPath(id));
 			}
 		}
 
-		boost::any viewIndexData = headerData(idx.column(), Wt::Horizontal, Wt::ViewIndexRole);
+		Wt::any viewIndexData = headerData(idx.column(), Wt::Orientation::Horizontal, Wt::ItemDataRole::ViewIndex);
 		if(viewIndexData.empty())
 			return Wt::WBatchEditProxyModel::data(idx, role);
-		int viewIndex = boost::any_cast<int>(viewIndexData);
+		int viewIndex = Wt::any_cast<int>(viewIndexData);
 
-		if(viewIndex == AccountList::ViewBalance && role == Wt::DisplayRole)
+		if(viewIndex == AccountList::ViewBalance && role == Wt::ItemDataRole::Display)
 		{
-			const AccountList::ResultType &res = dynamic_cast<Wt::Dbo::QueryModel<AccountList::ResultType>*>(sourceModel())->resultRow(idx.row());
-			Account::Type type = boost::get<AccountList::ResType>(res);
-			long long balanceInCents = boost::get<AccountList::ResBalance>(res);
+			const AccountList::ResultType &res = std::static_pointer_cast<Wt::Dbo::QueryModel<AccountList::ResultType>>(sourceModel())->resultRow(idx.row());
+			Account::Type type = std::get<AccountList::ResType>(res);
+			long long balanceInCents = std::get<AccountList::ResBalance>(res);
 			Wt::WString balanceStr = Wt::WLocale::currentLocale().toString(Money(std::abs(balanceInCents), DEFAULT_CURRENCY));
 
 			switch(type)
 			{
 			default:
-				if(balanceInCents > 0) return Wt::WString::tr("XDebit").arg(balanceStr);
-				else if(balanceInCents < 0) return Wt::WString::tr("XCredit").arg(balanceStr);
+				if(balanceInCents > 0) return tr("XDebit").arg(balanceStr);
+				else if(balanceInCents < 0) return tr("XCredit").arg(balanceStr);
 				else return balanceStr;
 			case Account::EntityBalanceAccount:
-				if(balanceInCents > 0) return Wt::WString::tr("XReceivable").arg(balanceStr);
-				else if(balanceInCents < 0) return Wt::WString::tr("XPayable").arg(balanceStr);
+				if(balanceInCents > 0) return tr("XReceivable").arg(balanceStr);
+				else if(balanceInCents < 0) return tr("XPayable").arg(balanceStr);
 				else return balanceStr;
 			case Account::EntityPnlAccount:
-				if(balanceInCents > 0) return Wt::WString::tr("XExpense").arg(balanceStr);
-				else if(balanceInCents < 0) return Wt::WString::tr("XIncome").arg(balanceStr);
+				if(balanceInCents > 0) return tr("XExpense").arg(balanceStr);
+				else if(balanceInCents < 0) return tr("XIncome").arg(balanceStr);
 				else return balanceStr;
 			}
 		}
 
 		if(viewIndex == AccountList::ViewEntity)
 		{
-			if(role == Wt::DisplayRole)
+			if(role == Wt::ItemDataRole::Display)
 			{
-				const AccountList::ResultType &res = dynamic_cast<Wt::Dbo::QueryModel<AccountList::ResultType>*>(sourceModel())->resultRow(idx.row());
-				return boost::get<AccountList::ResEntityName>(res);
+				const AccountList::ResultType &res = std::static_pointer_cast<Wt::Dbo::QueryModel<AccountList::ResultType>>(sourceModel())->resultRow(idx.row());
+				return std::get<AccountList::ResEntityName>(res);
 			}
-			else if(role == Wt::LinkRole)
+			else if(role == Wt::ItemDataRole::Link)
 			{
-				const AccountList::ResultType &res = dynamic_cast<Wt::Dbo::QueryModel<AccountList::ResultType>*>(sourceModel())->resultRow(idx.row());
-				const auto &entityId = boost::get<AccountList::ResEntityId>(res);
+				const AccountList::ResultType &res = std::static_pointer_cast<Wt::Dbo::QueryModel<AccountList::ResultType>>(sourceModel())->resultRow(idx.row());
+				const auto &entityId = std::get<AccountList::ResEntityId>(res);
 				if(entityId.is_initialized())
-					return Wt::WLink(Wt::WLink::InternalPath, Entity::viewInternalPath(*entityId));
+					return Wt::WLink(Wt::LinkType::InternalPath, Entity::viewInternalPath(*entityId));
 			}
 		}
 
@@ -165,23 +162,23 @@ namespace GS
 		{
 			int timestampColumn = viewIndexToColumn(ViewTimestamp);
 			if(timestampColumn != -1)
-				_tableView->sortByColumn(timestampColumn, Wt::DescendingOrder);
+				_tableView->sortByColumn(timestampColumn, Wt::SortOrder::Descending);
 		}
 	}
 
 	void AccountChildrenEntryList::initFilters()
 	{
-		filtersTemplate()->addFilterModel(new RangeFilterModel(tr("Amount"), "amount")); filtersTemplate()->addFilter(1);
+		filtersTemplate()->addFilterModel(std::make_shared<RangeFilterModel>(tr("Amount"), "amount")); filtersTemplate()->addFilter(1);
 	}
 
 	void AccountChildrenEntryList::initModel()
 	{
-		QueryModelType *model;
-		_model = model = new QueryModelType(this);
+		std::shared_ptr<QueryModelType> model;
+		_model = model = std::make_shared<QueryModelType>();
 
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
-			"SELECT e.timestamp, e.description, e.amount, e.debit_account_id, e.credit_account_id, oAcc.id oAcc_id, oAcc.name oAcc_name, e.id FROM " + 
+			"SELECT e.timestamp, e.description, e.amount, e.debit_account_id, e.credit_account_id, oAcc.id, oAcc.name, e.id FROM " + 
 			std::string(AccountEntry::tableName()) + " e "
 			"INNER JOIN " + Account::tableName() + " oAcc ON (oAcc.id <> ? AND (oAcc.id = e.debit_account_id OR oAcc.id = e.credit_account_id))").bind(_accountPtr.id())
 			.where("e.debit_account_id = ? OR e.credit_account_id = ?").bind(_accountPtr.id()).bind(_accountPtr.id());
@@ -194,17 +191,15 @@ namespace GS
 
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "e.");
 
-		Wt::Dbo::Query<ResultType> query(_baseQuery); //must copy the query first
-		model->setQuery(query);
-
+		model->setQuery(generateQuery());
 		addColumn(ViewTimestamp, model->addColumn("e.timestamp"), tr("Timestamp"), DateTimeColumnWidth);
 		addColumn(ViewDescription, model->addColumn("e.description"), tr("Description"), 300);
 		addColumn(ViewOppositeAccount, model->addColumn("e.amount"), tr("OppositeEntryAccount"), AccountNameColumnWidth);
 		addColumn(ViewDebitAmount, model->addColumn("e.debit_account_id"), tr("DebitAccount"), AmountColumnWidth);
 		addColumn(ViewCreditAmount, model->addColumn("e.credit_account_id"), tr("CreditAccount"), AmountColumnWidth);
 
-		_proxyModel = new AccountChildrenEntryListProxyModel(_model, _model);
-		model->setHeaderData(0, Wt::Horizontal, _accountPtr, Wt::UserRole);
+		_proxyModel = std::make_shared<AccountChildrenEntryListProxyModel>(_model);
+		model->setHeaderData(0, Wt::Orientation::Horizontal, _accountPtr, Wt::ItemDataRole::User);
 	}
 
 	void AccountEntryList::load()
@@ -216,24 +211,24 @@ namespace GS
 		{
 			int timestampColumn = viewIndexToColumn(ViewTimestamp);
 			if(timestampColumn != -1)
-				_tableView->sortByColumn(timestampColumn, Wt::DescendingOrder);
+				_tableView->sortByColumn(timestampColumn, Wt::SortOrder::Descending);
 		}
 	}
 
 	void AccountEntryList::initFilters()
 	{
-		filtersTemplate()->addFilterModel(new RangeFilterModel(tr("Amount"), "amount")); filtersTemplate()->addFilter(1);
+		filtersTemplate()->addFilterModel(std::make_shared<RangeFilterModel>(tr("Amount"), "amount")); filtersTemplate()->addFilter(1);
 	}
 
 	void AccountEntryList::initModel()
 	{
-		QueryModelType *model;
-		_model = model = new QueryModelType(this);
+		std::shared_ptr<QueryModelType> model;
+		_model = model = std::make_shared<QueryModelType>();
 
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
-			"SELECT e.timestamp, e.description, e.amount, e.debit_account_id, e.credit_account_id, dAcc.name dAcc_name, cAcc.name cAcc_name, e.id FROM " +
-			std::string(AccountEntry::tableName()) + " e "
+			"SELECT e.timestamp, e.description, e.amount, e.debit_account_id, e.credit_account_id, dAcc.name, cAcc.name, e.id "
+			"FROM " + std::string(AccountEntry::tableName()) + " e "
 			"INNER JOIN " + Account::tableName() + " dAcc ON (dAcc.id = e.debit_account_id) "
 			"INNER JOIN " + Account::tableName() + " cAcc ON (cAcc.id = e.credit_account_id)");
 
@@ -245,20 +240,17 @@ namespace GS
 
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "e.");
 
-		Wt::Dbo::Query<ResultType> query(_baseQuery); //must copy the query first
-		model->setQuery(query);
-
+		model->setQuery(generateQuery());
 		addColumn(ViewTimestamp, model->addColumn("e.timestamp"), tr("Timestamp"), DateTimeColumnWidth);
 		addColumn(ViewDescription, model->addColumn("e.description"), tr("Description"), 300);
 		addColumn(ViewAmount, model->addColumn("e.amount"), tr("AmountRs"), AmountColumnWidth);
 		addColumn(ViewDebitAccount, model->addColumn("dAcc.name dAcc_name"), tr("DebitRs"), AccountNameColumnWidth);
 		addColumn(ViewCreditAccount, model->addColumn("cAcc.name cAcc_name"), tr("CreditRs"), AccountNameColumnWidth);
 
-		_proxyModel = new AccountEntryListProxyModel(_model, _model);
+		_proxyModel = std::make_shared<AccountEntryListProxyModel>(_model);
 	}
 
-	AccountChildrenEntryListProxyModel::AccountChildrenEntryListProxyModel(Wt::WAbstractItemModel *model, Wt::WObject *parent /*= nullptr*/)
-		: Wt::WBatchEditProxyModel(parent)
+	AccountChildrenEntryListProxyModel::AccountChildrenEntryListProxyModel(std::shared_ptr<Wt::WAbstractItemModel> model)
 	{
 		setSourceModel(model);
 		addAdditionalColumns();
@@ -274,75 +266,75 @@ namespace GS
 			_linkColumn = -1;
 	}
 
-	boost::any AccountChildrenEntryListProxyModel::headerData(int section, Wt::Orientation orientation /*= Wt::Horizontal*/, int role /*= Wt::DisplayRole*/) const
+	Wt::any AccountChildrenEntryListProxyModel::headerData(int section, Wt::Orientation orientation, Wt::ItemDataRole role) const
 	{
 		if(section == _linkColumn)
 		{
-			if(role == Wt::WidthRole)
+			if(role == Wt::ItemDataRole::Width)
 				return 40;
 			return Wt::WAbstractItemModel::headerData(section, orientation, role);
 		}
 		return Wt::WBatchEditProxyModel::headerData(section, orientation, role);
 	}
 
-	boost::any AccountChildrenEntryListProxyModel::data(const Wt::WModelIndex &idx, int role /*= Wt::DisplayRole*/) const
+	Wt::any AccountChildrenEntryListProxyModel::data(const Wt::WModelIndex &idx, Wt::ItemDataRole role) const
 	{
 		if(_linkColumn != -1 && idx.column() == _linkColumn)
 		{
-			if(role == Wt::DisplayRole)
-				return Wt::WString::tr("GS.LinkIcon");
-			else if(role == Wt::LinkRole)
+			if(role == Wt::ItemDataRole::Display)
+				return tr("GS.LinkIcon");
+			else if(role == Wt::ItemDataRole::Link)
 			{
-				const AccountChildrenEntryList::ResultType &res = dynamic_cast<Wt::Dbo::QueryModel<AccountChildrenEntryList::ResultType>*>(sourceModel())->resultRow(idx.row());
-				long long id = boost::get<AccountChildrenEntryList::ResId>(res);
-				return Wt::WLink(Wt::WLink::InternalPath, AccountEntry::viewInternalPath(id));
+				const AccountChildrenEntryList::ResultType &res = std::static_pointer_cast<Wt::Dbo::QueryModel<AccountChildrenEntryList::ResultType>>(sourceModel())->resultRow(idx.row());
+				long long id = std::get<AccountChildrenEntryList::ResId>(res);
+				return Wt::WLink(Wt::LinkType::InternalPath, AccountEntry::viewInternalPath(id));
 			}
 		}
 
-		boost::any viewIndexData = headerData(idx.column(), Wt::Horizontal, Wt::ViewIndexRole);
+		Wt::any viewIndexData = headerData(idx.column(), Wt::Orientation::Horizontal, Wt::ItemDataRole::ViewIndex);
 		if(viewIndexData.empty())
 			return Wt::WBatchEditProxyModel::data(idx, role);
-		int viewIndex = boost::any_cast<int>(viewIndexData);
+		int viewIndex = Wt::any_cast<int>(viewIndexData);
 
 		//Opposite entry account
 		if(viewIndex == AccountChildrenEntryList::ViewOppositeAccount)
 		{
-			if(role == Wt::DisplayRole)
+			if(role == Wt::ItemDataRole::Display)
 			{
-				const AccountChildrenEntryList::ResultType &res = dynamic_cast<Wt::Dbo::QueryModel<AccountChildrenEntryList::ResultType>*>(sourceModel())->resultRow(idx.row());
-				return boost::get<AccountChildrenEntryList::ResOppositeAccountName>(res);
+				const AccountChildrenEntryList::ResultType &res = std::static_pointer_cast<Wt::Dbo::QueryModel<AccountChildrenEntryList::ResultType>>(sourceModel())->resultRow(idx.row());
+				return std::get<AccountChildrenEntryList::ResOppositeAccountName>(res);
 			}
-			else if(role == Wt::LinkRole)
+			else if(role == Wt::ItemDataRole::Link)
 			{
-				const AccountChildrenEntryList::ResultType &res = dynamic_cast<Wt::Dbo::QueryModel<AccountChildrenEntryList::ResultType>*>(sourceModel())->resultRow(idx.row());
-				const long long &accountId = boost::get<AccountChildrenEntryList::ResOppositeAccountId>(res);
-				return Wt::WLink(Wt::WLink::InternalPath, Account::viewInternalPath(accountId));
+				const AccountChildrenEntryList::ResultType &res = std::static_pointer_cast<Wt::Dbo::QueryModel<AccountChildrenEntryList::ResultType>>(sourceModel())->resultRow(idx.row());
+				const long long &accountId = std::get<AccountChildrenEntryList::ResOppositeAccountId>(res);
+				return Wt::WLink(Wt::LinkType::InternalPath, Account::viewInternalPath(accountId));
 			}
 		}
 
 		//Debit amount
-		if(viewIndex == AccountChildrenEntryList::ViewDebitAmount && role == Wt::DisplayRole)
+		if(viewIndex == AccountChildrenEntryList::ViewDebitAmount && role == Wt::ItemDataRole::Display)
 		{
-			const AccountChildrenEntryList::ResultType &res = dynamic_cast<Wt::Dbo::QueryModel<AccountChildrenEntryList::ResultType>*>(sourceModel())->resultRow(idx.row());
-			auto accountPtr = boost::any_cast<Wt::Dbo::ptr<Account>>(headerData(0, Wt::Horizontal, Wt::UserRole));
-			const long long &debitAccountId = boost::get<AccountChildrenEntryList::ResDebitAccountId>(res);
+			const AccountChildrenEntryList::ResultType &res = std::static_pointer_cast<Wt::Dbo::QueryModel<AccountChildrenEntryList::ResultType>>(sourceModel())->resultRow(idx.row());
+			auto accountPtr = Wt::any_cast<Wt::Dbo::ptr<Account>>(headerData(0, Wt::Orientation::Horizontal, Wt::ItemDataRole::User));
+			const long long &debitAccountId = std::get<AccountChildrenEntryList::ResDebitAccountId>(res);
 
 			if(accountPtr.id() == debitAccountId)
-				return Money(boost::get<AccountChildrenEntryList::ResAmount>(res), DEFAULT_CURRENCY);
+				return Money(std::get<AccountChildrenEntryList::ResAmount>(res), DEFAULT_CURRENCY);
 			else
-				return boost::any();
+				return Wt::any();
 		}
 		//Credit amount
-		if(viewIndex == AccountChildrenEntryList::ViewCreditAmount && role == Wt::DisplayRole)
+		if(viewIndex == AccountChildrenEntryList::ViewCreditAmount && role == Wt::ItemDataRole::Display)
 		{
-			const AccountChildrenEntryList::ResultType &res = dynamic_cast<Wt::Dbo::QueryModel<AccountChildrenEntryList::ResultType>*>(sourceModel())->resultRow(idx.row());
-			auto accountPtr = boost::any_cast<Wt::Dbo::ptr<Account>>(headerData(0, Wt::Horizontal, Wt::UserRole));
-			const long long &creditAccountId = boost::get<AccountChildrenEntryList::ResCreditAccountId>(res);
+			const AccountChildrenEntryList::ResultType &res = std::static_pointer_cast<Wt::Dbo::QueryModel<AccountChildrenEntryList::ResultType>>(sourceModel())->resultRow(idx.row());
+			auto accountPtr = Wt::any_cast<Wt::Dbo::ptr<Account>>(headerData(0, Wt::Orientation::Horizontal, Wt::ItemDataRole::User));
+			const long long &creditAccountId = std::get<AccountChildrenEntryList::ResCreditAccountId>(res);
 
 			if(accountPtr.id() == creditAccountId)
-				return Money(boost::get<AccountChildrenEntryList::ResAmount>(res), DEFAULT_CURRENCY);
+				return Money(std::get<AccountChildrenEntryList::ResAmount>(res), DEFAULT_CURRENCY);
 			else
-				return boost::any();
+				return Wt::any();
 		}
 
 		return Wt::WBatchEditProxyModel::data(idx, role);
@@ -351,12 +343,11 @@ namespace GS
 	Wt::WFlags<Wt::ItemFlag> AccountChildrenEntryListProxyModel::flags(const Wt::WModelIndex &index) const
 	{
 		if(index.column() == _linkColumn)
-			return Wt::ItemIsXHTMLText;
+			return Wt::ItemFlag::XHTMLText;
 		return Wt::WBatchEditProxyModel::flags(index);
 	}
 
-	AccountEntryListProxyModel::AccountEntryListProxyModel(Wt::WAbstractItemModel *model, Wt::WObject *parent /*= nullptr*/)
-		: Wt::WBatchEditProxyModel(parent)
+	AccountEntryListProxyModel::AccountEntryListProxyModel(std::shared_ptr<Wt::WAbstractItemModel> model)
 	{
 		setSourceModel(model);
 		addAdditionalColumns();
@@ -372,57 +363,57 @@ namespace GS
 			_linkColumn = -1;
 	}
 
-	boost::any AccountEntryListProxyModel::headerData(int section, Wt::Orientation orientation /*= Wt::Horizontal*/, int role /*= Wt::DisplayRole*/) const
+	Wt::any AccountEntryListProxyModel::headerData(int section, Wt::Orientation orientation, Wt::ItemDataRole role) const
 	{
 		if(section == _linkColumn)
 		{
-			if(role == Wt::WidthRole)
+			if(role == Wt::ItemDataRole::Width)
 				return 40;
 			return Wt::WAbstractItemModel::headerData(section, orientation, role);
 		}
 		return Wt::WBatchEditProxyModel::headerData(section, orientation, role);
 	}
 
-	boost::any AccountEntryListProxyModel::data(const Wt::WModelIndex &idx, int role /*= Wt::DisplayRole*/) const
+	Wt::any AccountEntryListProxyModel::data(const Wt::WModelIndex &idx, Wt::ItemDataRole role) const
 	{
 		if(_linkColumn != -1 && idx.column() == _linkColumn)
 		{
-			if(role == Wt::DisplayRole)
-				return Wt::WString::tr("GS.LinkIcon");
-			else if(role == Wt::LinkRole)
+			if(role == Wt::ItemDataRole::Display)
+				return tr("GS.LinkIcon");
+			else if(role == Wt::ItemDataRole::Link)
 			{
-				const AccountEntryList::ResultType &res = dynamic_cast<Wt::Dbo::QueryModel<AccountEntryList::ResultType>*>(sourceModel())->resultRow(idx.row());
-				long long id = boost::get<AccountEntryList::ResId>(res);
-				return Wt::WLink(Wt::WLink::InternalPath, AccountEntry::viewInternalPath(id));
+				const AccountEntryList::ResultType &res = std::static_pointer_cast<Wt::Dbo::QueryModel<AccountEntryList::ResultType>>(sourceModel())->resultRow(idx.row());
+				long long id = std::get<AccountEntryList::ResId>(res);
+				return Wt::WLink(Wt::LinkType::InternalPath, AccountEntry::viewInternalPath(id));
 			}
 		}
 
-		boost::any viewIndexData = headerData(idx.column(), Wt::Horizontal, Wt::ViewIndexRole);
+		Wt::any viewIndexData = headerData(idx.column(), Wt::Orientation::Horizontal, Wt::ItemDataRole::ViewIndex);
 		if(viewIndexData.empty())
 			return Wt::WBatchEditProxyModel::data(idx, role);
-		int viewIndex = boost::any_cast<int>(viewIndexData);
+		int viewIndex = Wt::any_cast<int>(viewIndexData);
 
 		//Debit entry account
-		if(viewIndex == AccountEntryList::ViewDebitAccount && role == Wt::LinkRole)
+		if(viewIndex == AccountEntryList::ViewDebitAccount && role == Wt::ItemDataRole::Link)
 		{
-			const AccountEntryList::ResultType &res = dynamic_cast<Wt::Dbo::QueryModel<AccountEntryList::ResultType>*>(sourceModel())->resultRow(idx.row());
-			const long long &accountId = boost::get<AccountEntryList::ResDebitAccountId>(res);
-			return Wt::WLink(Wt::WLink::InternalPath, Account::viewInternalPath(accountId));
+			const AccountEntryList::ResultType &res = std::static_pointer_cast<Wt::Dbo::QueryModel<AccountEntryList::ResultType>>(sourceModel())->resultRow(idx.row());
+			const long long &accountId = std::get<AccountEntryList::ResDebitAccountId>(res);
+			return Wt::WLink(Wt::LinkType::InternalPath, Account::viewInternalPath(accountId));
 		}
 
 		//Credit entry account
-		if(viewIndex == AccountEntryList::ViewCreditAccount && role == Wt::LinkRole)
+		if(viewIndex == AccountEntryList::ViewCreditAccount && role == Wt::ItemDataRole::Link)
 		{
-			const AccountEntryList::ResultType &res = dynamic_cast<Wt::Dbo::QueryModel<AccountEntryList::ResultType>*>(sourceModel())->resultRow(idx.row());
-			const long long &accountId = boost::get<AccountEntryList::ResCreditAccountId>(res);
-			return Wt::WLink(Wt::WLink::InternalPath, Account::viewInternalPath(accountId));
+			const AccountEntryList::ResultType &res = std::static_pointer_cast<Wt::Dbo::QueryModel<AccountEntryList::ResultType>>(sourceModel())->resultRow(idx.row());
+			const long long &accountId = std::get<AccountEntryList::ResCreditAccountId>(res);
+			return Wt::WLink(Wt::LinkType::InternalPath, Account::viewInternalPath(accountId));
 		}
 
 		//Amount
-		if(viewIndex == AccountEntryList::ViewAmount && role == Wt::DisplayRole)
+		if(viewIndex == AccountEntryList::ViewAmount && role == Wt::ItemDataRole::Display)
 		{
-			const AccountEntryList::ResultType &res = dynamic_cast<Wt::Dbo::QueryModel<AccountEntryList::ResultType>*>(sourceModel())->resultRow(idx.row());
-			return Money(boost::get<AccountEntryList::ResAmount>(res), DEFAULT_CURRENCY);
+			const AccountEntryList::ResultType &res = std::static_pointer_cast<Wt::Dbo::QueryModel<AccountEntryList::ResultType>>(sourceModel())->resultRow(idx.row());
+			return Money(std::get<AccountEntryList::ResAmount>(res), DEFAULT_CURRENCY);
 		}
 
 		return Wt::WBatchEditProxyModel::data(idx, role);
@@ -431,14 +422,14 @@ namespace GS
 	Wt::WFlags<Wt::ItemFlag> AccountEntryListProxyModel::flags(const Wt::WModelIndex &index) const
 	{
 		if(index.column() == _linkColumn)
-			return Wt::ItemIsXHTMLText;
+			return Wt::ItemFlag::XHTMLText;
 		return Wt::WBatchEditProxyModel::flags(index);
 	}
 
 	Wt::WValidator::Result AccountNameValidator::validate(const Wt::WString &input) const
 	{
 		Result baseResult = Wt::WValidator::validate(input);
-		if(baseResult.state() != Valid)
+		if(baseResult.state() != Wt::ValidationState::Valid)
 			return baseResult;
 
 		if(input.empty())
@@ -455,13 +446,13 @@ namespace GS
 			t.commit();
 
 			if(rows != 0)
-				return Result(Invalid, Wt::WString::tr("AccountNameInUse"));
+				return Result(Wt::ValidationState::Invalid, tr("AccountNameInUse"));
 		}
 		catch(Wt::Dbo::Exception &e)
 		{
 			Wt::log("error") << "AccountNameValidator::validate(): Dbo error(" << e.code() << "): " << e.what();
 			app->showDbBackendError(e.code());
-			return Result(Invalid, Wt::WString::tr("DatabaseValidationFailed"));
+			return Result(Wt::ValidationState::Invalid, tr("DatabaseValidationFailed"));
 		}
 
 		return baseResult;
@@ -491,9 +482,8 @@ namespace GS
 	{
 		setReadOnly(typeField, true);
 
-		auto entryList = new AccountChildrenEntryList(recordPtr());
+		auto entryList = _view->bindNew<AccountChildrenEntryList>("entry-list", recordPtr());
 		entryList->enableFilters();
-		_view->bindWidget("entry-list", entryList);
 	}
 
 	AuthLogin::PermissionResult AccountFormModel::checkModifyPermission() const
@@ -502,34 +492,34 @@ namespace GS
 		if(res != AuthLogin::Permitted)
 			return res;
 
-		long long cashAccountId = SERVER->configs()->getLongInt("CashAccountId", -1);
+		long long cashAccountId = SERVER->configs().getLongInt("CashAccountId", -1);
 		if(cashAccountId != -1 && _recordPtr.id() == cashAccountId)
 			return AuthLogin::Denied;
 
 		return res;
 	}
 
-	Wt::WWidget * AccountFormModel::createFormWidget(Field field)
+	std::unique_ptr<Wt::WWidget> AccountFormModel::createFormWidget(Field field)
 	{
 		if(field == nameField)
 		{
-			Wt::WLineEdit *name = new Wt::WLineEdit();
+			auto name = std::make_unique<Wt::WLineEdit>();
 			name->setMaxLength(70);
-			AccountNameValidator *nameValidator = new AccountNameValidator(true);
+			auto nameValidator = std::make_shared<AccountNameValidator>(true);
 			if(isRecordPersisted())
 			{
 				TRANSACTION(APP);
 				nameValidator->setAllowedName(_recordPtr->name);
 			}
 			setValidator(nameField, nameValidator);
-			name->changed().connect(boost::bind(&AbstractRecordFormModel::validateUpdateField, this, nameField));
+			name->changed().connect(this, std::bind(&AbstractRecordFormModel::validateUpdateField, this, nameField));
 			return name;
 		}
 		if(field == typeField)
 		{
-			Wt::WComboBox *typeCombo = new Wt::WComboBox();
-			typeCombo->insertItem(Account::Asset, Wt::boost_any_traits<Account::Type>::asString(Account::Asset, ""));
-			typeCombo->insertItem(Account::Liability, Wt::boost_any_traits<Account::Type>::asString(Account::Liability, ""));
+			auto typeCombo = std::make_unique<Wt::WComboBox>();
+			typeCombo->insertItem(Account::Asset, Wt::any_traits<Account::Type>::asString(Account::Asset, ""));
+			typeCombo->insertItem(Account::Liability, Wt::any_traits<Account::Type>::asString(Account::Liability, ""));
 			return typeCombo;
 		}
 		return RecordFormModel::createFormWidget(field);
@@ -545,18 +535,18 @@ namespace GS
 		
 		if(!_recordPtr)
 		{
-			_recordPtr = app->dboSession().add(new Account());
+			_recordPtr = app->dboSession().add(std::make_unique<Account>());
 			_recordPtr.modify()->setCreatedByValues();
 		}
 
 		_recordPtr.modify()->name = valueText(nameField).toUTF8();
 		if(isVisible(typeField))
-			_recordPtr.modify()->type = Account::Type(boost::any_cast<int>(value(typeField)));
+			_recordPtr.modify()->type = Account::Type(Wt::any_cast<int>(value(typeField)));
 
 		t.commit();
 
 		app->dboSession().flush();
-		auto nameValidator = dynamic_cast<AccountNameValidator*>(validator(nameField));
+		auto nameValidator = std::static_pointer_cast<AccountNameValidator>(validator(nameField));
 		nameValidator->setAllowedName(_recordPtr->name);
 		return true;
 	}
@@ -567,7 +557,7 @@ namespace GS
 
 	void AccountView::initView()
 	{
-		_model = new AccountFormModel(this, _tempPtr);
+		_model = std::make_shared<AccountFormModel>(this, _tempPtr);
 		addFormModel("account", _model);
 	}
 
@@ -640,36 +630,34 @@ namespace GS
 		WApplication *app = APP;
 		TRANSACTION(app);
 
-		Wt::Dbo::ptr<Entity> entityPtr = boost::any_cast<Wt::Dbo::ptr<Entity>>(value(entityField));
+		Wt::Dbo::ptr<Entity> entityPtr = Wt::any_cast<Wt::Dbo::ptr<Entity>>(value(entityField));
 		app->accountsDatabase().createEntityAccountsIfNotFound(entityPtr);
 		setAccountsFromEntity();
 
 		return BaseAccountEntryFormModel::saveChanges();
 	}
 
-	Wt::WWidget * BaseAccountEntryFormModel::createFormWidget(Field field)
+	std::unique_ptr<Wt::WWidget> BaseAccountEntryFormModel::createFormWidget(Field field)
 	{
 		if(field == descriptionField)
 		{
-			Wt::WTextArea *description = new Wt::WTextArea();
+			auto description = std::make_unique<Wt::WTextArea>();
 			description->setRows(2);
-			setValidator(descriptionField, new Wt::WLengthValidator(0, 255));
+			setValidator(descriptionField, std::make_shared<Wt::WLengthValidator>(0, 255));
 			return description;
 		}
 		if(field == debitAccountField)
 		{
-			FindAccountEdit *debitFindEdit = new FindAccountEdit();
-			return debitFindEdit;
+			return std::make_unique<FindAccountEdit>();
 		}
 		if(field == creditAccountField)
 		{
-			FindAccountEdit *creditFindEdit = new FindAccountEdit();
-			return creditFindEdit;
+			return std::make_unique<FindAccountEdit>();
 		}
 		if(field == amountField)
 		{
-			Wt::WLineEdit *amount = new Wt::WLineEdit();
-			auto amountValidator = new Wt::WDoubleValidator();
+			auto amount = std::make_unique<Wt::WLineEdit>();
+			auto amountValidator = std::make_shared<Wt::WDoubleValidator>();
 			amountValidator->setBottom(0);
 			amountValidator->setMandatory(true);
 			setValidator(amountField, amountValidator);
@@ -677,43 +665,42 @@ namespace GS
 		}
 		if(field == entityField)
 		{
-			FindEntityEdit *entityFindEdit = new FindEntityEdit();
-			return entityFindEdit;
+			return std::make_unique<FindEntityEdit>();
 		}
 		return RecordFormModel::createFormWidget(field);
 	}
 
-	Wt::WWidget *AccountEntryFormModel::createFormWidget(Field field)
+	std::unique_ptr<Wt::WWidget> AccountEntryFormModel::createFormWidget(Field field)
 	{
 		auto w = BaseAccountEntryFormModel::createFormWidget(field);
 		if(w)
 		{
 			if(field == debitAccountField)
 			{
-				auto debitFindEdit = dynamic_cast<FindAccountEdit*>(w);
-				debitFindEdit->valueChanged().connect(boost::bind(&BaseAccountEntryFormModel::handleAccountChanged, this, true));
-				setValidator(debitAccountField, new FindAccountValidator(debitFindEdit, true));
+				auto debitFindEdit = dynamic_cast<FindAccountEdit*>(w.get());
+				debitFindEdit->valueChanged().connect(this, std::bind(&BaseAccountEntryFormModel::handleAccountChanged, this, true));
+				setValidator(debitAccountField, std::make_shared<FindAccountValidator>(debitFindEdit, true));
 			}
 			if(field == creditAccountField)
 			{
-				auto creditFindEdit = dynamic_cast<FindAccountEdit*>(w);
-				creditFindEdit->valueChanged().connect(boost::bind(&BaseAccountEntryFormModel::handleAccountChanged, this, true));
-				setValidator(creditAccountField, new FindAccountValidator(creditFindEdit, true));
+				auto creditFindEdit = dynamic_cast<FindAccountEdit*>(w.get());
+				creditFindEdit->valueChanged().connect(this, std::bind(&BaseAccountEntryFormModel::handleAccountChanged, this, true));
+				setValidator(creditAccountField, std::make_shared<FindAccountValidator>(creditFindEdit, true));
 			}
 		}
 		return w;
 	}
 
-	Wt::WWidget *TransactionFormModel::createFormWidget(Field field)
+	std::unique_ptr<Wt::WWidget> TransactionFormModel::createFormWidget(Field field)
 	{
 		auto w = BaseAccountEntryFormModel::createFormWidget(field);
 		if(w)
 		{
 			if(field == entityField)
 			{
-				FindEntityEdit *entityFindEdit = dynamic_cast<FindEntityEdit*>(w);
+				FindEntityEdit *entityFindEdit = dynamic_cast<FindEntityEdit*>(w.get());
 				entityFindEdit->valueChanged().connect(this, &TransactionFormModel::setAccountsFromEntity);
-				setValidator(entityField, new FindEntityValidator(entityFindEdit, true));
+				setValidator(entityField, std::make_shared<FindEntityValidator>(entityFindEdit, true));
 			}
 		}
 		return w;
@@ -721,7 +708,7 @@ namespace GS
 
 	void BaseAccountEntryFormModel::handleAccountChanged(bool update /*= true*/)
 	{
-		long long cashAccountId = SERVER->configs()->getLongInt("CashAccountId", -1);
+		long long cashAccountId = SERVER->configs().getLongInt("CashAccountId", -1);
 		if(cashAccountId == -1)
 			return;
 
@@ -731,8 +718,8 @@ namespace GS
 			_view->updateModelField(this, creditAccountField);
 		}
 
-		const boost::any &debitData = value(debitAccountField);
-		const boost::any &creditData = value(creditAccountField);
+		const Wt::any &debitData = value(debitAccountField);
+		const Wt::any &creditData = value(creditAccountField);
 		if(debitData.empty() || creditData.empty())
 		{
 			setValue(entityField, Wt::Dbo::ptr<Entity>());
@@ -741,8 +728,8 @@ namespace GS
 			return;
 		}
 
-		Wt::Dbo::ptr<Account> debitPtr = boost::any_cast<Wt::Dbo::ptr<Account>>(debitData);
-		Wt::Dbo::ptr<Account> creditPtr = boost::any_cast<Wt::Dbo::ptr<Account>>(creditData);
+		Wt::Dbo::ptr<Account> debitPtr = Wt::any_cast<Wt::Dbo::ptr<Account>>(debitData);
+		Wt::Dbo::ptr<Account> creditPtr = Wt::any_cast<Wt::Dbo::ptr<Account>>(creditData);
 		if(!debitPtr || !creditPtr)
 		{
 			setValue(entityField, Wt::Dbo::ptr<Entity>());
@@ -771,16 +758,16 @@ namespace GS
 		if(!_isReceipt.is_initialized())
 			return;
 
-		long long cashAccountId = SERVER->configs()->getLongInt("CashAccountId", -1);
+		long long cashAccountId = SERVER->configs().getLongInt("CashAccountId", -1);
 		if(cashAccountId == -1)
 			return;
 
 		_view->updateModelField(this, entityField);
-		const boost::any &entityData = value(entityField);
+		const Wt::any &entityData = value(entityField);
 
 		if(!entityData.empty())
 		{
-			if(Wt::Dbo::ptr<Entity> entityPtr = boost::any_cast<Wt::Dbo::ptr<Entity>>(entityData))
+			if(Wt::Dbo::ptr<Entity> entityPtr = Wt::any_cast<Wt::Dbo::ptr<Entity>>(entityData))
 			{
 				WApplication *app = APP;
 				TRANSACTION(app);
@@ -816,8 +803,8 @@ namespace GS
 		TRANSACTION(app);
 
 		Money amount = Money(valueText(amountField).toUTF8(), DEFAULT_CURRENCY);
-		Wt::Dbo::ptr<Account> debitAccountPtr = boost::any_cast<Wt::Dbo::ptr<Account>>(value(debitAccountField));
-		Wt::Dbo::ptr<Account> creditAccountPtr = boost::any_cast<Wt::Dbo::ptr<Account>>(value(creditAccountField));
+		Wt::Dbo::ptr<Account> debitAccountPtr = Wt::any_cast<Wt::Dbo::ptr<Account>>(value(debitAccountField));
+		Wt::Dbo::ptr<Account> creditAccountPtr = Wt::any_cast<Wt::Dbo::ptr<Account>>(value(creditAccountField));
 
 		if(!_recordPtr)
 			_recordPtr = app->accountsDatabase().createAccountEntry(amount, debitAccountPtr, creditAccountPtr);
@@ -836,7 +823,7 @@ namespace GS
 
 	void AccountEntryView::initView()
 	{
-		_model = new AccountEntryFormModel(this, _tempPtr);
+		_model = std::make_shared<AccountEntryFormModel>(this, _tempPtr);
 		addFormModel("account", _model);
 	}
 
@@ -845,10 +832,10 @@ namespace GS
 		if(!accountEntryPtr())
 			return RecordFormView::viewName();
 
-		const boost::any &entityData = _model->value(BaseAccountEntryFormModel::entityField);
+		const Wt::any &entityData = _model->value(BaseAccountEntryFormModel::entityField);
 		if(!entityData.empty())
 		{
-			if(Wt::Dbo::ptr<Entity> entityPtr = boost::any_cast<Wt::Dbo::ptr<Entity>>(entityData))
+			if(Wt::Dbo::ptr<Entity> entityPtr = Wt::any_cast<Wt::Dbo::ptr<Entity>>(entityData))
 			{
 				TRANSACTION(APP);
 				return tr("TransactionViewName").arg(accountEntryPtr().id()).arg(entityPtr->name);
@@ -866,19 +853,17 @@ namespace GS
 
 	void TransactionView::initView()
 	{
-		_model = new TransactionFormModel(this, _tempPtr);
+		_model = std::make_shared<TransactionFormModel>(this, _tempPtr);
 		addFormModel("account", _model);
 
 		setCondition("select-direction", true);
 		setCondition("direction-selected", false);
 
-		_selectReceipt = new Wt::WPushButton(tr("Receipt"));
-		_selectReceipt->clicked().connect(boost::bind(&TransactionView::selectDirection, this, true));
-		bindWidget("selectReceipt", _selectReceipt);
+		_selectReceipt = bindNew<Wt::WPushButton>("selectReceipt", tr("Receipt"));
+		_selectReceipt->clicked().connect(this, std::bind(&TransactionView::selectDirection, this, true));
 
-		_selectPayment = new Wt::WPushButton(tr("Payment"));
-		_selectPayment->clicked().connect(boost::bind(&TransactionView::selectDirection, this, false));
-		bindWidget("selectPayment", _selectPayment);
+		_selectPayment = bindNew<Wt::WPushButton>("selectPayment", tr("Payment"));
+		_selectPayment->clicked().connect(this, std::bind(&TransactionView::selectDirection, this, false));
 	}
 
 	void TransactionView::selectDirection(bool isReceipt)

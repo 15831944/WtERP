@@ -1,6 +1,11 @@
 #ifndef GS_COMMON_H
 #define GS_COMMON_H
 
+#include <functional>
+#include <chrono>
+#include <Wt/WString.h>
+#include <Wt/cpp17/any.hpp>
+
 #define DEFAULT_CURRENCY "PKR"
 
 #define ADMIN_PATHC "admin"
@@ -48,12 +53,6 @@
 			#define REGION_PREFIX "region-"
 			#define NEW_REGION_PATHC "new"
 
-#define SET_TRANSIENT_VIEW_DIALOG(dialog) dialog->setClosable(true);\
-	dialog->resize(Wt::WLength(85, Wt::WLength::Percentage), Wt::WLength(95, Wt::WLength::Percentage));\
-	dialog->setTransient(true);\
-	dialog->setDeleteWhenHidden(true);\
-	dialog->contents()->setOverflow(Wt::WContainerWidget::OverflowAuto);
-
 namespace GS
 {
 	namespace Permissions
@@ -92,6 +91,21 @@ namespace GS
 		};
 	}
 
+	inline Wt::WString tr(const std::string &key) { return Wt::WString::tr(key); }
+	inline Wt::WString tr(const char *key) { return Wt::WString::tr(key); }
+	inline Wt::WString trn(const std::string &key, ::uint64_t n) { return Wt::WString::trn(key, n); }
+	inline Wt::WString trn(const char *key, ::uint64_t n) { return Wt::WString::trn(key, n); }
+}
+
+namespace Wt
+{
+	typedef cpp17::any any;
+
+	template <typename T, typename U>
+	auto any_cast(const U &u) -> decltype(cpp17::any_cast<T>(u))
+	{
+		return cpp17::any_cast<T>(u);
+	}
 }
 
 #endif 

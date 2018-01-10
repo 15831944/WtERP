@@ -6,9 +6,9 @@
 #include "Utilities/RecordFormView.h"
 #include "Utilities/FilteredList.h"
 
-#include <Wt/WTemplateFormView>
-#include <Wt/WBatchEditProxyModel>
-#include <Wt/WDateValidator>
+#include <Wt/WTemplateFormView.h>
+#include <Wt/WBatchEditProxyModel.h>
+#include <Wt/WDateValidator.h>
 
 namespace GS
 {
@@ -20,7 +20,7 @@ namespace GS
 	class CycleEndDateValidator : public Wt::WDateValidator
 	{
 	public:
-		CycleEndDateValidator(Wt::WFormModel *model) : Wt::WDateValidator(model), _model(model) { }
+		CycleEndDateValidator(Wt::WFormModel *model) : _model(model) { }
 		virtual Result validate(const Wt::WString &input) const override;
 
 	protected:
@@ -40,7 +40,7 @@ namespace GS
 		static const Wt::WFormModel::Field firstEntryAfterCycleField;
 
 		static void addFields(Wt::WFormModel *model);
-		static Wt::WWidget *createFormWidget(Wt::WFormModel *model, EntryCycleView *view, Wt::WFormModel::Field field);
+		static std::unique_ptr<Wt::WWidget> createFormWidget(Wt::WFormModel *model, EntryCycleView *view, Wt::WFormModel::Field field);
 		static void updateEndDateValidator(Wt::WFormModel *model, EntryCycleView *view, bool update);
 		static void updateModelFromCycle(Wt::WFormModel *model, const EntryCycle &cycle);
 
@@ -70,7 +70,7 @@ namespace GS
 	{
 	public:
 		ExpenseCycleFormModel(ExpenseCycleView *view, Wt::Dbo::ptr<ExpenseCycle> cyclePtr = Wt::Dbo::ptr<ExpenseCycle>());
-		virtual Wt::WWidget *createFormWidget(Wt::WFormModel::Field field) override;
+		virtual std::unique_ptr<Wt::WWidget> createFormWidget(Wt::WFormModel::Field field) override;
 		virtual bool saveChanges() override;
 
 	protected:
@@ -84,17 +84,17 @@ namespace GS
 	public:
 		ExpenseCycleView(Wt::Dbo::ptr<ExpenseCycle> cyclePtr = Wt::Dbo::ptr<ExpenseCycle>());
 		virtual void initView() override;
-		virtual Wt::WWidget *createFormWidget(Wt::WFormModel::Field field) override;
+		virtual std::unique_ptr<Wt::WWidget> createFormWidget(Wt::WFormModel::Field field) override;
 
 		virtual Wt::WString viewName() const override;
 		virtual std::string viewInternalPath() const override { return cyclePtr() ? ExpenseCycle::viewInternalPath(cyclePtr().id()) : ""; }
-		virtual RecordFormView *createFormView() override { return new ExpenseCycleView(); }
+		virtual std::unique_ptr<RecordFormView> createFormView() override { return std::make_unique<ExpenseCycleView>(); }
 
-		ExpenseCycleFormModel *model() const { return _model; }
+		std::shared_ptr<ExpenseCycleFormModel> model() const { return _model; }
 		Wt::Dbo::ptr<ExpenseCycle> cyclePtr() const { return _model->recordPtr(); }
 
 	protected:
-		ExpenseCycleFormModel *_model = nullptr;
+		std::shared_ptr<ExpenseCycleFormModel> _model = nullptr;
 		Wt::Dbo::ptr<ExpenseCycle> _tempPtr;
 	};
 
@@ -103,7 +103,7 @@ namespace GS
 	{
 	public:
 		IncomeCycleFormModel(IncomeCycleView *view, Wt::Dbo::ptr<IncomeCycle> cyclePtr = Wt::Dbo::ptr<IncomeCycle>());
-		virtual Wt::WWidget *createFormWidget(Wt::WFormModel::Field field) override;
+		virtual std::unique_ptr<Wt::WWidget> createFormWidget(Wt::WFormModel::Field field) override;
 		virtual bool saveChanges() override;
 
 	protected:
@@ -117,22 +117,22 @@ namespace GS
 	public:
 		IncomeCycleView(Wt::Dbo::ptr<IncomeCycle> cyclePtr = Wt::Dbo::ptr<IncomeCycle>());
 		virtual void initView() override;
-		virtual Wt::WWidget *createFormWidget(Wt::WFormModel::Field field) override;
+		virtual std::unique_ptr<Wt::WWidget> createFormWidget(Wt::WFormModel::Field field) override;
 
 		virtual Wt::WString viewName() const override;
 		virtual std::string viewInternalPath() const override { return cyclePtr() ? IncomeCycle::viewInternalPath(cyclePtr().id()) : ""; }
-		virtual RecordFormView *createFormView() override { return new IncomeCycleView(); }
+		virtual std::unique_ptr<RecordFormView> createFormView() override { return std::make_unique<IncomeCycleView>(); }
 
-		IncomeCycleFormModel *model() const { return _model; }
+		std::shared_ptr<IncomeCycleFormModel> model() const { return _model; }
 		Wt::Dbo::ptr<IncomeCycle> cyclePtr() const { return _model->recordPtr(); }
 
 	protected:
-		IncomeCycleFormModel *_model = nullptr;
+		std::shared_ptr<IncomeCycleFormModel> _model = nullptr;
 		Wt::Dbo::ptr<IncomeCycle> _tempPtr;
 	};
 
 	//LISTS
-	class EntryCycleList : public QueryModelFilteredList<boost::tuple<long long, Wt::WDateTime, std::string, Wt::WDate, Wt::WDate, long long, long long, CycleInterval, int, long long>>
+	class EntryCycleList : public QueryModelFilteredList<std::tuple<long long, Wt::WDateTime, std::string, Wt::WDate, Wt::WDate, long long, long long, CycleInterval, int, long long>>
 	{
 	public:
 		enum ResultColumns { ResId, ResTimestamp, ResEntityName, ResStartDate, ResEndDate, ResAmount, ResExtra, ResInterval, ResNIntervals, ResEntityId };
@@ -168,14 +168,14 @@ namespace GS
 	class EntryCycleListProxyModel : public Wt::WBatchEditProxyModel
 	{
 	public:
-		EntryCycleListProxyModel(const std::string &pathPrefix, Wt::WAbstractItemModel *model, Wt::WObject *parent = nullptr)
-			: Wt::WBatchEditProxyModel(parent), _pathPrefix(pathPrefix)
+		EntryCycleListProxyModel(const std::string &pathPrefix, std::shared_ptr<Wt::WAbstractItemModel> model)
+			: _pathPrefix(pathPrefix)
 		{
 			setSourceModel(model);
 			addAdditionalColumns();
 		}
-		virtual boost::any data(const Wt::WModelIndex &idx, int role = Wt::DisplayRole) const override;
-		virtual boost::any headerData(int section, Wt::Orientation orientation = Wt::Horizontal, int role = Wt::DisplayRole) const override;
+		virtual Wt::any data(const Wt::WModelIndex &idx, Wt::ItemDataRole role = Wt::ItemDataRole::Display) const override;
+		virtual Wt::any headerData(int section, Wt::Orientation orientation = Wt::Orientation::Horizontal, Wt::ItemDataRole role = Wt::ItemDataRole::Display) const override;
 		virtual Wt::WFlags<Wt::ItemFlag> flags(const Wt::WModelIndex &index) const override;
 
 	protected:
@@ -183,22 +183,6 @@ namespace GS
 		int _linkColumn = -1;
 		std::string _pathPrefix;
 	};
-
-	//TEMPLATE CLASS DEFITIONS
-
-// 	class IncomeCycleListProxyModel : public EntryCycleListProxyModel
-// 	{
-// 	public:
-// 		IncomeCycleListProxyModel(Wt::WAbstractItemModel *model, Wt::WObject *parent = nullptr) : EntryCycleListProxyModel(model, parent) { }
-// 		virtual boost::any data(const Wt::WModelIndex &idx, int role = Wt::DisplayRole) const override;
-// 	};
-// 	class ExpenseCycleListProxyModel : public EntryCycleListProxyModel
-// 	{
-// 	public:
-// 		ExpenseCycleListProxyModel(Wt::WAbstractItemModel *model, Wt::WObject *parent = nullptr) : EntryCycleListProxyModel(model, parent) { }
-// 		virtual boost::any data(const Wt::WModelIndex &idx, int role = Wt::DisplayRole) const override;
-// 	};
-
 }
 
 #endif

@@ -1,9 +1,9 @@
-#include <Wt/WApplication>
-#include <Wt/WContainerWidget>
-#include <Wt/WPushButton>
-#include <Wt/WText>
-#include <Wt/WColor>
-#include <Wt/WCssDecorationStyle>
+#include <Wt/WApplication.h>
+#include <Wt/WContainerWidget.h>
+#include <Wt/WPushButton.h>
+#include <Wt/WText.h>
+#include <Wt/WColor.h>
+#include <Wt/WCssDecorationStyle.h>
 
 using namespace Wt;
 

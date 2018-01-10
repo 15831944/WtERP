@@ -1,22 +1,26 @@
 #ifndef GS_ADMINPAGES_WIDGET_H
 #define GS_ADMINPAGES_WIDGET_H
 
-#include <Wt/WTemplate>
-#include <Wt/WTabWidget>
+#include <Wt/WTemplate.h>
+#include <Wt/WTabWidget.h>
 
 namespace GS
 {
 	class AdminPageContentWidget;
+	class RecordFormView;
+	class AbstractFilteredList;
 
 	class AdminPageWidget : public Wt::WTemplate
 	{
 	public:
-		AdminPageWidget(const std::string basePathComponent, Wt::WContainerWidget *parent = nullptr);
+		AdminPageWidget(const std::string basePathComponent);
 
-		Wt::WMenuItem *createMenuItemWrapped(const Wt::WString &label, const std::string &internalPath, Wt::WWidget *contents);
-		Wt::WMenuItem *createMenuItemWrapped(int index, const Wt::WString &label, const std::string &internalPath, Wt::WWidget *contents);
-		Wt::WMenuItem *createMenuItem(const Wt::WString &label, const std::string &internalPath, Wt::WWidget *contents);
-		Wt::WMenuItem *createMenuItem(int index, const Wt::WString &label, const std::string &internalPath, Wt::WWidget *contents);
+		Wt::WMenuItem *createMenuItemWrapped(std::unique_ptr<RecordFormView> contents);
+		Wt::WMenuItem *createMenuItemWrapped(const Wt::WString &label, const std::string &pathComponent, std::unique_ptr<AbstractFilteredList> contents);
+		Wt::WMenuItem *createMenuItemWrapped(const Wt::WString &label, const std::string &path, std::unique_ptr<Wt::WWidget> contents, bool isInternalPath);
+		Wt::WMenuItem *createMenuItemWrapped(int index, const Wt::WString &label, const std::string &path, std::unique_ptr<Wt::WWidget> contents, bool isInternalPath);
+		Wt::WMenuItem *createMenuItem(const Wt::WString &label, const std::string &path, std::unique_ptr<Wt::WWidget> contents, bool isInternalPath);
+		Wt::WMenuItem *createMenuItem(int index, const Wt::WString &label, const std::string &path, std::unique_ptr<Wt::WWidget> contents, bool isInternalPath);
 		bool checkPathComponentExist(const std::string &pathComponent) const;
 		void connectFormSubmitted(Wt::WMenuItem *item);
 		void setDeniedPermissionWidget();
@@ -44,7 +48,7 @@ namespace GS
 	class AdminPageContentWidget : public Wt::WTemplate
 	{
 	public:
-		AdminPageContentWidget(const Wt::WString &title, Wt::WWidget *content, Wt::WContainerWidget *parent = nullptr);
+		AdminPageContentWidget(const Wt::WString &title, std::unique_ptr<Wt::WWidget> content);
 		Wt::WText *title() const { return _title; }
 		Wt::WWidget *content() const { return _content; }
 
@@ -56,13 +60,13 @@ namespace GS
 	class DashboardAdminPage : public AdminPageWidget
 	{
 	public:
-		DashboardAdminPage(Wt::WContainerWidget *parent = nullptr);
+		DashboardAdminPage();
 	};
 
 	class EntitiesAdminPage : public AdminPageWidget
 	{
 	public:
-		EntitiesAdminPage(Wt::WContainerWidget *parent = nullptr);
+		EntitiesAdminPage();
 
 	protected:
 		Wt::WMenuItem *_newEntityMenuItem = nullptr;
@@ -71,19 +75,19 @@ namespace GS
 	class AccountsAdminPage : public AdminPageWidget
 	{
 	public:
-		AccountsAdminPage(Wt::WContainerWidget *parent = nullptr);
+		AccountsAdminPage();
 	};
 
 	class AttendanceAdminPage : public AdminPageWidget
 	{
 	public:
-		AttendanceAdminPage(Wt::WContainerWidget *parent = nullptr);
+		AttendanceAdminPage();
 	};
 
 	class UsersAdminPage : public AdminPageWidget
 	{
 	public:
-		UsersAdminPage(Wt::WContainerWidget *parent = nullptr);
+		UsersAdminPage();
 	};
 
 }

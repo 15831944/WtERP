@@ -1,11 +1,12 @@
 #ifndef GS_SELECTADDPROXYMODEL_H
 #define GS_SELECTADDPROXYMODEL_H
 
-#include <Wt/WBatchEditProxyModel>
-#include <Wt/WSortFilterProxyModel>
-#include <Wt/Dbo/QueryModel>
-#include <Wt/WComboBox>
-#include <Wt/WValidator>
+#include "Common.h"
+#include <Wt/WBatchEditProxyModel.h>
+#include <Wt/WSortFilterProxyModel.h>
+#include <Wt/Dbo/QueryModel.h>
+#include <Wt/WComboBox.h>
+#include <Wt/WValidator.h>
 
 namespace GS
 {
@@ -16,13 +17,12 @@ namespace GS
 	public:
 		typedef typename R Result;
 
-		QueryProxyModel(Wt::WObject *parent = nullptr) : Wt::WBatchEditProxyModel(parent) { }
 		int indexOf(const Result &result) const
 		{
-			Wt::WAbstractItemModel *srcModel = sourceModel();
-			Wt::Dbo::QueryModel<Result> *qryModel = nullptr;
+			std::shared_ptr<Wt::WAbstractItemModel> srcModel = sourceModel();
+			std::shared_ptr<Wt::Dbo::QueryModel<Result>> qryModel;
 
-			std::vector<Wt::WAbstractProxyModel*> srcProxyModels;
+			std::vector<std::shared_ptr<Wt::WAbstractProxyModel>> srcProxyModels;
 			do
 			{
 				if(!srcModel)
@@ -31,10 +31,10 @@ namespace GS
 					return -1;
 				}
 
-				qryModel = dynamic_cast<Wt::Dbo::QueryModel<Result>*>(srcModel);
+				qryModel = std::dynamic_pointer_cast<Wt::Dbo::QueryModel<Result>>(srcModel);
 				if(!qryModel)
 				{
-					if(Wt::WAbstractProxyModel *srcProxyModel = dynamic_cast<Wt::WAbstractProxyModel*>(srcModel))
+					if(std::shared_ptr<Wt::WAbstractProxyModel> srcProxyModel = std::dynamic_pointer_cast<Wt::WAbstractProxyModel>(srcModel))
 					{
 						srcProxyModels.push_back(srcProxyModel);
 						srcModel = srcProxyModel->sourceModel();
@@ -76,8 +76,8 @@ namespace GS
 			if(!idx.isValid())
 				return nullptr;
 
-			Wt::WAbstractItemModel *srcModel = sourceModel();
-			Wt::Dbo::QueryModel<Result> *qryModel = nullptr;
+			std::shared_ptr<Wt::WAbstractItemModel> srcModel = sourceModel();
+			std::shared_ptr<Wt::Dbo::QueryModel<Result>> qryModel;
 
 			do
 			{
@@ -87,10 +87,10 @@ namespace GS
 					return nullptr;
 				}
 
-				qryModel = dynamic_cast<Wt::Dbo::QueryModel<Result>*>(srcModel);
+				qryModel = std::dynamic_pointer_cast<Wt::Dbo::QueryModel<Result>>(srcModel);
 				if(!qryModel)
 				{
-					if(Wt::WAbstractProxyModel *srcProxyModel = dynamic_cast<Wt::WAbstractProxyModel*>(srcModel))
+					if(std::shared_ptr<Wt::WAbstractProxyModel> srcProxyModel = std::dynamic_pointer_cast<Wt::WAbstractProxyModel>(srcModel))
 					{
 						idx = srcProxyModel->mapToSource(idx);
 						if(!idx.isValid())
@@ -114,24 +114,23 @@ namespace GS
 	class AbstractQueryProxyModelCB : public Wt::WComboBox
 	{
 	protected:
-		AbstractQueryProxyModelCB(Wt::WAbstractItemModel *model, Wt::WContainerWidget *parent = nullptr)
-			: Wt::WComboBox(parent)
+		AbstractQueryProxyModelCB(std::shared_ptr<Wt::WAbstractItemModel> model)
 		{
 			setModel(model);
 			setCurrentIndex(0);
 		}
 
 	public:
-		virtual void setViewValue(const boost::any &v) = 0;
-		virtual boost::any modelValue() = 0;
+		virtual void setViewValue(const Wt::any &v) = 0;
+		virtual Wt::any modelValue() = 0;
 	};
 
 	template<class QueryProxyModel>
 	class QueryProxyModelCB : public AbstractQueryProxyModelCB
 	{
 	public:
-		QueryProxyModelCB(QueryProxyModel *model, Wt::WContainerWidget *parent = nullptr) : AbstractQueryProxyModelCB(model, parent) { }
-		virtual void setViewValue(const boost::any &v) override
+		QueryProxyModelCB(std::shared_ptr<QueryProxyModel> model) : AbstractQueryProxyModelCB(model) { }
+		virtual void setViewValue(const Wt::any &v) override
 		{
 			if(v.empty())
 			{
@@ -139,13 +138,13 @@ namespace GS
 				return;
 			}
 
-			const auto &result = boost::any_cast<QueryProxyModel::Result>(v);
-			auto proxyModel = dynamic_cast<QueryProxyModel*>(model());
+			const auto &result = Wt::any_cast<QueryProxyModel::Result>(v);
+			std::shared_ptr<QueryProxyModel> proxyModel = std::static_pointer_cast<QueryProxyModel>(model());
 			setCurrentIndex(std::max(0, proxyModel->indexOf(result)));
 		}
-		virtual boost::any modelValue() override
+		virtual Wt::any modelValue() override
 		{
-			auto proxyModel = dynamic_cast<QueryProxyModel*>(model());
+			std::shared_ptr<QueryProxyModel> proxyModel = std::static_pointer_cast<QueryProxyModel>(model());
 			const QueryProxyModel::Result *res = proxyModel->resultRow(currentIndex());
 			if(res)
 				return *res;
@@ -157,7 +156,6 @@ namespace GS
 	class BaseComboBoxValidator : public Wt::WValidator
 	{
 	public:
-		BaseComboBoxValidator(Wt::WObject *parent) : Wt::WValidator(parent) { }
 		void setErrorString(const Wt::WString &str) { _errorStr = str; }
 
 	protected:
@@ -170,19 +168,19 @@ namespace GS
 	public:
 		//typedef typename ProxyModel ProxyModel;
 		QueryProxyModelCBValidator(QueryProxyModelCB<QueryProxyModel> *cb)
-			: BaseComboBoxValidator((Wt::WObject*)cb), _cb(cb)
+			: _cb(cb)
 		{ }
 		virtual Result validate(const Wt::WString &input) const override
 		{
 			if(_cb->currentIndex() == -1)
-				return Result(Invalid, _errorStr);
+				return Result(Wt::ValidationState::Invalid, _errorStr);
 
-			auto proxyModel = dynamic_cast<QueryProxyModel*>(_cb->model());
+			auto proxyModel = std::static_pointer_cast<QueryProxyModel>(_cb->model());
 			auto result = proxyModel->resultRow(_cb->currentIndex());
 			if(!result)
-				return Result(Invalid, _errorStr);
+				return Result(Wt::ValidationState::Invalid, _errorStr);
 
-			return Result(Valid);
+			return Result(Wt::ValidationState::Valid);
 		}
 
 	protected:
@@ -194,25 +192,25 @@ namespace GS
 	public:
 		//typedef typename ProxyModel ProxyModel;
 		ProxyModelCBValidator(Wt::WComboBox *cb)
-			: BaseComboBoxValidator((Wt::WObject*)cb), _cb(cb)
+			:_cb(cb)
 		{ }
 		virtual Result validate(const Wt::WString &input) const override
 		{
 			if(_cb->currentIndex() == -1)
-				return Result(Invalid, _errorStr);
+				return Result(Wt::ValidationState::Invalid, _errorStr);
 
-			auto proxyModel = dynamic_cast<Wt::WAbstractProxyModel*>(_cb->model());
+			auto proxyModel = std::dynamic_pointer_cast<Wt::WAbstractProxyModel>(_cb->model());
 			if(!proxyModel)
 			{
 				Wt::log("warning") << "ProxyModelCBValidator::validator(): null proxyModel";
-				return Result(Invalid, Wt::WString::tr("Error"));
+				return Result(Wt::ValidationState::Invalid, tr("Error"));
 			}
 
 			auto sourceIndex = proxyModel->mapToSource(proxyModel->index(_cb->currentIndex(), 0));
 			if(!sourceIndex.isValid())
-				return Result(Invalid, _errorStr);
+				return Result(Wt::ValidationState::Invalid, _errorStr);
 
-			return Result(Valid);
+			return Result(Wt::ValidationState::Valid);
 		}
 
 	protected:

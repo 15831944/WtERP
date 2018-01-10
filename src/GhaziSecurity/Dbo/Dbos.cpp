@@ -55,6 +55,18 @@ namespace GS
 // 		dboSession.mapClass<Office>(Office::tableName());
 // 		dboSession.mapClass<RentHouse>(RentHouse::tableName());
 	}
+
+	void BaseAdminRecord::setCreatedByValues(bool setRegion)
+	{
+		WApplication *app = APP;
+		if(app->authLogin().userPtr())
+		{
+			creatorUserPtr = app->authLogin().userPtr();
+
+			if(setRegion)
+				regionPtr = app->authLogin().userPtr()->regionPtr;
+		}
+	}
 	
 	std::string UploadedFile::pathToFile() const
 	{
@@ -74,41 +86,27 @@ namespace GS
 		return o << "(" << k.userPtr << ", " << k.permissionPtr << ")";
 	}
 
-	boost::posix_time::ptime addCycleInterval(boost::posix_time::ptime pTime, CycleInterval interval, int nIntervals)
+	Wt::WDateTime addCycleInterval(const Wt::WDateTime &dt, CycleInterval interval, int nIntervals)
 	{
-		if(interval == DailyInterval)
-			pTime += boost::gregorian::days(nIntervals);
-		else if(interval == WeeklyInterval)
-			pTime += boost::gregorian::weeks(nIntervals);
-		else if(interval == MonthlyInterval)
-			pTime += boost::gregorian::months(nIntervals);
-		else if(interval == YearlyInterval)
-			pTime += boost::gregorian::years(nIntervals);
-
-		return pTime;
+		switch(interval)
+		{
+		case DailyInterval: return dt.addDays(nIntervals);
+		case WeeklyInterval: return dt.addDays(nIntervals*7);
+		case MonthlyInterval: return dt.addMonths(nIntervals);
+		case YearlyInterval: return dt.addYears(nIntervals);
+		default: return dt;
+		}
 	}
 
 	Wt::WString rsEveryNIntervals(const Money &amount, CycleInterval interval, int nIntervals)
 	{
 		switch(interval)
 		{
-		case DailyInterval: return Wt::WString::trn("RsEveryNDays", nIntervals).arg(Wt::WLocale::currentLocale().toString(amount)).arg(nIntervals);
-		case WeeklyInterval: return Wt::WString::trn("RsEveryNWeeks", nIntervals).arg(Wt::WLocale::currentLocale().toString(amount)).arg(nIntervals);
-		case MonthlyInterval: return Wt::WString::trn("RsEveryNMonths", nIntervals).arg(Wt::WLocale::currentLocale().toString(amount)).arg(nIntervals);
-		case YearlyInterval: return Wt::WString::trn("RsEveryNYears", nIntervals).arg(Wt::WLocale::currentLocale().toString(amount)).arg(nIntervals);
+		case DailyInterval: return trn("RsEveryNDays", nIntervals).arg(Wt::WLocale::currentLocale().toString(amount)).arg(nIntervals);
+		case WeeklyInterval: return trn("RsEveryNWeeks", nIntervals).arg(Wt::WLocale::currentLocale().toString(amount)).arg(nIntervals);
+		case MonthlyInterval: return trn("RsEveryNMonths", nIntervals).arg(Wt::WLocale::currentLocale().toString(amount)).arg(nIntervals);
+		case YearlyInterval: return trn("RsEveryNYears", nIntervals).arg(Wt::WLocale::currentLocale().toString(amount)).arg(nIntervals);
 		default: return Wt::WString::Empty;
-		}
-	}
-
-	void BaseAdminRecord::setCreatedByValues(bool setRegion)
-	{
-		WApplication *app = APP;
-		if(app->authLogin().userPtr())
-		{
-			creatorUserPtr = app->authLogin().userPtr();
-
-			if(setRegion)
-				regionPtr = app->authLogin().userPtr()->regionPtr;
 		}
 	}
 

@@ -2,17 +2,17 @@
 #include "Widgets/EntryCycleMVC.h"
 #include "Widgets/FindRecordEdit.h"
 
-#include <Wt/WTextArea>
-#include <Wt/WPushButton>
-#include <Wt/WDateEdit>
-#include <Wt/WTableView>
-#include <Wt/WLengthValidator>
-#include <Wt/WAnchor>
-#include <Wt/WSplitButton>
+#include <Wt/WTextArea.h>
+#include <Wt/WPushButton.h>
+#include <Wt/WDateEdit.h>
+#include <Wt/WTableView.h>
+#include <Wt/WLengthValidator.h>
+#include <Wt/WAnchor.h>
+#include <Wt/WSplitButton.h>
 
 namespace GS
 {
-
+	using namespace std::placeholders;
 	//POSITION VIEW
 	const Wt::WFormModel::Field PositionFormModel::titleField = "title";
 	const Wt::WFormModel::Field PositionFormModel::typeField = "type";
@@ -31,13 +31,13 @@ namespace GS
 		}
 	}
 
-	Wt::WWidget * PositionFormModel::createFormWidget(Field field)
+	std::unique_ptr<Wt::WWidget> PositionFormModel::createFormWidget(Field field)
 	{
 		if(field == titleField)
 		{
-			Wt::WLineEdit *title = new Wt::WLineEdit();
+			auto title = std::make_unique<Wt::WLineEdit>();
 			title->setMaxLength(70);
-			auto titleValidator = new Wt::WLengthValidator(0, 70);
+			auto titleValidator = std::make_shared<Wt::WLengthValidator>(0, 70);
 			titleValidator->setMandatory(true);
 			setValidator(titleField, titleValidator);
 			return title;
@@ -45,18 +45,18 @@ namespace GS
 		if(field == typeField)
 		{
 			//WApplication *app = APP;
-			auto cb = new Wt::WComboBox();
-			cb->insertItem(EmployeePosition::OtherType, Wt::boost_any_traits<EmployeePosition::Type>::asString(EmployeePosition::OtherType, ""));
-			cb->insertItem(EmployeePosition::PersonnelType, Wt::boost_any_traits<EmployeePosition::Type>::asString(EmployeePosition::PersonnelType, ""));
+			auto cb = std::make_unique<Wt::WComboBox>();
+			cb->insertItem(EmployeePosition::OtherType, Wt::any_traits<EmployeePosition::Type>::asString(EmployeePosition::OtherType, ""));
+			cb->insertItem(EmployeePosition::PersonnelType, Wt::any_traits<EmployeePosition::Type>::asString(EmployeePosition::PersonnelType, ""));
 
-			auto proxyModel = new Wt::WBatchEditProxyModel(cb);
+			auto proxyModel = std::make_shared<Wt::WBatchEditProxyModel>();
 			proxyModel->setSourceModel(cb->model());
 			proxyModel->insertRow(0);
-			proxyModel->setData(proxyModel->index(0, 0), Wt::WString::tr("SelectType"));
+			proxyModel->setData(proxyModel->index(0, 0), tr("SelectType"));
 			cb->setModel(proxyModel);
 
-			auto validator = new ProxyModelCBValidator(cb);
-			validator->setErrorString(Wt::WString::tr("MustSelectType"));
+			auto validator = std::make_shared<ProxyModelCBValidator>(cb.get());
+			validator->setErrorString(tr("MustSelectType"));
 			setValidator(field, validator);
 			return cb;
 		}
@@ -72,10 +72,10 @@ namespace GS
 		TRANSACTION(app);
 
 		if(!_recordPtr)
-			_recordPtr = app->dboSession().add(new EmployeePosition());
+			_recordPtr = app->dboSession().add(std::make_unique<EmployeePosition>());
 
 		_recordPtr.modify()->title = valueText(titleField).toUTF8();
-		_recordPtr.modify()->type = EmployeePosition::Type(boost::any_cast<int>(value(typeField)) - 1);
+		_recordPtr.modify()->type = EmployeePosition::Type(Wt::any_cast<int>(value(typeField)) - 1);
 
 		if(app->positionQueryModel())
 			app->positionQueryModel()->reload();
@@ -94,13 +94,12 @@ namespace GS
 
 	void PositionView::initView()
 	{
-		_model = new PositionFormModel(this, _tempPtr);
+		_model = std::make_shared<PositionFormModel>(this, _tempPtr);
 		addFormModel("position", _model);
 	}
 
 	//POSITION PROXY MODEL
-	PositionProxyModel::PositionProxyModel(Wt::Dbo::QueryModel<Wt::Dbo::ptr<EmployeePosition>> *sourceModel, Wt::WObject *parent /*= nullptr*/)
-		: QueryProxyModel<Wt::Dbo::ptr<EmployeePosition>>(parent)
+	PositionProxyModel::PositionProxyModel(std::shared_ptr<QueryModel> sourceModel)
 	{
 		setSourceModel(sourceModel);
 		addAdditionalRows();
@@ -111,15 +110,15 @@ namespace GS
 	{
 		if(insertRow(0))
 		{
-			setData(index(0, 0), Wt::WString::tr("SelectPosition"));
-			setData(index(0, 0), false, Wt::AdditionalRowRole);
+			setData(index(0, 0), tr("SelectPosition"));
+			setData(index(0, 0), false, Wt::ItemDataRole::AdditionalRow);
 		}
 
 		int lastRow = rowCount();
 		if(insertRow(lastRow))
 		{
-			setData(index(lastRow, 0), Wt::WString::tr("AddNewX").arg(Wt::WString::tr("position")));
-			setData(index(lastRow, 0), true, Wt::AdditionalRowRole);
+			setData(index(lastRow, 0), tr("AddNewX").arg(tr("position")));
+			setData(index(lastRow, 0), true, Wt::ItemDataRole::AdditionalRow);
 		}
 	}
 
@@ -138,13 +137,13 @@ namespace GS
 		}
 	}
 
-	Wt::WWidget *ServiceFormModel::createFormWidget(Field field)
+	std::unique_ptr<Wt::WWidget> ServiceFormModel::createFormWidget(Field field)
 	{
 		if(field == titleField)
 		{
-			Wt::WLineEdit *title = new Wt::WLineEdit();
+			auto title = std::make_unique<Wt::WLineEdit>();
 			title->setMaxLength(70);
-			auto titleValidator = new Wt::WLengthValidator(0, 70);
+			auto titleValidator = std::make_shared<Wt::WLengthValidator>(0, 70);
 			titleValidator->setMandatory(true);
 			setValidator(titleField, titleValidator);
 			return title;
@@ -161,7 +160,7 @@ namespace GS
 		TRANSACTION(app);
 
 		if(!_recordPtr)
-			_recordPtr = app->dboSession().add(new ClientService());
+			_recordPtr = app->dboSession().add(std::make_unique<ClientService>());
 
 		_recordPtr.modify()->title = valueText(titleField).toUTF8();
 
@@ -182,13 +181,12 @@ namespace GS
 
 	void ServiceView::initView()
 	{
-		_model = new ServiceFormModel(this, _tempPtr);
+		_model = std::make_shared<ServiceFormModel>(this, _tempPtr);
 		addFormModel("service", _model);
 	}
 
 	//SERVICE PROXY MODEL
-	ServiceProxyModel::ServiceProxyModel(Wt::Dbo::QueryModel<Wt::Dbo::ptr<ClientService>> *sourceModel, Wt::WObject *parent /*= nullptr*/)
-		: QueryProxyModel<Wt::Dbo::ptr<ClientService>>(parent)
+	ServiceProxyModel::ServiceProxyModel(std::shared_ptr<QueryModel> sourceModel)
 	{
 		setSourceModel(sourceModel);
 		addAdditionalRows();
@@ -199,15 +197,15 @@ namespace GS
 	{
 		if(insertRow(0))
 		{
-			setData(index(0, 0), Wt::WString::tr("SelectService"));
-			setData(index(0, 0), false, Wt::AdditionalRowRole);
+			setData(index(0, 0), tr("SelectService"));
+			setData(index(0, 0), false, Wt::ItemDataRole::AdditionalRow);
 		}
 
 		int lastRow = rowCount();
 		if(insertRow(lastRow))
 		{
-			setData(index(lastRow, 0), Wt::WString::tr("AddNewX").arg(Wt::WString::tr("service")));
-			setData(index(lastRow, 0), true, Wt::AdditionalRowRole);
+			setData(index(lastRow, 0), tr("AddNewX").arg(tr("service")));
+			setData(index(lastRow, 0), true, Wt::ItemDataRole::AdditionalRow);
 		}
 	}
 
@@ -245,44 +243,44 @@ namespace GS
 		}
 	}
 
-	Wt::WWidget *EmployeeAssignmentFormModel::createFormWidget(Wt::WFormModel::Field field)
+	std::unique_ptr<Wt::WWidget> EmployeeAssignmentFormModel::createFormWidget(Wt::WFormModel::Field field)
 	{
 		if(field == descriptionField)
 		{
-			Wt::WTextArea *description = new Wt::WTextArea();
+			auto description = std::make_unique<Wt::WTextArea>();
 			description->setRows(3);
 			return description;
 		}
 		if(field == startDateField)
 		{
-			auto startDateEdit = new Wt::WDateEdit();
+			auto startDateEdit = std::make_unique<Wt::WDateEdit>();
 			startDateEdit->setPlaceholderText(Wt::WLocale::currentLocale().dateFormat());
-			auto startDateValidator = new Wt::WDateValidator();
+			auto startDateValidator = std::make_shared<Wt::WDateValidator>();
 			startDateValidator->setMandatory(true);
 			setValidator(startDateField, startDateValidator);
-			startDateEdit->changed().connect(boost::bind(&EmployeeAssignmentFormModel::updateEndDateValidator, this, true));
+			startDateEdit->changed().connect(this, std::bind(&EmployeeAssignmentFormModel::updateEndDateValidator, this, true));
 			return startDateEdit;
 		}
 		if(field == endDateField)
 		{
-			auto endDateEdit = new Wt::WDateEdit();
-			endDateEdit->setPlaceholderText(Wt::WString::tr("EmptyEndDate"));
-			auto endDateValidator = new Wt::WDateValidator();
+			auto endDateEdit = std::make_unique<Wt::WDateEdit>();
+			endDateEdit->setPlaceholderText(tr("EmptyEndDate"));
+			auto endDateValidator = std::make_shared<Wt::WDateValidator>();
 			setValidator(endDateField, endDateValidator);
 			return endDateEdit;
 		}
 		if(field == entityField)
 		{
-			FindEntityEdit *findEntityEdit = new FindEntityEdit(Entity::PersonType);
-			FindEntityValidator *findEntityValidator = new FindEntityValidator(findEntityEdit, true);
+			auto findEntityEdit = std::make_unique<FindEntityEdit>(Entity::PersonType);
+			auto findEntityValidator = std::make_shared<FindEntityValidator>(findEntityEdit.get(), true);
 			findEntityValidator->setModifyPermissionRequired(true);
 			setValidator(entityField, findEntityValidator);
 			return findEntityEdit;
 		}
 		if(field == locationField)
 		{
-			FindLocationEdit *findLocationEdit = new FindLocationEdit();
-			FindLocationValidator *findLocationValidator = new FindLocationValidator(findLocationEdit, true);
+			auto findLocationEdit = std::make_unique<FindLocationEdit>();
+			auto findLocationValidator = std::make_shared<FindLocationValidator>(findLocationEdit.get(), true);
 			setValidator(locationField, findLocationValidator);
 			return findLocationEdit;
 		}
@@ -290,12 +288,14 @@ namespace GS
 		{
 			WApplication *app = APP;
 			app->initPositionQueryModel();
-			_view->_positionCombo = new QueryProxyModelCB<PositionProxyModel>(app->positionProxyModel());
-			auto validator = new QueryProxyModelCBValidator<PositionProxyModel>(_view->_positionCombo);
-			validator->setErrorString(Wt::WString::tr("MustSelectPosition"));
+
+			auto posCombo = std::make_unique<QueryProxyModelCB<PositionProxyModel>>(app->positionProxyModel());
+			auto validator = std::make_shared<QueryProxyModelCBValidator<PositionProxyModel>>(posCombo.get());
+			validator->setErrorString(tr("MustSelectPosition"));
 			setValidator(field, validator);
-			_view->_positionCombo->changed().connect(_view, &EmployeeAssignmentView::handlePositionChanged);
-			return _view->_positionCombo;
+			posCombo->changed().connect(_view, &EmployeeAssignmentView::handlePositionChanged);
+			_view->_positionCombo = posCombo.get();
+			return posCombo;
 		}
 		return nullptr;
 	}
@@ -310,19 +310,19 @@ namespace GS
 
 		if(!_recordPtr)
 		{
-			_recordPtr = app->dboSession().add(new EmployeeAssignment());
+			_recordPtr = app->dboSession().add(std::make_unique<EmployeeAssignment>());
 			_recordPtr.modify()->setCreatedByValues();
 		}
 
 		_recordPtr.modify()->description = valueText(descriptionField).toUTF8();
-		_recordPtr.modify()->startDate = boost::any_cast<Wt::WDate>(value(startDateField));
-		_recordPtr.modify()->endDate = boost::any_cast<Wt::WDate>(value(endDateField));
-		_recordPtr.modify()->entityPtr = boost::any_cast<Wt::Dbo::ptr<Entity>>(value(entityField));
-		_recordPtr.modify()->locationPtr = boost::any_cast<Wt::Dbo::ptr<Location>>(value(locationField));
-		_recordPtr.modify()->positionPtr = boost::any_cast<Wt::Dbo::ptr<EmployeePosition>>(value(positionField));
+		_recordPtr.modify()->startDate = Wt::any_cast<Wt::WDate>(value(startDateField));
+		_recordPtr.modify()->endDate = Wt::any_cast<Wt::WDate>(value(endDateField));
+		_recordPtr.modify()->entityPtr = Wt::any_cast<Wt::Dbo::ptr<Entity>>(value(entityField));
+		_recordPtr.modify()->locationPtr = Wt::any_cast<Wt::Dbo::ptr<Location>>(value(locationField));
+		_recordPtr.modify()->positionPtr = Wt::any_cast<Wt::Dbo::ptr<EmployeePosition>>(value(positionField));
 
-		const boost::any &expenseCycleVal = value(cycleField);
-		_recordPtr.modify()->expenseCyclePtr = expenseCycleVal.empty() ? Wt::Dbo::ptr<ExpenseCycle>() : boost::any_cast<Wt::Dbo::ptr<ExpenseCycle>>(expenseCycleVal);
+		const Wt::any &expenseCycleVal = value(cycleField);
+		_recordPtr.modify()->expenseCyclePtr = expenseCycleVal.empty() ? Wt::Dbo::ptr<ExpenseCycle>() : Wt::any_cast<Wt::Dbo::ptr<ExpenseCycle>>(expenseCycleVal);
 
 		t.commit();
 		return true;
@@ -330,23 +330,33 @@ namespace GS
 
 	void EmployeeAssignmentFormModel::showExpenseCycleDialog()
 	{
+		if(_dialog)
+			return;
+
 		TRANSACTION(APP);
 		if(_recordPtr->expenseCyclePtr)
 			return;
 
-		auto selectionDialog = new ListSelectionDialog<ExpenseCycleList>(Wt::WString::tr("SelectXFromList").arg(Wt::WString::tr("recurringExpense")), this);
+		auto selectionDialog = addChild(std::make_unique<ListSelectionDialog<ExpenseCycleList>>(tr("SelectXFromList").arg(tr("recurringExpense"))));
 		selectionDialog->selected().connect(this, &EmployeeAssignmentFormModel::handleExpenseCycleSelected);
+		selectionDialog->finished().connect(this, &EmployeeAssignmentFormModel::handleDialogFinished);
+		_dialog = selectionDialog;
 		selectionDialog->show();
 	}
 
 	void EmployeeAssignmentFormModel::showClientAssignmentDialog()
 	{
+		if(_dialog)
+			return;
+
 		TRANSACTION(APP);
 		if(_recordPtr->clientAssignmentPtr)
 			return;
 
-		auto selectionDialog = new ListSelectionDialog<ClientAssignmentList>(Wt::WString::tr("SelectXFromList").arg(Wt::WString::tr("recurringExpense")), this);
+		auto selectionDialog = addChild(std::make_unique<ListSelectionDialog<ClientAssignmentList>>(tr("SelectXFromList").arg(tr("recurringExpense"))));
 		selectionDialog->selected().connect(this, &EmployeeAssignmentFormModel::handleClientAssignmentSelected);
+		selectionDialog->finished().connect(this, &EmployeeAssignmentFormModel::handleDialogFinished);
+		_dialog = selectionDialog;
 		selectionDialog->show();
 	}
 
@@ -404,6 +414,15 @@ namespace GS
 		_view->reload();
 	}
 
+	void EmployeeAssignmentFormModel::handleDialogFinished()
+	{
+		if(!_dialog)
+			return;
+
+		_dialog->removeFromParent();
+		_dialog = nullptr;
+	}
+
 	EmployeeAssignmentView::EmployeeAssignmentView(Wt::Dbo::ptr<EmployeeAssignment> assignmentPtr /*= Wt::Dbo::ptr<EmployeeAssignment>()*/)
 		: _tempPtr(assignmentPtr)
 	{
@@ -412,7 +431,7 @@ namespace GS
 
 	void EmployeeAssignmentView::initView()
 	{
-		_model = new EmployeeAssignmentFormModel(this, _tempPtr);
+		_model = std::make_shared<EmployeeAssignmentFormModel>(this, _tempPtr);
 		addFormModel("assignment", _model);
 	}
 
@@ -420,16 +439,14 @@ namespace GS
 	{
 		setReadOnly(startDateField, true);
 
-		_view->bindWidget("expenseCycle", new Wt::WAnchor());
-		_view->bindWidget("clientAssignment", new Wt::WAnchor());
+		_view->bindNew<Wt::WAnchor>("expenseCycle");
+		_view->bindNew<Wt::WAnchor>("clientAssignment");
 
-		Wt::WPushButton *setExpenseCycle = new Wt::WPushButton(Wt::WString::tr("AssociateWithRecurringExpense"));
+		Wt::WPushButton *setExpenseCycle = _view->bindNew<Wt::WPushButton>("setExpenseCycle", tr("AssociateWithRecurringExpense"));
 		setExpenseCycle->clicked().connect(this, &EmployeeAssignmentFormModel::showExpenseCycleDialog);
-		_view->bindWidget("setExpenseCycle", setExpenseCycle);
 
-		Wt::WPushButton *setClientAssignment = new Wt::WPushButton(Wt::WString::tr("AssociateWithClientAssignment"));
+		Wt::WPushButton *setClientAssignment = _view->bindNew<Wt::WPushButton>("setClientAssignment", tr("AssociateWithClientAssignment"));
 		setClientAssignment->clicked().connect(this, &EmployeeAssignmentFormModel::showClientAssignmentDialog);
-		_view->bindWidget("setClientAssignment", setClientAssignment);
 
 		_view->reload();
 	}
@@ -451,10 +468,10 @@ namespace GS
 						.arg(rsEveryNIntervals(assignmentPtr->expenseCyclePtr->amount(), assignmentPtr->expenseCyclePtr->interval, assignmentPtr->expenseCyclePtr->nIntervals));
 					Wt::WAnchor *a = resolve<Wt::WAnchor*>("expenseCycle");
 					a->setText(text);
-					a->setLink(Wt::WLink(Wt::WLink::InternalPath, ExpenseCycle::viewInternalPath(assignmentPtr->expenseCyclePtr.id())));
+					a->setLink(Wt::WLink(Wt::LinkType::InternalPath, ExpenseCycle::viewInternalPath(assignmentPtr->expenseCyclePtr.id())));
 				}
-				setCondition("show-expenseCycle", assignmentPtr->expenseCyclePtr);
-				resolveWidget("setExpenseCycle")->setHidden(assignmentPtr->expenseCyclePtr);
+				setCondition("show-expenseCycle", (bool)assignmentPtr->expenseCyclePtr);
+				resolveWidget("setExpenseCycle")->setHidden((bool)assignmentPtr->expenseCyclePtr);
 			}
 			catch(const Wt::Dbo::Exception &e)
 			{
@@ -471,10 +488,10 @@ namespace GS
 						.arg(assignmentPtr->clientAssignmentPtr->servicePtr->title);
 					Wt::WAnchor *a = resolve<Wt::WAnchor*>("clientAssignment");
 					a->setText(text);
-					a->setLink(Wt::WLink(Wt::WLink::InternalPath, ClientAssignment::viewInternalPath(assignmentPtr->clientAssignmentPtr.id())));
+					a->setLink(Wt::WLink(Wt::LinkType::InternalPath, ClientAssignment::viewInternalPath(assignmentPtr->clientAssignmentPtr.id())));
 				}
-				setCondition("show-clientAssignment", assignmentPtr->clientAssignmentPtr);
-				resolveWidget("setClientAssignment")->setHidden(assignmentPtr->clientAssignmentPtr);
+				setCondition("show-clientAssignment", (bool)assignmentPtr->clientAssignmentPtr);
+				resolveWidget("setClientAssignment")->setHidden((bool)assignmentPtr->clientAssignmentPtr);
 			}
 			catch(const Wt::Dbo::Exception &e)
 			{
@@ -487,41 +504,43 @@ namespace GS
 
 	void EmployeeAssignmentView::handlePositionChanged()
 	{
-		boost::any v = _positionCombo->model()->index(_positionCombo->currentIndex(), 0).data(Wt::AdditionalRowRole);
+		Wt::any v = _positionCombo->model()->index(_positionCombo->currentIndex(), 0).data(Wt::ItemDataRole::AdditionalRow);
 		if(v.empty())
 			return;
 
-		if(boost::any_cast<bool>(v) == true)
-			createAddPositionDialog();
+		if(Wt::any_cast<bool>(v) == true)
+			showAddPositionDialog();
 	}
 
-	Wt::WDialog * EmployeeAssignmentView::createAddPositionDialog()
+	void EmployeeAssignmentView::showAddPositionDialog()
 	{
-		Wt::WDialog *dialog = new Wt::WDialog(tr("AddNewX").arg(tr("position")), this);
-		dialog->setClosable(true);
-		dialog->setTransient(true);
-		dialog->rejectWhenEscapePressed(true);
-		dialog->setDeleteWhenHidden(true);
-		dialog->setWidth(Wt::WLength(500));
-		PositionView *positionView = new PositionView();
-		dialog->contents()->addWidget(positionView);
+		if(_dialog)
+			return;
 
-		dialog->finished().connect(std::bind([=](Wt::WDialog::DialogCode code) {
-			if(code == Wt::WDialog::Rejected)
+		_dialog = addChild(std::make_unique<Wt::WDialog>(tr("AddNewX").arg(tr("position"))));
+		_dialog->setClosable(true);
+		_dialog->setTransient(true);
+		_dialog->rejectWhenEscapePressed(true);
+		_dialog->setWidth(Wt::WLength(500));
+		PositionView *positionView = _dialog->contents()->addNew<PositionView>();
+
+		_dialog->finished().connect(this, std::bind([this](Wt::DialogCode code) {
+			if(code == Wt::DialogCode::Rejected)
 			{
 				_model->setValue(EmployeeAssignmentFormModel::positionField, Wt::Dbo::ptr<EmployeePosition>());
-				updateViewField(_model, EmployeeAssignmentFormModel::positionField);
+				updateViewField(_model.get(), EmployeeAssignmentFormModel::positionField);
 			}
-		}, std::placeholders::_1));
+			_dialog->removeFromParent();
+			_dialog = nullptr;
+		}, _1));
 
-		positionView->submitted().connect(std::bind([=]() {
+		positionView->submitted().connect(this, std::bind([this, positionView]() {
 			_model->setValue(EmployeeAssignmentFormModel::positionField, positionView->positionPtr());
-			updateViewField(_model, EmployeeAssignmentFormModel::positionField);
-			dialog->accept();
+			updateViewField(_model.get(), EmployeeAssignmentFormModel::positionField);
+			_dialog->accept();
 		}));
 
-		dialog->show();
-		return dialog;
+		_dialog->show();
 	}
 
 	void EmployeeAssignmentView::updateView(Wt::WFormModel *model)
@@ -549,17 +568,16 @@ namespace GS
 		if(update)
 			_view->updateModelField(this, EmployeeAssignmentFormModel::startDateField);
 
-		const boost::any &startDateVal = value(EmployeeAssignmentFormModel::startDateField);
+		const Wt::any &startDateVal = value(EmployeeAssignmentFormModel::startDateField);
 		if(startDateVal.empty())
 			return;
 
-		Wt::WDate startDate = boost::any_cast<Wt::WDate>(startDateVal);
-		Wt::WDateValidator *endDateValidator = dynamic_cast<Wt::WDateValidator*>(validator(EmployeeAssignmentFormModel::endDateField));
+		Wt::WDate startDate = Wt::any_cast<Wt::WDate>(startDateVal);
+		auto endDateValidator = std::static_pointer_cast<Wt::WDateValidator>(validator(EmployeeAssignmentFormModel::endDateField));
 		endDateValidator->setBottom(startDate.isValid() ? startDate.addDays(1) : Wt::WDate());
 	}
 
-	EmployeeAssignmentListProxyModel::EmployeeAssignmentListProxyModel(Wt::WAbstractItemModel *model, Wt::WObject *parent /*= nullptr*/)
-		: Wt::WBatchEditProxyModel(parent)
+	EmployeeAssignmentListProxyModel::EmployeeAssignmentListProxyModel(std::shared_ptr<Wt::WAbstractItemModel> model)
 	{
 		setSourceModel(model);
 		addAdditionalColumns();
@@ -578,15 +596,15 @@ namespace GS
 	Wt::WFlags<Wt::ItemFlag> EmployeeAssignmentListProxyModel::flags(const Wt::WModelIndex &index) const
 	{
 		if(index.column() == _linkColumn)
-			return Wt::ItemIsXHTMLText;
+			return Wt::ItemFlag::XHTMLText;
 		return Wt::WBatchEditProxyModel::flags(index);
 	}
 
-	boost::any EmployeeAssignmentListProxyModel::headerData(int section, Wt::Orientation orientation /*= Wt::Horizontal*/, int role /*= Wt::DisplayRole*/) const
+	Wt::any EmployeeAssignmentListProxyModel::headerData(int section, Wt::Orientation orientation, Wt::ItemDataRole role) const
 	{
 		if(section == _linkColumn)
 		{
-			if(role == Wt::WidthRole)
+			if(role == Wt::ItemDataRole::Width)
 				return 40;
 			return Wt::WAbstractItemModel::headerData(section, orientation, role);
 		}
@@ -594,49 +612,49 @@ namespace GS
 		return Wt::WBatchEditProxyModel::headerData(section, orientation, role);
 	}
 
-	boost::any EmployeeAssignmentListProxyModel::data(const Wt::WModelIndex &idx, int role /*= Wt::DisplayRole*/) const
+	Wt::any EmployeeAssignmentListProxyModel::data(const Wt::WModelIndex &idx, Wt::ItemDataRole role) const
 	{
 		if(_linkColumn != -1 && idx.column() == _linkColumn)
 		{
-			if(role == Wt::DisplayRole)
-				return Wt::WString::tr("GS.LinkIcon");
-			else if(role == Wt::LinkRole)
+			if(role == Wt::ItemDataRole::Display)
+				return tr("GS.LinkIcon");
+			else if(role == Wt::ItemDataRole::Link)
 			{
-				const EmployeeAssignmentList::ResultType &res = dynamic_cast<Wt::Dbo::QueryModel<EmployeeAssignmentList::ResultType>*>(sourceModel())->resultRow(idx.row());
-				long long id = boost::get<EmployeeAssignmentList::ResId>(res);
-				return Wt::WLink(Wt::WLink::InternalPath, EmployeeAssignment::viewInternalPath(id));
+				const EmployeeAssignmentList::ResultType &res = std::static_pointer_cast<Wt::Dbo::QueryModel<EmployeeAssignmentList::ResultType>>(sourceModel())->resultRow(idx.row());
+				long long id = std::get<EmployeeAssignmentList::ResId>(res);
+				return Wt::WLink(Wt::LinkType::InternalPath, EmployeeAssignment::viewInternalPath(id));
 			}
 		}
 
-		boost::any viewIndexData = headerData(idx.column(), Wt::Horizontal, Wt::ViewIndexRole);
+		Wt::any viewIndexData = headerData(idx.column(), Wt::Orientation::Horizontal, Wt::ItemDataRole::ViewIndex);
 		if(viewIndexData.empty())
 			return Wt::WBatchEditProxyModel::data(idx, role);
-		int viewIndex = boost::any_cast<int>(viewIndexData);
+		int viewIndex = Wt::any_cast<int>(viewIndexData);
 
-		const EmployeeAssignmentList::ResultType &res = dynamic_cast<Wt::Dbo::QueryModel<EmployeeAssignmentList::ResultType>*>(sourceModel())->resultRow(idx.row());
+		const EmployeeAssignmentList::ResultType &res = std::static_pointer_cast<Wt::Dbo::QueryModel<EmployeeAssignmentList::ResultType>>(sourceModel())->resultRow(idx.row());
 
-		if(viewIndex == EmployeeAssignmentList::ViewStartDate && role == Wt::DisplayRole)
+		if(viewIndex == EmployeeAssignmentList::ViewStartDate && role == Wt::ItemDataRole::Display)
 		{
-			const Wt::WDate &date = boost::get<EmployeeAssignmentList::ResStartDate>(res);
-			if(date.isValid() && date > Wt::WDate(boost::gregorian::day_clock::local_day()))
-				return Wt::WString::tr("XNotStarted").arg(boost::get<EmployeeAssignmentList::ResStartDate>(res).toString(Wt::WLocale::currentLocale().dateFormat()));
+			const Wt::WDate &date = std::get<EmployeeAssignmentList::ResStartDate>(res);
+			if(date.isValid() && date > Wt::WDate::currentServerDate())
+				return tr("XNotStarted").arg(std::get<EmployeeAssignmentList::ResStartDate>(res).toString(Wt::WLocale::currentLocale().dateFormat()));
 		}
 
-		if(viewIndex == EmployeeAssignmentList::ViewEndDate && role == Wt::DisplayRole)
+		if(viewIndex == EmployeeAssignmentList::ViewEndDate && role == Wt::ItemDataRole::Display)
 		{
-			const Wt::WDate &date = boost::get<EmployeeAssignmentList::ResEndDate>(res);
-			if(date.isValid() && Wt::WDate(boost::gregorian::day_clock::local_day()) >= date)
-				return Wt::WString::tr("XEnded").arg(date.toString(Wt::WLocale::currentLocale().dateFormat()));
+			const Wt::WDate &date = std::get<EmployeeAssignmentList::ResEndDate>(res);
+			if(date.isValid() && Wt::WDate::currentServerDate() >= date)
+				return tr("XEnded").arg(date.toString(Wt::WLocale::currentLocale().dateFormat()));
 		}
 
-		if(role == Wt::StyleClassRole)
+		if(role == Wt::ItemDataRole::StyleClass)
 		{
-			const Wt::WDate &startDate = boost::get<EmployeeAssignmentList::ResStartDate>(res);
-			if(startDate.isValid() && startDate > Wt::WDate(boost::gregorian::day_clock::local_day()))
+			const Wt::WDate &startDate = std::get<EmployeeAssignmentList::ResStartDate>(res);
+			if(startDate.isValid() && startDate > Wt::WDate::currentServerDate())
 				return "text-info";
 
-			const Wt::WDate &endDate = boost::get<EmployeeAssignmentList::ResEndDate>(res);
-			if(endDate.isValid() && Wt::WDate(boost::gregorian::day_clock::local_day()) >= endDate)
+			const Wt::WDate &endDate = std::get<EmployeeAssignmentList::ResEndDate>(res);
+			if(endDate.isValid() && Wt::WDate::currentServerDate() >= endDate)
 				return "text-muted";
 		}
 
@@ -652,23 +670,23 @@ namespace GS
 		{
 			int timestampColumn = viewIndexToColumn(ViewCreatedOn);
 			if(timestampColumn != -1)
-				_tableView->sortByColumn(timestampColumn, Wt::DescendingOrder);
+				_tableView->sortByColumn(timestampColumn, Wt::SortOrder::Descending);
 		}
 	}
 
 	void EmployeeAssignmentList::initFilters()
 	{
-		filtersTemplate()->addFilterModel(new WLineEditFilterModel(tr("ID"), "a.id", std::bind(&FiltersTemplate::initIdEdit, std::placeholders::_1))); filtersTemplate()->addFilter(1);
+		filtersTemplate()->addFilterModel(std::make_shared<WLineEditFilterModel>(tr("ID"), "a.id", std::bind(&FiltersTemplate::initIdEdit, std::placeholders::_1))); filtersTemplate()->addFilter(1);
 	}
 
 	void EmployeeAssignmentList::initModel()
 	{
-		QueryModelType *model;
-		_model = model = new QueryModelType(this);
+		std::shared_ptr<QueryModelType> model;
+		_model = model = std::make_shared<QueryModelType>();
 
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
-			"SELECT a.id a_id, a.timestamp, e.name e_name, a.startDate, a.endDate, cnt.name cnt_name, city.name city_name, l.address FROM "
+			"SELECT a.id, a.timestamp, e.name, a.startDate, a.endDate, cnt.name, city.name, l.address FROM "
 			+ std::string(EmployeeAssignment::tableName()) + " a "
 			"INNER JOIN " + Entity::tableName() + " e ON (e.id = a.entity_id) "
 			"LEFT JOIN " + Location::tableName() + " l ON (l.id = a.location_id) "
@@ -686,22 +704,20 @@ namespace GS
 
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "a.");
 
-		Wt::Dbo::Query<ResultType> query(_baseQuery); //must copy the query first
-		model->setQuery(query);
-
-		addColumn(ViewId, model->addColumn("a.id a_id"), tr("ID"), IdColumnWidth);
+		model->setQuery(generateQuery());
+		addColumn(ViewId, model->addColumn("a.id"), tr("ID"), IdColumnWidth);
 		addColumn(ViewCreatedOn, model->addColumn("a.timestamp"), tr("CreatedOn"), DateTimeColumnWidth);
 
 		if(_entityPtr.id() == -1)
-			addColumn(ViewEntity, model->addColumn("e.name e_name"), tr("Entity"), 200);
+			addColumn(ViewEntity, model->addColumn("e.name"), tr("Entity"), 200);
 
 		addColumn(ViewStartDate, model->addColumn("a.startDate"), tr("StartDate"), DateColumnWidth);
 		addColumn(ViewEndDate, model->addColumn("a.endDate"), tr("EndDate"), DateColumnWidth);
-		addColumn(ViewCountry, model->addColumn("cnt.name cnt_name"), tr("Country"), 150);
-		addColumn(ViewCity, model->addColumn("city.name city_name"), tr("City"), 150);
+		addColumn(ViewCountry, model->addColumn("cnt.name"), tr("Country"), 150);
+		addColumn(ViewCity, model->addColumn("city.name"), tr("City"), 150);
 		addColumn(ViewAddress, model->addColumn("l.address"), tr("Address"), 300);
 
-		_proxyModel = new EmployeeAssignmentListProxyModel(_model, _model);
+		_proxyModel = std::make_shared<EmployeeAssignmentListProxyModel>(_model);
 	}
 
 	const Wt::WFormModel::Field ClientAssignmentFormModel::descriptionField = "description";
@@ -735,36 +751,36 @@ namespace GS
 		}
 	}
 
-	Wt::WWidget *ClientAssignmentFormModel::createFormWidget(Wt::WFormModel::Field field)
+	std::unique_ptr<Wt::WWidget> ClientAssignmentFormModel::createFormWidget(Wt::WFormModel::Field field)
 	{
 		if(field == descriptionField)
 		{
-			Wt::WTextArea *description = new Wt::WTextArea();
+			auto description = std::make_unique<Wt::WTextArea>();
 			description->setRows(3);
 			return description;
 		}
 		if(field == startDateField)
 		{
-			auto startDateEdit = new Wt::WDateEdit();
+			auto startDateEdit = std::make_unique<Wt::WDateEdit>();
 			startDateEdit->setPlaceholderText(Wt::WLocale::currentLocale().dateFormat());
-			auto startDateValidator = new Wt::WDateValidator();
+			auto startDateValidator = std::make_shared<Wt::WDateValidator>();
 			startDateValidator->setMandatory(true);
 			setValidator(startDateField, startDateValidator);
-			startDateEdit->changed().connect(boost::bind(&ClientAssignmentFormModel::updateEndDateValidator, this, true));
+			startDateEdit->changed().connect(this, std::bind(&ClientAssignmentFormModel::updateEndDateValidator, this, true));
 			return startDateEdit;
 		}
 		if(field == endDateField)
 		{
-			auto endDateEdit = new Wt::WDateEdit();
-			endDateEdit->setPlaceholderText(Wt::WString::tr("EmptyEndDate"));
-			auto endDateValidator = new Wt::WDateValidator();
+			auto endDateEdit = std::make_unique<Wt::WDateEdit>();
+			endDateEdit->setPlaceholderText(tr("EmptyEndDate"));
+			auto endDateValidator = std::make_shared<Wt::WDateValidator>();
 			setValidator(endDateField, endDateValidator);
 			return endDateEdit;
 		}
 		if(field == entityField)
 		{
-			FindEntityEdit *findEntityEdit = new FindEntityEdit();
-			FindEntityValidator *findEntityValidator = new FindEntityValidator(findEntityEdit, true);
+			auto findEntityEdit = std::make_unique<FindEntityEdit>();
+			auto findEntityValidator = std::make_shared<FindEntityValidator>(findEntityEdit.get(), true);
 			findEntityValidator->setModifyPermissionRequired(true);
 			setValidator(entityField, findEntityValidator);
 			return findEntityEdit;
@@ -773,12 +789,14 @@ namespace GS
 		{
 			WApplication *app = APP;
 			app->initServiceQueryModel();
-			_view->_serviceCombo = new QueryProxyModelCB<ServiceProxyModel>(app->serviceProxyModel());
-			auto validator = new QueryProxyModelCBValidator<ServiceProxyModel>(_view->_serviceCombo);
-			validator->setErrorString(Wt::WString::tr("MustSelectService"));
+
+			auto serviceCombo = std::make_unique<QueryProxyModelCB<ServiceProxyModel>>(app->serviceProxyModel());
+			auto validator = std::make_shared<QueryProxyModelCBValidator<ServiceProxyModel>>(serviceCombo.get());
+			validator->setErrorString(tr("MustSelectService"));
 			setValidator(field, validator);
-			_view->_serviceCombo->changed().connect(_view, &ClientAssignmentView::handleServiceChanged);
-			return _view->_serviceCombo;
+			serviceCombo->changed().connect(_view, &ClientAssignmentView::handleServiceChanged);
+			_view->_serviceCombo = serviceCombo.get();
+			return serviceCombo;
 		}
 		return nullptr;
 	}
@@ -793,18 +811,18 @@ namespace GS
 
 		if(!_recordPtr)
 		{
-			_recordPtr = app->dboSession().add(new ClientAssignment());
+			_recordPtr = app->dboSession().add(std::make_unique<ClientAssignment>());
 			_recordPtr.modify()->setCreatedByValues();
 		}
 
 		_recordPtr.modify()->description = valueText(descriptionField).toUTF8();
-		_recordPtr.modify()->startDate = boost::any_cast<Wt::WDate>(value(startDateField));
-		_recordPtr.modify()->endDate = boost::any_cast<Wt::WDate>(value(endDateField));
-		_recordPtr.modify()->entityPtr = boost::any_cast<Wt::Dbo::ptr<Entity>>(value(entityField));
-		_recordPtr.modify()->servicePtr = boost::any_cast<Wt::Dbo::ptr<ClientService>>(value(serviceField));
+		_recordPtr.modify()->startDate = Wt::any_cast<Wt::WDate>(value(startDateField));
+		_recordPtr.modify()->endDate = Wt::any_cast<Wt::WDate>(value(endDateField));
+		_recordPtr.modify()->entityPtr = Wt::any_cast<Wt::Dbo::ptr<Entity>>(value(entityField));
+		_recordPtr.modify()->servicePtr = Wt::any_cast<Wt::Dbo::ptr<ClientService>>(value(serviceField));
 
-		const boost::any &cycleVal = value(cycleField);
-		_recordPtr.modify()->incomeCyclePtr = cycleVal.empty() ? Wt::Dbo::ptr<IncomeCycle>() : boost::any_cast<Wt::Dbo::ptr<IncomeCycle>>(cycleVal);
+		const Wt::any &cycleVal = value(cycleField);
+		_recordPtr.modify()->incomeCyclePtr = cycleVal.empty() ? Wt::Dbo::ptr<IncomeCycle>() : Wt::any_cast<Wt::Dbo::ptr<IncomeCycle>>(cycleVal);
 
 		t.commit();
 		return true;
@@ -812,12 +830,17 @@ namespace GS
 
 	void ClientAssignmentFormModel::showIncomeCycleDialog()
 	{
+		if(_dialog)
+			return;
+
 		TRANSACTION(APP);
 		if(_recordPtr->incomeCyclePtr)
 			return;
 
-		auto selectionDialog = new ListSelectionDialog<IncomeCycleList>(Wt::WString::tr("SelectXFromList").arg(Wt::WString::tr("recurringIncome")), this);
+		auto selectionDialog = addChild(std::make_unique<ListSelectionDialog<IncomeCycleList>>(tr("SelectXFromList").arg(tr("recurringIncome"))));
 		selectionDialog->selected().connect(this, &ClientAssignmentFormModel::handleIncomeCycleSelected);
+		selectionDialog->finished().connect(this, &ClientAssignmentFormModel::handleDialogFinished);
+		_dialog = selectionDialog;
 		selectionDialog->show();
 	}
 
@@ -848,6 +871,15 @@ namespace GS
 		_view->reload();
 	}
 
+	void ClientAssignmentFormModel::handleDialogFinished()
+	{
+		if(!_dialog)
+			return;
+
+		_dialog->removeFromParent();
+		_dialog = nullptr;
+	}
+
 	ClientAssignmentView::ClientAssignmentView(Wt::Dbo::ptr<ClientAssignment> assignmentPtr /*= Wt::Dbo::ptr<ClientAssignment>()*/)
 		: _tempPtr(assignmentPtr)
 	{
@@ -856,10 +888,10 @@ namespace GS
 
 	void ClientAssignmentView::initView()
 	{
-		_model = new ClientAssignmentFormModel(this, _tempPtr);
+		_model = std::make_shared<ClientAssignmentFormModel>(this, _tempPtr);
 		addFormModel("assignment", _model);
 
-		bindWidget("incomeCycle", new Wt::WAnchor());
+		bindNew<Wt::WAnchor>("incomeCycle");
 	}
 
 	void ClientAssignmentView::reload()
@@ -879,9 +911,9 @@ namespace GS
 						.arg(rsEveryNIntervals(assignmentPtr->incomeCyclePtr->amount(), assignmentPtr->incomeCyclePtr->interval, assignmentPtr->incomeCyclePtr->nIntervals));
 					Wt::WAnchor *a = resolve<Wt::WAnchor*>("incomeCycle");
 					a->setText(text);
-					a->setLink(Wt::WLink(Wt::WLink::InternalPath, IncomeCycle::viewInternalPath(assignmentPtr->incomeCyclePtr.id())));
+					a->setLink(Wt::WLink(Wt::LinkType::InternalPath, IncomeCycle::viewInternalPath(assignmentPtr->incomeCyclePtr.id())));
 				}
-				setCondition("show-incomeCycle", assignmentPtr->incomeCyclePtr);
+				setCondition("show-incomeCycle", (bool)assignmentPtr->incomeCyclePtr);
 				setCondition("set-incomeCycle", !assignmentPtr->incomeCyclePtr);
 			}
 			catch(const Wt::Dbo::Exception &e)
@@ -895,41 +927,43 @@ namespace GS
 
 	void ClientAssignmentView::handleServiceChanged()
 	{
-		boost::any v = _serviceCombo->model()->index(_serviceCombo->currentIndex(), 0).data(Wt::AdditionalRowRole);
+		Wt::any v = _serviceCombo->model()->index(_serviceCombo->currentIndex(), 0).data(Wt::ItemDataRole::AdditionalRow);
 		if(v.empty())
 			return;
 
-		if(boost::any_cast<bool>(v) == true)
-			createAddServiceDialog();
+		if(Wt::any_cast<bool>(v) == true)
+			showAddServiceDialog();
 	}
 
-	Wt::WDialog * ClientAssignmentView::createAddServiceDialog()
+	void ClientAssignmentView::showAddServiceDialog()
 	{
-		Wt::WDialog *dialog = new Wt::WDialog(tr("AddNewX").arg(tr("service")), this);
-		dialog->setTransient(true);
-		dialog->rejectWhenEscapePressed(true);
-		dialog->setDeleteWhenHidden(true);
-		dialog->setClosable(true);
-		dialog->setWidth(Wt::WLength(500));
-		ServiceView *serviceView = new ServiceView();
-		dialog->contents()->addWidget(serviceView);
+		if(_dialog)
+			return;
 
-		dialog->finished().connect(std::bind([=](Wt::WDialog::DialogCode code) {
-			if(code == Wt::WDialog::Rejected)
+		_dialog = addChild(std::make_unique<Wt::WDialog>(tr("AddNewX").arg(tr("service"))));
+		_dialog->setTransient(true);
+		_dialog->rejectWhenEscapePressed(true);
+		_dialog->setClosable(true);
+		_dialog->setWidth(Wt::WLength(500));
+		ServiceView *serviceView  = _dialog->contents()->addNew<ServiceView>();
+
+		_dialog->finished().connect(this, std::bind([this](Wt::DialogCode code) {
+			if(code == Wt::DialogCode::Rejected)
 			{
 				_model->setValue(ClientAssignmentFormModel::serviceField, Wt::Dbo::ptr<ClientService>());
-				updateViewField(_model, ClientAssignmentFormModel::serviceField);
+				updateViewField(_model.get(), ClientAssignmentFormModel::serviceField);
 			}
-		}, std::placeholders::_1));
+			_dialog->removeFromParent();
+			_dialog = nullptr;
+		}, _1));
 
-		serviceView->submitted().connect(std::bind([=]() {
+		serviceView->submitted().connect(this, std::bind([this, serviceView]() {
 			_model->setValue(ClientAssignmentFormModel::serviceField, serviceView->servicePtr());
-			updateViewField(_model, ClientAssignmentFormModel::serviceField);
-			dialog->accept();
+			updateViewField(_model.get(), ClientAssignmentFormModel::serviceField);
+			_dialog->accept();
 		}));
 
-		dialog->show();
-		return dialog;
+		_dialog->show();
 	}
 
 	void ClientAssignmentView::updateView(Wt::WFormModel *model)
@@ -956,11 +990,10 @@ namespace GS
 	{
 		setReadOnly(startDateField, true);
 
-		_view->bindWidget("employeeAssignments", new EmployeeAssignmentList(recordPtr()));
+		_view->bindNew<EmployeeAssignmentList>("employeeAssignments", recordPtr());
 
-		Wt::WPushButton *setIncomeCycle = new Wt::WPushButton(Wt::WString::tr("AssociateWithRecurringIncome"));
+		Wt::WPushButton *setIncomeCycle = _view->bindNew<Wt::WPushButton>("setIncomeCycle", tr("AssociateWithRecurringIncome"));
 		setIncomeCycle->clicked().connect(this, &ClientAssignmentFormModel::showIncomeCycleDialog);
-		_view->bindWidget("setIncomeCycle", setIncomeCycle);
 
 		_view->reload();
 	}
@@ -970,12 +1003,12 @@ namespace GS
 		if(update)
 			_view->updateModelField(this, ClientAssignmentFormModel::startDateField);
 
-		const boost::any &startDateVal = value(ClientAssignmentFormModel::startDateField);
+		const Wt::any &startDateVal = value(ClientAssignmentFormModel::startDateField);
 		if(startDateVal.empty())
 			return;
 
-		Wt::WDate startDate = boost::any_cast<Wt::WDate>(startDateVal);
-		Wt::WDateValidator *endDateValidator = dynamic_cast<Wt::WDateValidator*>(validator(ClientAssignmentFormModel::endDateField));
+		Wt::WDate startDate = Wt::any_cast<Wt::WDate>(startDateVal);
+		auto endDateValidator = std::static_pointer_cast<Wt::WDateValidator>(validator(ClientAssignmentFormModel::endDateField));
 		endDateValidator->setBottom(startDate.isValid() ? startDate.addDays(1) : Wt::WDate());
 	}
 
@@ -988,23 +1021,23 @@ namespace GS
 		{
 			int timestampColumn = viewIndexToColumn(ViewCreatedOn);
 			if(timestampColumn != -1)
-				_tableView->sortByColumn(timestampColumn, Wt::DescendingOrder);
+				_tableView->sortByColumn(timestampColumn, Wt::SortOrder::Descending);
 		}
 	}
 
 	void ClientAssignmentList::initFilters()
 	{
-		filtersTemplate()->addFilterModel(new WLineEditFilterModel(tr("ID"), "ca.id", std::bind(&FiltersTemplate::initIdEdit, std::placeholders::_1))); filtersTemplate()->addFilter(1);
+		filtersTemplate()->addFilterModel(std::make_shared<WLineEditFilterModel>(tr("ID"), "ca.id", std::bind(&FiltersTemplate::initIdEdit, std::placeholders::_1))); filtersTemplate()->addFilter(1);
 	}
 
 	void ClientAssignmentList::initModel()
 	{
-		QueryModelType *model;
-		_model = model = new QueryModelType(this);
+		std::shared_ptr<QueryModelType> model;
+		_model = model = std::make_shared<QueryModelType>();
 
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
-			"SELECT ca.id ca_id, ca.timestamp, e.name e_name, ca.startDate, ca.endDate, COUNT(ea.id) FROM "
+			"SELECT ca.id, ca.timestamp, e.name, ca.startDate, ca.endDate, COUNT(ea.id) FROM "
 			+ std::string(ClientAssignment::tableName()) + " ca "
 			"INNER JOIN " + Entity::tableName() + " e ON (e.id = ca.entity_id) "
 			"LEFT JOIN " + EmployeeAssignment::tableName() + " ea ON ea.clientassignment_id = ca.id"
@@ -1018,24 +1051,21 @@ namespace GS
 
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "ca.");
 
-		Wt::Dbo::Query<ResultType> query(_baseQuery); //must copy the query first
-		model->setQuery(query);
-
-		addColumn(ViewId, model->addColumn("ca.id ca_id"), tr("ID"), IdColumnWidth);
+		model->setQuery(generateQuery());
+		addColumn(ViewId, model->addColumn("ca.id"), tr("ID"), IdColumnWidth);
 		addColumn(ViewCreatedOn, model->addColumn("ca.timestamp"), tr("CreatedOn"), DateTimeColumnWidth);
 
 		if(_entityPtr.id() == -1)
-			addColumn(ViewEntity, model->addColumn("e.name e_name"), tr("Entity"), 200);
+			addColumn(ViewEntity, model->addColumn("e.name"), tr("Entity"), 200);
 
 		addColumn(ViewStartDate, model->addColumn("ca.startDate"), tr("StartDate"), DateColumnWidth);
 		addColumn(ViewEndDate, model->addColumn("ca.endDate"), tr("EndDate"), DateColumnWidth);
 		addColumn(ViewEmployeesAssigned, model->addColumn("COUNT(ea.id)"), tr("EmployeesAssigned"), 80);
 
-		_proxyModel = new ClientAssignmentListProxyModel(_model, _model);
+		_proxyModel = std::make_shared<ClientAssignmentListProxyModel>(_model);
 	}
 
-	ClientAssignmentListProxyModel::ClientAssignmentListProxyModel(Wt::WAbstractItemModel *model, Wt::WObject *parent /*= nullptr*/)
-		: Wt::WBatchEditProxyModel(parent)
+	ClientAssignmentListProxyModel::ClientAssignmentListProxyModel(std::shared_ptr<Wt::WAbstractItemModel> model)
 	{
 		setSourceModel(model);
 		addAdditionalColumns();
@@ -1054,15 +1084,15 @@ namespace GS
 	Wt::WFlags<Wt::ItemFlag> ClientAssignmentListProxyModel::flags(const Wt::WModelIndex &index) const
 	{
 		if(index.column() == _linkColumn)
-			return Wt::ItemIsXHTMLText;
+			return Wt::ItemFlag::XHTMLText;
 		return Wt::WBatchEditProxyModel::flags(index);
 	}
 
-	boost::any ClientAssignmentListProxyModel::headerData(int section, Wt::Orientation orientation /*= Wt::Horizontal*/, int role /*= Wt::DisplayRole*/) const
+	Wt::any ClientAssignmentListProxyModel::headerData(int section, Wt::Orientation orientation /*= Wt::Orientation::Horizontal*/, Wt::ItemDataRole role /*= Wt::ItemDataRole::Display*/) const
 	{
 		if(section == _linkColumn)
 		{
-			if(role == Wt::WidthRole)
+			if(role == Wt::ItemDataRole::Width)
 				return 40;
 			return Wt::WAbstractItemModel::headerData(section, orientation, role);
 		}
@@ -1070,49 +1100,49 @@ namespace GS
 		return Wt::WBatchEditProxyModel::headerData(section, orientation, role);
 	}
 
-	boost::any ClientAssignmentListProxyModel::data(const Wt::WModelIndex &idx, int role /*= Wt::DisplayRole*/) const
+	Wt::any ClientAssignmentListProxyModel::data(const Wt::WModelIndex &idx, Wt::ItemDataRole role) const
 	{
 		if(_linkColumn != -1 && idx.column() == _linkColumn)
 		{
-			if(role == Wt::DisplayRole)
-				return Wt::WString::tr("GS.LinkIcon");
-			else if(role == Wt::LinkRole)
+			if(role == Wt::ItemDataRole::Display)
+				return tr("GS.LinkIcon");
+			else if(role == Wt::ItemDataRole::Link)
 			{
-				const ClientAssignmentList::ResultType &res = dynamic_cast<Wt::Dbo::QueryModel<ClientAssignmentList::ResultType>*>(sourceModel())->resultRow(idx.row());
-				long long id = boost::get<ClientAssignmentList::ResId>(res);
-				return Wt::WLink(Wt::WLink::InternalPath, ClientAssignment::viewInternalPath(id));
+				const ClientAssignmentList::ResultType &res = std::static_pointer_cast<Wt::Dbo::QueryModel<ClientAssignmentList::ResultType>>(sourceModel())->resultRow(idx.row());
+				long long id = std::get<ClientAssignmentList::ResId>(res);
+				return Wt::WLink(Wt::LinkType::InternalPath, ClientAssignment::viewInternalPath(id));
 			}
 		}
 
-		boost::any viewIndexData = headerData(idx.column(), Wt::Horizontal, Wt::ViewIndexRole);
+		Wt::any viewIndexData = headerData(idx.column(), Wt::Orientation::Horizontal, Wt::ItemDataRole::ViewIndex);
 		if(viewIndexData.empty())
 			return Wt::WBatchEditProxyModel::data(idx, role);
-		int viewIndex = boost::any_cast<int>(viewIndexData);
+		int viewIndex = Wt::any_cast<int>(viewIndexData);
 
-		const ClientAssignmentList::ResultType &res = dynamic_cast<Wt::Dbo::QueryModel<ClientAssignmentList::ResultType>*>(sourceModel())->resultRow(idx.row());
+		const ClientAssignmentList::ResultType &res = std::static_pointer_cast<Wt::Dbo::QueryModel<ClientAssignmentList::ResultType>>(sourceModel())->resultRow(idx.row());
 
-		if(viewIndex == ClientAssignmentList::ViewStartDate && role == Wt::DisplayRole)
+		if(viewIndex == ClientAssignmentList::ViewStartDate && role == Wt::ItemDataRole::Display)
 		{
-			const Wt::WDate &date = boost::get<ClientAssignmentList::ResStartDate>(res);
-			if(date.isValid() && date > Wt::WDate(boost::gregorian::day_clock::local_day()))
-				return Wt::WString::tr("XNotStarted").arg(boost::get<ClientAssignmentList::ResStartDate>(res).toString(Wt::WLocale::currentLocale().dateFormat()));
+			const Wt::WDate &date = std::get<ClientAssignmentList::ResStartDate>(res);
+			if(date.isValid() && date > Wt::WDate::currentServerDate())
+				return tr("XNotStarted").arg(std::get<ClientAssignmentList::ResStartDate>(res).toString(Wt::WLocale::currentLocale().dateFormat()));
 		}
 
-		if(viewIndex == ClientAssignmentList::ViewEndDate && role == Wt::DisplayRole)
+		if(viewIndex == ClientAssignmentList::ViewEndDate && role == Wt::ItemDataRole::Display)
 		{
-			const Wt::WDate &date = boost::get<ClientAssignmentList::ResEndDate>(res);
-			if(date.isValid() && Wt::WDate(boost::gregorian::day_clock::local_day()) >= date)
-				return Wt::WString::tr("XEnded").arg(date.toString(Wt::WLocale::currentLocale().dateFormat()));
+			const Wt::WDate &date = std::get<ClientAssignmentList::ResEndDate>(res);
+			if(date.isValid() && Wt::WDate::currentServerDate() >= date)
+				return tr("XEnded").arg(date.toString(Wt::WLocale::currentLocale().dateFormat()));
 		}
 
-		if(role == Wt::StyleClassRole)
+		if(role == Wt::ItemDataRole::StyleClass)
 		{
-			const Wt::WDate &startDate = boost::get<ClientAssignmentList::ResStartDate>(res);
-			if(startDate.isValid() && startDate > Wt::WDate(boost::gregorian::day_clock::local_day()))
+			const Wt::WDate &startDate = std::get<ClientAssignmentList::ResStartDate>(res);
+			if(startDate.isValid() && startDate > Wt::WDate::currentServerDate())
 				return "text-info";
 
-			const Wt::WDate &endDate = boost::get<ClientAssignmentList::ResEndDate>(res);
-			if(endDate.isValid() && Wt::WDate(boost::gregorian::day_clock::local_day()) >= endDate)
+			const Wt::WDate &endDate = std::get<ClientAssignmentList::ResEndDate>(res);
+			if(endDate.isValid() && Wt::WDate::currentServerDate() >= endDate)
 				return "text-muted";
 		}
 
@@ -1248,9 +1278,9 @@ namespace GS
 // 					newView->load();
 // 					newView->model()->setValue(EmployeeAssignmentFormModel::cycleField, cMainView->cyclePtr());
 // 
-// 					const boost::any &entityVal = cMainView->model()->value(EntryCycleFormModel::entityField);
+// 					const Wt::any &entityVal = cMainView->model()->value(EntryCycleFormModel::entityField);
 // 					if(!entityVal.empty())
-// 						newView->model()->setValue(EmployeeAssignmentFormModel::entityField, boost::any_cast<Wt::Dbo::ptr<Entity>>(entityVal));
+// 						newView->model()->setValue(EmployeeAssignmentFormModel::entityField, Wt::any_cast<Wt::Dbo::ptr<Entity>>(entityVal));
 // 
 // 					newView->updateViewField(newView->model(), EmployeeAssignmentFormModel::entityField);
 // 				}
@@ -1272,9 +1302,9 @@ namespace GS
 // 				if(cMainView->model()->isRecordPersisted())
 // 				{
 // 					newView->load();
-// 					const boost::any &entityVal = cMainView->model()->value(EmployeeAssignmentFormModel::entityField);
+// 					const Wt::any &entityVal = cMainView->model()->value(EmployeeAssignmentFormModel::entityField);
 // 					if(!entityVal.empty())
-// 						newView->model()->setValue(EntryCycleFormModel::entityField, boost::any_cast<Wt::Dbo::ptr<Entity>>(entityVal));
+// 						newView->model()->setValue(EntryCycleFormModel::entityField, Wt::any_cast<Wt::Dbo::ptr<Entity>>(entityVal));
 // 
 // 					newView->updateViewField(newView->model(), EntryCycleFormModel::entityField);
 // 				}
@@ -1424,9 +1454,9 @@ namespace GS
 // 				newView->load();
 // 				newView->model()->setValue(ClientAssignmentFormModel::cycleField, cMainView->cyclePtr());
 // 
-// 				const boost::any &entityVal = cMainView->model()->value(EntryCycleFormModel::entityField);
+// 				const Wt::any &entityVal = cMainView->model()->value(EntryCycleFormModel::entityField);
 // 				if(!entityVal.empty())
-// 					newView->model()->setValue(ClientAssignmentFormModel::entityField, boost::any_cast<Wt::Dbo::ptr<Entity>>(entityVal));
+// 					newView->model()->setValue(ClientAssignmentFormModel::entityField, Wt::any_cast<Wt::Dbo::ptr<Entity>>(entityVal));
 // 
 // 				newView->updateViewField(newView->model(), ClientAssignmentFormModel::entityField);
 // 			}
@@ -1448,9 +1478,9 @@ namespace GS
 // 			if(cMainView->model()->isRecordPersisted())
 // 			{
 // 				newView->load();
-// 				const boost::any &entityVal = cMainView->model()->value(ClientAssignmentFormModel::entityField);
+// 				const Wt::any &entityVal = cMainView->model()->value(ClientAssignmentFormModel::entityField);
 // 				if(!entityVal.empty())
-// 					newView->model()->setValue(EntryCycleFormModel::entityField, boost::any_cast<Wt::Dbo::ptr<Entity>>(entityVal));
+// 					newView->model()->setValue(EntryCycleFormModel::entityField, Wt::any_cast<Wt::Dbo::ptr<Entity>>(entityVal));
 // 
 // 				newView->updateViewField(newView->model(), EntryCycleFormModel::entityField);
 // 			}
