@@ -67,7 +67,7 @@ namespace GS
 
 		if(!_recordPtr)
 		{
-			_recordPtr = app->dboSession().add(std::make_unique<Entity>());
+			_recordPtr = app->dboSession().addNew<Entity>();
 			_recordPtr.modify()->setCreatedByValues();
 		}
 
@@ -252,7 +252,7 @@ namespace GS
 		WApplication *app = APP;
 		TRANSACTION(app);
 		if(!_recordPtr)
-			_recordPtr = app->dboSession().add(std::make_unique<Person>());
+			_recordPtr = app->dboSession().addNew<Person>();
 		if(!_recordPtr->entityPtr())
 			_recordPtr.modify()->_entityPtr = _view->entityPtr();
 		_recordPtr->entityPtr().modify()->type = Entity::PersonType;
@@ -369,7 +369,7 @@ namespace GS
 		WApplication *app = WApplication::instance();
 		TRANSACTION(app);
 		if(!_recordPtr)
-			_recordPtr = app->dboSession().add(std::make_unique<Employee>());
+			_recordPtr = app->dboSession().addNew<Employee>();
 		if(!_recordPtr->personPtr())
 			_recordPtr.modify()->_personPtr = _view->_personModel->recordPtr();
 
@@ -449,7 +449,7 @@ namespace GS
 		WApplication *app = APP;
 		TRANSACTION(app);
 		if(!_recordPtr)
-			_recordPtr = app->dboSession().add(std::make_unique<Personnel>());
+			_recordPtr = app->dboSession().addNew<Personnel>();
 		if(!_recordPtr->employeePtr())
 			_recordPtr.modify()->_employeePtr = _view->_employeeModel->recordPtr();
 
@@ -583,7 +583,7 @@ namespace GS
 		TRANSACTION(app);
 
 		if(!_recordPtr)
-			_recordPtr = app->dboSession().add(std::make_unique<Business>());
+			_recordPtr = app->dboSession().addNew<Business>();
 		if(!_recordPtr->entityPtr())
 			_recordPtr.modify()->_entityPtr = _view->entityPtr();
 		_recordPtr->entityPtr().modify()->type = Entity::BusinessType;
@@ -931,7 +931,7 @@ namespace GS
 			{
 				return false;
 			}
-			_recordPtr = app->dboSession().add(std::make_unique<ContactNumber>());
+			_recordPtr = app->dboSession().addNew<ContactNumber>();
 			//_recordPtr.modify()->setCreatedByValues();
 		}
 		else

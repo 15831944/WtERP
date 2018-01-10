@@ -64,7 +64,7 @@ namespace GS
 
 		if(!_recordPtr)
 		{
-			_recordPtr = app->dboSession().add(std::make_unique<Country>());
+			_recordPtr = app->dboSession().addNew<Country>();
 			//_recordPtr.modify()->setCreatedByValues();
 		}
 
@@ -178,7 +178,7 @@ namespace GS
 
 		if(!_recordPtr)
 		{
-			_recordPtr = app->dboSession().add(std::make_unique<City>());
+			_recordPtr = app->dboSession().addNew<City>();
 			//_recordPtr.modify()->setCreatedByValues();
 		}
 
@@ -337,7 +337,7 @@ namespace GS
 			if(address.empty() && !countryPtr && !cityPtr)
 				return false;
 
-			_recordPtr = app->dboSession().add(std::make_unique<Location>());
+			_recordPtr = app->dboSession().addNew<Location>();
 			_recordPtr.modify()->setCreatedByValues();
 		}
 

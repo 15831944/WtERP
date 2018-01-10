@@ -535,7 +535,7 @@ namespace GS
 		
 		if(!_recordPtr)
 		{
-			_recordPtr = app->dboSession().add(std::make_unique<Account>());
+			_recordPtr = app->dboSession().addNew<Account>();
 			_recordPtr.modify()->setCreatedByValues();
 		}
 

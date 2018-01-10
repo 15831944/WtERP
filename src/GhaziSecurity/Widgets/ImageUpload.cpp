@@ -193,7 +193,7 @@ namespace GS
 		TRANSACTION(app);
 
 		if(!_imageInfo.filePtr)
-			_imageInfo.filePtr = app->dboSession().add(std::make_unique<UploadedFile>());
+			_imageInfo.filePtr = app->dboSession().addNew<UploadedFile>();
 
 		_imageInfo.filePtr.modify()->description = description;
 		_imageInfo.filePtr.modify()->extension = _imageInfo.extension;

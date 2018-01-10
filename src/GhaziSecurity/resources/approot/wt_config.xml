@@ -77,7 +77,7 @@
 	       like CSRF or BREACH), and also provides proper support for
 	       concurrent sessions in a single browser.
 	      -->
-	    <tracking>Auto</tracking>
+	    <tracking>URL</tracking>
 
 	    <!-- How reload should be handled.
 
@@ -86,7 +86,7 @@
 	       the URL will not be cluttered with a sessionid.
 	       However, WApplication::refresh() will never be called.
 	      -->
-	    <reload-is-new-session>true</reload-is-new-session>
+	    <reload-is-new-session>false</reload-is-new-session>
 
 	    <!-- Session timeout (seconds).
 
@@ -232,7 +232,7 @@
 	   (e.g. for apache + fastcgi module), or on stderr (e.g. for
 	   the built-in httpd).
          -->
-	<log-file>C:\GS\source\src\GhaziSecurity\resources\approot\log.txt</log-file>
+	<log-file></log-file>
 
 	<!-- Logger configuration
 
@@ -602,9 +602,9 @@
 		
 	    <property name="MySQLHost">127.0.0.1</property>
 	    <property name="MySQLPort">3306</property>
-	    <property name="MySQLDb">gs</property>
+	    <property name="MySQLDb">ghazisecurity</property>
 	    <property name="MySQLUser">root</property>
-	    <property name="MySQLPassword">root</property>
+	    <property name="MySQLPassword"></property>
 		
 	    <property name="ReinstallDb">false</property>
 	</properties>

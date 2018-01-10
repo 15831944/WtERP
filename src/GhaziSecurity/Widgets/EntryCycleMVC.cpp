@@ -256,7 +256,7 @@ namespace GS
 		bool newCycle = false;
 		if(!_recordPtr)
 		{
-			_recordPtr = app->dboSession().add(std::make_unique<ExpenseCycle>());
+			_recordPtr = app->dboSession().addNew<ExpenseCycle>();
 			_recordPtr.modify()->setCreatedByValues();
 			newCycle = true;
 		}
@@ -344,7 +344,7 @@ namespace GS
 		bool newCycle = false;
 		if(!_recordPtr)
 		{
-			_recordPtr = app->dboSession().add(std::make_unique<IncomeCycle>());
+			_recordPtr = app->dboSession().addNew<IncomeCycle>();
 			_recordPtr.modify()->setCreatedByValues();
 			newCycle = true;
 		}

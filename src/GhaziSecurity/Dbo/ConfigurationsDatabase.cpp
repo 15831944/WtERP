@@ -281,11 +281,11 @@ namespace WW
 
 		configPtr = dboSession.find<Dbo::Configuration>().where("name = ? AND type = ?").bind(name).bind(Dbo::Configuration::LongInt);
 		if(!configPtr)
-			configPtr = dboSession.add(std::make_unique<Dbo::Configuration>(name, Dbo::Configuration::LongInt));
+			configPtr = dboSession.addNew<Dbo::Configuration>(name, Dbo::Configuration::LongInt);
 
 		configValPtr = configPtr->longIntPtr;
 		if(!configValPtr)
-			configValPtr = dboSession.add(std::make_unique<Dbo::ConfigurationLongInt>(configPtr));
+			configValPtr = dboSession.addNew<Dbo::ConfigurationLongInt>(configPtr);
 		configValPtr.modify()->value = value;
 
 		configPtr.flush();

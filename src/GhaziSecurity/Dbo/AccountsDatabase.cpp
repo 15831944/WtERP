@@ -28,7 +28,7 @@ namespace GS
 		if(!accountPtr)
 		{
 			Wt::log("gs-info") << "AccountsDatabase: Cash account was not found in database, creating cash account";
-			accountPtr = dboSession.add(std::make_unique<Account>(Account::Asset));
+			accountPtr = dboSession.addNew<Account>(Account::Asset);
 			accountPtr.modify()->name = tr("CashAccountName").toUTF8();
 			accountPtr.flush();
 
@@ -49,7 +49,7 @@ namespace GS
 
 		if(!entityPtr->balAccountPtr)
 		{
-			auto accountPtr = dboSession.add(std::make_unique<Account>(Account::EntityBalanceAccount));
+			auto accountPtr = dboSession.addNew<Account>(Account::EntityBalanceAccount);
 			accountPtr.modify()->creatorUserPtr = entityPtr->creatorUserPtr;
 			accountPtr.modify()->regionPtr = entityPtr->regionPtr;
 			accountPtr.modify()->name = tr("EntityIdBalanceAccount").arg(entityPtr.id()).toUTF8();
@@ -58,7 +58,7 @@ namespace GS
 		}
 		if(!entityPtr->pnlAccountPtr)
 		{
-			auto accountPtr = dboSession.add(std::make_unique<Account>(Account::EntityPnlAccount));
+			auto accountPtr = dboSession.addNew<Account>(Account::EntityPnlAccount);
 			accountPtr.modify()->creatorUserPtr = entityPtr->creatorUserPtr;
 			accountPtr.modify()->regionPtr = entityPtr->regionPtr;
 			accountPtr.modify()->name = tr("EntityIdPnlAccount").arg(entityPtr.id()).toUTF8();
@@ -337,6 +337,6 @@ namespace GS
 				newEntry.description = tr("RecurringEntry");
 		}
 
-		return dboSession.add(std::make_unique<AccountEntry>(std::move(newEntry)));
+		return dboSession.addNew<AccountEntry>(std::move(newEntry));
 	}
 }

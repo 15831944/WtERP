@@ -148,46 +148,46 @@ void WServer::initialize()
 			Wt::Dbo::Transaction tr(_dboSession);
 
 			//Countries
-			auto pakistan = _dboSession.add(std::make_unique<Country>("PK", "Pakistan"));
+			auto pakistan = _dboSession.addNew<Country>("PK", "Pakistan");
 			//Cities
-			auto karachi = _dboSession.add(std::make_unique<City>(pakistan, "Karachi"));
-			auto hyderabad = _dboSession.add(std::make_unique<City>(pakistan, "Hyderabad"));
-			auto sukhur = _dboSession.add(std::make_unique<City>(pakistan, "Sukhur"));
-			auto Quetta = _dboSession.add(std::make_unique<City>(pakistan, "Quetta"));
-			auto Multan = _dboSession.add(std::make_unique<City>(pakistan, "Multan"));
-			auto Lahore = _dboSession.add(std::make_unique<City>(pakistan, "Lahore"));
-			auto Islamabad = _dboSession.add(std::make_unique<City>(pakistan, "Islamabad"));
-			auto Peshawar = _dboSession.add(std::make_unique<City>(pakistan, "Peshawar"));
-			auto Faisalabad = _dboSession.add(std::make_unique<City>(pakistan, "Faisalabad"));
+			auto karachi = _dboSession.addNew<City>(pakistan, "Karachi");
+			auto hyderabad = _dboSession.addNew<City>(pakistan, "Hyderabad");
+			auto sukhur = _dboSession.addNew<City>(pakistan, "Sukhur");
+			auto Quetta = _dboSession.addNew<City>(pakistan, "Quetta");
+			auto Multan = _dboSession.addNew<City>(pakistan, "Multan");
+			auto Lahore = _dboSession.addNew<City>(pakistan, "Lahore");
+			auto Islamabad = _dboSession.addNew<City>(pakistan, "Islamabad");
+			auto Peshawar = _dboSession.addNew<City>(pakistan, "Peshawar");
+			auto Faisalabad = _dboSession.addNew<City>(pakistan, "Faisalabad");
 
 			//Permissions
-			auto accessAdminPanel = _dboSession.add(std::make_unique<Permission>(Permissions::AccessAdminPanel, "Access Admin Panel"));
+			auto accessAdminPanel = _dboSession.addNew<Permission>(Permissions::AccessAdminPanel, "Access Admin Panel");
 
-			auto createRecord = _dboSession.add(std::make_unique<Permission>(Permissions::CreateRecord, "Create records"));
-			auto modifyRecord = _dboSession.add(std::make_unique<Permission>(Permissions::ModifyRecord, "Modify records"));
-			auto removeRecord = _dboSession.add(std::make_unique<Permission>(Permissions::RemoveRecord, "Remove records"));
+			auto createRecord = _dboSession.addNew<Permission>(Permissions::CreateRecord, "Create records");
+			auto modifyRecord = _dboSession.addNew<Permission>(Permissions::ModifyRecord, "Modify records");
+			auto removeRecord = _dboSession.addNew<Permission>(Permissions::RemoveRecord, "Remove records");
 
-			auto viewUser = _dboSession.add(std::make_unique<Permission>(Permissions::ViewUser, "View users"));
-			auto createUser = _dboSession.add(std::make_unique<Permission>(Permissions::CreateUser, "Create users"));
-			auto modifyUser = _dboSession.add(std::make_unique<Permission>(Permissions::ModifyUser, "Modify users"));
-			auto modifyUserPermission = _dboSession.add(std::make_unique<Permission>(Permissions::ModifyUserPermission, "Modify user permissions"));
-			auto removeUser = _dboSession.add(std::make_unique<Permission>(Permissions::RemoveUser, "Remove users"));
+			auto viewUser = _dboSession.addNew<Permission>(Permissions::ViewUser, "View users");
+			auto createUser = _dboSession.addNew<Permission>(Permissions::CreateUser, "Create users");
+			auto modifyUser = _dboSession.addNew<Permission>(Permissions::ModifyUser, "Modify users");
+			auto modifyUserPermission = _dboSession.addNew<Permission>(Permissions::ModifyUserPermission, "Modify user permissions");
+			auto removeUser = _dboSession.addNew<Permission>(Permissions::RemoveUser, "Remove users");
 
-			auto viewUnassignedUserRecord = _dboSession.add(std::make_unique<Permission>(Permissions::ViewUnassignedUserRecord, "View records not assigned to any user"));
-			auto viewOtherUserRecord = _dboSession.add(std::make_unique<Permission>(Permissions::ViewOtherUserRecord, "View records created by other users"));
-			auto modifyOtherUserRecord = _dboSession.add(std::make_unique<Permission>(Permissions::ModifyOtherUserRecord, "Modify records created by other users"));
-			auto removeOtherUserRecord = _dboSession.add(std::make_unique<Permission>(Permissions::RemoveOtherUserRecord, "Remove records created by other users"));
+			auto viewUnassignedUserRecord = _dboSession.addNew<Permission>(Permissions::ViewUnassignedUserRecord, "View records not assigned to any user");
+			auto viewOtherUserRecord = _dboSession.addNew<Permission>(Permissions::ViewOtherUserRecord, "View records created by other users");
+			auto modifyOtherUserRecord = _dboSession.addNew<Permission>(Permissions::ModifyOtherUserRecord, "Modify records created by other users");
+			auto removeOtherUserRecord = _dboSession.addNew<Permission>(Permissions::RemoveOtherUserRecord, "Remove records created by other users");
 
-			auto viewUnassignedRegionRecord = _dboSession.add(std::make_unique<Permission>(Permissions::ViewUnassignedRegionRecord, "View records not assigned to any region"));
-			auto viewOtherRegionRecord = _dboSession.add(std::make_unique<Permission>(Permissions::ViewOtherRegionRecord, "View records created by other regions"));
-			auto modifyOtherRegionRecord = _dboSession.add(std::make_unique<Permission>(Permissions::ModifyOtherRegionRecord, "Modify records created by other regions"));
-			auto removeOtherRegionRecord = _dboSession.add(std::make_unique<Permission>(Permissions::RemoveOtherRegionRecord, "Remove records created by other regions"));
+			auto viewUnassignedRegionRecord = _dboSession.addNew<Permission>(Permissions::ViewUnassignedRegionRecord, "View records not assigned to any region");
+			auto viewOtherRegionRecord = _dboSession.addNew<Permission>(Permissions::ViewOtherRegionRecord, "View records created by other regions");
+			auto modifyOtherRegionRecord = _dboSession.addNew<Permission>(Permissions::ModifyOtherRegionRecord, "Modify records created by other regions");
+			auto removeOtherRegionRecord = _dboSession.addNew<Permission>(Permissions::RemoveOtherRegionRecord, "Remove records created by other regions");
 
-			auto viewRegion = _dboSession.add(std::make_unique<Permission>(Permissions::ViewRegion, "View regions"));
-			auto createRegion = _dboSession.add(std::make_unique<Permission>(Permissions::CreateRegion, "Create regions"));
-			auto modifyRegion = _dboSession.add(std::make_unique<Permission>(Permissions::ModifyRegion, "Modify regions"));
+			auto viewRegion = _dboSession.addNew<Permission>(Permissions::ViewRegion, "View regions");
+			auto createRegion = _dboSession.addNew<Permission>(Permissions::CreateRegion, "Create regions");
+			auto modifyRegion = _dboSession.addNew<Permission>(Permissions::ModifyRegion, "Modify regions");
 
-			auto globalAdministrator = _dboSession.add(std::make_unique<Permission>(Permissions::GlobalAdministrator, "Global administrator permissions"));
+			auto globalAdministrator = _dboSession.addNew<Permission>(Permissions::GlobalAdministrator, "Global administrator permissions");
 			globalAdministrator.modify()->linkedToCollection.insert(accessAdminPanel);
 			globalAdministrator.modify()->linkedToCollection.insert(createRecord);
 			globalAdministrator.modify()->linkedToCollection.insert(modifyRecord);
@@ -209,7 +209,7 @@ void WServer::initialize()
 			globalAdministrator.modify()->linkedToCollection.insert(createRegion);
 			globalAdministrator.modify()->linkedToCollection.insert(modifyRegion);
 
-			auto regionalAdministrator = _dboSession.add(std::make_unique<Permission>(Permissions::RegionalAdministrator, "Regional administrator permissions"));
+			auto regionalAdministrator = _dboSession.addNew<Permission>(Permissions::RegionalAdministrator, "Regional administrator permissions");
 			regionalAdministrator.modify()->linkedToCollection.insert(accessAdminPanel);
 			regionalAdministrator.modify()->linkedToCollection.insert(createRecord);
 			regionalAdministrator.modify()->linkedToCollection.insert(modifyRecord);
@@ -225,7 +225,7 @@ void WServer::initialize()
 			regionalAdministrator.modify()->linkedToCollection.insert(removeOtherUserRecord);
 			regionalAdministrator.modify()->linkedToCollection.insert(viewUnassignedRegionRecord);
 
-			auto regionalUser = _dboSession.add(std::make_unique<Permission>(Permissions::RegionalUser, "Regional user permissions"));
+			auto regionalUser = _dboSession.addNew<Permission>(Permissions::RegionalUser, "Regional user permissions");
 			regionalUser.modify()->linkedToCollection.insert(accessAdminPanel);
 			regionalUser.modify()->linkedToCollection.insert(createRecord);
 			regionalUser.modify()->linkedToCollection.insert(modifyRecord);
@@ -246,31 +246,31 @@ void WServer::initialize()
 				authUser.setIdentity(Wt::Auth::Identity::LoginName, "admin");
 				server->getPasswordService().updatePassword(authUser, "changeme");
 				authInfoPtr = userDatabase.find(authUser);
-				userPtr = _dboSession.add(std::make_unique<User>());
+				userPtr = _dboSession.addNew<User>();
 				authInfoPtr.modify()->setUser(userPtr);
-				_dboSession.add(std::make_unique<UserPermission>(userPtr, globalAdministrator));
+				_dboSession.addNew<UserPermission>(userPtr, globalAdministrator);
 
 // 				authUser = userDatabase.registerNew();
 // 				authUser.setIdentity(Wt::Auth::Identity::LoginName, "regionaladmin");
 // 				server->getPasswordService().updatePassword(authUser, "changeme");
 // 				authInfoPtr = userDatabase.find(authUser);
-// 				userPtr = _dboSession.add(std::make_unique<User>());
+// 				userPtr = _dboSession.addNew<User>();
 // 				authInfoPtr.modify()->setUser(userPtr);
-// 				_dboSession.add(std::make_unique<UserPermission>(userPtr, regionalAdministrator));
+// 				_dboSession.addNew<UserPermission>(userPtr, regionalAdministrator);
 // 
 // 				authUser = userDatabase.registerNew();
 // 				authUser.setIdentity(Wt::Auth::Identity::LoginName, "regionaluser");
 // 				server->getPasswordService().updatePassword(authUser, "changeme");
 // 				authInfoPtr = userDatabase.find(authUser);
-// 				userPtr = _dboSession.add(std::make_unique<User>());
+// 				userPtr = _dboSession.addNew<User>();
 // 				authInfoPtr.modify()->setUser(userPtr);
-// 				_dboSession.add(std::make_unique<UserPermission>(userPtr, regionalUser));
+// 				_dboSession.addNew<UserPermission>(userPtr, regionalUser);
 // 
 // 				authUser = userDatabase.registerNew();
 // 				authUser.setIdentity(Wt::Auth::Identity::LoginName, "test");
 // 				server->getPasswordService().updatePassword(authUser, "changeme");
 // 				authInfoPtr = userDatabase.find(authUser);
-// 				userPtr = _dboSession.add(std::make_unique<User>());
+// 				userPtr = _dboSession.addNew<User>();
 // 				authInfoPtr.modify()->setUser(userPtr);
 			}
 

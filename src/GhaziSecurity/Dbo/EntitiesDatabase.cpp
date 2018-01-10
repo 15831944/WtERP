@@ -23,7 +23,7 @@ namespace GS
 		if(!entityPtr)
 		{
 			Wt::log("warning") << "Self entity was not found, creating self entity";
-			entityPtr = dboSession.add(std::make_unique<Entity>(Entity::InvalidType));
+			entityPtr = dboSession.addNew<Entity>(Entity::InvalidType);
 			entityPtr.modify()->name = "Self entity (Modify this entity)";
 			entityPtr.flush();
 

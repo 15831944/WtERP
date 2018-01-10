@@ -135,7 +135,7 @@ namespace GS
 		TRANSACTION(app);
 
 		if(!_recordPtr)
-			_recordPtr = app->dboSession().add(std::make_unique<AttendanceDevice>());
+			_recordPtr = app->dboSession().addNew<AttendanceDevice>();
 
 		_recordPtr.modify()->hostName = valueText(hostNameField).toUTF8();
 		_recordPtr.modify()->locationPtr = Wt::any_cast<Wt::Dbo::ptr<Location>>(value(locationField));
@@ -238,7 +238,7 @@ namespace GS
 		TRANSACTION(app);
 
 		if(!_recordPtr)
-			_recordPtr = app->dboSession().add(std::make_unique<AttendanceEntry>());
+			_recordPtr = app->dboSession().addNew<AttendanceEntry>();
 
 		_recordPtr.modify()->entityPtr = Wt::any_cast<Wt::Dbo::ptr<Entity>>(value(entityField));
 		_recordPtr.modify()->locationPtr = Wt::any_cast<Wt::Dbo::ptr<Location>>(value(locationField));

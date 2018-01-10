@@ -116,7 +116,7 @@ namespace GS
 			Wt::Dbo::ptr<User> userPtr = _authInfoPtr->user();
 			if(!userPtr)
 			{
-				userPtr = app->dboSession().add(std::make_unique<User>());
+				userPtr = app->dboSession().addNew<User>();
 				_authInfoPtr.modify()->setUser(userPtr);
 			}
 			_recordPtr = userPtr;
@@ -220,7 +220,7 @@ namespace GS
 			authUser.setIdentity(Wt::Auth::Identity::LoginName, valueText(loginNameField));
 			_authInfoPtr = app->userDatabase().find(authUser);
 
-			_recordPtr = app->dboSession().add(std::make_unique<User>());
+			_recordPtr = app->dboSession().addNew<User>();
 			_authInfoPtr.modify()->setUser(_recordPtr);
 			_recordPtr.modify()->setCreatedByValues(false);
 		}
@@ -231,7 +231,7 @@ namespace GS
 				_recordPtr = _authInfoPtr->user();
 			else
 			{
-				_recordPtr = app->dboSession().add(std::make_unique<User>());
+				_recordPtr = app->dboSession().addNew<User>();
 				_authInfoPtr.modify()->setUser(_recordPtr);
 			}
 		}
@@ -250,7 +250,7 @@ namespace GS
 			int permissionIndex = Wt::any_cast<int>(value(permissionsField));
 
 			_recordPtr.modify()->userPermissionCollection.clear();
-			app->dboSession().add(std::make_unique<UserPermission>(_recordPtr, app->dboSession().loadLazy<Permission>(permissionIndexToId(permissionIndex))));
+			app->dboSession().addNew<UserPermission>(_recordPtr, app->dboSession().loadLazy<Permission>(permissionIndexToId(permissionIndex)));
 			_permissionMap = SERVER->permissionsDatabase().getUserPermissions(_recordPtr, Wt::Auth::LoginState::Strong, &app->dboSession());
 		}
 
@@ -493,7 +493,7 @@ namespace GS
 		TRANSACTION(app);
 
 		if(!_recordPtr)
-			_recordPtr = app->dboSession().add(std::make_unique<Region>());
+			_recordPtr = app->dboSession().addNew<Region>();
 
 		_recordPtr.modify()->name = valueText(nameField).toUTF8();
 

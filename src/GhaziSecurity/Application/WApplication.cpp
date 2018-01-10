@@ -52,7 +52,7 @@ namespace GS
 		if(_authInfoPtr && !_authInfoPtr->user())
 		{
 			TRANSACTION(app);
-			_authInfoPtr.modify()->setUser(app->dboSession().add(std::make_unique<User>()));
+			_authInfoPtr.modify()->setUser(app->dboSession().addNew<User>());
 		}
 
 		_permissions = SERVER->permissionsDatabase().getUserPermissions(userPtr(), state(), &app->dboSession());

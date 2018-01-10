@@ -72,7 +72,7 @@ namespace GS
 		TRANSACTION(app);
 
 		if(!_recordPtr)
-			_recordPtr = app->dboSession().add(std::make_unique<EmployeePosition>());
+			_recordPtr = app->dboSession().addNew<EmployeePosition>();
 
 		_recordPtr.modify()->title = valueText(titleField).toUTF8();
 		_recordPtr.modify()->type = EmployeePosition::Type(Wt::any_cast<int>(value(typeField)) - 1);
@@ -160,7 +160,7 @@ namespace GS
 		TRANSACTION(app);
 
 		if(!_recordPtr)
-			_recordPtr = app->dboSession().add(std::make_unique<ClientService>());
+			_recordPtr = app->dboSession().addNew<ClientService>();
 
 		_recordPtr.modify()->title = valueText(titleField).toUTF8();
 
@@ -310,7 +310,7 @@ namespace GS
 
 		if(!_recordPtr)
 		{
-			_recordPtr = app->dboSession().add(std::make_unique<EmployeeAssignment>());
+			_recordPtr = app->dboSession().addNew<EmployeeAssignment>();
 			_recordPtr.modify()->setCreatedByValues();
 		}
 
@@ -811,7 +811,7 @@ namespace GS
 
 		if(!_recordPtr)
 		{
-			_recordPtr = app->dboSession().add(std::make_unique<ClientAssignment>());
+			_recordPtr = app->dboSession().addNew<ClientAssignment>();
 			_recordPtr.modify()->setCreatedByValues();
 		}
 
