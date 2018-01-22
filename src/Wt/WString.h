@@ -650,6 +650,7 @@ public:
    */
   WString& arg(::int64_t value);
 
+  WString& arg(long long value);
   /*! \brief Substitutes the next positional argument with an unsigned value.
    *
    * \sa arg()

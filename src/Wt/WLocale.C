@@ -160,6 +160,11 @@ WT_USTRING WLocale::toString(::int64_t value) const
   return integerToString(std::to_string(value));
 }
 
+WT_USTRING WLocale::toString(long long value) const
+{
+  return integerToString(std::to_string(value));
+}
+
 WT_USTRING WLocale::toString(::uint64_t value) const
 {
   return integerToString(std::to_string(value));

@@ -66,7 +66,7 @@ public:
    */
   virtual std::shared_ptr<WDateValidator> dateValidator() const;
 
-  void WDateEdit::resetValidator();
+  void resetValidator();
 
   /*! \brief Sets the format used for representing the date.
    *
