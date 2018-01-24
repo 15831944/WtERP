@@ -2,6 +2,14 @@
 #include "Application/WServer.h"
 #include "Application/WApplication.h"
 
+//TODO: Exception handling
+//TODO: Record deletion
+//TODO: Versioned record keeping
+//TODO: Find solution to Dbo::ptr circular reference
+//TODO: Check for shared_ptr circular references
+//TODO: Localize DateTimes
+//TODO: Separate FormModel and FormView roles properly
+
 int main(int argc, char *argv[])
 {
 	/* *************************************************************************
@@ -25,12 +33,12 @@ int main(int argc, char *argv[])
 			Server.stop();
 		}
 	}
-	catch(Wt::WServer::Exception &e)
+	catch(const Wt::WServer::Exception &e)
 	{
 		Wt::log("fatal") << "Error starting the server: " << e.what();
 		return EXIT_FAILURE;
 	}
-	catch(std::exception &e)
+	catch(const std::exception &e)
 	{
 		Wt::log("fatal") << "Server exception error: " << e.what();
 		return EXIT_FAILURE;
