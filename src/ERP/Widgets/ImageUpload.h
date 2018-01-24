@@ -1,5 +1,5 @@
-#ifndef GS_IMAGEUPLOAD_WIDGET_H
-#define GS_IMAGEUPLOAD_WIDGET_H
+#ifndef ERP_IMAGEUPLOAD_WIDGET_H
+#define ERP_IMAGEUPLOAD_WIDGET_H
 
 #include "Common.h"
 #include "Dbo/Dbos.h"

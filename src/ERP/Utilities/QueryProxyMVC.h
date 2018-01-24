@@ -1,5 +1,5 @@
-#ifndef GS_SELECTADDPROXYMODEL_H
-#define GS_SELECTADDPROXYMODEL_H
+#ifndef ERP_SELECTADDPROXYMODEL_H
+#define ERP_SELECTADDPROXYMODEL_H
 
 #include "Common.h"
 #include <Wt/WBatchEditProxyModel.h>

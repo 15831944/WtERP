@@ -1,5 +1,5 @@
-#ifndef GS_COMMON_H
-#define GS_COMMON_H
+#ifndef ERP_COMMON_H
+#define ERP_COMMON_H
 
 #define BOOST_BIND_NO_PLACEHOLDERS
 

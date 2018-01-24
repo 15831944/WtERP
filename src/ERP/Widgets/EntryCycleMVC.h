@@ -1,5 +1,5 @@
-#ifndef GS_ENTRYCYCLE_MVC_H
-#define GS_ENTRYCYCLE_MVC_H
+#ifndef ERP_ENTRYCYCLE_MVC_H
+#define ERP_ENTRYCYCLE_MVC_H
 
 #include "Common.h"
 #include "Dbo/Dbos.h"

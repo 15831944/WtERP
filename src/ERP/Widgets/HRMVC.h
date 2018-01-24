@@ -1,5 +1,5 @@
-#ifndef GS_HR_MVC_H
-#define GS_HR_MVC_H
+#ifndef ERP_HR_MVC_H
+#define ERP_HR_MVC_H
 
 #include "Common.h"
 #include "Dbo/Dbos.h"

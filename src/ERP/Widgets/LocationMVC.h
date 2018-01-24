@@ -1,5 +1,5 @@
-#ifndef GS_LOCATION_MVC_H
-#define GS_LOCATION_MVC_H
+#ifndef ERP_LOCATION_MVC_H
+#define ERP_LOCATION_MVC_H
 
 #include "Common.h"
 #include "Dbo/Dbos.h"

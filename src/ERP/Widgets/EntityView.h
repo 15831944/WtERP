@@ -1,5 +1,5 @@
-#ifndef GS_ENTITYVIEW_WIDGET_H
-#define GS_ENTITYVIEW_WIDGET_H
+#ifndef ERP_ENTITYVIEW_WIDGET_H
+#define ERP_ENTITYVIEW_WIDGET_H
 
 #include "Common.h"
 #include "Dbo/Dbos.h"

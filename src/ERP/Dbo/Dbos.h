@@ -1,5 +1,5 @@
-#ifndef GS_DBOS_H
-#define GS_DBOS_H
+#ifndef ERP_DBOS_H
+#define ERP_DBOS_H
 
 #include "Common.h"
 #include <Wt/Dbo/Dbo.h>

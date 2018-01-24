@@ -1,5 +1,5 @@
-#ifndef GS_LISTFILTERMODEL_UTILITY_H
-#define GS_LISTFILTERMODEL_UTILITY_H
+#ifndef ERP_LISTFILTERMODEL_UTILITY_H
+#define ERP_LISTFILTERMODEL_UTILITY_H
 
 #include "Common.h"
 #include "Application/WApplication.h"

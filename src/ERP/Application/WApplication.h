@@ -1,5 +1,5 @@
-#ifndef GS_WAPPLICATION_H
-#define GS_WAPPLICATION_H
+#ifndef ERP_WAPPLICATION_H
+#define ERP_WAPPLICATION_H
 
 #include "Common.h"
 #include "Dbo/Dbos.h"

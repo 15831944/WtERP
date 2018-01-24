@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
 		{
 			//And wait till a shutdown signal is given
 			int sig = ERP::WServer::waitForShutdown();
-			Wt::log("gs-info") << "Shutdown (Signal = " << sig << ")";
+			Wt::log("erp-info") << "Shutdown (Signal = " << sig << ")";
 			Server.stop();
 		}
 	}

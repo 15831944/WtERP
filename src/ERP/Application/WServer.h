@@ -1,5 +1,5 @@
-#ifndef GS_WSERVER_H
-#define GS_WSERVER_H
+#ifndef ERP_WSERVER_H
+#define ERP_WSERVER_H
 
 #include "Common.h"
 #include <Wt/WServer.h>

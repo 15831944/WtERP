@@ -84,7 +84,7 @@ namespace ERP
 
 	void TaskScheduler::createDefaultAccounts(bool scheduleNext)
 	{
-		Wt::log("gs-info") << "TaskScheduler: Checking default accounts in database";
+		Wt::log("erp-info") << "TaskScheduler: Checking default accounts in database";
 		try
 		{
 			_accountsDatabase.findOrCreateCashAccount();
@@ -103,7 +103,7 @@ namespace ERP
 
 	void TaskScheduler::recalculateAccountBalances(bool scheduleNext)
 	{
-		Wt::log("gs-info") << "TaskScheduler: Recalculating account balances";
+		Wt::log("erp-info") << "TaskScheduler: Recalculating account balances";
 		Dbo::Transaction t(dboSession);
 		try
 		{
@@ -124,7 +124,7 @@ namespace ERP
 
 	void TaskScheduler::createPendingCycleEntries(bool scheduleNext)
 	{
-		Wt::log("gs-info") << "TaskScheduler: Checking for pending EntryCycle entries";
+		Wt::log("erp-info") << "TaskScheduler: Checking for pending EntryCycle entries";
 		steady_clock::duration nextEntryDuration = _createPendingCycleEntries(scheduleNext);
 
 		//Repeat
@@ -183,7 +183,7 @@ namespace ERP
 
 	void TaskScheduler::checkAbnormalRecords(bool scheduleNext)
 	{
-		Wt::log("gs-info") << "TaskScheduler: Checking for abnormal database entries";
+		Wt::log("erp-info") << "TaskScheduler: Checking for abnormal database entries";
 		Dbo::Transaction t(dboSession);
 		try
 		{

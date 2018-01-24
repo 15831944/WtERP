@@ -97,7 +97,7 @@ namespace ERP
 		steady_clock::time_point tpEnd = steady_clock::now();
 		_loadDuration = duration_cast<milliseconds>(tpEnd - tpStart);
 
-		Wt::log("gs-info") << "ConfigurationsDatabase: " << _count << " entries successfully loaded in " << _loadDuration.count() << " ms";
+		Wt::log("erp-info") << "ConfigurationsDatabase: " << _count << " entries successfully loaded in " << _loadDuration.count() << " ms";
 	}
 
 	shared_ptr<const Ddo::ConfigurationBool> ConfigurationsDatabase::getBoolPtr(const std::string &name) const

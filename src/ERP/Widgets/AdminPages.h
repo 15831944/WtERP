@@ -1,5 +1,5 @@
-#ifndef GS_ADMINPAGES_WIDGET_H
-#define GS_ADMINPAGES_WIDGET_H
+#ifndef ERP_ADMINPAGES_WIDGET_H
+#define ERP_ADMINPAGES_WIDGET_H
 
 #include "Common.h"
 #include <Wt/WTemplate.h>

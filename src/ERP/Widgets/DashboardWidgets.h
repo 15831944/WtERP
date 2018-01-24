@@ -1,5 +1,5 @@
-#ifndef GS_DASHBOARD_WIDGETS_H
-#define GS_DASHBOARD_WIDGETS_H
+#ifndef ERP_DASHBOARD_WIDGETS_H
+#define ERP_DASHBOARD_WIDGETS_H
 
 #include "Common.h"
 #include "Utilities/ReloadableWidget.h"

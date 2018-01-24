@@ -776,7 +776,7 @@ ${</not-readonly>}
 
 <!-- AuthWidget -->
 <message id="Wt.Auth.template.login">
-<div class="container Wt-auth-login gs-auth">
+<div class="container Wt-auth-login erp-auth">
 	<h1 class="text-center">${tr:Wt.Auth.login-form-title}</h1>
 	<p>${tr:Wt.Auth.login-form-info}</p>
 

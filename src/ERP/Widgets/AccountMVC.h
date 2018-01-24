@@ -1,5 +1,5 @@
-#ifndef GS_ACCOUNT_MVC_H
-#define GS_ACCOUNT_MVC_H
+#ifndef ERP_ACCOUNT_MVC_H
+#define ERP_ACCOUNT_MVC_H
 
 #include "Common.h"
 #include "Dbo/Dbos.h"

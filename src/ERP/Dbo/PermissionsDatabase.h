@@ -1,5 +1,5 @@
-#ifndef GS_DBODATABASE_PERMISSION_H
-#define GS_DBODATABASE_PERMISSION_H
+#ifndef ERP_DBODATABASE_PERMISSION_H
+#define ERP_DBODATABASE_PERMISSION_H
 
 #include "Common.h"
 #include "Dbo/Dbos.h"

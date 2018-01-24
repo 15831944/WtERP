@@ -1,5 +1,5 @@
-#ifndef GS_FINDRECORDEDIT_H
-#define GS_FINDRECORDEDIT_H
+#ifndef ERP_FINDRECORDEDIT_H
+#define ERP_FINDRECORDEDIT_H
 
 #include "Common.h"
 #include "Application/WApplication.h"

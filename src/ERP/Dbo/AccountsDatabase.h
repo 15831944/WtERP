@@ -1,5 +1,5 @@
-#ifndef GS_ACCOUNTSDATABASE_H
-#define GS_ACCOUNTSDATABASE_H
+#ifndef ERP_ACCOUNTSDATABASE_H
+#define ERP_ACCOUNTSDATABASE_H
 
 #include "Common.h"
 #include "Dbo/Dbos.h"

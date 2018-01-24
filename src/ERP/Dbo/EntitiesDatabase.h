@@ -1,5 +1,5 @@
-#ifndef GS_ENTITIESDATABASE_H
-#define GS_ENTITIESDATABASE_H
+#ifndef ERP_ENTITIESDATABASE_H
+#define ERP_ENTITIESDATABASE_H
 
 #include "Common.h"
 #include "Dbo/Dbos.h"

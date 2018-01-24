@@ -26,7 +26,7 @@ namespace ERP
 		//Create account if not found
 		if(!accountPtr)
 		{
-			Wt::log("gs-info") << "AccountsDatabase: Cash account was not found in database, creating cash account";
+			Wt::log("erp-info") << "AccountsDatabase: Cash account was not found in database, creating cash account";
 			accountPtr = dboSession.addNew<Account>(Account::Asset);
 			accountPtr.modify()->name = tr("CashAccountName").toUTF8();
 			accountPtr.flush();

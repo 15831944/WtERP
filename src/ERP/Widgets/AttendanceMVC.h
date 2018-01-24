@@ -1,5 +1,5 @@
-#ifndef GS_ATTENDANCEDEVICE_MVC_H
-#define GS_ATTENDANCEDEVICE_MVC_H
+#ifndef ERP_ATTENDANCEDEVICE_MVC_H
+#define ERP_ATTENDANCEDEVICE_MVC_H
 
 #include "Common.h"
 #include "Dbo/Dbos.h"

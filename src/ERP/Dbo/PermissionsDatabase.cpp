@@ -80,7 +80,7 @@ namespace ERP
 		steady_clock::time_point tpEnd = steady_clock::now();
 		_loadDuration = duration_cast<milliseconds>(tpEnd - tpStart);
 
-		Wt::log("gs-info") << "PermissionsDatabase: " << _permissionItemMap.size() << " permissions successfully loaded in " << _loadDuration.count() << " ms";
+		Wt::log("erp-info") << "PermissionsDatabase: " << _permissionItemMap.size() << " permissions successfully loaded in " << _loadDuration.count() << " ms";
 	}
 
 	void PermissionsDatabase::linkAllDescendants(long long parentPermissionId, const _PermissionItemMap &sourceMap, PermissionMap &linkedPermissionMap)

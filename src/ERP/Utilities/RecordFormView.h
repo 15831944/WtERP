@@ -1,5 +1,5 @@
-#ifndef GS_RECORDFORMVIEW_H
-#define GS_RECORDFORMVIEW_H
+#ifndef ERP_RECORDFORMVIEW_H
+#define ERP_RECORDFORMVIEW_H
 
 #include "Common.h"
 #include "Utilities/QueryProxyMVC.h"

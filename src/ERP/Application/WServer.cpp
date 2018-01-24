@@ -15,7 +15,6 @@
 #include <Wt/Auth/FacebookService.h>
 #include <Wt/Auth/Dbo/UserDatabase.h>
 
-
 namespace ERP
 {
 	WServer::WServer(int argc, char *argv[], const std::string &wtConfigurationFile)
@@ -38,7 +37,7 @@ namespace ERP
 		* *************************************************************************/
 		try
 		{
-			log("gs-info") << "Connecting to database backend";
+			log("erp-info") << "Connecting to database backend";
 
 			std::string dbBackend;
 			if(!readConfigurationProperty("DbBackend", dbBackend))
