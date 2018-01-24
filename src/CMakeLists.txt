@@ -629,4 +629,4 @@ IF(MSVC)
 ENDIF(MSVC)
 
 SUBDIRS(isapi fcgi http)
-SUBDIRS(GhaziSecurity)
+SUBDIRS(ERP)
