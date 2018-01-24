@@ -1,11 +1,10 @@
 #include "Dbo/AccountsDatabase.h"
 #include "Dbo/ConfigurationsDatabase.h"
 #include "Application/WServer.h"
-#include <Wt/WLogger.h>
 
 namespace GS
 {
-	Dbo::ptr<Account> AccountsDatabase::findOrCreateCashAccount(bool loadLazy /*= false*/)
+	Dbo::ptr<Account> AccountsDatabase::findOrCreateCashAccount(bool loadLazy)
 	{
 		Dbo::Transaction t(dboSession);
 		Dbo::ptr<Account> accountPtr;
@@ -72,7 +71,7 @@ namespace GS
 	Dbo::ptr<AccountEntry> AccountsDatabase::createAccountEntry(const Money &amount, Dbo::ptr<Account> debitAccountPtr, Dbo::ptr<Account> creditAccountPtr)
 	{
 		if(!debitAccountPtr || !creditAccountPtr)
-			return Dbo::ptr<AccountEntry>();
+			return nullptr;
 
 		Dbo::Transaction t(dboSession);
 		auto result = dboSession.add(unique_ptr<AccountEntry>(new AccountEntry(amount, debitAccountPtr, creditAccountPtr)));
@@ -197,31 +196,31 @@ namespace GS
 	{
 		//DO NOT ALLOW THESE NULL DATES(in scan query)
 		if(cycle.startDate.isNull() || cycle.timestamp.isNull())
-			return Dbo::ptr<AccountEntry>();
+			return nullptr;
 
 		//Do not allow cycles with start dates later than today and creation dt later than now(already filtered, reasserted)
 		if(cycle.startDate > currentDt.date() || cycle.timestamp > currentDt)
-			return Dbo::ptr<AccountEntry>();
+			return nullptr;
 
 		//Do not allow cycles with end dates earlier or equal to start date
 		if(cycle.endDate.isValid() && cycle.endDate <= cycle.startDate)
-			return Dbo::ptr<AccountEntry>();
+			return nullptr;
 
 		//Do not allow invalid interval or nIntervals
 		if(cycle.interval < DailyInterval || cycle.interval > YearlyInterval)
-			return Dbo::ptr<AccountEntry>();
+			return nullptr;
 		if(cycle.nIntervals < 1)
-			return Dbo::ptr<AccountEntry>();
+			return nullptr;
 
 		if(lastEntryPtr)
 		{
 			//Do not allow cycles which have ended and the final entry had already been made(already filtered, reasserted)
 			if(cycle.endDate.isValid() && cycle.endDate <= lastEntryPtr->timestamp.date())
-				return Dbo::ptr<AccountEntry>();
+				return nullptr;
 
 			//Do not allow entries with invalid date(in scan query)
 			if(lastEntryPtr->timestamp.isNull() || lastEntryPtr->timestamp > currentDt)
-				return Dbo::ptr<AccountEntry>();
+				return nullptr;
 		}
 
 		//BEGIN
@@ -238,9 +237,6 @@ namespace GS
 
 		if(checkElapsedDuration)
 		{
-			steady_clock::duration cycleDuration;
-			steady_clock::duration elapsedDuration;
-
 			if(lastEntryPtr)
 				previousCyclePeriodDt = lastEntryPtr->timestamp;
 			else if(cycle.firstEntryAfterCycle)
@@ -248,16 +244,16 @@ namespace GS
 			else
 			{
 				Wt::log("error") << "AccountsDatabase::_createPendingCycleEntry() logic error: lastEntryPtr AND cycle.firstEntryAfterCycle were both false!";
-				return Dbo::ptr<AccountEntry>();
+				return nullptr;
 			}
 
 			//Its possible because of cycle.firstEntryAfterCycle
 			if(previousCyclePeriodDt > currentDt)
-				return Dbo::ptr<AccountEntry>();
+				return nullptr;
 
-			elapsedDuration = currentDt.toTimePoint() - previousCyclePeriodDt.toTimePoint();
+			steady_clock::duration elapsedDuration = currentDt.toTimePoint() - previousCyclePeriodDt.toTimePoint();
+			steady_clock::duration cycleDuration = nextCyclePeriodDt.toTimePoint() - previousCyclePeriodDt.toTimePoint();
 			nextCyclePeriodDt = addCycleInterval(previousCyclePeriodDt, cycle.interval, cycle.nIntervals);
-			cycleDuration = nextCyclePeriodDt.toTimePoint() - previousCyclePeriodDt.toTimePoint();
 
 			if(elapsedDuration >= cycleDuration) //complete cycle
 			{
@@ -284,7 +280,7 @@ namespace GS
 					createEntry = false;
 
 					//Next entry duration
-					auto remainingDuration = cycleDuration - elapsedDuration;
+					steady_clock::duration remainingDuration = cycleDuration - elapsedDuration;
 					if(nextEntryDuration && *nextEntryDuration > remainingDuration)
 						*nextEntryDuration = remainingDuration;
 				}
@@ -297,7 +293,7 @@ namespace GS
 		}
 
 		if(!createEntry)
-			return Dbo::ptr<AccountEntry>();
+			return nullptr;
 
 		AccountEntry newEntry;
 		if(incompleteDurationEntry)
@@ -337,6 +333,6 @@ namespace GS
 				newEntry.description = tr("RecurringEntry");
 		}
 
-		return dboSession.addNew<AccountEntry>(std::move(newEntry));
+		return dboSession.addNew<AccountEntry>(move(newEntry));
 	}
 }

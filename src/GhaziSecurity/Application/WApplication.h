@@ -10,6 +10,8 @@
 #include <Wt/Auth/Login.h>
 #include <Wt/Auth/Dbo/UserDatabase.h>
 #include <Wt/WDialog.h>
+#include <Wt/WMenu.h>
+#include <Wt/WMenuItem.h>
 
 namespace GS
 {
@@ -27,7 +29,6 @@ namespace GS
 	class AuthWidget;
 	class AdminPageWidget;
 
-	typedef Dbo::QueryModel<Dbo::ptr<Location>> LocationQueryModel;
 	typedef Dbo::QueryModel<Dbo::ptr<Country>> CountryQueryModel;
 	typedef Dbo::QueryModel<Dbo::ptr<City>> CityQueryModel;
 	typedef Dbo::QueryModel<Dbo::ptr<EmployeePosition>> PositionQueryModel;
@@ -46,7 +47,7 @@ namespace GS
 
 		AuthLogin();
 		Dbo::ptr<AuthInfo> authInfoPtr() const { return _authInfoPtr; };
-		Dbo::ptr<User> userPtr() const { return _authInfoPtr ? _authInfoPtr->user() : Dbo::ptr<User>(); }
+		Dbo::ptr<User> userPtr() const { return _authInfoPtr ? _authInfoPtr->user() : nullptr; }
 
 		bool hasPermission(long long permissionId) { return checkPermission(permissionId) == Permitted; }
 		PermissionResult checkPermission(long long permissionId);
@@ -73,14 +74,14 @@ namespace GS
 
 		void handleBeforeLoginChanged();
 		PermissionMap _permissions;
-		PermissionResult _recordCreatePermission;
+		PermissionResult _recordCreatePermission = Denied;
 		Dbo::ptr<AuthInfo> _authInfoPtr;
 	};
 
 	class WApplication : public Wt::WApplication
 	{
 	public:
-		WApplication(const Wt::WEnvironment& env);
+		WApplication(const Wt::WEnvironment &env);
 
 		static WApplication *instance() { return dynamic_cast<WApplication*>(Wt::WApplication::instance()); }
 		static unique_ptr<WApplication> createApplication(const Wt::WEnvironment &env) { return make_unique<WApplication>(env); }
@@ -152,9 +153,9 @@ namespace GS
 		PageClass *addMenuItem(Wt::WMenu *menu, const Wt::WString &title, unique_ptr<PageClass> pageContents)
 		{
 			PageClass *ret = pageContents.get();
-			auto menuItem = make_unique<Wt::WMenuItem>(title, std::move(pageContents));
+			auto menuItem = make_unique<Wt::WMenuItem>(title, move(pageContents));
 			menuItem->setPathComponent(ret->basePathComponent());
-			menu->addItem(std::move(menuItem));
+			menu->addItem(move(menuItem));
 			return ret;
 		}
 
@@ -213,7 +214,7 @@ namespace GS
 
 	//TEMPLATE FUNCTIONS
 	template<class QueryResult>
-	void AuthLogin::setPermissionConditionsToQuery(Dbo::Query<QueryResult> &query, bool resultsIfLoggedOut /*= false*/, const std::string &fieldPrefix /*= ""*/, bool modifyPermissionRequired /*= false*/)
+	void AuthLogin::setPermissionConditionsToQuery(Dbo::Query<QueryResult> &query, bool resultsIfLoggedOut, const std::string &fieldPrefix, bool modifyPermissionRequired)
 	{
 		if(modifyPermissionRequired && !hasPermission(Permissions::ModifyRecord))
 		{

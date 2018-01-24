@@ -10,9 +10,6 @@ namespace GS
 	{
 	public:
 		AuthWidget();
-
-	protected:
-		//virtual void createLoginView() override;
 	};
 }
 

@@ -38,28 +38,28 @@ namespace GS
 	{
 		auto name = contents->viewName();
 		auto internalPath = contents->viewInternalPath();
-		return createMenuItem(name, internalPath, std::move(contents), true);
+		return createMenuItem(name, internalPath, move(contents), true);
 	}
 
 	Wt::WMenuItem *AdminPageWidget::createMenuItemWrapped(const Wt::WString &label, const std::string &pathComponent, unique_ptr<AbstractFilteredList> contents)
 	{
 		contents->enableFilters();
-		return createMenuItemWrapped(label, pathComponent, std::move(contents), false);
+		return createMenuItemWrapped(label, pathComponent, move(contents), false);
 	}
 
 	Wt::WMenuItem *AdminPageWidget::createMenuItemWrapped(const Wt::WString &label, const std::string &path, unique_ptr<Wt::WWidget> contents, bool isInternalPath)
 	{
-		return createMenuItemWrapped(menu()->count(), label, path, std::move(contents), isInternalPath);
+		return createMenuItemWrapped(menu()->count(), label, path, move(contents), isInternalPath);
 	}
 
 	Wt::WMenuItem *AdminPageWidget::createMenuItemWrapped(int index, const Wt::WString &label, const std::string &path, unique_ptr<Wt::WWidget> contents, bool isInternalPath)
 	{
-		return createMenuItem(index, label, path, make_unique<AdminPageContentWidget>(label, std::move(contents)), isInternalPath);
+		return createMenuItem(index, label, path, make_unique<AdminPageContentWidget>(label, move(contents)), isInternalPath);
 	}
 
 	Wt::WMenuItem *AdminPageWidget::createMenuItem(const Wt::WString &label, const std::string &path, unique_ptr<Wt::WWidget> contents, bool isInternalPath)
 	{
-		return createMenuItem(menu()->count(), label, path, std::move(contents), isInternalPath);
+		return createMenuItem(menu()->count(), label, path, move(contents), isInternalPath);
 	}
 
 	Wt::WMenuItem *AdminPageWidget::createMenuItem(int index, const Wt::WString &label, const std::string &path, unique_ptr<Wt::WWidget> contents, bool isInternalPath)
@@ -78,9 +78,9 @@ namespace GS
 		if(!pathComponent.empty() && pathComponent.front() == '/')
 			pathComponent = pathComponent.substr(1);
 
-		auto menuItem = make_unique<Wt::WMenuItem>(label, std::move(contents));
+		auto menuItem = make_unique<Wt::WMenuItem>(label, move(contents));
 		menuItem->setPathComponent(pathComponent);
-		return menu()->insertItem(index, std::move(menuItem));
+		return menu()->insertItem(index, move(menuItem));
 	}
 
 	bool AdminPageWidget::checkPathComponentExist(const std::string &pathComponent) const
@@ -114,8 +114,8 @@ namespace GS
 		contentContainer->title()->setText(submittedView->viewName());
 
 		auto newFormView = submittedView->createFormView();
-		auto newPageContainer = make_unique<AdminPageContentWidget>(submittedItem->text(), std::move(newFormView));
-		submittedItem->setContents(std::move(newPageContainer), Wt::ContentLoading::Lazy);
+		auto newPageContainer = make_unique<AdminPageContentWidget>(submittedItem->text(), move(newFormView));
+		submittedItem->setContents(move(newPageContainer), Wt::ContentLoading::Lazy);
 
 		_submitSignalMap[submittedItem].disconnect();
 		connectFormSubmitted(submittedItem);
@@ -146,7 +146,7 @@ namespace GS
 		: Wt::WTemplate(tr("GS.Admin.Main.Content"))
 	{
 		_content = content.get();
-		bindWidget("content", std::move(content));
+		bindWidget("content", move(content));
 		_title = bindNew<Wt::WText>("title", title);
 	}
 

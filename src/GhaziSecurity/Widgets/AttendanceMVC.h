@@ -46,7 +46,7 @@ namespace GS
 		static const Wt::WFormModel::Field hostNameField;
 		static const Wt::WFormModel::Field locationField;
 
-		AttendanceDeviceFormModel(AttendanceDeviceView *view, Dbo::ptr<AttendanceDevice> attendanceDevicePtr = Dbo::ptr<AttendanceDevice>());
+		AttendanceDeviceFormModel(AttendanceDeviceView *view, Dbo::ptr<AttendanceDevice> attendanceDevicePtr = nullptr);
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
@@ -57,7 +57,7 @@ namespace GS
 	class AttendanceDeviceView : public RecordFormView
 	{
 	public:
-		AttendanceDeviceView(Dbo::ptr<AttendanceDevice> attendanceDevicePtr = Dbo::ptr<AttendanceDevice>());
+		AttendanceDeviceView(Dbo::ptr<AttendanceDevice> attendanceDevicePtr = nullptr);
 		virtual void initView() override;
 
 		Dbo::ptr<AttendanceDevice> attendanceDevicePtr() const { return _model->recordPtr(); }
@@ -110,7 +110,7 @@ namespace GS
 		static const Wt::WFormModel::Field timeOutField;
 		static const Wt::WFormModel::Field locationField;
 
-		AttendanceEntryFormModel(AttendanceEntryView *view, Dbo::ptr<AttendanceEntry> attendanceEntryPtr = Dbo::ptr<AttendanceEntry>());
+		AttendanceEntryFormModel(AttendanceEntryView *view, Dbo::ptr<AttendanceEntry> attendanceEntryPtr = nullptr);
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
@@ -124,7 +124,7 @@ namespace GS
 	class AttendanceEntryView : public RecordFormView
 	{
 	public:
-		AttendanceEntryView(Dbo::ptr<AttendanceEntry> attendanceEntryPtr = Dbo::ptr<AttendanceEntry>());
+		AttendanceEntryView(Dbo::ptr<AttendanceEntry> attendanceEntryPtr = nullptr);
 		virtual void initView() override;
 
 		Dbo::ptr<AttendanceEntry> attendanceEntryPtr() const { return _model->recordPtr(); }

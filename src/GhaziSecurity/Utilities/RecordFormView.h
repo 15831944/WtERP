@@ -134,7 +134,7 @@ namespace GS
 	class RecordFormModel : public AbstractRecordFormModel
 	{
 	public:
-		typedef typename DboType RecordDbo;
+		typedef DboType RecordDbo;
 		RecordFormModel(RecordFormView *view, Dbo::ptr<RecordDbo> recordPtr) : AbstractRecordFormModel(view), _recordPtr(recordPtr) { }
 
 		Dbo::ptr<RecordDbo> recordPtr() const { return _recordPtr; }
@@ -151,8 +151,9 @@ namespace GS
 	class ChildRecordFormModel : public RecordFormModel<DboType>
 	{
 	public:
+		typedef DboType RecordDbo;
 		ChildRecordFormModel(shared_ptr<AbstractRecordFormModel> parentModel, RecordFormView *view, Dbo::ptr<RecordDbo> recordPtr = nullptr)
-			: RecordFormModel(view, recordPtr), _parentModel(parentModel) { }
+			: RecordFormModel<DboType>(view, recordPtr), _parentModel(parentModel) { }
 
 		virtual AuthLogin::PermissionResult checkViewPermission() const override { return _parentModel->checkViewPermission(); }
 		virtual AuthLogin::PermissionResult checkModifyPermission() const override { return _parentModel->checkModifyPermission(); }
@@ -177,7 +178,7 @@ namespace GS
 	class MultipleRecordModel : public AbstractMultipleRecordModel
 	{
 	public:
-		typedef typename DboType RecordDbo;
+		typedef DboType RecordDbo;
 		typedef std::vector<Dbo::ptr<RecordDbo>> PtrVector;
 		typedef Dbo::collection<Dbo::ptr<RecordDbo>> PtrCollection;
 		typedef RecordFormModel<RecordDbo> ModelType;
@@ -185,7 +186,7 @@ namespace GS
 
 		static const Field field;
 
-		virtual void addRecordPtr() override { addRecordPtr(Dbo::ptr<RecordDbo>()); }
+		virtual void addRecordPtr() override { addRecordPtr(nullptr); }
 		virtual void addRecordPtr(Dbo::ptr<RecordDbo> ptr);
 		virtual void updateContainer(RecordViewsContainer *container) override;
 		virtual void updateModelValue() override;
@@ -198,7 +199,7 @@ namespace GS
 
 	protected:
 		MultipleRecordModel(RecordFormView *view, PtrCollection collection = PtrCollection());
-		tuple<unique_ptr<RecordFormView>, shared_ptr<ModelType>> createRecordView() { return createRecordView(Dbo::ptr<RecordDbo>()); }
+		tuple<unique_ptr<RecordFormView>, shared_ptr<ModelType>> createRecordView() { return createRecordView(nullptr); }
 		virtual tuple<unique_ptr<RecordFormView>, shared_ptr<ModelType>> createRecordView(Dbo::ptr<RecordDbo> recordPtr) = 0;
 
 		ModelVector _modelVector;
@@ -206,7 +207,7 @@ namespace GS
 
 	//TEMPLATE CLASS DEFITIONS
 	template<class DboType>
-	MultipleRecordModel<DboType>::MultipleRecordModel(RecordFormView *view, PtrCollection collection /*= PtrCollection()*/)
+	MultipleRecordModel<DboType>::MultipleRecordModel(RecordFormView *view, PtrCollection collection)
 		: AbstractMultipleRecordModel(view)
 	{
 		TRANSACTION(APP);
@@ -230,9 +231,9 @@ namespace GS
 		for(size_t i = container->count(); i < ptrs.size(); ++i)
 		{
 			auto createRes = createRecordView(ptrs[i]);
-			auto w = std::move(std::get<0>(createRes));
+			auto w = move(std::get<0>(createRes));
 			w->bindInt("index", i + 1);
-			container->insertWidget(i, std::move(w));
+			container->insertWidget(i, move(w));
 			_modelVector[i] = std::get<1>(createRes);
 		}
 		for(int wCount = container->count(); wCount > ptrs.size(); --wCount)

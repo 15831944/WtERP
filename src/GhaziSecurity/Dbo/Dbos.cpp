@@ -1,4 +1,4 @@
-#include "Dbos.h"
+#include "Dbo/Dbos.h"
 #include "Application/WServer.h"
 #include "Application/WApplication.h"
 #include <boost/filesystem/path.hpp>
@@ -71,13 +71,13 @@ namespace GS
 	std::string UploadedFile::pathToFile() const
 	{
 		boost::filesystem::path result(pathToDirectory());
-		result /= boost::lexical_cast<std::string>(id()) + extension;
+		result /= std::to_string(id()) + extension;
 		return result.string();
 	}
 
 	std::string UploadedFile::pathToDirectory() const
 	{
-		auto result = boost::filesystem::path(SERVER->appRoot()) / "uploads" / boost::lexical_cast<std::string>(entityPtr.id());
+		auto result = boost::filesystem::path(SERVER->appRoot()) / "uploads" / std::to_string(entityPtr.id());
 		return result.string();
 	}
 
@@ -98,7 +98,7 @@ namespace GS
 		}
 	}
 
-	Wt::WString rsEveryNIntervals(const Money &amount, CycleInterval interval, int nIntervals)
+	Wt::WString rsEveryNIntervals(const Money &amount, CycleInterval interval, uint64_t nIntervals)
 	{
 		switch(interval)
 		{
@@ -109,7 +109,6 @@ namespace GS
 		default: return Wt::WString::Empty;
 		}
 	}
-
 }
 
 Wt::Dbo::dbo_traits<GS::UserPermission>::IdType Wt::Dbo::dbo_traits<GS::UserPermission>::invalidId()

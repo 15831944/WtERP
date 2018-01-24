@@ -129,7 +129,7 @@ namespace GS
 	const Wt::WFormModel::Field CityFormModel::countryField = "country";
 	const Wt::WFormModel::Field CityFormModel::nameField = "name";
 
-	CityFormModel::CityFormModel(CityView *view, Dbo::ptr<City> cityPtr /*= Dbo::ptr<City>()*/)
+	CityFormModel::CityFormModel(CityView *view, Dbo::ptr<City> cityPtr)
 		: RecordFormModel(view, cityPtr), _view(view)
 	{
 		addField(countryField);
@@ -190,7 +190,7 @@ namespace GS
 		return true;
 	}
 
-	CityView::CityView(Dbo::ptr<City> cityPtr /*= Dbo::ptr<City>()*/)
+	CityView::CityView(Dbo::ptr<City> cityPtr)
 		: RecordFormView(tr("GS.Admin.CityView")), _tempPtr(cityPtr)
 	{ }
 
@@ -282,7 +282,7 @@ namespace GS
 	const Wt::WFormModel::Field LocationFormModel::cityField = "city";
 	const Wt::WFormModel::Field LocationFormModel::addressField = "address";
 
-	LocationFormModel::LocationFormModel(LocationView *view, Dbo::ptr<Location> locationPtr /*= Dbo::ptr<Location>()*/)
+	LocationFormModel::LocationFormModel(LocationView *view, Dbo::ptr<Location> locationPtr)
 		: RecordFormModel(view, locationPtr), _view(view)
 	{
 		addField(entityField);
@@ -367,13 +367,13 @@ namespace GS
 		auto cntCombo = make_unique<QueryProxyModelCB<CountryProxyModel>>(app->countryProxyModel());
 		_countryCombo = cntCombo.get();
 		_countryCombo->changed().connect(this, std::bind(&LocationView::handleCountryChanged, this, true));
-		setFormWidget(LocationFormModel::countryField, std::move(cntCombo));
+		setFormWidget(LocationFormModel::countryField, move(cntCombo));
 
 		_cityProxyModel = make_shared<CityProxyModel>(app->cityQueryModel());
 		auto citCombo = make_unique<QueryProxyModelCB<CityProxyModel>>(_cityProxyModel);
 		_cityCombo = citCombo.get();
 		_cityCombo->changed().connect(this, &LocationView::handleCityChanged);
-		setFormWidget(LocationFormModel::cityField, std::move(citCombo));
+		setFormWidget(LocationFormModel::cityField, move(citCombo));
 	}
 
 	void LocationView::updateView(Wt::WFormModel *model)

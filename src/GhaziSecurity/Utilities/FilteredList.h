@@ -9,6 +9,7 @@
 #include <Wt/WString.h>
 #include <Wt/WTemplate.h>
 #include <Wt/WLineEdit.h>
+#include <Wt/WModelIndex.h>
 
 #define IdColumnWidth 80
 #define DateColumnWidth 120
@@ -37,8 +38,8 @@ namespace GS
 		bool enabled() const { return _enabled; }
 
 	protected:
-		AbstractFilterWidgetModel(const Wt::WString &filterTitle, const std::string &columnName)
-			: _columnName(columnName), _filterTitle(filterTitle)
+		AbstractFilterWidgetModel(Wt::WString filterTitle, std::string columnName)
+			: _columnName(move(columnName)), _filterTitle(move(filterTitle))
 		{ }
 		Wt::WString _filterTitle;
 		std::string _columnName;
@@ -50,8 +51,8 @@ namespace GS
 	{
 	public:
 		typedef std::function<void(Wt::WLineEdit*)> FuncType;
-		WLineEditFilterModel(const Wt::WString &filterTitle, const std::string &columnName, const FuncType &f = FuncType())
-			: AbstractFilterWidgetModel(filterTitle, columnName), _function(f)
+		WLineEditFilterModel(const Wt::WString &filterTitle, const std::string &columnName, FuncType f = FuncType())
+			: AbstractFilterWidgetModel(filterTitle, columnName), _function(move(f))
 		{ }
 		//virtual void updateView() override { _edit->setValueText(_value); }
 		virtual void updateModel() override;
@@ -212,7 +213,7 @@ namespace GS
 	class QueryModelFilteredList : public AbstractFilteredList
 	{
 	public:
-		typedef typename T ResultType;
+		typedef T ResultType;
 		typedef Dbo::QueryModel<ResultType> QueryModelType;
 
 		shared_ptr<QueryModelType> queryModel() const { return dynamic_pointer_cast<QueryModelType>(_model); }
@@ -240,7 +241,7 @@ namespace GS
 		Wt::Signal<IdType> _selected;
 	};
 
-	template<class FilteredList, typename IdType>
+	template<typename FilteredList, typename IdType>
 	ListSelectionDialog<FilteredList, IdType>::ListSelectionDialog(const Wt::WString &title)
 		: Wt::WDialog(title)
 	{
@@ -250,7 +251,7 @@ namespace GS
 		rejectWhenEscapePressed(true);
 		contents()->setOverflow(Wt::Overflow::Auto);
 
-		_listWidget = contents()->addNew<FilteredList>();
+		_listWidget = contents()->template addNew<FilteredList>();
 		_listWidget->enableFilters();
 		_listWidget->tableView()->setSelectionMode(Wt::SelectionMode::Single);
 		_listWidget->tableView()->setSelectionBehavior(Wt::SelectionBehavior::Rows);
@@ -278,7 +279,7 @@ namespace GS
 			}
 		}
 
-		auto queryModel = static_pointer_cast<Dbo::QueryModel<FilteredList::ResultType>>(_listWidget->model());
+		auto queryModel = static_pointer_cast<Dbo::QueryModel<typename FilteredList::ResultType>>(_listWidget->model());
 		if(index.model() != queryModel.get())
 		{
 			Wt::log("error") << "ListSelectionDialog::handleSelected(): index.model() != queryModel";

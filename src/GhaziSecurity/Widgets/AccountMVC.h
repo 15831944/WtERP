@@ -37,7 +37,6 @@ namespace GS
 	public:
 		enum ResultColumns { ResId, ResName, ResType, ResEntityId, ResBalance, ResEntityName };
 		enum ViewColumns { ViewId, ViewName, ViewType, ViewEntity, ViewBalance };
-		AccountList();
 
 	protected:
 		virtual void initFilters() override;
@@ -134,7 +133,7 @@ namespace GS
 		static const Wt::WFormModel::Field typeField;
 		static const Wt::WFormModel::Field nameField;
 
-		AccountFormModel(AccountView *view, Dbo::ptr<Account> accountPtr = Dbo::ptr<Account>());
+		AccountFormModel(AccountView *view, Dbo::ptr<Account> accountPtr = nullptr);
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
@@ -147,7 +146,7 @@ namespace GS
 	class AccountView : public RecordFormView
 	{
 	public:
-		AccountView(Dbo::ptr<Account> accountPtr = Dbo::ptr<Account>());
+		AccountView(Dbo::ptr<Account> accountPtr = nullptr);
 		virtual void initView() override;
 
 		Dbo::ptr<Account> accountPtr() const { return _model->recordPtr(); }
@@ -181,21 +180,21 @@ namespace GS
 
 	protected:
 		virtual void persistedHandler() override;
-		BaseAccountEntryFormModel(AccountEntryView *view, Dbo::ptr<AccountEntry> accountEntryPtr = Dbo::ptr<AccountEntry>());
+		BaseAccountEntryFormModel(AccountEntryView *view, Dbo::ptr<AccountEntry> accountEntryPtr = nullptr);
 		AccountEntryView *_view = nullptr;
 	};
 
 	class AccountEntryFormModel : public BaseAccountEntryFormModel
 	{
 	public:
-		AccountEntryFormModel(AccountEntryView *view, Dbo::ptr<AccountEntry> accountEntryPtr = Dbo::ptr<AccountEntry>());
+		AccountEntryFormModel(AccountEntryView *view, Dbo::ptr<AccountEntry> accountEntryPtr = nullptr);
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 	};
 
 	class TransactionFormModel : public BaseAccountEntryFormModel
 	{
 	public:
-		TransactionFormModel(AccountEntryView *view, Dbo::ptr<AccountEntry> accountEntryPtr = Dbo::ptr<AccountEntry>());
+		TransactionFormModel(AccountEntryView *view, Dbo::ptr<AccountEntry> accountEntryPtr = nullptr);
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 		
@@ -210,7 +209,7 @@ namespace GS
 	class AccountEntryView : public RecordFormView
 	{
 	public:
-		AccountEntryView(Dbo::ptr<AccountEntry> accountEntryPtr = Dbo::ptr<AccountEntry>(), bool isTransactionView = false);
+		AccountEntryView(Dbo::ptr<AccountEntry> accountEntryPtr = nullptr);
 		virtual void initView() override;
 
 		Dbo::ptr<AccountEntry> accountEntryPtr() const { return _model->recordPtr(); }

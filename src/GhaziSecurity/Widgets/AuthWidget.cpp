@@ -18,9 +18,4 @@ namespace GS
 		processEnvironment();
 	}
 
-// 	void AuthWidget::createLoginView()
-// 	{
-// 		Wt::Auth::AuthWidget::createLoginView();
-// 	}
-
 }

@@ -1,5 +1,4 @@
 #include "Dbo/ConfigurationsDatabase.h"
-#include <Wt/WLogger.h>
 #include "Application/WServer.h"
 
 namespace WW
@@ -14,7 +13,7 @@ namespace WW
 
 	void ConfigurationsDatabase::fetchAll()
 	{
-		std::lock_guard<std::shared_mutex> lock(_mutex);
+		boost::lock_guard<boost::shared_mutex> lock(_mutex);
 		//Time at start
 		steady_clock::time_point tpStart = steady_clock::now();
 
@@ -114,7 +113,7 @@ namespace WW
 
 	Ddo::cPtr<Ddo::ConfigurationBool> ConfigurationsDatabase::getBoolPtr(const std::string &name) const
 	{
-		std::shared_lock<std::shared_mutex> lock(_mutex);
+		boost::shared_lock<boost::shared_mutex> lock(_mutex);
 		BoolMap::const_iterator itr = _boolMap.find(name);
 		if(itr == _boolMap.end())
 			return Ddo::cPtr<Ddo::ConfigurationBool>();
@@ -124,7 +123,7 @@ namespace WW
 
 	Ddo::cPtr<Ddo::ConfigurationDouble> ConfigurationsDatabase::getDoublePtr(const std::string &name) const
 	{
-		std::shared_lock<std::shared_mutex> lock(_mutex);
+		boost::shared_lock<boost::shared_mutex> lock(_mutex);
 		DoubleMap::const_iterator itr = _doubleMap.find(name);
 		if(itr == _doubleMap.end())
 			return Ddo::cPtr<Ddo::ConfigurationDouble>();
@@ -134,7 +133,7 @@ namespace WW
 
 	Ddo::cPtr<Ddo::ConfigurationEnum> ConfigurationsDatabase::getEnumPtr(const std::string &name) const
 	{
-		std::shared_lock<std::shared_mutex> lock(_mutex);
+		boost::shared_lock<boost::shared_mutex> lock(_mutex);
 		EnumMap::const_iterator itr = _enumMap.find(name);
 		if(itr == _enumMap.end())
 			return Ddo::cPtr<Ddo::ConfigurationEnum>();
@@ -144,7 +143,7 @@ namespace WW
 
 	Ddo::cPtr<Ddo::ConfigurationFloat> ConfigurationsDatabase::getFloatPtr(const std::string &name) const
 	{
-		std::shared_lock<std::shared_mutex> lock(_mutex);
+		boost::shared_lock<boost::shared_mutex> lock(_mutex);
 		FloatMap::const_iterator itr = _floatMap.find(name);
 		if(itr == _floatMap.end())
 			return Ddo::cPtr<Ddo::ConfigurationFloat>();
@@ -154,7 +153,7 @@ namespace WW
 
 	Ddo::cPtr<Ddo::ConfigurationInt> ConfigurationsDatabase::getIntPtr(const std::string &name) const
 	{
-		std::shared_lock<std::shared_mutex> lock(_mutex);
+		boost::shared_lock<boost::shared_mutex> lock(_mutex);
 		IntMap::const_iterator itr = _intMap.find(name);
 		if(itr == _intMap.end())
 			return Ddo::cPtr<Ddo::ConfigurationInt>();
@@ -164,7 +163,7 @@ namespace WW
 
 	Ddo::cPtr<Ddo::ConfigurationLongInt> ConfigurationsDatabase::getLongIntPtr(const std::string &name) const
 	{
-		std::shared_lock<std::shared_mutex> lock(_mutex);
+		boost::shared_lock<boost::shared_mutex> lock(_mutex);
 		LongIntMap::const_iterator itr = _longIntMap.find(name);
 		if(itr == _longIntMap.end())
 			return Ddo::cPtr<Ddo::ConfigurationLongInt>();
@@ -174,7 +173,7 @@ namespace WW
 
 	Ddo::cPtr<Ddo::ConfigurationString> ConfigurationsDatabase::getStringPtr(const std::string &name) const
 	{
-		std::shared_lock<std::shared_mutex> lock(_mutex);
+		boost::shared_lock<boost::shared_mutex> lock(_mutex);
 		StringMap::const_iterator itr = _stringMap.find(name);
 		if(itr == _stringMap.end())
 			return Ddo::cPtr<Ddo::ConfigurationString>();
@@ -266,9 +265,9 @@ namespace WW
 		return stringPtr->value;
 	}
 
-	Ddo::cPtr<Ddo::ConfigurationLongInt> ConfigurationsDatabase::addLongInt(const std::string &name, long long value, Wt::Dbo::Session *alternateSession /*= nullptr*/)
+	Ddo::cPtr<Ddo::ConfigurationLongInt> ConfigurationsDatabase::addLongInt(const std::string &name, long long value, Wt::Dbo::Session *alternateSession)
 	{
-		std::lock_guard<std::shared_mutex> lock(_mutex);
+		boost::lock_guard<boost::shared_mutex> lock(_mutex);
 
 		Dbo::ptr<Dbo::Configuration> configPtr;
 		Dbo::ptr<Dbo::ConfigurationLongInt> configValPtr;
@@ -299,13 +298,13 @@ namespace WW
 
 	long long ConfigurationsDatabase::getLoadDurationinMS() const
 	{
-		std::shared_lock<std::shared_mutex> lock(_mutex);
+		boost::shared_lock<boost::shared_mutex> lock(_mutex);
 		return _loadDuration.count();
 	}
 
 	std::size_t ConfigurationsDatabase::configurationsCount() const
 	{
-		std::shared_lock<std::shared_mutex> lock(_mutex);
+		boost::shared_lock<boost::shared_mutex> lock(_mutex);
 		return _count;
 	}
 

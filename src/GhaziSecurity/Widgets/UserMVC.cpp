@@ -98,7 +98,7 @@ namespace GS
 	const Wt::WFormModel::Field UserFormModel::regionField = "region";
 	const Wt::WFormModel::Field UserFormModel::permissionsField = "permissions";
 
-	UserFormModel::UserFormModel(UserView *view, Dbo::ptr<AuthInfo> authInfoPtr /*= Dbo::ptr<AuthInfo>()*/)
+	UserFormModel::UserFormModel(UserView *view, Dbo::ptr<AuthInfo> authInfoPtr)
 		: RecordFormModel(view, Dbo::ptr<User>()), _view(view), _authInfoPtr(authInfoPtr)
 	{
 		addField(loginNameField);
@@ -366,7 +366,7 @@ namespace GS
 		_view->updateView();
 	}
 
-	UserView::UserView(Dbo::ptr<AuthInfo> authInfoPtr /*= Dbo::ptr<AuthInfo>()*/)
+	UserView::UserView(Dbo::ptr<AuthInfo> authInfoPtr)
 		: RecordFormView(tr("GS.Admin.UserView")), _tempPtr(authInfoPtr)
 	{ }
 
@@ -426,7 +426,7 @@ namespace GS
 		return Wt::WBatchEditProxyModel::flags(index);
 	}
 
-	Wt::any RegionListProxyModel::headerData(int section, Wt::Orientation orientation /*= Wt::Orientation::Horizontal*/, Wt::ItemDataRole role /*= Wt::ItemDataRole::Display*/) const
+	Wt::any RegionListProxyModel::headerData(int section, Wt::Orientation orientation, Wt::ItemDataRole role) const
 	{
 		if(section == _linkColumn)
 		{
@@ -438,7 +438,7 @@ namespace GS
 		return Wt::WBatchEditProxyModel::headerData(section, orientation, role);
 	}
 
-	Wt::any RegionListProxyModel::data(const Wt::WModelIndex &idx, Wt::ItemDataRole role /*= Wt::ItemDataRole::Display*/) const
+	Wt::any RegionListProxyModel::data(const Wt::WModelIndex &idx, Wt::ItemDataRole role) const
 	{
 		if(_linkColumn != -1 && idx.column() == _linkColumn)
 		{
@@ -456,7 +456,7 @@ namespace GS
 
 	const Wt::WFormModel::Field RegionFormModel::nameField = "name";
 
-	RegionFormModel::RegionFormModel(RegionView *view, Dbo::ptr<Region> regionPtr /*= Dbo::ptr<Region>()*/)
+	RegionFormModel::RegionFormModel(RegionView *view, Dbo::ptr<Region> regionPtr)
 		: RecordFormModel(view, regionPtr), _view(view)
 	{
 		addField(nameField);
@@ -530,7 +530,7 @@ namespace GS
 		return APP->authLogin().checkPermission(Permissions::CreateRegion);
 	}
 
-	RegionView::RegionView(Dbo::ptr<Region> regionPtr /*= Dbo::ptr<Region>()*/)
+	RegionView::RegionView(Dbo::ptr<Region> regionPtr)
 		: RecordFormView(tr("GS.Admin.RegionView")), _tempPtr(regionPtr)
 	{ }
 

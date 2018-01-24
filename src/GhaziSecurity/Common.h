@@ -1,13 +1,17 @@
 #ifndef GS_COMMON_H
 #define GS_COMMON_H
 
+#define BOOST_BIND_NO_PLACEHOLDERS
+
 #include <functional>
 #include <chrono>
 #include <tuple>
+#include <memory>
 
 #include <Wt/WGlobal.h>
 #include <Wt/WString.h>
 #include <Wt/cpp17/any.hpp>
+#include <Wt/Payment/Money.h>
 
 #include <boost/optional.hpp>
 
@@ -109,8 +113,7 @@ namespace Wt
 namespace GS
 {
 	namespace Dbo = Wt::Dbo;
-
-	using namespace std::placeholders;
+	using Wt::Payment::Money;
 
 	using std::chrono::system_clock;
 	using std::chrono::steady_clock;
@@ -125,6 +128,7 @@ namespace GS
 	using std::chrono::minutes;
 	using std::chrono::hours;
 
+	using std::move;
 	using std::unique_ptr;
 	using std::shared_ptr;
 	using std::make_unique;
@@ -135,6 +139,7 @@ namespace GS
 	using std::tuple;
 
 	using boost::optional;
+	using namespace std::placeholders;
 }
 
 #endif 

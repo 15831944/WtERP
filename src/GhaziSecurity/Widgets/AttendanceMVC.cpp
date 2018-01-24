@@ -89,7 +89,7 @@ namespace GS
 	const Wt::WFormModel::Field AttendanceDeviceFormModel::hostNameField = "hostName";
 	const Wt::WFormModel::Field AttendanceDeviceFormModel::locationField = "location";
 
-	AttendanceDeviceFormModel::AttendanceDeviceFormModel(AttendanceDeviceView *view, Dbo::ptr<AttendanceDevice> attendanceDevicePtr /*= Dbo::ptr<AttendanceDevice>()*/)
+	AttendanceDeviceFormModel::AttendanceDeviceFormModel(AttendanceDeviceView *view, Dbo::ptr<AttendanceDevice> attendanceDevicePtr)
 		: RecordFormModel(view, attendanceDevicePtr), _view(view)
 	{
 		addField(hostNameField);
@@ -140,7 +140,7 @@ namespace GS
 		return true;
 	}
 
-	AttendanceDeviceView::AttendanceDeviceView(Dbo::ptr<AttendanceDevice> attendanceDevicePtr /*= Dbo::ptr<AttendanceDevice>()*/)
+	AttendanceDeviceView::AttendanceDeviceView(Dbo::ptr<AttendanceDevice> attendanceDevicePtr)
 		: RecordFormView(tr("GS.Admin.AttendanceDeviceView")), _tempPtr(attendanceDevicePtr)
 	{ }
 
@@ -157,7 +157,7 @@ namespace GS
 	const Wt::WFormModel::Field AttendanceEntryFormModel::timeOutField = "timeOut";
 	const Wt::WFormModel::Field AttendanceEntryFormModel::locationField = "location";
 
-	AttendanceEntryFormModel::AttendanceEntryFormModel(AttendanceEntryView *view, Dbo::ptr<AttendanceEntry> attendanceEntryPtr /*= Dbo::ptr<AttendanceEntry>()*/)
+	AttendanceEntryFormModel::AttendanceEntryFormModel(AttendanceEntryView *view, Dbo::ptr<AttendanceEntry> attendanceEntryPtr)
 		: RecordFormModel(view, attendanceEntryPtr), _view(view)
 	{
 		addField(entityField);

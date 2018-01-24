@@ -1,8 +1,6 @@
 #include "Dbo/PermissionsDatabase.h"
 
 #include <Wt/WLogger.h>
-#include <mutex>
-#include <shared_mutex>
 
 namespace GS
 {
@@ -15,7 +13,7 @@ namespace GS
 
 	void PermissionsDatabase::fetchAll()
 	{
-		std::lock_guard<std::shared_mutex> lock(_mutex);
+		boost::lock_guard<boost::shared_mutex> lock(_mutex);
 		//Time at start
 		steady_clock::time_point tpStart = steady_clock::now();
 
@@ -100,20 +98,20 @@ namespace GS
 
 	PermissionCPtr PermissionsDatabase::getPermissionPtr(long long permissionId) const
 	{
-		std::shared_lock<std::shared_mutex> lock(_mutex);
-		_PermissionItemMap::const_iterator itr = _permissionItemMap.find(permissionId);
+		boost::shared_lock<boost::shared_mutex> lock(_mutex);
+		auto itr = _permissionItemMap.find(permissionId);
 		if(itr == _permissionItemMap.end())
 			return PermissionCPtr();
 
 		return itr->second.permissionPtr;
 	}
 
-	PermissionMap PermissionsDatabase::getUserPermissions(Dbo::ptr<User> userPtr, Wt::Auth::LoginState loginState, Dbo::Session *altSession /*= nullptr*/)
+	PermissionMap PermissionsDatabase::getUserPermissions(Dbo::ptr<User> userPtr, Wt::Auth::LoginState loginState, Dbo::Session *altSession)
 	{
 		if(!altSession)
 			altSession = &dboSession;
 
-		std::shared_lock<std::shared_mutex> lock(_mutex);
+		boost::shared_lock<boost::shared_mutex> lock(_mutex);
 
 		//Return default logged out permissions if not logged in
 		if(!userPtr || loginState == Wt::Auth::LoginState::LoggedOut)

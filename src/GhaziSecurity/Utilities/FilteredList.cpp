@@ -251,7 +251,7 @@ namespace GS
 
 		filterTemplate->bindWidget("checkbox", model->createCheckbox());
 		filterTemplate->bindString("title", model->filterTitle());
-		filterTemplate->bindWidget("widget", std::move(newWidget));
+		filterTemplate->bindWidget("widget", move(newWidget));
 		model->checkbox()->setChecked(true);
 	}
 

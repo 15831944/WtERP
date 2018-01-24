@@ -5,7 +5,7 @@
 #include "Dbo/Configuration.h"
 
 #include <unordered_map>
-#include <shared_mutex>
+#include <boost/thread/shared_mutex.hpp>
 
 namespace WW
 {
@@ -63,7 +63,7 @@ namespace WW
 		Wt::Dbo::Session &dboSession;
 
 	private:
-		mutable std::shared_mutex _mutex;
+		mutable boost::shared_mutex _mutex;
 	};
 }
 

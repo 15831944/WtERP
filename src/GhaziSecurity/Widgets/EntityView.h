@@ -31,7 +31,7 @@ namespace GS
 	public:
 		static const Field nameField;
 
-		EntityFormModel(EntityView *view, Dbo::ptr<Entity> entityPtr = Dbo::ptr<Entity>());
+		EntityFormModel(EntityView *view, Dbo::ptr<Entity> entityPtr = nullptr);
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
@@ -59,7 +59,7 @@ namespace GS
 		static const Field cnicUploadField;
 		static const Field cnicUpload2Field;
 
-		PersonFormModel(EntityView *view, Dbo::ptr<Person> personPtr = Dbo::ptr<Person>());
+		PersonFormModel(EntityView *view, Dbo::ptr<Person> personPtr = nullptr);
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
@@ -78,7 +78,7 @@ namespace GS
 		static const Field experienceField;
 		static const Field addQualificationsField;
 
-		EmployeeFormModel(EntityView *view, Dbo::ptr<Employee> employeePtr = Dbo::ptr<Employee>());
+		EmployeeFormModel(EntityView *view, Dbo::ptr<Employee> employeePtr = nullptr);
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
@@ -96,7 +96,7 @@ namespace GS
 		static const Field armyNumberField;
 		static const Field rankField;
 
-		PersonnelFormModel(EntityView *view, Dbo::ptr<Personnel> personnelPtr = Dbo::ptr<Personnel>());
+		PersonnelFormModel(EntityView *view, Dbo::ptr<Personnel> personnelPtr = nullptr);
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
@@ -108,7 +108,7 @@ namespace GS
 	class BusinessFormModel : public ChildRecordFormModel<Business>
 	{
 	public:
-		BusinessFormModel(EntityView *view, Dbo::ptr<Business> businessPtr = Dbo::ptr<Business>());
+		BusinessFormModel(EntityView *view, Dbo::ptr<Business> businessPtr = nullptr);
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
@@ -122,7 +122,7 @@ namespace GS
 		static const Wt::WFormModel::Field entityField;
 		static const Wt::WFormModel::Field numberField;
 
-		ContactNumberFormModel(ContactNumberView *view, Dbo::ptr<ContactNumber> contactNumberPtr = Dbo::ptr<ContactNumber>());
+		ContactNumberFormModel(ContactNumberView *view, Dbo::ptr<ContactNumber> contactNumberPtr = nullptr);
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
@@ -183,8 +183,8 @@ namespace GS
 
 		void selectEntityType(Entity::Type type);
 		void setSpecificType(Entity::SpecificType type);
-		void addEmployeeModel(Dbo::ptr<Employee> employeePtr = Dbo::ptr<Employee>());
-		void addPersonnelModel(Dbo::ptr<Personnel> personnelPtr = Dbo::ptr<Personnel>());
+		void addEmployeeModel(Dbo::ptr<Employee> employeePtr = nullptr);
+		void addPersonnelModel(Dbo::ptr<Personnel> personnelPtr = nullptr);
 
 		Entity::Type entityType() const { return _type; }
 		Dbo::ptr<Entity> entityPtr() const { return _entityModel->recordPtr(); }

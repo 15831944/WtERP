@@ -5,7 +5,7 @@
 #include "Dbo/Dbos.h"
 
 #include <Wt/Auth/Login.h>
-#include <shared_mutex>
+#include <boost/thread/shared_mutex.hpp>
 
 namespace GS
 {
@@ -41,7 +41,7 @@ namespace GS
 		Dbo::Session &dboSession;
 
 	private:
-		mutable std::shared_mutex _mutex;
+		mutable boost::shared_mutex _mutex;
 	};
 }
 

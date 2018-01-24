@@ -21,16 +21,16 @@ namespace GS
 	protected:
 		virtual void propagateSetVisible(bool visible) override
 		{
-			scheduleRender();
+			Base::scheduleRender();
 			Base::propagateSetVisible(visible);
 		}
 
 		virtual void render(Wt::WFlags<Wt::RenderFlag> flags) override
 		{
-			isNotStateless();
-			if(canOptimizeUpdates() && !flags.test(Wt::RenderFlag::Full))
+			Base::isNotStateless();
+			if(Base::canOptimizeUpdates() && !flags.test(Wt::RenderFlag::Full))
 			{
-				bool visible = isVisible();
+				bool visible = Base::isVisible();
 				if(visible && !_wasVisible)
 					reload();
 

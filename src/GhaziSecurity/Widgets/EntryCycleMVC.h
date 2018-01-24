@@ -70,7 +70,7 @@ namespace GS
 	class ExpenseCycleFormModel : public RecordFormModel<ExpenseCycle>
 	{
 	public:
-		ExpenseCycleFormModel(ExpenseCycleView *view, Dbo::ptr<ExpenseCycle> cyclePtr = Dbo::ptr<ExpenseCycle>());
+		ExpenseCycleFormModel(ExpenseCycleView *view, Dbo::ptr<ExpenseCycle> cyclePtr = nullptr);
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Wt::WFormModel::Field field) override;
 		virtual bool saveChanges() override;
 
@@ -83,7 +83,7 @@ namespace GS
 	class ExpenseCycleView : public EntryCycleView
 	{
 	public:
-		ExpenseCycleView(Dbo::ptr<ExpenseCycle> cyclePtr = Dbo::ptr<ExpenseCycle>());
+		ExpenseCycleView(Dbo::ptr<ExpenseCycle> cyclePtr = nullptr);
 		virtual void initView() override;
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Wt::WFormModel::Field field) override;
 
@@ -103,7 +103,7 @@ namespace GS
 	class IncomeCycleFormModel : public RecordFormModel<IncomeCycle>
 	{
 	public:
-		IncomeCycleFormModel(IncomeCycleView *view, Dbo::ptr<IncomeCycle> cyclePtr = Dbo::ptr<IncomeCycle>());
+		IncomeCycleFormModel(IncomeCycleView *view, Dbo::ptr<IncomeCycle> cyclePtr = nullptr);
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Wt::WFormModel::Field field) override;
 		virtual bool saveChanges() override;
 
@@ -116,7 +116,7 @@ namespace GS
 	class IncomeCycleView : public EntryCycleView
 	{
 	public:
-		IncomeCycleView(Dbo::ptr<IncomeCycle> cyclePtr = Dbo::ptr<IncomeCycle>());
+		IncomeCycleView(Dbo::ptr<IncomeCycle> cyclePtr = nullptr);
 		virtual void initView() override;
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Wt::WFormModel::Field field) override;
 
@@ -150,7 +150,7 @@ namespace GS
 	class IncomeCycleList : public EntryCycleList
 	{
 	public:
-		IncomeCycleList(Dbo::ptr<Entity> entityPtr = Dbo::ptr<Entity>()) : EntryCycleList(entityPtr) { }
+		IncomeCycleList(Dbo::ptr<Entity> entityPtr = nullptr) : EntryCycleList(entityPtr) { }
 
 	protected:
 		virtual void initModel() override;
@@ -159,7 +159,7 @@ namespace GS
 	class ExpenseCycleList : public EntryCycleList
 	{
 	public:
-		ExpenseCycleList(Dbo::ptr<Entity> entityPtr = Dbo::ptr<Entity>()) : EntryCycleList(entityPtr) { }
+		ExpenseCycleList(Dbo::ptr<Entity> entityPtr = nullptr) : EntryCycleList(entityPtr) { }
 
 	protected:
 		virtual void initModel() override;

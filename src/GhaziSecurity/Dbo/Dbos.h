@@ -8,12 +8,12 @@
 #include <Wt/WAny.h>
 #include <Wt/Dbo/WtSqlTraits.h>
 #include <Wt/Dbo/SqlTraits.h>
-#include <Wt/Payment/Money.h>
 
 #include <boost/lexical_cast.hpp>
 
 #define TRANSACTION(app) Dbo::Transaction t(app->dboSession())
 
+//Forward declarations and typedefs
 namespace GS
 {
 	//User related
@@ -128,28 +128,27 @@ namespace GS
 	typedef Dbo::collection<Dbo::ptr<AttendanceEntry>> AttendanceEntryCollection;
 }
 
+//Dbo traits
 namespace Wt
 {
 	namespace Dbo
 	{
 		//User Permissions
 		template <class Action>
-		void field(Action &a, GS::UserPermissionPK &key, const std::string &, int size = -1)
-		{
-			belongsTo(a, key.userPtr, "user", OnDeleteCascade | OnUpdateCascade | NotNull);
-			belongsTo(a, key.permissionPtr, "permission", OnDeleteCascade | OnUpdateCascade | NotNull);
-		}
+		void field(Action &a, GS::UserPermissionPK &key, const std::string &, int size = -1);
+
 		template<>
 		struct dbo_traits<GS::UserPermission> : public dbo_default_traits
 		{
 			typedef GS::UserPermissionPK IdType;
 			static IdType invalidId();
-			constexpr static const char *surrogateIdField() { return nullptr; }
+			static const char *surrogateIdField() { return nullptr; }
 		};
+
 		template<>
 		struct dbo_traits<GS::Permission> : public dbo_default_traits
 		{
-			constexpr static const char *surrogateIdField() { return nullptr; }
+			static const char *surrogateIdField() { return nullptr; }
 		};
 
 		//Entities
@@ -158,35 +157,35 @@ namespace Wt
 		{
 			typedef ptr<GS::Entity> IdType;
 			static IdType invalidId() { return IdType(); }
-			constexpr static const char *surrogateIdField() { return nullptr; }
+			static const char *surrogateIdField() { return nullptr; }
 		};
 		template<>
 		struct dbo_traits<GS::Business> : public dbo_default_traits
 		{
 			typedef ptr<GS::Entity> IdType;
 			static IdType invalidId() { return IdType(); }
-			constexpr static const char *surrogateIdField() { return nullptr; }
+			static const char *surrogateIdField() { return nullptr; }
 		};
 		template<>
 		struct dbo_traits<GS::Employee> : public dbo_default_traits
 		{
 			typedef ptr<GS::Person> IdType;
 			static IdType invalidId() { return IdType(); }
-			constexpr static const char *surrogateIdField() { return nullptr; }
+			static const char *surrogateIdField() { return nullptr; }
 		};
 		template<>
 		struct dbo_traits<GS::Personnel> : public dbo_default_traits
 		{
 			typedef ptr<GS::Employee> IdType;
 			static IdType invalidId() { return IdType(); }
-			constexpr static const char *surrogateIdField() { return nullptr; }
+			static const char *surrogateIdField() { return nullptr; }
 		};
 		template<>
 		struct dbo_traits<GS::Country> : public dbo_default_traits
 		{
 			typedef std::string IdType;
 			static IdType invalidId() { return IdType(); }
-			constexpr static const char *surrogateIdField() { return nullptr; }
+			static const char *surrogateIdField() { return nullptr; }
 		};
 
 // 		//Assets
@@ -195,35 +194,35 @@ namespace Wt
 // 		{
 // 			typedef ptr<GS::Asset> IdType;
 // 			static IdType invalidId() { return IdType(); }
-// 			constexpr static const char *surrogateIdField() { return nullptr; }
+// 			static const char *surrogateIdField() { return nullptr; }
 // 		};
 // 		template<>
 // 		struct dbo_traits<GS::Weapon> : public dbo_default_traits
 // 		{
 // 			typedef ptr<GS::Asset> IdType;
 // 			static IdType invalidId() { return IdType(); }
-// 			constexpr static const char *surrogateIdField() { return nullptr; }
+// 			static const char *surrogateIdField() { return nullptr; }
 // 		};
 // 		template<>
 // 		struct dbo_traits<GS::Vehicle> : public dbo_default_traits
 // 		{
 // 			typedef ptr<GS::Asset> IdType;
 // 			static IdType invalidId() { return IdType(); }
-// 			constexpr static const char *surrogateIdField() { return nullptr; }
+// 			static const char *surrogateIdField() { return nullptr; }
 // 		};
 // 		template<>
 // 		struct dbo_traits<GS::ClothingItem> : public dbo_default_traits
 // 		{
 // 			typedef ptr<GS::Asset> IdType;
 // 			static IdType invalidId() { return IdType(); }
-// 			constexpr static const char *surrogateIdField() { return nullptr; }
+// 			static const char *surrogateIdField() { return nullptr; }
 // 		};
 // 		template<>
 // 		struct dbo_traits<GS::AlarmItem> : public dbo_default_traits
 // 		{
 // 			typedef ptr<GS::Asset> IdType;
 // 			static IdType invalidId() { return IdType(); }
-// 			constexpr static const char *surrogateIdField() { return nullptr; }
+// 			static const char *surrogateIdField() { return nullptr; }
 // 		};
 
 		//Accounts
@@ -232,29 +231,28 @@ namespace Wt
 		{
 			typedef ptr<GS::AccountEntry> IdType;
 			static IdType invalidId() { return IdType(); }
-			constexpr static const char *surrogateIdField() { return nullptr; }
+			static const char *surrogateIdField() { return nullptr; }
 		};
 		template<>
 		struct dbo_traits<GS::FineInfo> : public dbo_default_traits
 		{
 			typedef ptr<GS::AccountEntry> IdType;
 			static IdType invalidId() { return IdType(); }
-			constexpr static const char *surrogateIdField() { return nullptr; }
+			static const char *surrogateIdField() { return nullptr; }
 		};
 		template<>
 		struct dbo_traits<GS::PettyExpenditureInfo> : public dbo_default_traits
 		{
 			typedef ptr<GS::AccountEntry> IdType;
 			static IdType invalidId() { return IdType(); }
-			constexpr static const char *surrogateIdField() { return nullptr; }
+			static const char *surrogateIdField() { return nullptr; }
 		};
 	}
 }
 
+//Dbos
 namespace GS
 {
-	typedef Wt::Payment::Money Money;
-
 	class BaseAdminRecord
 	{
 	public:
@@ -306,7 +304,7 @@ namespace GS
 
 			BaseAdminRecord::persist(a);
 		}
-		constexpr static const char *tableName()
+		static const char *tableName()
 		{
 			return "user";
 		}
@@ -340,7 +338,7 @@ namespace GS
 			Dbo::hasMany(a, incomeCyclesCollection, Dbo::ManyToOne, "region");
 			Dbo::hasMany(a, expenseCyclesCollection, Dbo::ManyToOne, "region");
 		}
-		constexpr static const char *tableName()
+		static const char *tableName()
 		{
 			return "region";
 		}
@@ -375,7 +373,7 @@ namespace GS
 			Dbo::hasMany(a, linkedToCollection, Dbo::ManyToMany, "linked_permission", "to");
 			Dbo::hasMany(a, linkedByCollection, Dbo::ManyToMany, "linked_permission", "by");
 		}
-		constexpr static const char *tableName()
+		static const char *tableName()
 		{
 			return "permission";
 		}
@@ -434,7 +432,7 @@ namespace GS
 			Dbo::id(a, _id, "id");
 			Dbo::field(a, denied, "denied");
 		}
-		constexpr static const char *tableName()
+		static const char *tableName()
 		{
 			return "user_permission";
 		}
@@ -463,7 +461,7 @@ namespace GS
 			Dbo::belongsTo(a, permissionPtr, "permission", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
 			Dbo::field(a, loginStates, "loginStates");
 		}
-		constexpr static const char *tableName()
+		static const char *tableName()
 		{
 			return "default_permission";
 		}
@@ -579,7 +577,7 @@ namespace GS
 
 			BaseAdminRecord::persist(a);
 		}
-		constexpr static const char *tableName()
+		static const char *tableName()
 		{
 			return "entity";
 		}
@@ -643,7 +641,7 @@ namespace GS
 			Dbo::belongsTo(a, cnicFile1Ptr, "cnicFile1", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 			Dbo::belongsTo(a, cnicFile2Ptr, "cnicFile2", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 		}
-		constexpr static const char *tableName()
+		static const char *tableName()
 		{
 			return "person";
 		}
@@ -682,7 +680,7 @@ namespace GS
 			//Dbo::hasMany(a, assignedClothesCollection, Dbo::ManyToOne, "employee");
 			Dbo::hasOne(a, personnelWPtr, "employee");
 		}
-		constexpr static const char *tableName()
+		static const char *tableName()
 		{
 			return "employee";
 		}
@@ -717,7 +715,7 @@ namespace GS
 
 			Dbo::hasMany(a, witnessCollection, Dbo::ManyToMany, "personnel_witness");
 		}
-		constexpr static const char *tableName()
+		static const char *tableName()
 		{
 			return "personnel";
 		}
@@ -746,7 +744,7 @@ namespace GS
 			Dbo::field(a, type, "type");
 			Dbo::hasMany(a, employeeAssignmentCollection, Dbo::ManyToOne, "employeeposition");
 		}
-		constexpr static const char *tableName()
+		static const char *tableName()
 		{
 			return "employeeposition";
 		}
@@ -764,7 +762,7 @@ namespace GS
 			Dbo::field(a, title, "title", 70);
 			Dbo::hasMany(a, clientAssignmentCollection, Dbo::ManyToOne, "clientservice");
 		}
-		constexpr static const char *tableName()
+		static const char *tableName()
 		{
 			return "clientservice";
 		}
@@ -783,7 +781,7 @@ namespace GS
 		{
 			Dbo::id(a, _entityPtr, "entity", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
 		}
-		constexpr static const char *tableName()
+		static const char *tableName()
 		{
 			return "business";
 		}
@@ -808,7 +806,7 @@ namespace GS
 			Dbo::field(a, countryCode, "countryCode", 3);
 			Dbo::field(a, nationalNumber, "nationalNumber", 15);
 		}
-		constexpr static const char *tableName()
+		static const char *tableName()
 		{
 			return "contactnumber";
 		}
@@ -830,7 +828,7 @@ namespace GS
 			Dbo::field(a, name, "name", 70);
 			Dbo::hasMany(a, cityCollection, Dbo::ManyToOne, "country");
 		}
-		constexpr static const char *tableName()
+		static const char *tableName()
 		{
 			return "country";
 		}
@@ -850,7 +848,7 @@ namespace GS
 			Dbo::belongsTo(a, countryPtr, "country", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
 			Dbo::field(a, name, "name", 70);
 		}
-		constexpr static const char *tableName()
+		static const char *tableName()
 		{
 			return "city";
 		}
@@ -889,7 +887,7 @@ namespace GS
 
 			BaseAdminRecord::persist(a);
 		}
-		constexpr static const char *tableName()
+		static const char *tableName()
 		{
 			return "location";
 		}
@@ -931,7 +929,7 @@ namespace GS
 
 			BaseAdminRecord::persist(a);
 		}
-		constexpr static const char *tableName()
+		static const char *tableName()
 		{
 			return "employeeassignment";
 		}
@@ -967,7 +965,7 @@ namespace GS
 
 			BaseAdminRecord::persist(a);
 		}
-		constexpr static const char *tableName()
+		static const char *tableName()
 		{
 			return "clientassignment";
 		}
@@ -1017,7 +1015,7 @@ namespace GS
 
 			BaseAdminRecord::persist(a);
 		}
-		constexpr static const char *tableName()
+		static const char *tableName()
 		{
 			return "account";
 		}
@@ -1091,7 +1089,7 @@ namespace GS
 
 			BaseAdminRecord::persist(a);
 		}
-		constexpr static const char *tableName()
+		static const char *tableName()
 		{
 			return "accountentry";
 		}
@@ -1107,7 +1105,7 @@ namespace GS
 		{
 			Dbo::id(a, entryPtr, "accountentry", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
 		}
-		constexpr static const char *tableName()
+		static const char *tableName()
 		{
 			return "overtimeInfo";
 		}
@@ -1123,7 +1121,7 @@ namespace GS
 		{
 			Dbo::id(a, entryPtr, "accountentry", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
 		}
-		constexpr static const char *tableName()
+		static const char *tableName()
 		{
 			return "fineinfo";
 		}
@@ -1139,7 +1137,7 @@ namespace GS
 		{
 			Dbo::id(a, entryPtr, "accountentry", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
 		}
-		constexpr static const char *tableName()
+		static const char *tableName()
 		{
 			return "pettyexpenditureinfo";
 		}
@@ -1153,7 +1151,7 @@ namespace GS
 		YearlyInterval = 3
 	};
 	Wt::WDateTime addCycleInterval(const Wt::WDateTime &dt, CycleInterval interval, int nIntervals);
-	Wt::WString rsEveryNIntervals(const Money &amount, CycleInterval interval, int nIntervals);
+	Wt::WString rsEveryNIntervals(const Money &amount, CycleInterval interval, uint64_t nIntervals);
 
 	class EntryCycle : public BaseAdminRecord
 	{
@@ -1212,7 +1210,7 @@ namespace GS
 			EntryCycle::persist(a, "incomecycle");
 			Dbo::hasMany(a, clientAssignmentCollection, Dbo::ManyToOne, "incomecycle");
 		}
-		constexpr static const char *tableName()
+		static const char *tableName()
 		{
 			return "incomecycle";
 		}
@@ -1244,7 +1242,7 @@ namespace GS
 			Dbo::hasMany(a, employeeAssignmentCollection, Dbo::ManyToOne, "expensecycle");
 			//Dbo::hasOne(a, rentHouseWPtr, "expensecycle");
 		}
-		constexpr static const char *tableName()
+		static const char *tableName()
 		{
 			return "expensecycle";
 		}
@@ -1279,7 +1277,7 @@ namespace GS
 		}
 		std::string pathToFile() const;
 		std::string pathToDirectory() const;
-		constexpr static const char *tableName()
+		static const char *tableName()
 		{
 			return "uploadedfile";
 		}
@@ -1305,7 +1303,7 @@ namespace GS
 
 			Dbo::hasMany(a, attendanceCollection, Dbo::ManyToOne, "attendancedevice");
 		}
-		constexpr static const char *tableName()
+		static const char *tableName()
 		{
 			return "attendancedevice";
 		}
@@ -1333,7 +1331,7 @@ namespace GS
 			Dbo::belongsTo(a, attendanceDevicePtr, "attendancedevice", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 			Dbo::belongsTo(a, locationPtr, "location", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 		}
-		constexpr static const char *tableName()
+		static const char *tableName()
 		{
 			return "attendanceentry";
 		}
@@ -1363,7 +1361,7 @@ namespace GS
 // 			Dbo::belongsTo(a, locationPtr, "location", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 // 			Dbo::belongsTo(a, assetPtr, "asset", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 // 		}
-// 		constexpr static const char *tableName()
+// 		static const char *tableName()
 // 		{
 // 			return "inquiry";
 // 		}
@@ -1401,7 +1399,7 @@ namespace GS
 // 			Dbo::hasOne(a, weaponWPtr, "asset");
 // 			Dbo::hasOne(a, vehicleWPtr, "asset");
 // 		}
-// 		constexpr static const char *tableName()
+// 		static const char *tableName()
 // 		{
 // 			return "asset";
 // 		}
@@ -1420,7 +1418,7 @@ namespace GS
 // 			Dbo::id(a, assetPtr, "asset", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
 // 			Dbo::field(a, quantity, "quantity");
 // 		}
-// 		constexpr static const char *tableName()
+// 		static const char *tableName()
 // 		{
 // 			return "inventory";
 // 		}
@@ -1435,7 +1433,7 @@ namespace GS
 // 		{
 // 			Dbo::hasMany(a, clothingItemCollection, Dbo::ManyToOne, "clothingtemplate");
 // 		}
-// 		constexpr static const char *tableName()
+// 		static const char *tableName()
 // 		{
 // 			return "clothingtemplate";
 // 		}
@@ -1458,7 +1456,7 @@ namespace GS
 // 			Dbo::field(a, serviceable, "serviceable");
 // 			Dbo::belongsTo(a, assignedEmployeePtr, "employee", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 // 		}
-// 		constexpr static const char *tableName()
+// 		static const char *tableName()
 // 		{
 // 			return "clothingitem";
 // 		}
@@ -1473,7 +1471,7 @@ namespace GS
 // 		{
 // 			Dbo::hasMany(a, alarmItemCollection, Dbo::ManyToOne, "alarmtemplate");
 // 		}
-// 		constexpr static const char *tableName()
+// 		static const char *tableName()
 // 		{
 // 			return "alarmtemplate";
 // 		}
@@ -1496,7 +1494,7 @@ namespace GS
 // 			Dbo::field(a, serviceable, "serviceable");
 // 			Dbo::belongsTo(a, assignedEntityPtr, "entity", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 // 		}
-// 		constexpr static const char *tableName()
+// 		static const char *tableName()
 // 		{
 // 			return "alarmitem";
 // 		}
@@ -1511,7 +1509,7 @@ namespace GS
 // 		{
 // 			Dbo::hasMany(a, weaponCollection, Dbo::ManyToOne, "weapontemplate");
 // 		}
-// 		constexpr static const char *tableName()
+// 		static const char *tableName()
 // 		{
 // 			return "weapontemplate";
 // 		}
@@ -1532,7 +1530,7 @@ namespace GS
 // 			Dbo::belongsTo(a, weaponTemplatePtr, "weapontemplate", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade);
 // 			Dbo::field(a, weaponNumber, "weaponNumber");
 // 		}
-// 		constexpr static const char *tableName()
+// 		static const char *tableName()
 // 		{
 // 			return "weapon";
 // 		}
@@ -1547,7 +1545,7 @@ namespace GS
 // 		{
 // 			Dbo::hasMany(a, vehicleCollection, Dbo::ManyToOne, "vehicletemplate");
 // 		}
-// 		constexpr static const char *tableName()
+// 		static const char *tableName()
 // 		{
 // 			return "vehicletemplate";
 // 		}
@@ -1566,7 +1564,7 @@ namespace GS
 // 			Dbo::id(a, assetPtr, "asset", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
 // 			Dbo::belongsTo(a, vehicleTemplatePtr, "vehicletemplate", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade);
 // 		}
-// 		constexpr static const char *tableName()
+// 		static const char *tableName()
 // 		{
 // 			return "vehicle";
 // 		}
@@ -1596,7 +1594,7 @@ namespace GS
 // 
 // 			Dbo::hasOne(a, assetWPtr, "assetregistration");
 // 		}
-// 		constexpr static const char *tableName()
+// 		static const char *tableName()
 // 		{
 // 			return "assetregistration";
 // 		}
@@ -1611,7 +1609,7 @@ namespace GS
 // 		{
 // 			Dbo::belongsTo(a, assetPtr, "asset", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 // 		}
-// 		constexpr static const char *tableName()
+// 		static const char *tableName()
 // 		{
 // 			return "office";
 // 		}
@@ -1638,7 +1636,7 @@ namespace GS
 // 
 // 			Dbo::hasMany(a, depositEntryCollection, Dbo::ManyToOne, "deposit_renthouse");
 // 		}
-// 		constexpr static const char *tableName()
+// 		static const char *tableName()
 // 		{
 // 			return "renthouse";
 // 		}
@@ -1647,6 +1645,7 @@ namespace GS
 
 }
 
+//Any Traits
 namespace Wt
 {
 	using namespace GS;
@@ -1817,5 +1816,21 @@ namespace Wt
 		};
 	}
 }
+
+//Dbo traits template definition
+namespace Wt
+{
+	namespace Dbo
+	{
+		//User Permissions
+		template<class Action>
+		void field(Action &a, GS::UserPermissionPK &key, const std::string &, int size)
+		{
+			belongsTo(a, key.userPtr, "user", OnDeleteCascade | OnUpdateCascade | NotNull);
+			belongsTo(a, key.permissionPtr, "permission", OnDeleteCascade | OnUpdateCascade | NotNull);
+		}
+	}
+}
+
 
 #endif

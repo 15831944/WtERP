@@ -1,18 +1,11 @@
 #include "Widgets/AccountMVC.h"
 #include "Widgets/EntityList.h"
-#include "Application/WApplication.h"
 #include "Application/WServer.h"
 #include "Dbo/ConfigurationsDatabase.h"
 
 #include <Wt/WTableView.h>
-#include <Wt/WPushButton.h>
-#include <Wt/WComboBox.h>
-#include <Wt/WSuggestionPopup.h>
-#include <Wt/WDialog.h>
 #include <Wt/WTextArea.h>
 #include <Wt/WDoubleValidator.h>
-
-#include <Wt/Dbo/QueryModel.h>
 
 namespace GS
 {
@@ -22,10 +15,6 @@ namespace GS
 #define EntityColumnWidth 200
 #define TypeColumnWidth 250
 #define AmountColumnWidth 100
-
-	AccountList::AccountList()
-		: QueryModelFilteredList<ResultType>()
-	{ }
 
 	void AccountList::initFilters()
 	{
@@ -108,7 +97,7 @@ namespace GS
 		Wt::any viewIndexData = headerData(idx.column(), Wt::Orientation::Horizontal, Wt::ItemDataRole::ViewIndex);
 		if(viewIndexData.empty())
 			return Wt::WBatchEditProxyModel::data(idx, role);
-		int viewIndex = Wt::any_cast<int>(viewIndexData);
+		auto viewIndex = Wt::any_cast<int>(viewIndexData);
 
 		if(viewIndex == AccountList::ViewBalance && role == Wt::ItemDataRole::Display)
 		{
@@ -294,7 +283,7 @@ namespace GS
 		Wt::any viewIndexData = headerData(idx.column(), Wt::Orientation::Horizontal, Wt::ItemDataRole::ViewIndex);
 		if(viewIndexData.empty())
 			return Wt::WBatchEditProxyModel::data(idx, role);
-		int viewIndex = Wt::any_cast<int>(viewIndexData);
+		auto viewIndex = Wt::any_cast<int>(viewIndexData);
 
 		//Opposite entry account
 		if(viewIndex == AccountChildrenEntryList::ViewOppositeAccount)
@@ -391,7 +380,7 @@ namespace GS
 		Wt::any viewIndexData = headerData(idx.column(), Wt::Orientation::Horizontal, Wt::ItemDataRole::ViewIndex);
 		if(viewIndexData.empty())
 			return Wt::WBatchEditProxyModel::data(idx, role);
-		int viewIndex = Wt::any_cast<int>(viewIndexData);
+		auto viewIndex = Wt::any_cast<int>(viewIndexData);
 
 		//Debit entry account
 		if(viewIndex == AccountEntryList::ViewDebitAccount && role == Wt::ItemDataRole::Link)
@@ -461,8 +450,8 @@ namespace GS
 	const Wt::WFormModel::Field AccountFormModel::typeField = "type";
 	const Wt::WFormModel::Field AccountFormModel::nameField = "name";
 
-	AccountFormModel::AccountFormModel(AccountView *view, Dbo::ptr<Account> accountPtr /*= Dbo::ptr<Account>()*/)
-		: RecordFormModel(view, accountPtr), _view(view)
+	AccountFormModel::AccountFormModel(AccountView *view, Dbo::ptr<Account> accountPtr)
+		: RecordFormModel(view, move(accountPtr)), _view(view)
 	{
 		addField(typeField);
 		addField(nameField);
@@ -552,7 +541,7 @@ namespace GS
 	}
 
 	AccountView::AccountView(Dbo::ptr<Account> accountPtr)
-		: RecordFormView(tr("GS.Admin.AccountView")), _tempPtr(accountPtr)
+		: RecordFormView(tr("GS.Admin.AccountView")), _tempPtr(move(accountPtr))
 	{ }
 
 	void AccountView::initView()
@@ -584,8 +573,8 @@ namespace GS
 		setReadOnly(creditAccountField, true);
 	}
 
-	BaseAccountEntryFormModel::BaseAccountEntryFormModel(AccountEntryView *view, Dbo::ptr<AccountEntry> accountEntryPtr /*= Dbo::ptr<AccountEntry>()*/)
-		: RecordFormModel(view, accountEntryPtr), _view(view)
+	BaseAccountEntryFormModel::BaseAccountEntryFormModel(AccountEntryView *view, Dbo::ptr<AccountEntry> accountEntryPtr)
+		: RecordFormModel(view, move(accountEntryPtr)), _view(view)
 	{
 		addField(descriptionField);
 		addField(debitAccountField);
@@ -603,8 +592,8 @@ namespace GS
 		}
 	}
 
-	AccountEntryFormModel::AccountEntryFormModel(AccountEntryView *view, Dbo::ptr<AccountEntry> accountEntryPtr /*= Dbo::ptr<AccountEntry>()*/)
-		: BaseAccountEntryFormModel(view, accountEntryPtr)
+	AccountEntryFormModel::AccountEntryFormModel(AccountEntryView *view, Dbo::ptr<AccountEntry> accountEntryPtr)
+		: BaseAccountEntryFormModel(view, move(accountEntryPtr))
 	{
 		setReadOnly(entityField, true);
 		setVisible(entityField, false);
@@ -613,8 +602,8 @@ namespace GS
 			handleAccountChanged(false);
 	}
 
-	TransactionFormModel::TransactionFormModel(AccountEntryView *view, Dbo::ptr<AccountEntry> accountEntryPtr /*= Dbo::ptr<AccountEntry>()*/)
-		: BaseAccountEntryFormModel(view, accountEntryPtr)
+	TransactionFormModel::TransactionFormModel(AccountEntryView *view, Dbo::ptr<AccountEntry> accountEntryPtr)
+		: BaseAccountEntryFormModel(view, move(accountEntryPtr))
 	{
 		setReadOnly(entityField, false);
 		setVisible(entityField, true);
@@ -698,7 +687,7 @@ namespace GS
 		{
 			if(field == entityField)
 			{
-				FindEntityEdit *entityFindEdit = dynamic_cast<FindEntityEdit*>(w.get());
+				auto *entityFindEdit = dynamic_cast<FindEntityEdit*>(w.get());
 				entityFindEdit->valueChanged().connect(this, &TransactionFormModel::setAccountsFromEntity);
 				setValidator(entityField, make_shared<FindEntityValidator>(entityFindEdit, true));
 			}
@@ -706,7 +695,7 @@ namespace GS
 		return w;
 	}
 
-	void BaseAccountEntryFormModel::handleAccountChanged(bool update /*= true*/)
+	void BaseAccountEntryFormModel::handleAccountChanged(bool update)
 	{
 		long long cashAccountId = SERVER->configs().getLongInt("CashAccountId", -1);
 		if(cashAccountId == -1)
@@ -817,8 +806,8 @@ namespace GS
 		return true;
 	}
 
-	AccountEntryView::AccountEntryView(Dbo::ptr<AccountEntry> accountEntryPtr, bool isTransactionView /*= false*/)
-		: RecordFormView(tr("GS.Admin.AccountEntryView")), _tempPtr(accountEntryPtr)
+	AccountEntryView::AccountEntryView(Dbo::ptr<AccountEntry> accountEntryPtr)
+		: RecordFormView(tr("GS.Admin.AccountEntryView")), _tempPtr(move(accountEntryPtr))
 	{ }
 
 	void AccountEntryView::initView()
@@ -846,7 +835,7 @@ namespace GS
 	}
 
 	TransactionView::TransactionView()
-		: AccountEntryView(Dbo::ptr<AccountEntry>(), true)
+		: AccountEntryView(nullptr)
 	{
 		setTemplateText(tr("GS.Admin.TransactionView"));
 	}

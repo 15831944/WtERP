@@ -80,7 +80,7 @@ namespace GS
 		};
 		Permissions::GSPermissions permissionIndexToId(int idx) const { return idx < PermissionCBValues ? _permissionIdxToId[idx] : Permissions::RegionalUser; }
 
-		UserFormModel(UserView *view, Dbo::ptr<AuthInfo> autoInfoPtr = Dbo::ptr<AuthInfo>());
+		UserFormModel(UserView *view, Dbo::ptr<AuthInfo> autoInfoPtr = nullptr);
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 		virtual bool validateField(Field field);
@@ -103,7 +103,7 @@ namespace GS
 	class UserView : public RecordFormView
 	{
 	public:
-		UserView(Dbo::ptr<AuthInfo> authInfoPtr = Dbo::ptr<AuthInfo>());
+		UserView(Dbo::ptr<AuthInfo> authInfoPtr = nullptr);
 		virtual void initView() override;
 
 		Dbo::ptr<AuthInfo> authInfoPtr() const { return _model->authInfoPtr(); }
@@ -148,7 +148,7 @@ namespace GS
 	public:
 		static const Wt::WFormModel::Field nameField;
 
-		RegionFormModel(RegionView *view, Dbo::ptr<Region> regionPtr = Dbo::ptr<Region>());
+		RegionFormModel(RegionView *view, Dbo::ptr<Region> regionPtr = nullptr);
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
@@ -163,7 +163,7 @@ namespace GS
 	class RegionView : public RecordFormView
 	{
 	public:
-		RegionView(Dbo::ptr<Region> regionPtr = Dbo::ptr<Region>());
+		RegionView(Dbo::ptr<Region> regionPtr = nullptr);
 		virtual void initView() override;
 
 		Dbo::ptr<Region> regionPtr() const { return _model->recordPtr(); }

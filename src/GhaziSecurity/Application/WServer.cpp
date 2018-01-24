@@ -4,11 +4,9 @@
 #include "Dbo/PermissionsDatabase.h"
 #include "Utilities/TaskScheduler.h"
 
-#include <Wt/WMessageResourceBundle.h>
 #include <Wt/Dbo/FixedSqlConnectionPool.h>
 #include <Wt/Dbo/backend/MySQL.h>
 #include <Wt/Dbo/backend/Sqlite3.h>
-#include <Wt/Dbo/Exception.h>
 
 #include <Wt/Auth/HashFunction.h>
 #include <Wt/Auth/PasswordStrengthValidator.h>
@@ -74,7 +72,7 @@ namespace GS
 			}
 
 			sqlConnection->setProperty("show-queries", "true");
-			_sqlPool = make_unique<Dbo::FixedSqlConnectionPool>(std::move(sqlConnection), 1);
+			_sqlPool = make_unique<Dbo::FixedSqlConnectionPool>(move(sqlConnection), 1);
 
 			log("success") << "Successfully connected to database";
 		}
@@ -324,7 +322,6 @@ namespace GS
 		Wt::registerType<Account::Type>();
 		Wt::registerType<EmployeePosition::Type>();
 		Wt::registerType<Wt::WFlags<Entity::SpecificType>>();
-		//Wt::registerType<Dbo::ptr<Entity>>();
 	}
 
 	bool WServer::start()
@@ -352,13 +349,13 @@ namespace GS
 		//Hash and throttling
 		auto verifier = make_unique<Wt::Auth::PasswordVerifier>();
 		verifier->addHashFunction(make_unique<Wt::Auth::BCryptHashFunction>(7));
-		_passwordService.setVerifier(std::move(verifier));
+		_passwordService.setVerifier(move(verifier));
 		_passwordService.setAttemptThrottlingEnabled(true);
 
 		//Password strength
 		auto strengthValidator = make_unique<Wt::Auth::PasswordStrengthValidator>();
 		strengthValidator->setMinimumLength(Wt::Auth::PasswordStrengthType::OneCharClass, 6);
-		_passwordService.setStrengthValidator(std::move(strengthValidator));
+		_passwordService.setStrengthValidator(move(strengthValidator));
 
 	// 	if(Wt::Auth::GoogleService::configured() && configurations()->getBool("GoogleOAuth", ModuleDatabase::Authentication, false))
 	// 		_oAuthServices.push_back(make_unique<Wt::Auth::GoogleService>(_authService));

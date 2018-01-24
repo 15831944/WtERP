@@ -35,7 +35,7 @@ namespace GS
 		static const Wt::WFormModel::Field titleField;
 		static const Wt::WFormModel::Field typeField;
 
-		PositionFormModel(PositionView *view, Dbo::ptr<EmployeePosition> positionPtr = Dbo::ptr<EmployeePosition>());
+		PositionFormModel(PositionView *view, Dbo::ptr<EmployeePosition> positionPtr = nullptr);
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
@@ -75,7 +75,7 @@ namespace GS
 	public:
 		static const Wt::WFormModel::Field titleField;
 
-		ServiceFormModel(ServiceView *view, Dbo::ptr<ClientService> servicePtr = Dbo::ptr<ClientService>());
+		ServiceFormModel(ServiceView *view, Dbo::ptr<ClientService> servicePtr = nullptr);
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
@@ -109,7 +109,7 @@ namespace GS
 		static const Field cycleField;
 		static const Field positionField;
 
-		EmployeeAssignmentFormModel(EmployeeAssignmentView *view, Dbo::ptr<EmployeeAssignment> employeeAssignmentPtr = Dbo::ptr<EmployeeAssignment>());
+		EmployeeAssignmentFormModel(EmployeeAssignmentView *view, Dbo::ptr<EmployeeAssignment> employeeAssignmentPtr = nullptr);
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Wt::WFormModel::Field field) override;
 		virtual bool saveChanges() override;
 
@@ -134,7 +134,7 @@ namespace GS
 	class EmployeeAssignmentView : public ReloadOnVisibleWidget<RecordFormView>
 	{
 	public:
-		EmployeeAssignmentView(Dbo::ptr<EmployeeAssignment> employeeAssignmentPtr = Dbo::ptr<EmployeeAssignment>());
+		EmployeeAssignmentView(Dbo::ptr<EmployeeAssignment> employeeAssignmentPtr = nullptr);
 		virtual void reload() override;
 
 		using RecordFormView::updateView;
@@ -176,7 +176,7 @@ namespace GS
 		static const Field cycleField;
 		static const Field serviceField;
 
-		ClientAssignmentFormModel(ClientAssignmentView *view, Dbo::ptr<ClientAssignment> clientAssignmentPtr = Dbo::ptr<ClientAssignment>());
+		ClientAssignmentFormModel(ClientAssignmentView *view, Dbo::ptr<ClientAssignment> clientAssignmentPtr = nullptr);
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Wt::WFormModel::Field field) override;
 		virtual bool saveChanges() override;
 
@@ -199,7 +199,7 @@ namespace GS
 	class ClientAssignmentView : public ReloadOnVisibleWidget<RecordFormView>
 	{
 	public:
-		ClientAssignmentView(Dbo::ptr<ClientAssignment> clientAssignmentPtr = Dbo::ptr<ClientAssignment>());
+		ClientAssignmentView(Dbo::ptr<ClientAssignment> clientAssignmentPtr = nullptr);
 		virtual void reload() override;
 		virtual void initView() override;
 
@@ -234,7 +234,7 @@ namespace GS
 	class EmployeeAssignmentList : public QueryModelFilteredList<tuple<long long, Wt::WDateTime, std::string, Wt::WDate, Wt::WDate, std::string, std::string, std::string>>
 	{
 	public:
-		EmployeeAssignmentList(Dbo::ptr<Entity> entityPtr = Dbo::ptr<Entity>()) : _entityPtr(entityPtr) { }
+		EmployeeAssignmentList(Dbo::ptr<Entity> entityPtr = nullptr) : _entityPtr(entityPtr) { }
 		EmployeeAssignmentList(Dbo::ptr<ClientAssignment> clientAssignmentPtr) : _clientAssignmentPtr(clientAssignmentPtr) { }
 		EmployeeAssignmentList(Dbo::ptr<ExpenseCycle> cyclePtr) : _cyclePtr(cyclePtr) { }
 		enum ResultColumns { ResId, ResTimestamp, ResEntityName, ResStartDate, ResEndDate, ResCountryName, ResCityName, ResAddress };
@@ -269,7 +269,7 @@ namespace GS
 	public:
 		enum ResultColumns { ResId, ResTimestamp, ResEntityName, ResStartDate, ResEndDate, ResEmployeesAssigned };
 		enum ViewColumns { ViewId, ViewCreatedOn, ViewEntity, ViewStartDate, ViewEndDate, ViewEmployeesAssigned };
-		ClientAssignmentList(Dbo::ptr<Entity> entityPtr = Dbo::ptr<Entity>()) : _entityPtr(entityPtr) { }
+		ClientAssignmentList(Dbo::ptr<Entity> entityPtr = nullptr) : _entityPtr(entityPtr) { }
 		ClientAssignmentList(Dbo::ptr<IncomeCycle> cyclePtr) : _cyclePtr(cyclePtr) { }
 		virtual void load() override;
 

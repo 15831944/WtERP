@@ -16,18 +16,10 @@
 #include "Widgets/AuthWidget.h"
 
 #include <Wt/WNavigationBar.h>
-#include <Wt/WMenu.h>
 #include <Wt/WStackedWidget.h>
-#include <Wt/WTemplate.h>
-#include <Wt/WText.h>
-#include <Wt/WImage.h>
 #include <Wt/WBootstrapTheme.h>
-#include <Wt/WPushButton.h>
 #include <Wt/WLoadingIndicator.h>
-#include <Wt/WSuggestionPopup.h>
 #include <web/WebUtils.h>
-
-#include <Wt/Dbo/QueryModel.h>
 
 namespace GS
 {
@@ -44,7 +36,7 @@ namespace GS
 		if(loggedIn())
 			_authInfoPtr = app->userDatabase().find(user());
 		else
-			_authInfoPtr = Dbo::ptr<AuthInfo>();
+			_authInfoPtr = nullptr;
 		
 		//Make sure user entry for authinfo exists
 		if(_authInfoPtr && !_authInfoPtr->user())
@@ -123,7 +115,7 @@ namespace GS
 		return result;
 	}
 
-	AuthLogin::PermissionResult AuthLogin::checkRecordViewPermission(const void *record)
+	AuthLogin::PermissionResult AuthLogin::checkRecordViewPermission(const void *)
 	{
 		return Permitted;
 	}
@@ -174,7 +166,7 @@ namespace GS
 		return result;
 	}
 
-	AuthLogin::PermissionResult AuthLogin::checkRecordModifyPermission(const void *record)
+	AuthLogin::PermissionResult AuthLogin::checkRecordModifyPermission(const void *)
 	{
 		return checkPermission(Permissions::ModifyRecord);
 	}
@@ -214,7 +206,7 @@ namespace GS
 
 		auto theme = make_unique<Wt::WBootstrapTheme>();
 		theme->setVersion(Wt::WBootstrapTheme::Version::v3);
-		setTheme(std::move(theme));
+		setTheme(move(theme));
 
 		//Error Dialog
 		_errorDialog = make_unique<Wt::WDialog>(tr("AnErrorOccurred"));
@@ -266,10 +258,9 @@ namespace GS
 			{
 				try
 				{
-					long long id = boost::lexical_cast<long long>(idStr);
-					return id;
+					return boost::lexical_cast<long long>(idStr);
 				}
-				catch(...) {}
+				catch(const boost::bad_lexical_cast &) {}
 			}
 		}
 
@@ -323,7 +314,7 @@ namespace GS
 						{
 							auto view = make_unique<EntityView>(ptr);
 							view->load();
-							auto menuItem = _entitiesAdminPage->createMenuItemWrapped(std::move(view));
+							_entitiesAdminPage->createMenuItemWrapped(move(view));
 						}
 						else
 							_entitiesAdminPage->setDeniedPermissionWidget();
@@ -342,7 +333,7 @@ namespace GS
 						{
 							auto view = make_unique<EmployeeAssignmentView>(ptr);
 							view->load();
-							auto menuItem = _entitiesAdminPage->createMenuItemWrapped(std::move(view));
+							_entitiesAdminPage->createMenuItemWrapped(move(view));
 						}
 						else
 							_entitiesAdminPage->setDeniedPermissionWidget();
@@ -361,7 +352,7 @@ namespace GS
 						{
 							auto view = make_unique<ClientAssignmentView>(ptr);
 							view->load();
-							auto menuItem = _entitiesAdminPage->createMenuItemWrapped(std::move(view));
+							_entitiesAdminPage->createMenuItemWrapped(move(view));
 						}
 						else
 							_entitiesAdminPage->setDeniedPermissionWidget();
@@ -380,7 +371,7 @@ namespace GS
 						{
 							auto view = make_unique<AccountView>(ptr);
 							view->load();
-							auto menuItem = _accountsAdminPage->createMenuItemWrapped(std::move(view));
+							_accountsAdminPage->createMenuItemWrapped(move(view));
 						}
 						else
 							_accountsAdminPage->setDeniedPermissionWidget();
@@ -399,7 +390,7 @@ namespace GS
 						{
 							auto view = make_unique<AccountEntryView>(ptr);
 							view->load();
-							auto menuItem = _accountsAdminPage->createMenuItemWrapped(std::move(view));
+							_accountsAdminPage->createMenuItemWrapped(move(view));
 						}
 						else
 							_accountsAdminPage->setDeniedPermissionWidget();
@@ -418,7 +409,7 @@ namespace GS
 						{
 							auto view = make_unique<IncomeCycleView>(ptr);
 							view->load();
-							auto menuItem = _accountsAdminPage->createMenuItemWrapped(std::move(view));
+							_accountsAdminPage->createMenuItemWrapped(move(view));
 						}
 						else
 							_accountsAdminPage->setDeniedPermissionWidget();
@@ -437,7 +428,7 @@ namespace GS
 						{
 							auto view = make_unique<ExpenseCycleView>(ptr);
 							view->load();
-							auto menuItem = _accountsAdminPage->createMenuItemWrapped(std::move(view));
+							_accountsAdminPage->createMenuItemWrapped(move(view));
 						}
 						else
 							_accountsAdminPage->setDeniedPermissionWidget();
@@ -456,7 +447,7 @@ namespace GS
 						{
 							auto view = make_unique<AttendanceEntryView>(ptr);
 							view->load();
-							auto menuItem = _attendanceAdminPage->createMenuItemWrapped(std::move(view));
+							_attendanceAdminPage->createMenuItemWrapped(move(view));
 						}
 						else
 							_attendanceAdminPage->setDeniedPermissionWidget();
@@ -475,7 +466,7 @@ namespace GS
 						{
 							auto view = make_unique<AttendanceDeviceView>(ptr);
 							view->load();
-							auto menuItem = _attendanceAdminPage->createMenuItemWrapped(std::move(view));
+							_attendanceAdminPage->createMenuItemWrapped(move(view));
 						}
 						else
 							_attendanceAdminPage->setDeniedPermissionWidget();
@@ -494,7 +485,7 @@ namespace GS
 						{
 							auto view = make_unique<UserView>(ptr);
 							view->load();
-							auto menuItem = _usersAdminPage->createMenuItemWrapped(std::move(view));
+							_usersAdminPage->createMenuItemWrapped(move(view));
 						}
 						else
 							_usersAdminPage->setDeniedPermissionWidget();
@@ -513,7 +504,7 @@ namespace GS
 						{
 							auto view = make_unique<RegionView>(ptr);
 							view->load();
-							auto menuItem = _usersAdminPage->createMenuItemWrapped(std::move(view));
+							_usersAdminPage->createMenuItemWrapped(move(view));
 						}
 						else
 							_usersAdminPage->setDeniedPermissionWidget();
@@ -562,11 +553,11 @@ namespace GS
 		auto menu = make_unique<Wt::WMenu>(_visitorStack);
 		_visitorMenu = menu.get();
 		_visitorMenu->setInternalPathEnabled("/");
-		_visitorNavBar->addMenu(std::move(menu));
+		_visitorNavBar->addMenu(move(menu));
 
 		//Logo
 		auto logoImage = make_unique<Wt::WImage>(Wt::WLink("images/logo.png"), tr("GS.Logo.Alt"));
-		_visitorNavBar->setTitle(std::move(logoImage), Wt::WLink(Wt::LinkType::InternalPath, "/"));
+		_visitorNavBar->setTitle(move(logoImage), Wt::WLink(Wt::LinkType::InternalPath, "/"));
 
 		//Page widgets
 		//...
@@ -590,14 +581,14 @@ namespace GS
 		auto menu = make_unique<Wt::WMenu>(_adminStack);
 		_adminMenu = menu.get();
 		_adminMenu->setInternalPathEnabled("/" ADMIN_PATHC "/");
-		_adminNavBar->addMenu(std::move(menu));
+		_adminNavBar->addMenu(move(menu));
 
 		auto logoutBtn = make_unique<Wt::WPushButton>(tr("LogoutButton"), Wt::TextFormat::XHTML);
 		logoutBtn->clicked().connect(&authLogin(), &Wt::Auth::Login::logout);
-		_adminNavBar->addWidget(std::move(logoutBtn), Wt::AlignmentFlag::Right);
+		_adminNavBar->addWidget(move(logoutBtn), Wt::AlignmentFlag::Right);
 
 		auto logoImage = make_unique<Wt::WImage>(Wt::WLink("images/logo.png"), tr("GS.Logo.Alt"));
-		_adminNavBar->setTitle(std::move(logoImage), Wt::WLink(Wt::LinkType::InternalPath, "/"));
+		_adminNavBar->setTitle(move(logoImage), Wt::WLink(Wt::LinkType::InternalPath, "/"));
 
 		//Admin page widgets
 		_dashboardAdminPage = addMenuItem(_adminMenu, tr("Dashboard"), make_unique<DashboardAdminPage>());

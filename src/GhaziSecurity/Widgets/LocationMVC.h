@@ -62,7 +62,7 @@ namespace GS
 		static const Wt::WFormModel::Field codeField;
 		static const Wt::WFormModel::Field nameField;
 
-		CountryFormModel(CountryView *view, Dbo::ptr<Country> countryPtr = Dbo::ptr<Country>());
+		CountryFormModel(CountryView *view, Dbo::ptr<Country> countryPtr = nullptr);
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
@@ -106,7 +106,7 @@ namespace GS
 		static const Wt::WFormModel::Field countryField;
 		static const Wt::WFormModel::Field nameField;
 
-		CityFormModel(CityView *view, Dbo::ptr<City> cityPtr = Dbo::ptr<City>());
+		CityFormModel(CityView *view, Dbo::ptr<City> cityPtr = nullptr);
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
@@ -137,7 +137,7 @@ namespace GS
 		static const Field cityField;
 		static const Field addressField;
 
-		LocationFormModel(LocationView *view, Dbo::ptr<Location> locationPtr = Dbo::ptr<Location>());
+		LocationFormModel(LocationView *view, Dbo::ptr<Location> locationPtr = nullptr);
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
@@ -148,7 +148,7 @@ namespace GS
 	class LocationView : public RecordFormView
 	{
 	public:
-		LocationView(Dbo::ptr<Location> locationPtr = Dbo::ptr<Location>());
+		LocationView(Dbo::ptr<Location> locationPtr = nullptr);
 		virtual void initView() override;
 
 		void handleCountryChanged(bool resetCity);

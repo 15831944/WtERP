@@ -57,7 +57,7 @@ namespace GS
 	class FindRecordEdit : public AbstractFindRecordEdit
 	{
 	public:
-		virtual void setValuePtr(Wt::any ptrData) override { setValuePtr(ptrData.empty() ? Dbo::ptr<Value>() : Wt::cpp17::any_cast<Dbo::ptr<Value>>(ptrData)); }
+		virtual void setValuePtr(Wt::any ptrData) override { setValuePtr(ptrData.empty() ? Dbo::ptr<Value>() : Wt::any_cast<Dbo::ptr<Value>>(ptrData)); }
 		void setValuePtr(Dbo::ptr<Value> ptr);
 
 		Dbo::ptr<Value> valuePtr() const { return _valuePtr; }

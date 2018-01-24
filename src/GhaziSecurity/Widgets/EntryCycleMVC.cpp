@@ -226,7 +226,7 @@ namespace GS
 	}
 
 	//EXPENSE CYCLE MODEL
-	ExpenseCycleFormModel::ExpenseCycleFormModel(ExpenseCycleView *view, Dbo::ptr<ExpenseCycle> cyclePtr /*= Dbo::ptr<ExpenseCycle>()*/)
+	ExpenseCycleFormModel::ExpenseCycleFormModel(ExpenseCycleView *view, Dbo::ptr<ExpenseCycle> cyclePtr)
 		: RecordFormModel(view, cyclePtr), _view(view)
 	{
 		EntryCycleFormModel::addFields(this);
@@ -312,7 +312,7 @@ namespace GS
 	}
 
 	//INCOME CYCLE MODEL
-	IncomeCycleFormModel::IncomeCycleFormModel(IncomeCycleView *view, Dbo::ptr<IncomeCycle> cyclePtr /*= Dbo::ptr<IncomeCycle>()*/)
+	IncomeCycleFormModel::IncomeCycleFormModel(IncomeCycleView *view, Dbo::ptr<IncomeCycle> cyclePtr)
 		: RecordFormModel(view, cyclePtr), _view(view)
 	{
 		EntryCycleFormModel::addFields(this);
@@ -480,12 +480,12 @@ namespace GS
 		_proxyModel = make_shared<EntryCycleListProxyModel<ExpenseCycleList>>(ExpenseCycle::viewInternalPath(""), _model);
 	}
 
-// 	Wt::any IncomeCycleListProxyModel::data(const Wt::WModelIndex &idx, Wt::ItemDataRole role /*= Wt::ItemDataRole::Display*/) const
+// 	Wt::any IncomeCycleListProxyModel::data(const Wt::WModelIndex &idx, Wt::ItemDataRole role) const
 // 	{
 // 		return EntryCycleListProxyModel::data(idx, role);
 // 	}
 // 
-// 	Wt::any ExpenseCycleListProxyModel::data(const Wt::WModelIndex &idx, Wt::ItemDataRole role /*= Wt::ItemDataRole::Display*/) const
+// 	Wt::any ExpenseCycleListProxyModel::data(const Wt::WModelIndex &idx, Wt::ItemDataRole role) const
 // 	{
 // 		return EntryCycleListProxyModel::data(idx, role);
 // 	}
@@ -502,7 +502,7 @@ namespace GS
 	}
 
 	template<class FilteredList>
-	Wt::any EntryCycleListProxyModel<FilteredList>::headerData(int section, Wt::Orientation orientation /*= Wt::Orientation::Horizontal*/, Wt::ItemDataRole role /*= Wt::ItemDataRole::Display*/) const
+	Wt::any EntryCycleListProxyModel<FilteredList>::headerData(int section, Wt::Orientation orientation, Wt::ItemDataRole role) const
 	{
 		if(section == _linkColumn)
 		{

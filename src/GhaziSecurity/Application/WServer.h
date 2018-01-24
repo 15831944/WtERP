@@ -18,7 +18,6 @@ namespace WW
 
 namespace GS
 {
-	class WApplication;
 	class TaskScheduler;
 	class PermissionsDatabase;
 
@@ -28,7 +27,7 @@ namespace GS
 	{
 	public:
 		WServer(int argc, char *argv[], const std::string &wtConfigurationFile = "");
-		virtual ~WServer() override;;
+		virtual ~WServer() override;
 		void initialize();
 
 		static WServer *instance() { return dynamic_cast<WServer*>(Wt::WServer::instance()); }

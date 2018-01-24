@@ -31,7 +31,7 @@ namespace GS
 	//ENTITY MODEL
 	const Wt::WFormModel::Field EntityFormModel::nameField = "name";
 
-	EntityFormModel::EntityFormModel(EntityView *view, Dbo::ptr<Entity> entityPtr /*= Dbo::ptr<Entity>()*/)
+	EntityFormModel::EntityFormModel(EntityView *view, Dbo::ptr<Entity> entityPtr)
 		: RecordFormModel(view, entityPtr), _view(view)
 	{
 		addField(nameField);
@@ -465,7 +465,8 @@ namespace GS
 	}
 
 	//CONTACT NUMBER MODEL
-	const Wt::WFormModel::Field ContactNumbersManagerModel::field = "contactNumbers";
+	template<>
+	const Wt::WFormModel::Field MultipleRecordModel<ContactNumber>::field = "contactNumbers";
 
 	ContactNumbersManagerModel::ContactNumbersManagerModel(EntityView *view, PtrCollection collection)
 		: MultipleRecordModel(view, collection), _view(view)
@@ -474,7 +475,7 @@ namespace GS
 		if(vec.empty())
 		{
 			PtrVector newVec;
-			newVec.push_back(Dbo::ptr<RecordDbo>());
+			newVec.push_back(nullptr);
 			setValue(field, newVec);
 		}
 	}
@@ -511,11 +512,12 @@ namespace GS
 		view->updateViewField(view->model().get(), ContactNumberFormModel::entityField);
 
 		auto model = view->model();
-		return std::make_tuple(std::move(view), model);
+		return std::make_tuple(move(view), model);
 	}
 
 	//LOCATIONS MANAGER MODEL
-	const Wt::WFormModel::Field LocationsManagerModel::field = "locations";
+	template<>
+	const Wt::WFormModel::Field MultipleRecordModel<Location>::field = "locations";
 
 	LocationsManagerModel::LocationsManagerModel(EntityView *view, PtrCollection collection)
 		: MultipleRecordModel(view, collection), _view(view)
@@ -524,7 +526,7 @@ namespace GS
 		if(vec.empty())
 		{
 			PtrVector newVec;
-			newVec.push_back(Dbo::ptr<RecordDbo>());
+			newVec.push_back(nullptr);
 			setValue(field, newVec);
 		}
 	}
@@ -561,7 +563,7 @@ namespace GS
 		view->updateViewField(view->model().get(), LocationFormModel::entityField);
 
 		auto model = view->model();
-		return std::make_tuple(std::move(view), model);
+		return std::make_tuple(move(view), model);
 	}
 
 	//BUSINESS MODEL
@@ -652,7 +654,7 @@ namespace GS
 			if(!_businessModel) addFormModel("business", _businessModel = make_shared<BusinessFormModel>(this));
 			break;
 		default:
-			throw std::exception("NewEntityTemplate: Invalid EntityType");
+			throw std::runtime_error("NewEntityTemplate: Invalid EntityType");
 			break;
 		}
 		setCondition("type-selection", !conditionValue("type-chosen"));
@@ -779,7 +781,7 @@ namespace GS
 		auto unitMenu = make_unique<Wt::WPopupMenu>();
 		unitMenu->addItem("cm")->clicked().connect(this, std::bind(&HeightEdit::selectUnit, this, cm));
 		unitMenu->addItem("ft")->clicked().connect(this, std::bind(&HeightEdit::selectUnit, this, ft));
-		unitSelect->setMenu(std::move(unitMenu));
+		unitSelect->setMenu(move(unitMenu));
 
 		Wt::WLineEdit *cmEdit = bindNew<Wt::WLineEdit>("cm-edit");
 		cmEdit->setValidator(make_shared<Wt::WIntValidator>());
@@ -884,7 +886,7 @@ namespace GS
 	const Wt::WFormModel::Field ContactNumberFormModel::entityField = "entity";
 	const Wt::WFormModel::Field ContactNumberFormModel::numberField = "number";
 
-	ContactNumberFormModel::ContactNumberFormModel(ContactNumberView *view, Dbo::ptr<ContactNumber> countryPtr /*= Dbo::ptr<ContactNumber>()*/)
+	ContactNumberFormModel::ContactNumberFormModel(ContactNumberView *view, Dbo::ptr<ContactNumber> countryPtr)
 		: RecordFormModel(view, countryPtr), _view(view)
 	{
 		addField(entityField);
@@ -964,99 +966,4 @@ namespace GS
 		_model = make_shared<ContactNumberFormModel>(this, _tempPtr);
 		addFormModel("contactnumber", _model);
 	}
-
-// 	void EntityView::applyArguments(Wt::WWidget *w, const std::vector<Wt::WString> &args)
-// 	{
-// 		Wt::WTemplate::applyArguments(w, args);
-// 
-// 		if(auto tw = dynamic_cast<Wt::WTemplate*>(w))
-// 		{
-// 			for(unsigned i = 0; i < args.size(); ++i)
-// 			{
-// 				std::string s = args[i].toUTF8();
-// 				if(boost::starts_with(s, "label="))
-// 				{
-// 					if(auto lw = tw->resolve<Wt::WLabel*>("label"))
-// 						lw->setText(tr(s.substr(6)));
-// 				}
-// 			}
-// 		}
-// 	}
-	
-// 	void EntityView::submit()
-// 	{
-// 		if(_type == Entity::InvalidType)
-// 			return;
-// 
-// 		WApplication *app = WApplication::instance();
-// 		if(app->authLogin().checkSubmitFormPermission(entityPtr().get()) != AuthLogin::Permitted)
-// 			return;
-// 
-// 		TRANSACTION(app);
-// 		updateModel();
-// 
-// 		try
-// 		{
-// 			bool valid = true;
-// 
-// 			if(!_entityModel->validate()) valid = false;
-// 
-// 			if(_type == Entity::PersonType)
-// 			{
-// 				if(!_personModel->validate()) valid = false;
-// 				if(_employeeModel && !_employeeModel->validate()) valid = false;
-// 				if(_personnelModel && !_personnelModel->validate()) valid = false;
-// 			}
-// 			else if(_type == Entity::BusinessType)
-// 			{
-// 				if(!_businessModel->validate()) valid = false;
-// 			}
-// 
-// 			if(_contactNumbersModel && !_contactNumbersModel->validate()) valid = false;
-// 			if(_locationsModel && !_locationsModel->validate()) valid = false;
-// 
-// 			if(!valid)
-// 			{
-// 				updateView();
-// 				return;
-// 			}
-// 
-// 			_entityModel->saveChanges();
-// 
-// 			if(_type == Entity::PersonType)
-// 			{
-// 				_personModel->saveChanges();
-// 				if(_employeeModel) _employeeModel->saveChanges();
-// 				if(_personnelModel) _personnelModel->saveChanges();
-// 			}
-// 			else if(_type == Entity::BusinessType)
-// 			{
-// 				_businessModel->saveChanges();
-// 			}
-// 
-// 			if(_contactNumbersModel) _contactNumbersModel->saveChanges();
-// 			if(_locationsModel) _locationsModel->saveChanges();
-// 
-// 			t.commit();
-// 
-// 			setAllReadOnly(app->authLogin().checkRecordModifyPermission(*entityPtr()) != AuthLogin::Permitted);
-// 			setCondition("type-selection", false);
-// 			updateView();
-// 
-// 			_submitted.emit();
-// 		}
-// 		catch(const Dbo::StaleObjectException &)
-// 		{
-// 			app->dboSession().rereadAll();
-// 			app->showStaleObjectError(tr("Entity"));
-// 			//valid = false;
-// 		}
-// 		catch(const Dbo::Exception &e)
-// 		{
-// 			Wt::log("error") << "EntityView::submit(): Dbo error(" << e.code() << "): " << e.what();
-// 			app->showDbBackendError(e.code());
-// 			//valid = false;
-// 		}
-// 	}
-
 }

@@ -80,7 +80,7 @@ namespace GS
 			_imageInfo.mimeType = fileInfo.contentType();
 			_imageInfo.extension = filePath.extension().string();
 			_imageInfo.temporary = true;
-			_imageInfo.filePtr = Dbo::ptr<UploadedFile>();
+			_imageInfo.filePtr = nullptr;
 
 			resolve<Wt::WText*>("action")->setText(_actionChange);
 			setCondition("has-image", true);
@@ -118,13 +118,13 @@ namespace GS
 			return;
 
 		_image->setImageLink(link);
-		bindWidget("image", std::move(_tempImage));
+		bindWidget("image", move(_tempImage));
 	}
 
 	void ImageUpload::lazyBindImage()
 	{
 		if(!resolveWidget("image"))
-			bindWidget("image", std::move(_tempImage));
+			bindWidget("image", move(_tempImage));
 	}
 
 	void ImageUpload::viewImage()
@@ -183,7 +183,7 @@ namespace GS
 		lazyBindImage();
 	}
 
-	bool ImageUpload::saveAndRelocate(Dbo::ptr<Entity> entityPtr, const std::string &description /*= ""*/)
+	bool ImageUpload::saveAndRelocate(Dbo::ptr<Entity> entityPtr, const std::string &description)
 	{
 		if(!_imageInfo.temporary || !entityPtr || _fileUpload->uploadedFiles().empty())
 			return false;

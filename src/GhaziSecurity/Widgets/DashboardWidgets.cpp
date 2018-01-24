@@ -124,7 +124,7 @@ namespace GS
 		auto container = make_unique<Wt::WContainerWidget>();
 		container->setWidth(Wt::WLength(100, Wt::LengthUnit::Percentage));
 		_text = container->addNew<Wt::WText>(tr("Loading..."));
-		bindWidget("progress-bar", std::move(container));
+		bindWidget("progress-bar", move(container));
 	}
 
 	void RecordCountTemplate::load()
@@ -175,7 +175,7 @@ namespace GS
 		auto rightContainer = make_unique<Wt::WContainerWidget>();
 		rightContainer->setWidth(0);
 		_rightText = rightContainer->addNew<Wt::WText>(tr("Loading..."));
-		bindWidget("progress-bar-right", std::move(rightContainer));
+		bindWidget("progress-bar-right", move(rightContainer));
 	}
 
 	void RecordMultiCountTemplate::reload()

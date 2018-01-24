@@ -39,7 +39,7 @@ namespace GS
 	FindRecordEditTemplate::FindRecordEditTemplate(unique_ptr<Wt::WLineEdit> edit)
 		: Wt::WTemplate(tr("GS.FindRecordEdit")), _edit(edit.get())
 	{
-		bindWidget("edit", std::move(edit));
+		bindWidget("edit", move(edit));
 		setReadOnly(false);
 	}
 
@@ -49,7 +49,7 @@ namespace GS
 		_lineEdit = edit.get();
 		setFormWidgetImpl(_lineEdit);
 
-		_containerTemplate = setImplementation(make_unique<FindRecordEditTemplate>(std::move(edit)));
+		_containerTemplate = setImplementation(make_unique<FindRecordEditTemplate>(move(edit)));
 
 		_lineEdit->changed().connect(this, &AbstractFindRecordEdit::handleLineEditChanged);
 		valueChanged().connect(_lineEdit, std::bind(&Wt::WLineEdit::validate, _lineEdit));
@@ -126,7 +126,7 @@ namespace GS
 		setTextFromValuePtr();
 	}
 
-	FindEntityEdit::FindEntityEdit(Entity::Type entityType, Entity::SpecificType specificType /*= Entity::UnspecificType*/)
+	FindEntityEdit::FindEntityEdit(Entity::Type entityType, Entity::SpecificType specificType)
 		: _entityType(entityType), _specificType(specificType)
 	{
 		_lineEdit->setPlaceholderText(tr("FindEntityEditPlaceholder"));
@@ -139,11 +139,11 @@ namespace GS
 		case Entity::BusinessType: newEntity->setText(tr("AddNewX").arg(tr("business"))); break;
 		default: newEntity->setText(tr("AddNewX").arg(tr("entity"))); break;
 		}
-		_containerTemplate->bindWidget("new", std::move(newEntity));
+		_containerTemplate->bindWidget("new", move(newEntity));
 
 		auto showList = make_unique<Wt::WPushButton>(tr("SelectFromList"));
 		showList->clicked().connect(this, &FindEntityEdit::showEntityListDialog);
-		_containerTemplate->bindWidget("list", std::move(showList));
+		_containerTemplate->bindWidget("list", move(showList));
 
 		WApplication *app = WApplication::instance();
 		app->initFindEntitySuggestion();
@@ -186,22 +186,22 @@ namespace GS
 		{
 			auto selectionDialog = make_unique<ListSelectionDialog<PersonList>>(tr("SelectXFromList").arg(tr("person")));
 			selectionDialog->selected().connect(this, &FindEntityEdit::handleListSelectionChanged);
-			ld = std::move(selectionDialog);
+			ld = move(selectionDialog);
 		}
 		else if(_entityType == Entity::BusinessType)
 		{
 			auto selectionDialog = make_unique<ListSelectionDialog<BusinessList>>(tr("SelectXFromList").arg(tr("business")));
 			selectionDialog->selected().connect(this, &FindEntityEdit::handleListSelectionChanged);
-			ld = std::move(selectionDialog);
+			ld = move(selectionDialog);
 		}
 		else
 		{
 			auto selectionDialog = make_unique<ListSelectionDialog<AllEntityList>>(tr("SelectXFromList").arg(tr("entity")));
 			selectionDialog->selected().connect(this, &FindEntityEdit::handleListSelectionChanged);
-			ld = std::move(selectionDialog);
+			ld = move(selectionDialog);
 		}
 		_listDialog = ld.get();
-		addChild(std::move(ld));
+		addChild(move(ld));
 		_listDialog->show();
 	}
 
@@ -288,14 +288,14 @@ namespace GS
 					else
 						return Result(Wt::ValidationState::Invalid, tr("InvalidVSelection").arg(tr("employee")));
 				}
-				else if(_findEdit->_entityType == Entity::PersonnelType)
+				else if(_findEdit->_specificType == Entity::PersonnelType)
 				{
 					if(isMandatory())
 						return Result(Wt::ValidationState::Invalid, tr("InvalidXSelectionMandatory").arg(tr("personnel")));
 					else
 						return Result(Wt::ValidationState::Invalid, tr("InvalidXSelection").arg(tr("personnel")));
 				}
-				else if(_findEdit->_entityType == Entity::ClientType)
+				else if(_findEdit->_specificType == Entity::ClientType)
 				{
 					if(isMandatory())
 						return Result(Wt::ValidationState::Invalid, tr("InvalidXSelectionMandatory").arg(tr("client")));
@@ -365,7 +365,7 @@ namespace GS
 		selectionDialog->selected().connect(this, &FindAccountEdit::handleListSelectionChanged);
 		
 		_listDialog = selectionDialog.get();
-		addChild(std::move(selectionDialog));
+		addChild(move(selectionDialog));
 		_listDialog->show();
 	}
 
@@ -494,7 +494,7 @@ namespace GS
 		selectionDialog->selected().connect(this, &FindLocationEdit::handleListSelectionChanged);
 
 		_listDialog = selectionDialog.get();
-		addChild(std::move(selectionDialog));
+		addChild(move(selectionDialog));
 		_listDialog->show();
 	}
 

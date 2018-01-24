@@ -3,6 +3,7 @@
 
 #include <Wt/Dbo/Dbo.h>
 #include <boost/optional.hpp>
+#include <utility>
 
 namespace WW
 {
@@ -157,8 +158,8 @@ namespace WW
 			Wt::Dbo::weak_ptr<ConfigurationString>	stringPtr;
 
 			Configuration() = default;
-			Configuration(const std::string &name, ValueTypes type)
-				: _name(name), _type(type)
+			Configuration(std::string name, ValueTypes type)
+				: _name(std::move(name)), _type(type)
 			{ }
 
 			std::string name() const { return _name; };
@@ -202,7 +203,7 @@ namespace WW
 			ConfigurationBool() = default;
 			ConfigurationBool(const ConfigurationBool &) = default;
 			ConfigurationBool(ptr<Configuration> configurationPtr)
-				: _configurationPtr(configurationPtr)
+				: _configurationPtr(std::move(configurationPtr))
 			{ }
 
 			template<class Action>void persist(Action &a)
@@ -237,7 +238,7 @@ namespace WW
 			ConfigurationDouble() = default;
 			ConfigurationDouble(const ConfigurationDouble &) = default;
 			ConfigurationDouble(ptr<Configuration> configurationPtr)
-				: _configurationPtr(configurationPtr)
+				: _configurationPtr(std::move(configurationPtr))
 			{ }
 
 			template<class Action>void persist(Action &a)
@@ -263,7 +264,7 @@ namespace WW
 
 			ConfigurationEnumValue() = default;
 			ConfigurationEnumValue(ptr<ConfigurationEnum> enumPtr)
-				: enumPtr(enumPtr)
+				: enumPtr(std::move(enumPtr))
 			{ }
 
 			template<class Action>void persist(Action &a)
@@ -295,7 +296,7 @@ namespace WW
 			ConfigurationEnum() = default;
 			ConfigurationEnum(const ConfigurationEnum &) = default;
 			ConfigurationEnum(ptr<Configuration> configurationPtr)
-				: _configurationPtr(configurationPtr)
+				: _configurationPtr(std::move(configurationPtr))
 			{ }
 
 			EnumValueCollection enumValueCollection;
@@ -334,7 +335,7 @@ namespace WW
 			ConfigurationFloat() = default;
 			ConfigurationFloat(const ConfigurationFloat &) = default;
 			ConfigurationFloat(ptr<Configuration> configurationPtr)
-				: _configurationPtr(configurationPtr)
+				: _configurationPtr(std::move(configurationPtr))
 			{ }
 
 			template<class Action>void persist(Action &a)
@@ -371,7 +372,7 @@ namespace WW
 			ConfigurationInt() = default;
 			ConfigurationInt(const ConfigurationInt &) = default;
 			ConfigurationInt(ptr<Configuration> configurationPtr)
-				: _configurationPtr(configurationPtr)
+				: _configurationPtr(std::move(configurationPtr))
 			{ }
 
 			template<class Action>void persist(Action &a)
@@ -408,7 +409,7 @@ namespace WW
 			ConfigurationLongInt() = default;
 			ConfigurationLongInt(const ConfigurationLongInt &) = default;
 			ConfigurationLongInt(ptr<Configuration> configurationPtr)
-				: _configurationPtr(configurationPtr)
+				: _configurationPtr(std::move(configurationPtr))
 			{ }
 
 			template<class Action>void persist(Action &a)
@@ -446,7 +447,7 @@ namespace WW
 			ConfigurationString() = default;
 			ConfigurationString(const ConfigurationString &) = default;
 			ConfigurationString(ptr<Configuration> configurationPtr)
-				: _configurationPtr(configurationPtr)
+				: _configurationPtr(std::move(configurationPtr))
 			{ }
 
 			template<class Action>void persist(Action &a)
@@ -475,8 +476,8 @@ namespace WW
 		protected:
 			std::string _name;
 
-			ConfigurationKey(const std::string &name)
-				: _name(name)
+			ConfigurationKey(std::string name)
+				: _name(std::move(name))
 			{}
 
 		public:
@@ -486,7 +487,7 @@ namespace WW
 		class ConfigurationBool : public Dbo::BaseConfigurationBool, public ConfigurationKey
 		{
 		public:
-			ConfigurationBool(Dbo::ptr<Dbo::ConfigurationBool> ptr)
+			ConfigurationBool(const Dbo::ptr<Dbo::ConfigurationBool> &ptr)
 				: BaseConfigurationBool(*ptr), ConfigurationKey(ptr.id()->name())
 			{ }
 		};
@@ -494,7 +495,7 @@ namespace WW
 		class ConfigurationDouble : public Dbo::BaseConfigurationDouble, public ConfigurationKey
 		{
 		public:
-			ConfigurationDouble(Dbo::ptr<Dbo::ConfigurationDouble> ptr)
+			ConfigurationDouble(const Dbo::ptr<Dbo::ConfigurationDouble> &ptr)
 				: Dbo::BaseConfigurationDouble(*ptr), ConfigurationKey(ptr.id()->name())
 			{ }
 		};
@@ -502,7 +503,7 @@ namespace WW
 		class ConfigurationEnum : public Dbo::BaseConfigurationEnum, public ConfigurationKey
 		{
 		public:
-			ConfigurationEnum(Dbo::ptr<Dbo::ConfigurationEnum> ptr)
+			ConfigurationEnum(const Dbo::ptr<Dbo::ConfigurationEnum> &ptr)
 				: Dbo::BaseConfigurationEnum(*ptr), ConfigurationKey(ptr.id()->name())
 			{ }
 		};
@@ -510,7 +511,7 @@ namespace WW
 		class ConfigurationFloat : public Dbo::BaseConfigurationFloat, public ConfigurationKey
 		{
 		public:
-			ConfigurationFloat(Dbo::ptr<Dbo::ConfigurationFloat> ptr)
+			ConfigurationFloat(const Dbo::ptr<Dbo::ConfigurationFloat> &ptr)
 				: Dbo::BaseConfigurationFloat(*ptr), ConfigurationKey(ptr.id()->name())
 			{ }
 		};
@@ -518,7 +519,7 @@ namespace WW
 		class ConfigurationInt : public Dbo::BaseConfigurationInt, public ConfigurationKey
 		{
 		public:
-			ConfigurationInt(Dbo::ptr<Dbo::ConfigurationInt> ptr)
+			ConfigurationInt(const Dbo::ptr<Dbo::ConfigurationInt> &ptr)
 				: Dbo::BaseConfigurationInt(*ptr), ConfigurationKey(ptr.id()->name())
 			{ }
 		};
@@ -526,7 +527,7 @@ namespace WW
 		class ConfigurationLongInt : public Dbo::BaseConfigurationLongInt, public ConfigurationKey
 		{
 		public:
-			ConfigurationLongInt(Dbo::ptr<Dbo::ConfigurationLongInt> ptr)
+			ConfigurationLongInt(const Dbo::ptr<Dbo::ConfigurationLongInt> &ptr)
 				: Dbo::BaseConfigurationLongInt(*ptr), ConfigurationKey(ptr.id()->name())
 			{ }
 		};
@@ -534,7 +535,7 @@ namespace WW
 		class ConfigurationString : public Dbo::BaseConfigurationString, public ConfigurationKey
 		{
 		public:
-			ConfigurationString(Dbo::ptr<Dbo::ConfigurationString> ptr)
+			ConfigurationString(const Dbo::ptr<Dbo::ConfigurationString> &ptr)
 				: BaseConfigurationString(*ptr), ConfigurationKey(ptr.id()->name())
 			{ }
 		};

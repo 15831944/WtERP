@@ -128,7 +128,7 @@ namespace GS
 				return tr("GS.LinkIcon");
 			else if(role == Wt::ItemDataRole::Link)
 			{
-				const FilteredList::ResultType &res = static_pointer_cast<Dbo::QueryModel<FilteredList::ResultType>>(sourceModel())->resultRow(idx.row());
+				const auto &res = static_pointer_cast<Dbo::QueryModel<typename FilteredList::ResultType>>(sourceModel())->resultRow(idx.row());
 				long long id = std::get<FilteredList::ResId>(res);
 				return Wt::WLink(Wt::LinkType::InternalPath, Entity::viewInternalPath(id));
 			}
@@ -141,7 +141,7 @@ namespace GS
 
 		if(viewIndex == FilteredList::ViewRole && role == Wt::ItemDataRole::Display)
 		{
-			const FilteredList::ResultType &res = static_pointer_cast<Dbo::QueryModel<FilteredList::ResultType>>(sourceModel())->resultRow(idx.row());
+			const auto &res = static_pointer_cast<Dbo::QueryModel<typename FilteredList::ResultType>>(sourceModel())->resultRow(idx.row());
 			int typeMask = Entity::UnspecificType;
 			if(std::get<FilteredList::ResEmployeeAssignment>(res).is_initialized())
 				typeMask |= Entity::EmployeeType;

@@ -15,7 +15,7 @@ namespace GS
 	class QueryProxyModel : public Wt::WBatchEditProxyModel
 	{
 	public:
-		typedef typename R Result;
+		typedef R Result;
 
 		int indexOf(const Result &result) const
 		{
@@ -138,18 +138,18 @@ namespace GS
 				return;
 			}
 
-			const auto &result = Wt::any_cast<QueryProxyModel::Result>(v);
+			const auto &result = Wt::any_cast<typename QueryProxyModel::Result>(v);
 			shared_ptr<QueryProxyModel> proxyModel = static_pointer_cast<QueryProxyModel>(model());
 			setCurrentIndex(std::max(0, proxyModel->indexOf(result)));
 		}
 		virtual Wt::any modelValue() override
 		{
 			shared_ptr<QueryProxyModel> proxyModel = static_pointer_cast<QueryProxyModel>(model());
-			const QueryProxyModel::Result *res = proxyModel->resultRow(currentIndex());
+			const typename QueryProxyModel::Result *res = proxyModel->resultRow(currentIndex());
 			if(res)
 				return *res;
 			else
-				return QueryProxyModel::Result();
+				return typename QueryProxyModel::Result();
 		}
 	};
 
