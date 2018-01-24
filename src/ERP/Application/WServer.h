@@ -11,15 +11,11 @@
 #include <Wt/Dbo/SqlConnectionPool.h>
 #include <Wt/Dbo/Session.h>
 
-namespace WW
-{
-	class ConfigurationsDatabase;
-}
-
 namespace ERP
 {
 	class TaskScheduler;
 	class PermissionsDatabase;
+	class ConfigurationsDatabase;
 
 	typedef std::vector<unique_ptr<const Wt::Auth::OAuthService>> OAuthServiceMap;
 
@@ -34,7 +30,7 @@ namespace ERP
 		bool start();
 
 		Dbo::SqlConnectionPool &sqlPool() const { return *_sqlPool; }
-		WW::ConfigurationsDatabase &configs() const { return *_configs; }
+		ConfigurationsDatabase &configs() const { return *_configs; }
 		PermissionsDatabase &permissionsDatabase() const { return *_permissionsDatabase; }
 
 		const Wt::Auth::AuthService &getAuthService() const { return _authService; }
@@ -46,7 +42,7 @@ namespace ERP
 
 		Dbo::Session _dboSession;
 		unique_ptr<Dbo::SqlConnectionPool> _sqlPool;
-		unique_ptr<WW::ConfigurationsDatabase> _configs;
+		unique_ptr<ConfigurationsDatabase> _configs;
 		unique_ptr<PermissionsDatabase> _permissionsDatabase;
 		unique_ptr<TaskScheduler> _taskScheduler;
 

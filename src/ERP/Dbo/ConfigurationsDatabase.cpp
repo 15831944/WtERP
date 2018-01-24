@@ -1,10 +1,8 @@
 #include "Dbo/ConfigurationsDatabase.h"
 #include "Application/WServer.h"
 
-namespace WW
+namespace ERP
 {
-	using namespace ERP;
-
 	ConfigurationsDatabase::ConfigurationsDatabase(Wt::Dbo::Session &session)
 		: dboSession(session)
 	{
@@ -14,7 +12,6 @@ namespace WW
 	void ConfigurationsDatabase::fetchAll()
 	{
 		boost::lock_guard<boost::shared_mutex> lock(_mutex);
-		//Time at start
 		steady_clock::time_point tpStart = steady_clock::now();
 
 		//Insert into temporary objects first
@@ -27,71 +24,63 @@ namespace WW
 		StringMap stringmap;
 		std::size_t count = 0;
 
-		Dbo::BoolCollection boolCollection;
-		Dbo::DoubleCollection doubleCollection;
-		Dbo::EnumCollection enumCollection;
-		Dbo::FloatCollection floatCollection;
-		Dbo::IntCollection intCollection;
-		Dbo::LongIntCollection longIntCollection;
-		Dbo::StringCollection stringCollection;
-
 		//Fetch em all
 		Wt::Dbo::Transaction transaction(dboSession);
-		boolCollection = dboSession.find<Dbo::ConfigurationBool>();
-		doubleCollection = dboSession.find<Dbo::ConfigurationDouble>();
-		enumCollection = dboSession.find<Dbo::ConfigurationEnum>();
-		floatCollection = dboSession.find<Dbo::ConfigurationFloat>();
-		intCollection = dboSession.find<Dbo::ConfigurationInt>();
-		longIntCollection = dboSession.find<Dbo::ConfigurationLongInt>();
-		stringCollection = dboSession.find<Dbo::ConfigurationString>();
+		ConfigurationBoolCollection boolCollection = dboSession.find<ConfigurationBool>();
+		ConfigurationDoubleCollection doubleCollection = dboSession.find<ConfigurationDouble>();
+		ConfigurationEnumCollection enumCollection = dboSession.find<ConfigurationEnum>();
+		ConfigurationFloatCollection floatCollection = dboSession.find<ConfigurationFloat>();
+		ConfigurationIntCollection intCollection = dboSession.find<ConfigurationInt>();
+		ConfigurationLongIntCollection longIntCollection = dboSession.find<ConfigurationLongInt>();
+		ConfigurationStringCollection stringCollection = dboSession.find<ConfigurationString>();
 
 		//Bool
-		for(Dbo::ptr<Dbo::ConfigurationBool> &ptr : boolCollection)
+		for(Dbo::ptr<ConfigurationBool> &ptr : boolCollection)
 		{
-			boolmap[ptr.id()->name()] = std::make_shared<Ddo::ConfigurationBool>(ptr);
-			_count++;
+			boolmap[ptr.id()->name()] = make_shared<Ddo::ConfigurationBool>(ptr);
+			++_count;
 		}
 
 		//Double
-		for(Dbo::ptr<Dbo::ConfigurationDouble> &ptr : doubleCollection)
+		for(Dbo::ptr<ConfigurationDouble> &ptr : doubleCollection)
 		{
-			doublemap[ptr.id()->name()] = std::make_shared<Ddo::ConfigurationDouble>(ptr);
-			_count++;
+			doublemap[ptr.id()->name()] = make_shared<Ddo::ConfigurationDouble>(ptr);
+			++_count;
 		}
 
 		//Enum
-		for(Dbo::ptr<Dbo::ConfigurationEnum> &ptr : enumCollection)
+		for(Dbo::ptr<ConfigurationEnum> &ptr : enumCollection)
 		{
-			enummap[ptr.id()->name()] = std::make_shared<Ddo::ConfigurationEnum>(ptr);
-			_count++;
+			enummap[ptr.id()->name()] = make_shared<Ddo::ConfigurationEnum>(ptr);
+			++_count;
 		}
 
 		//Float
-		for(Dbo::ptr<Dbo::ConfigurationFloat> &ptr : floatCollection)
+		for(Dbo::ptr<ConfigurationFloat> &ptr : floatCollection)
 		{
-			floatmap[ptr.id()->name()] = std::make_shared<Ddo::ConfigurationFloat>(ptr);
-			_count++;
+			floatmap[ptr.id()->name()] = make_shared<Ddo::ConfigurationFloat>(ptr);
+			++_count;
 		}
 
 		//Int
-		for(Dbo::ptr<Dbo::ConfigurationInt> &ptr : intCollection)
+		for(Dbo::ptr<ConfigurationInt> &ptr : intCollection)
 		{
-			intmap[ptr.id()->name()] = std::make_shared<Ddo::ConfigurationInt>(ptr);
-			_count++;
+			intmap[ptr.id()->name()] = make_shared<Ddo::ConfigurationInt>(ptr);
+			++_count;
 		}
 
 		//LongInt
-		for(Dbo::ptr<Dbo::ConfigurationLongInt> &ptr : longIntCollection)
+		for(Dbo::ptr<ConfigurationLongInt> &ptr : longIntCollection)
 		{
-			longintmap[ptr.id()->name()] = std::make_shared<Ddo::ConfigurationLongInt>(ptr);
-			_count++;
+			longintmap[ptr.id()->name()] = make_shared<Ddo::ConfigurationLongInt>(ptr);
+			++_count;
 		}
 
 		//String
-		for(Dbo::ptr<Dbo::ConfigurationString> &ptr : stringCollection)
+		for(Dbo::ptr<ConfigurationString> &ptr : stringCollection)
 		{
-			stringmap[ptr.id()->name()] = std::make_shared<Ddo::ConfigurationString>(ptr);
-			_count++;
+			stringmap[ptr.id()->name()] = make_shared<Ddo::ConfigurationString>(ptr);
+			++_count;
 		}
 
 		transaction.commit();
@@ -111,72 +100,72 @@ namespace WW
 		Wt::log("gs-info") << "ConfigurationsDatabase: " << _count << " entries successfully loaded in " << _loadDuration.count() << " ms";
 	}
 
-	Ddo::cPtr<Ddo::ConfigurationBool> ConfigurationsDatabase::getBoolPtr(const std::string &name) const
+	shared_ptr<const Ddo::ConfigurationBool> ConfigurationsDatabase::getBoolPtr(const std::string &name) const
 	{
 		boost::shared_lock<boost::shared_mutex> lock(_mutex);
-		BoolMap::const_iterator itr = _boolMap.find(name);
+		auto itr = _boolMap.find(name);
 		if(itr == _boolMap.end())
-			return Ddo::cPtr<Ddo::ConfigurationBool>();
+			return nullptr;
 
 		return itr->second;
 	}
 
-	Ddo::cPtr<Ddo::ConfigurationDouble> ConfigurationsDatabase::getDoublePtr(const std::string &name) const
+	shared_ptr<const Ddo::ConfigurationDouble> ConfigurationsDatabase::getDoublePtr(const std::string &name) const
 	{
 		boost::shared_lock<boost::shared_mutex> lock(_mutex);
-		DoubleMap::const_iterator itr = _doubleMap.find(name);
+		auto itr = _doubleMap.find(name);
 		if(itr == _doubleMap.end())
-			return Ddo::cPtr<Ddo::ConfigurationDouble>();
+			return nullptr;
 
 		return itr->second;
 	}
 
-	Ddo::cPtr<Ddo::ConfigurationEnum> ConfigurationsDatabase::getEnumPtr(const std::string &name) const
+	shared_ptr<const Ddo::ConfigurationEnum> ConfigurationsDatabase::getEnumPtr(const std::string &name) const
 	{
 		boost::shared_lock<boost::shared_mutex> lock(_mutex);
-		EnumMap::const_iterator itr = _enumMap.find(name);
+		auto itr = _enumMap.find(name);
 		if(itr == _enumMap.end())
-			return Ddo::cPtr<Ddo::ConfigurationEnum>();
+			return nullptr;
 
 		return itr->second;
 	}
 
-	Ddo::cPtr<Ddo::ConfigurationFloat> ConfigurationsDatabase::getFloatPtr(const std::string &name) const
+	shared_ptr<const Ddo::ConfigurationFloat> ConfigurationsDatabase::getFloatPtr(const std::string &name) const
 	{
 		boost::shared_lock<boost::shared_mutex> lock(_mutex);
-		FloatMap::const_iterator itr = _floatMap.find(name);
+		auto itr = _floatMap.find(name);
 		if(itr == _floatMap.end())
-			return Ddo::cPtr<Ddo::ConfigurationFloat>();
+			return nullptr;
 
 		return itr->second;
 	}
 
-	Ddo::cPtr<Ddo::ConfigurationInt> ConfigurationsDatabase::getIntPtr(const std::string &name) const
+	shared_ptr<const Ddo::ConfigurationInt> ConfigurationsDatabase::getIntPtr(const std::string &name) const
 	{
 		boost::shared_lock<boost::shared_mutex> lock(_mutex);
-		IntMap::const_iterator itr = _intMap.find(name);
+		auto itr = _intMap.find(name);
 		if(itr == _intMap.end())
-			return Ddo::cPtr<Ddo::ConfigurationInt>();
+			return nullptr;
 
 		return itr->second;
 	}
 
-	Ddo::cPtr<Ddo::ConfigurationLongInt> ConfigurationsDatabase::getLongIntPtr(const std::string &name) const
+	shared_ptr<const Ddo::ConfigurationLongInt> ConfigurationsDatabase::getLongIntPtr(const std::string &name) const
 	{
 		boost::shared_lock<boost::shared_mutex> lock(_mutex);
-		LongIntMap::const_iterator itr = _longIntMap.find(name);
+		auto itr = _longIntMap.find(name);
 		if(itr == _longIntMap.end())
-			return Ddo::cPtr<Ddo::ConfigurationLongInt>();
+			return nullptr;
 
 		return itr->second;
 	}
 
-	Ddo::cPtr<Ddo::ConfigurationString> ConfigurationsDatabase::getStringPtr(const std::string &name) const
+	shared_ptr<const Ddo::ConfigurationString> ConfigurationsDatabase::getStringPtr(const std::string &name) const
 	{
 		boost::shared_lock<boost::shared_mutex> lock(_mutex);
-		StringMap::const_iterator itr = _stringMap.find(name);
+		auto itr = _stringMap.find(name);
 		if(itr == _stringMap.end())
-			return Ddo::cPtr<Ddo::ConfigurationString>();
+			return nullptr;
 
 		return itr->second;
 	}
@@ -184,7 +173,7 @@ namespace WW
 	//Boolean getter
 	bool ConfigurationsDatabase::getBool(const std::string &name, bool defaultValue) const
 	{
-		Ddo::cPtr<Ddo::ConfigurationBool> boolPtr = getBoolPtr(name);
+		shared_ptr<const Ddo::ConfigurationBool> boolPtr = getBoolPtr(name);
 		if(!boolPtr)
 		{
 			Wt::log("warning") << "BoolPtr not found in ConfigurationsDatabase in GetBool(...). Name: " << name << ", Default Value: " << defaultValue;
@@ -196,7 +185,7 @@ namespace WW
 	//Double getter
 	double ConfigurationsDatabase::getDouble(const std::string &name, double defaultValue) const
 	{
-		Ddo::cPtr<Ddo::ConfigurationDouble> doublePtr = getDoublePtr(name);
+		shared_ptr<const Ddo::ConfigurationDouble> doublePtr = getDoublePtr(name);
 		if(!doublePtr)
 		{
 			Wt::log("warning") << "DoublePtr not found in ConfigurationsDatabase in GetDouble(...). Name: " << name << ", Default Value: " << defaultValue;
@@ -208,7 +197,7 @@ namespace WW
 	//Enum getter
 	int ConfigurationsDatabase::getEnum(const std::string &name, int defaultValue) const
 	{
-		Ddo::cPtr<Ddo::ConfigurationEnum> enumPtr = getEnumPtr(name);
+		shared_ptr<const Ddo::ConfigurationEnum> enumPtr = getEnumPtr(name);
 		if(!enumPtr)
 		{
 			Wt::log("warning") << "EnumPtr not found in ConfigurationsDatabase in GetEnum(...). Name: " << name << ", Default Value: " << defaultValue;
@@ -220,7 +209,7 @@ namespace WW
 	//Float getter
 	float ConfigurationsDatabase::getFloat(const std::string &name, float defaultValue) const
 	{
-		Ddo::cPtr<Ddo::ConfigurationFloat> floatPtr = getFloatPtr(name);
+		shared_ptr<const Ddo::ConfigurationFloat> floatPtr = getFloatPtr(name);
 		if(!floatPtr)
 		{
 			Wt::log("warning") << "FloatPtr not found in ConfigurationsDatabase in GetFloat(...). Name: " << name << ", Default Value: " << defaultValue;
@@ -232,7 +221,7 @@ namespace WW
 	//Integer getter
 	int ConfigurationsDatabase::getInt(const std::string &name, int defaultValue) const
 	{
-		Ddo::cPtr<Ddo::ConfigurationInt> intPtr = getIntPtr(name);
+		shared_ptr<const Ddo::ConfigurationInt> intPtr = getIntPtr(name);
 		if(!intPtr)
 		{
 			Wt::log("warning") << "IntPtr not found in ConfigurationsDatabase in GetInt(...). Name: " << name << ", Default Value: " << defaultValue;
@@ -244,7 +233,7 @@ namespace WW
 	//Long integer getter
 	long long ConfigurationsDatabase::getLongInt(const std::string &name, long long defaultValue) const
 	{
-		Ddo::cPtr<Ddo::ConfigurationLongInt> longIntPtr = getLongIntPtr(name);
+		shared_ptr<const Ddo::ConfigurationLongInt> longIntPtr = getLongIntPtr(name);
 		if(!longIntPtr)
 		{
 			Wt::log("warning") << "LongIntPtr not found in ConfigurationsDatabase in GetLongInt(...). Name: " << name << ", Default Value: " << defaultValue;
@@ -256,7 +245,7 @@ namespace WW
 	//String getter
 	std::string ConfigurationsDatabase::getStr(const std::string &name, std::string defaultValue) const
 	{
-		Ddo::cPtr<Ddo::ConfigurationString> stringPtr = getStringPtr(name);
+		shared_ptr<const Ddo::ConfigurationString> stringPtr = getStringPtr(name);
 		if(!stringPtr)
 		{
 			Wt::log("warning") << "StringPtr not found in ConfigurationsDatabase in GetString(...). Name: " << name << ", Default Value: " << defaultValue;
@@ -265,12 +254,12 @@ namespace WW
 		return stringPtr->value;
 	}
 
-	Ddo::cPtr<Ddo::ConfigurationLongInt> ConfigurationsDatabase::addLongInt(const std::string &name, long long value, Wt::Dbo::Session *alternateSession)
+	shared_ptr<const Ddo::ConfigurationLongInt> ConfigurationsDatabase::addLongInt(const std::string &name, long long value, Wt::Dbo::Session *alternateSession)
 	{
 		boost::lock_guard<boost::shared_mutex> lock(_mutex);
 
-		Dbo::ptr<Dbo::Configuration> configPtr;
-		Dbo::ptr<Dbo::ConfigurationLongInt> configValPtr;
+		Dbo::ptr<Configuration> configPtr;
+		Dbo::ptr<ConfigurationLongInt> configValPtr;
 		
 		//Use server's session if not provided as argument
 		if(!alternateSession)
@@ -278,20 +267,20 @@ namespace WW
 
 		Wt::Dbo::Transaction t(*alternateSession);
 
-		configPtr = dboSession.find<Dbo::Configuration>().where("name = ? AND type = ?").bind(name).bind(Dbo::Configuration::LongInt);
+		configPtr = dboSession.find<Configuration>().where("name = ? AND type = ?").bind(name).bind(Configuration::LongInt);
 		if(!configPtr)
-			configPtr = dboSession.addNew<Dbo::Configuration>(name, Dbo::Configuration::LongInt);
+			configPtr = dboSession.addNew<Configuration>(name, Configuration::LongInt);
 
 		configValPtr = configPtr->longIntPtr;
 		if(!configValPtr)
-			configValPtr = dboSession.addNew<Dbo::ConfigurationLongInt>(configPtr);
+			configValPtr = dboSession.addNew<ConfigurationLongInt>(configPtr);
 		configValPtr.modify()->value = value;
 
 		configPtr.flush();
 		configValPtr.flush();
 		t.commit();
 
-		Ddo::ptr<Ddo::ConfigurationLongInt> result = std::make_shared<Ddo::ConfigurationLongInt>(configValPtr);
+		auto result = make_shared<Ddo::ConfigurationLongInt>(configValPtr);
 		_longIntMap[configPtr->name()] = result;
 		return result;
 	}

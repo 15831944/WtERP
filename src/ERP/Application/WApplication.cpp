@@ -179,7 +179,7 @@ namespace ERP
 		WServer *server = SERVER;
 		_dboSession.setConnectionPool(server->sqlPool());
 		mapDboTree(_dboSession);
-		WW::Dbo::mapConfigurationDboTree(_dboSession);
+		mapConfigurationDboTree(_dboSession);
 
 		//Localization and Strings
 		messageResourceBundle().use(appRoot() + "templates", false); //CHECK_BEFORE_RELEASE

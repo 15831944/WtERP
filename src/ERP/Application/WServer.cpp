@@ -25,7 +25,7 @@ namespace ERP
 		setServerConfiguration(argc, argv, WTHTTP_CONFIGURATION);
 	}
 
-	WServer::~WServer() { }
+	WServer::~WServer() = default;
 
 	void WServer::initialize()
 	{
@@ -90,7 +90,7 @@ namespace ERP
 		//Prepare server's Dbo::Session
 		_dboSession.setConnectionPool(*_sqlPool);
 		mapDboTree(_dboSession);
-		WW::Dbo::mapConfigurationDboTree(_dboSession);
+		mapConfigurationDboTree(_dboSession);
 
 		//Configure authorization module
 		configureAuth();
@@ -122,7 +122,7 @@ namespace ERP
 			{
 				Dbo::Transaction t(_dboSession);
 				_dboSession.createTables();
-				_dboSession.execute("CREATE UNIQUE INDEX unique_configuration ON " + std::string(WW::Dbo::Configuration::tableName()) + " (name, type)");
+				_dboSession.execute("CREATE UNIQUE INDEX unique_configuration ON " + std::string(Configuration::tableName()) + " (name, type)");
 				t.commit();
 			}
 			catch(const Dbo::Exception &e)
@@ -284,7 +284,7 @@ namespace ERP
 		//Load configurations
 		try
 		{
-			_configs = make_unique<WW::ConfigurationsDatabase>(_dboSession);
+			_configs = make_unique<ConfigurationsDatabase>(_dboSession);
 		}
 		catch(const Dbo::Exception &e)
 		{
