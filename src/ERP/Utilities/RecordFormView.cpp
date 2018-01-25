@@ -317,7 +317,7 @@ namespace ERP
 		}
 		catch(const Dbo::Exception &e)
 		{
-			Wt::log("error") << "RecordFormView::submit(): (View: " + viewName() + ") Dbo error(" << e.code() << "): " << e.what();
+			Wt::log("error") << "RecordFormView::submit(): (View: " << viewName() << ") Dbo error(" << e.code() << "): " << e.what();
 			app->showDbBackendError(e.code());
 			nothingSaved = true;
 		}
