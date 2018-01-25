@@ -26,6 +26,7 @@ namespace ERP
 
 		//Fetch em all
 		Wt::Dbo::Transaction transaction(dboSession);
+		ConfigurationCollection configurationCollection = dboSession.find<Configuration>();
 		ConfigurationBoolCollection boolCollection = dboSession.find<ConfigurationBool>();
 		ConfigurationDoubleCollection doubleCollection = dboSession.find<ConfigurationDouble>();
 		ConfigurationEnumCollection enumCollection = dboSession.find<ConfigurationEnum>();
@@ -34,53 +35,56 @@ namespace ERP
 		ConfigurationLongIntCollection longIntCollection = dboSession.find<ConfigurationLongInt>();
 		ConfigurationStringCollection stringCollection = dboSession.find<ConfigurationString>();
 
+		//Load configs dbos
+		std::vector<Dbo::ptr<Configuration>> allConfigs(configurationCollection.begin(), configurationCollection.end());
+
 		//Bool
 		for(Dbo::ptr<ConfigurationBool> &ptr : boolCollection)
 		{
 			boolmap[ptr.id()->name()] = make_shared<Ddo::ConfigurationBool>(ptr);
-			++_count;
+			++count;
 		}
 
 		//Double
 		for(Dbo::ptr<ConfigurationDouble> &ptr : doubleCollection)
 		{
 			doublemap[ptr.id()->name()] = make_shared<Ddo::ConfigurationDouble>(ptr);
-			++_count;
+			++count;
 		}
 
 		//Enum
 		for(Dbo::ptr<ConfigurationEnum> &ptr : enumCollection)
 		{
 			enummap[ptr.id()->name()] = make_shared<Ddo::ConfigurationEnum>(ptr);
-			++_count;
+			++count;
 		}
 
 		//Float
 		for(Dbo::ptr<ConfigurationFloat> &ptr : floatCollection)
 		{
 			floatmap[ptr.id()->name()] = make_shared<Ddo::ConfigurationFloat>(ptr);
-			++_count;
+			++count;
 		}
 
 		//Int
 		for(Dbo::ptr<ConfigurationInt> &ptr : intCollection)
 		{
 			intmap[ptr.id()->name()] = make_shared<Ddo::ConfigurationInt>(ptr);
-			++_count;
+			++count;
 		}
 
 		//LongInt
 		for(Dbo::ptr<ConfigurationLongInt> &ptr : longIntCollection)
 		{
 			longintmap[ptr.id()->name()] = make_shared<Ddo::ConfigurationLongInt>(ptr);
-			++_count;
+			++count;
 		}
 
 		//String
 		for(Dbo::ptr<ConfigurationString> &ptr : stringCollection)
 		{
 			stringmap[ptr.id()->name()] = make_shared<Ddo::ConfigurationString>(ptr);
-			++_count;
+			++count;
 		}
 
 		transaction.commit();

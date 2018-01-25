@@ -231,8 +231,8 @@ namespace ERP
 		TransactionView();
 		virtual void initView() override;
 
-		shared_ptr<TransactionFormModel> model() const { return dynamic_pointer_cast<TransactionFormModel>(_model); }
 		void selectDirection(bool isReceipt);
+		shared_ptr<TransactionFormModel> model() const { return dynamic_pointer_cast<TransactionFormModel>(_model); }
 		virtual unique_ptr<RecordFormView> createFormView() override { return make_unique<TransactionView>(); }
 
 	protected:
