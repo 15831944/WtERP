@@ -8,7 +8,8 @@
 //TODO: Find solution to Dbo::ptr circular reference
 //TODO: Check for shared_ptr circular references
 //TODO: Localize DateTimes
-//TODO: Separate FormModel and FormView roles properly
+//TODO: Modernize code
+//TODO: Check what else should be made a BaseAdminRecord
 
 int main(int argc, char *argv[])
 {
