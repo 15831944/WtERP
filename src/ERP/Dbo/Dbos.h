@@ -9,8 +9,6 @@
 #include <Wt/Dbo/WtSqlTraits.h>
 #include <Wt/Dbo/SqlTraits.h>
 
-#include <boost/lexical_cast.hpp>
-
 #define TRANSACTION(app) Dbo::Transaction t((app)->dboSession())
 
 //Utilities, forward declarations and typedefs

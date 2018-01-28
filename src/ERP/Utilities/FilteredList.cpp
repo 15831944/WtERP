@@ -56,7 +56,7 @@ namespace ERP
 
 	std::string WComboBoxFilterModel::value()
 	{
-		return boost::lexical_cast<std::string>(_value);
+		return std::to_string(_value);
 	}
 
 	void BitmaskFilterModel::updateModel()

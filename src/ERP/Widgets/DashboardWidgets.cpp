@@ -31,7 +31,7 @@ namespace ERP
 			Wt::WDate currentDate = Wt::WDate::currentServerDate();
 			return APP->dboSession().query<long long>(
 				"SELECT COUNT(DISTINCT a.entity_id) FROM " + EmployeeAssignment::tStr() + " a "
-				"INNER JOIN " + EmployeePosition::tStr() + " p ON (p.id = a.employeeposition_id AND p.type = " + boost::lexical_cast<std::string>(EmployeePosition::PersonnelType) + ")"
+				"INNER JOIN " + EmployeePosition::tStr() + " p ON (p.id = a.employeeposition_id AND p.type = " + std::to_string(EmployeePosition::PersonnelType) + ")"
 				).where("? >= startDate AND (endDate IS null OR ? < endDate)").bind(currentDate).bind(currentDate);
 		}, totalEntities);
 		bindNew<RecordCountTemplate>("clients", []() -> long long {
@@ -141,7 +141,7 @@ namespace ERP
 		{
 			TRANSACTION(APP);
 			_currentCount = _queryFunction();
-			_text->setText(boost::lexical_cast<std::string>(_currentCount));
+			_text->setText(std::to_string(_currentCount));
 
 			if(_relativeTo)
 			{

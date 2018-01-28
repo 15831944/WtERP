@@ -166,7 +166,8 @@ namespace ERP
 				int nIntervals = Wt::WLocale::currentLocale().toInt(nIntervalsStr);
 				endDateBottom = addCycleInterval(Wt::WDateTime(endDateBottom), interval, nIntervals).date();
 			}
-			catch(const boost::bad_lexical_cast &) {}
+			catch(const std::invalid_argument &) {}
+			catch(const std::out_of_range &) {}
 		}
 
 		endDateValidator->setBottom(endDateBottom);
@@ -533,7 +534,7 @@ namespace ERP
 			{
 				const typename FilteredList::ResultType &res = static_pointer_cast<Dbo::QueryModel<typename FilteredList::ResultType>>(sourceModel())->resultRow(idx.row());
 				long long id = std::get<FilteredList::ResId>(res);
-				return Wt::WLink(Wt::LinkType::InternalPath, _pathPrefix + boost::lexical_cast<std::string>(id));
+				return Wt::WLink(Wt::LinkType::InternalPath, _pathPrefix + std::to_string(id));
 			}
 		}
 

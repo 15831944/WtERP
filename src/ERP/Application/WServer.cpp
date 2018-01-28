@@ -15,6 +15,8 @@
 #include <Wt/Auth/FacebookService.h>
 #include <Wt/Auth/Dbo/UserDatabase.h>
 
+#include <boost/lexical_cast.hpp>
+
 namespace ERP
 {
 	WServer::WServer(int argc, char *argv[], const std::string &wtConfigurationFile)

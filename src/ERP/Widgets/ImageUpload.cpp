@@ -204,8 +204,8 @@ namespace ERP
 
 		//Relocate
 		boost::filesystem::path newPath = boost::filesystem::path(_imageInfo.filePtr->pathToDirectory());
-		boost::filesystem::path thumbnailFilePath = newPath / (boost::lexical_cast<std::string>(_imageInfo.filePtr.id()) + "_thumb.jpg");
-		boost::filesystem::path newFilePath = newPath / (boost::lexical_cast<std::string>(_imageInfo.filePtr.id()) + _imageInfo.extension);
+		boost::filesystem::path thumbnailFilePath = newPath / (std::to_string(_imageInfo.filePtr.id()) + "_thumb.jpg");
+		boost::filesystem::path newFilePath = newPath / (std::to_string(_imageInfo.filePtr.id()) + _imageInfo.extension);
 
 		try
 		{

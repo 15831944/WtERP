@@ -258,9 +258,10 @@ namespace ERP
 			{
 				try
 				{
-					return boost::lexical_cast<long long>(idStr);
+					return std::stoll(idStr);
 				}
-				catch(const boost::bad_lexical_cast &) {}
+				catch(const std::invalid_argument &) {}
+				catch(const std::out_of_range &) {}
 			}
 		}
 

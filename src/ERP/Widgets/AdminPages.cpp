@@ -198,7 +198,7 @@ namespace ERP
 		Dbo::ptr<Account> cashAccountPtr = app->accountsDatabase().findOrCreateCashAccount(true);
 
 		auto accountsMenuItem = createMenuItemWrapped(tr("Accounts"), "", make_unique<AccountList>());
-		auto transactionsMenuItem = createMenuItemWrapped(tr("Transactions"), ACCOUNT_PREFIX + boost::lexical_cast<std::string>(cashAccountPtr.id()),
+		auto transactionsMenuItem = createMenuItemWrapped(tr("Transactions"), ACCOUNT_PREFIX + std::to_string(cashAccountPtr.id()),
 			make_unique<AccountView>(cashAccountPtr), false);
 		auto recurringIncomesMenuItem = createMenuItemWrapped(tr("RecurringIncomes"), INCOMECYCLES_PATHC, make_unique<IncomeCycleList>());
 		auto recurringExpensesMenuItem = createMenuItemWrapped(tr("RecurringExpenses"), EXPENSECYCLES_PATHC, make_unique<ExpenseCycleList>());
