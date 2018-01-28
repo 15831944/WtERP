@@ -4,12 +4,25 @@
 
 //TODO: Exception handling
 //TODO: Record deletion
-//TODO: Versioned record keeping
 //TODO: Find solution to Dbo::ptr circular reference
 //TODO: Check for shared_ptr circular references
 //TODO: Localize DateTimes
 //TODO: Modernize code
+
+//TODO: Follow Multiple Dialogs error report
+
+//TODO: Better solution to std::string(Dbo::tableName())
+//TODO: Fix SuggestionPopups
+//TODO: Location ViewName and other missing ViewNames
 //TODO: Check what else should be made a BaseAdminRecord
+//TODO: shared_ptr RecordFormModel to unique_ptr
+//TODO: A better way to create indexes on Dbos (create index on AttendaceDeviceV and all record version dbos)
+//TODO: Read only view and reloadable RecordFormView
+//TODO: Improve RecordFormModel API (and remove unnecessary pointers)
+//TODO: Create abstraction for list proxy models
+//TODO: Fix LOG_ERROR(Wt::Dbo::ptr) useless errors
+//TODO: Remove Employee and Personnel DBOs
+//TODO: Versioned record keeping for all Record Dbos
 
 int main(int argc, char *argv[])
 {

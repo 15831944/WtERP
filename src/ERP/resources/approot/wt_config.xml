@@ -602,7 +602,7 @@
 		
 	    <property name="MySQLHost">127.0.0.1</property>
 	    <property name="MySQLPort">3306</property>
-	    <property name="MySQLDb">ghazisecurity</property>
+	    <property name="MySQLDb">erp</property>
 	    <property name="MySQLUser">root</property>
 	    <property name="MySQLPassword"></property>
 		
