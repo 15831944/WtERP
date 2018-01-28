@@ -38,6 +38,7 @@ namespace ERP
 		dboSession.mapClass<ExpenseCycle>(ExpenseCycle::tableName());
 		dboSession.mapClass<UploadedFile>(UploadedFile::tableName());
 		dboSession.mapClass<AttendanceDevice>(AttendanceDevice::tableName());
+		dboSession.mapClass<AttendanceDeviceV>(AttendanceDeviceV::tableName());
 		dboSession.mapClass<AttendanceEntry>(AttendanceEntry::tableName());
 
 // 		dboSession.mapClass<Inquiry>(Inquiry::tableName());
@@ -67,6 +68,12 @@ namespace ERP
 				regionPtr = app->authLogin().userPtr()->regionPtr;
 		}
 	}
+	void BaseRecordVersionInfo::setModifiedByValues()
+	{
+		WApplication *app = APP;
+		if(app->authLogin().userPtr())
+			_modifierUserPtr = app->authLogin().userPtr();
+	}
 	
 	std::string UploadedFile::pathToFile() const
 	{
@@ -94,7 +101,7 @@ namespace ERP
 		case WeeklyInterval: return dt.addDays(nIntervals*7);
 		case MonthlyInterval: return dt.addMonths(nIntervals);
 		case YearlyInterval: return dt.addYears(nIntervals);
-		default: return dt;
+		default: throw std::logic_error("addCycleInterval(): Invalid CycleInterval");
 		}
 	}
 

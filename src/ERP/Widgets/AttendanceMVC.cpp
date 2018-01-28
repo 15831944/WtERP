@@ -19,15 +19,17 @@ namespace ERP
 
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
-			"SELECT d.id, d.hostName, cnt.name, city.name, l.address FROM "
+			"SELECT d.id, dv.hostName, cnt.name, city.name, l.address FROM "
 			+ std::string(AttendanceDevice::tableName()) + " d "
-			"LEFT JOIN " + Location::tableName() + " l ON (l.id = d.location_id) "
+			"INNER JOIN " + AttendanceDeviceV::tableName() + " dv "
+			"ON dv.id = (SELECT dvi.id FROM "+AttendanceDeviceV::tableName()+" dvi WHERE dvi.parent_id = d.id ORDER BY dvi.`timestamp` DESC LIMIT 1) "
+			"LEFT JOIN " + Location::tableName() + " l ON (l.id = dv.location_id) "
 			"LEFT JOIN " + Country::tableName() + " cnt ON (cnt.code = l.country_code) "
 			"LEFT JOIN " + City::tableName() + " city ON (city.id = l.city_id)");
 
 		model->setQuery(generateQuery());
 		addColumn(ViewId, model->addColumn("d.id"), tr("ID"), IdColumnWidth);
-		addColumn(ViewHostName, model->addColumn("d.hostName"), tr("Hostname"), 200);
+		addColumn(ViewHostName, model->addColumn("dv.hostName"), tr("Hostname"), 200);
 		addColumn(ViewCountry, model->addColumn("cnt.name"), tr("Country"), 150);
 		addColumn(ViewCity, model->addColumn("city.name"), tr("City"), 150);
 		addColumn(ViewAddress, model->addColumn("l.address"), tr("Address"), 300);
@@ -97,9 +99,13 @@ namespace ERP
 
 		if(_recordPtr)
 		{
-			TRANSACTION(APP);
-			setValue(hostNameField, Wt::WString::fromUTF8(_recordPtr->hostName));
-			setValue(locationField, _recordPtr->locationPtr);
+			WApplication *app = APP;
+			TRANSACTION(app);
+
+			Dbo::ptr<AttendanceDeviceV> latestVersionPtr = app->dboSession().find<AttendanceDeviceV>()
+					.where("parent_id = ?").bind(_recordPtr.id()).orderBy("timestamp desc").limit(1);
+			setValue(hostNameField, Wt::WString::fromUTF8(latestVersionPtr->hostName));
+			setValue(locationField, latestVersionPtr->locationPtr);
 		}
 	}
 
@@ -135,8 +141,10 @@ namespace ERP
 		if(!_recordPtr)
 			_recordPtr = app->dboSession().addNew<AttendanceDevice>();
 
-		_recordPtr.modify()->hostName = valueText(hostNameField).toUTF8();
-		_recordPtr.modify()->locationPtr = Wt::any_cast<Dbo::ptr<Location>>(value(locationField));
+		Dbo::ptr<AttendanceDeviceV> newVersionPtr = app->dboSession().addNew<AttendanceDeviceV>(_recordPtr);
+		newVersionPtr.modify()->setModifiedByValues();
+		newVersionPtr.modify()->hostName = valueText(hostNameField).toUTF8();
+		newVersionPtr.modify()->locationPtr = Wt::any_cast<Dbo::ptr<Location>>(value(locationField));
 		return true;
 	}
 

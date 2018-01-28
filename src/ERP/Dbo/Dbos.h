@@ -87,6 +87,7 @@ namespace ERP
 
 	class UploadedFile;
 	class AttendanceDevice;
+	class AttendanceDeviceV;
 	class AttendanceEntry;
 
 	typedef Dbo::collection<Dbo::ptr<Entity>> EntityCollection;
@@ -125,6 +126,7 @@ namespace ERP
 	typedef Dbo::collection<Dbo::ptr<PettyExpenditureInfo>> PettyExpenditureInfoCollection;
 	typedef Dbo::collection<Dbo::ptr<UploadedFile>> UploadedFileCollection;
 	typedef Dbo::collection<Dbo::ptr<AttendanceDevice>> AttendanceDeviceCollection;
+	typedef Dbo::collection<Dbo::ptr<AttendanceDeviceV>> AttendanceDeviceVCollection;
 	typedef Dbo::collection<Dbo::ptr<AttendanceEntry>> AttendanceEntryCollection;
 }
 
@@ -271,6 +273,39 @@ namespace ERP
 		}
 	};
 
+	class BaseRecordVersionInfo
+	{
+	private:
+		Dbo::ptr<User> _modifierUserPtr;
+		Wt::WDateTime _timestamp = Wt::WDateTime::currentDateTime();
+
+	public:
+		void setModifiedByValues();
+
+		template<class Action>
+		void persist(Action& a)
+		{
+			Dbo::belongsTo(a, _modifierUserPtr, "modifier_user", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
+			Dbo::field(a, _timestamp, "timestamp");
+		}
+	};
+	template<class C>
+	class BaseRecordVersion : public BaseRecordVersionInfo
+	{
+	private:
+		Dbo::ptr<C> _parentPtr;
+
+	public:
+		BaseRecordVersion(Dbo::ptr<C> parentPtr = nullptr) : _parentPtr(parentPtr) { }
+
+		template<class Action>
+		void persist(Action& a)
+		{
+			Dbo::belongsTo(a, _parentPtr, "parent", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
+			BaseRecordVersionInfo::persist(a);
+		}
+	};
+
 	class User : public BaseAdminRecord
 	{
 	public:
@@ -289,6 +324,8 @@ namespace ERP
 		ExpenseCycleCollection expenseCyclesCollection;
 		UserCollection createdUserCollection;
 
+		AttendanceDeviceVCollection attendanceDeviceVCollection;
+
 		template<class Action>
 		void persist(Action& a)
 		{
@@ -301,6 +338,8 @@ namespace ERP
 			Dbo::hasMany(a, incomeCyclesCollection, Dbo::ManyToOne, "creator_user");
 			Dbo::hasMany(a, expenseCyclesCollection, Dbo::ManyToOne, "creator_user");
 			Dbo::hasMany(a, createdUserCollection, Dbo::ManyToOne, "creator_user");
+
+			Dbo::hasMany(a, attendanceDeviceVCollection, Dbo::ManyToOne, "modifier_user");
 
 			BaseAdminRecord::persist(a);
 		}
@@ -863,7 +902,7 @@ namespace ERP
 
 		ContactNumberCollection contactNumberCollection;
 		EmployeeAssignmentCollection assignedEmployeeCollection;
-		AttendanceDeviceCollection attendanceDeviceCollection;
+		AttendanceDeviceVCollection attendanceDeviceVCollection;
 		AttendanceEntryCollection attendanceCollection;
 // 		InquiryCollection inquiryCollection;
 // 		AssetCollection assetCollection;
@@ -872,14 +911,14 @@ namespace ERP
 		template<class Action>
 		void persist(Action& a)
 		{
-			Dbo::belongsTo(a, entityPtr, "entity", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
+			Dbo::belongsTo(a, entityPtr, "entity", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 			Dbo::field(a, address, "address");
 			Dbo::belongsTo(a, countryPtr, "country", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 			Dbo::belongsTo(a, cityPtr, "city", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 
 			Dbo::hasMany(a, contactNumberCollection, Dbo::ManyToOne, "location");
 			Dbo::hasMany(a, assignedEmployeeCollection, Dbo::ManyToOne, "location");
-			Dbo::hasMany(a, attendanceDeviceCollection, Dbo::ManyToOne, "location");
+			Dbo::hasMany(a, attendanceDeviceVCollection, Dbo::ManyToOne, "location");
 			Dbo::hasMany(a, attendanceCollection, Dbo::ManyToOne, "location");
 // 			Dbo::hasMany(a, inquiryCollection, Dbo::ManyToOne, "location");
 // 			Dbo::hasMany(a, assetCollection, Dbo::ManyToOne, "location");
@@ -1286,9 +1325,7 @@ namespace ERP
 	class AttendanceDevice
 	{
 	public:
-		std::string hostName;
-		Dbo::ptr<Location> locationPtr;
-
+		AttendanceDeviceVCollection versionsCollection;
 		AttendanceEntryCollection attendanceCollection;
 
 		static std::string newInternalPath() { return "/" ADMIN_PATHC "/" ATTENDANCE_PATHC "/" ATTENDANCEDEVICES_PATHC "/" NEW_ATTENDANCEDEVICE_PATHC; }
@@ -1298,14 +1335,34 @@ namespace ERP
 		template<class Action>
 		void persist(Action& a)
 		{
-			Dbo::field(a, hostName, "hostName", 255);
-			Dbo::belongsTo(a, locationPtr, "location", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
-
+			Dbo::hasMany(a, versionsCollection, Dbo::ManyToOne, "parent");
 			Dbo::hasMany(a, attendanceCollection, Dbo::ManyToOne, "attendancedevice");
 		}
 		static const char *tableName()
 		{
 			return "attendancedevice";
+		}
+	};
+	class AttendanceDeviceV : public BaseRecordVersion<AttendanceDevice>
+	{
+	public:
+		AttendanceDeviceV() = default;
+		AttendanceDeviceV(Dbo::ptr<AttendanceDevice> parentPtr) : BaseRecordVersion(parentPtr) { }
+
+		std::string hostName;
+		Dbo::ptr<Location> locationPtr;
+
+		template<class Action>
+		void persist(Action& a)
+		{
+			BaseRecordVersion::persist(a);
+
+			Dbo::field(a, hostName, "hostName", 255);
+			Dbo::belongsTo(a, locationPtr, "location", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
+		}
+		static const char *tableName()
+		{
+			return "attendancedevice_v";
 		}
 	};
 
