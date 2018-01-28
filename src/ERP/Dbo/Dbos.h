@@ -11,56 +11,112 @@
 
 #include <boost/lexical_cast.hpp>
 
-#define TRANSACTION(app) Dbo::Transaction t(app->dboSession())
+#define TRANSACTION(app) Dbo::Transaction t((app)->dboSession())
 
-//Forward declarations and typedefs
+//Utilities, forward declarations and typedefs
 namespace ERP
 {
+	//Utilities
+	void mapERPDbos(Dbo::Session &dboSession);
+
 	//User related
 	class User;
+	typedef Dbo::collection<Dbo::ptr<User>> UserCollection;
+
 	class Region;
+	typedef Dbo::collection<Dbo::ptr<Region>> RegionCollection;
+
 	class Permission;
+	typedef Dbo::collection<Dbo::ptr<Permission>> PermissionCollection;
+
+	struct PermissionDdo;
+	typedef std::map<long long, shared_ptr<const PermissionDdo>> PermissionMap;
+
 	struct UserPermissionPK;
 	class UserPermission;
 	class DefaultPermission;
+	typedef Dbo::collection<Dbo::ptr<UserPermission>> UserPermissionCollection;
+	typedef Dbo::collection<Dbo::ptr<DefaultPermission>> DefaultPermissionCollection;
 
 	typedef Wt::Auth::Dbo::AuthInfo<User> AuthInfo;
 	typedef Wt::Auth::Dbo::AuthIdentity<AuthInfo> AuthIdentity;
 	typedef Wt::Auth::Dbo::AuthToken<AuthInfo> AuthToken;
-
 	typedef Dbo::collection<Dbo::ptr<AuthInfo>> AuthInfoCollection;
-	typedef Dbo::collection<Dbo::ptr<User>> UserCollection;
-	typedef Dbo::collection<Dbo::ptr<Region>> RegionCollection;
-	typedef Dbo::collection<Dbo::ptr<UserPermission>> UserPermissionCollection;
-	typedef Dbo::collection<Dbo::ptr<Permission>> PermissionCollection;
-	typedef Dbo::collection<Dbo::ptr<DefaultPermission>> DefaultPermissionCollection;
-
-	struct PermissionDdo;
-	typedef shared_ptr<PermissionDdo> PermissionSPtr;
-	typedef shared_ptr<const PermissionDdo> PermissionCPtr;
-	typedef std::map<long long, PermissionCPtr> PermissionMap;
-
 	typedef Wt::Auth::Dbo::UserDatabase<ERP::AuthInfo> UserDatabase;
 
 	//The rest
 	class Entity;
+	typedef Dbo::collection<Dbo::ptr<Entity>> EntityCollection;
+
 	class Person;
+	typedef Dbo::collection<Dbo::ptr<Person>> PersonCollection;
+
 	class Business;
+	typedef Dbo::collection<Dbo::ptr<Business>> BusinessCollection;
+
 	class Employee;
+	typedef Dbo::collection<Dbo::ptr<Employee>> EmployeeCollection;
+
 	class Personnel;
+	typedef Dbo::collection<Dbo::ptr<Personnel>> PersonnelCollection;
 
 	class EmployeePosition;
+	typedef Dbo::collection<Dbo::ptr<EmployeePosition>> EmployeePositionCollection;
+
 	class ClientService;
+	typedef Dbo::collection<Dbo::ptr<ClientService>> ClientServiceCollection;
 
 	class ContactNumber;
+	typedef Dbo::collection<Dbo::ptr<ContactNumber>> ContactNumberCollection;
+
 	class Country;
+	typedef Dbo::collection<Dbo::ptr<Country>> CountryCollection;
+
 	class City;
+	typedef Dbo::collection<Dbo::ptr<City>> CityCollection;
+
 	class Location;
+	typedef Dbo::collection<Dbo::ptr<Location>> LocationCollection;
 
 	class EmployeeAssignment;
-	class ClientAssignment;
-//	class Inquiry;
+	typedef Dbo::collection<Dbo::ptr<EmployeeAssignment>> EmployeeAssignmentCollection;
 
+	class ClientAssignment;
+	typedef Dbo::collection<Dbo::ptr<ClientAssignment>> ClientAssignmentCollection;
+
+	class Account;
+	typedef Dbo::collection<Dbo::ptr<Account>> AccountCollection;
+
+	class AccountEntry;
+	typedef Dbo::collection<Dbo::ptr<AccountEntry>> AccountEntryCollection;
+
+	class OvertimeInfo;
+	typedef Dbo::collection<Dbo::ptr<OvertimeInfo>> OvertimeInfoCollection;
+
+	class FineInfo;
+	typedef Dbo::collection<Dbo::ptr<FineInfo>> FineInfoCollection;
+
+	class PettyExpenditureInfo;
+	typedef Dbo::collection<Dbo::ptr<PettyExpenditureInfo>> PettyExpenditureInfoCollection;
+
+	class IncomeCycle;
+	typedef Dbo::collection<Dbo::ptr<IncomeCycle>> IncomeCycleCollection;
+
+	class ExpenseCycle;
+	typedef Dbo::collection<Dbo::ptr<ExpenseCycle>> ExpenseCycleCollection;
+
+	class UploadedFile;
+	typedef Dbo::collection<Dbo::ptr<UploadedFile>> UploadedFileCollection;
+
+	class AttendanceDevice;
+	class AttendanceDeviceV;
+	typedef Dbo::collection<Dbo::ptr<AttendanceDevice>> AttendanceDeviceCollection;
+	typedef Dbo::collection<Dbo::ptr<AttendanceDeviceV>> AttendanceDeviceVCollection;
+
+	class AttendanceEntry;
+	typedef Dbo::collection<Dbo::ptr<AttendanceEntry>> AttendanceEntryCollection;
+
+//	class Inquiry;
 // 	class Asset;
 // 	class Inventory;
 // 	class ClothingTemplate;
@@ -73,36 +129,7 @@ namespace ERP
 // 	class Vehicle;
 // 	class Office;
 // 	class RentHouse;
-// 
 // 	class AssetRegistration;
-
-	class Account;
-	class AccountEntry;
-	class OvertimeInfo;
-	class FineInfo;
-	class PettyExpenditureInfo;
-
-	class IncomeCycle;
-	class ExpenseCycle;
-
-	class UploadedFile;
-	class AttendanceDevice;
-	class AttendanceDeviceV;
-	class AttendanceEntry;
-
-	typedef Dbo::collection<Dbo::ptr<Entity>> EntityCollection;
-	typedef Dbo::collection<Dbo::ptr<Person>> PersonCollection;
-	typedef Dbo::collection<Dbo::ptr<Business>> BusinessCollection;
-	typedef Dbo::collection<Dbo::ptr<Employee>> EmployeeCollection;
-	typedef Dbo::collection<Dbo::ptr<Personnel>> PersonnelCollection;
-	typedef Dbo::collection<Dbo::ptr<EmployeePosition>> EmployeePositionCollection;
-	typedef Dbo::collection<Dbo::ptr<ClientService>> ClientServiceCollection;
-	typedef Dbo::collection<Dbo::ptr<ContactNumber>> ContactNumberCollection;
-	typedef Dbo::collection<Dbo::ptr<Country>> CountryCollection;
-	typedef Dbo::collection<Dbo::ptr<City>> CityCollection;
-	typedef Dbo::collection<Dbo::ptr<Location>> LocationCollection;
-	typedef Dbo::collection<Dbo::ptr<EmployeeAssignment>> EmployeeAssignmentCollection;
-	typedef Dbo::collection<Dbo::ptr<ClientAssignment>> ClientAssignmentCollection;
 // 	typedef Dbo::collection<Dbo::ptr<Inquiry>> InquiryCollection;
 // 	typedef Dbo::collection<Dbo::ptr<Asset>> AssetCollection;
 // 	typedef Dbo::collection<Dbo::ptr<Inventory>> InventoryCollection;
@@ -117,17 +144,6 @@ namespace ERP
 // 	typedef Dbo::collection<Dbo::ptr<Office>> OfficeCollection;
 // 	typedef Dbo::collection<Dbo::ptr<RentHouse>> RentHouseCollection;
 // 	typedef Dbo::collection<Dbo::ptr<AssetRegistration>> LicenseCollection;
-	typedef Dbo::collection<Dbo::ptr<IncomeCycle>> IncomeCycleCollection;
-	typedef Dbo::collection<Dbo::ptr<ExpenseCycle>> ExpenseCycleCollection;
-	typedef Dbo::collection<Dbo::ptr<Account>> AccountCollection;
-	typedef Dbo::collection<Dbo::ptr<AccountEntry>> AccountEntryCollection;
-	typedef Dbo::collection<Dbo::ptr<OvertimeInfo>> OvertimeInfoCollection;
-	typedef Dbo::collection<Dbo::ptr<FineInfo>> FineInfoCollection;
-	typedef Dbo::collection<Dbo::ptr<PettyExpenditureInfo>> PettyExpenditureInfoCollection;
-	typedef Dbo::collection<Dbo::ptr<UploadedFile>> UploadedFileCollection;
-	typedef Dbo::collection<Dbo::ptr<AttendanceDevice>> AttendanceDeviceCollection;
-	typedef Dbo::collection<Dbo::ptr<AttendanceDeviceV>> AttendanceDeviceVCollection;
-	typedef Dbo::collection<Dbo::ptr<AttendanceEntry>> AttendanceEntryCollection;
 }
 
 //Dbo traits
@@ -190,6 +206,29 @@ namespace Wt
 			static const char *surrogateIdField() { return nullptr; }
 		};
 
+		//Accounts
+		template<>
+		struct dbo_traits<ERP::OvertimeInfo> : public dbo_default_traits
+		{
+			typedef ptr<ERP::AccountEntry> IdType;
+			static IdType invalidId() { return IdType(); }
+			static const char *surrogateIdField() { return nullptr; }
+		};
+		template<>
+		struct dbo_traits<ERP::FineInfo> : public dbo_default_traits
+		{
+			typedef ptr<ERP::AccountEntry> IdType;
+			static IdType invalidId() { return IdType(); }
+			static const char *surrogateIdField() { return nullptr; }
+		};
+		template<>
+		struct dbo_traits<ERP::PettyExpenditureInfo> : public dbo_default_traits
+		{
+			typedef ptr<ERP::AccountEntry> IdType;
+			static IdType invalidId() { return IdType(); }
+			static const char *surrogateIdField() { return nullptr; }
+		};
+
 // 		//Assets
 // 		template<>
 // 		struct dbo_traits<ERP::Inventory> : public dbo_default_traits
@@ -226,29 +265,6 @@ namespace Wt
 // 			static IdType invalidId() { return IdType(); }
 // 			static const char *surrogateIdField() { return nullptr; }
 // 		};
-
-		//Accounts
-		template<>
-		struct dbo_traits<ERP::OvertimeInfo> : public dbo_default_traits
-		{
-			typedef ptr<ERP::AccountEntry> IdType;
-			static IdType invalidId() { return IdType(); }
-			static const char *surrogateIdField() { return nullptr; }
-		};
-		template<>
-		struct dbo_traits<ERP::FineInfo> : public dbo_default_traits
-		{
-			typedef ptr<ERP::AccountEntry> IdType;
-			static IdType invalidId() { return IdType(); }
-			static const char *surrogateIdField() { return nullptr; }
-		};
-		template<>
-		struct dbo_traits<ERP::PettyExpenditureInfo> : public dbo_default_traits
-		{
-			typedef ptr<ERP::AccountEntry> IdType;
-			static IdType invalidId() { return IdType(); }
-			static const char *surrogateIdField() { return nullptr; }
-		};
 	}
 }
 
@@ -296,7 +312,7 @@ namespace ERP
 		Dbo::ptr<C> _parentPtr;
 
 	public:
-		BaseRecordVersion(Dbo::ptr<C> parentPtr = nullptr) : _parentPtr(parentPtr) { }
+		BaseRecordVersion(Dbo::ptr<C> parentPtr = nullptr) : _parentPtr(move(parentPtr)) { }
 
 		template<class Action>
 		void persist(Action& a)
@@ -310,7 +326,7 @@ namespace ERP
 	{
 	public:
 		static std::string newInternalPath() { return "/" ADMIN_PATHC "/" USERS_PATHC "/" NEW_USER_PATHC; }
-		static std::string viewInternalPath(long long id) { return viewInternalPath(boost::lexical_cast<std::string>(id)); }
+		static std::string viewInternalPath(long long id) { return viewInternalPath(std::to_string(id)); }
 		static std::string viewInternalPath(const std::string &idStr) { return "/" ADMIN_PATHC "/" USERS_PATHC "/" USER_PREFIX + idStr; }
 
 		Dbo::weak_ptr<AuthInfo> authInfoWPtr;
@@ -343,17 +359,14 @@ namespace ERP
 
 			BaseAdminRecord::persist(a);
 		}
-		static const char *tableName()
-		{
-			return "user";
-		}
+		DEFINE_DBO_TABLENAME("user");
 	};
 
 	class Region
 	{
 	public:
 		static std::string newInternalPath() { return "/" ADMIN_PATHC "/" USERS_PATHC "/" REGIONS_PATHC "/" NEW_REGION_PATHC; }
-		static std::string viewInternalPath(long long id) { return viewInternalPath(boost::lexical_cast<std::string>(id)); }
+		static std::string viewInternalPath(long long id) { return viewInternalPath(std::to_string(id)); }
 		static std::string viewInternalPath(const std::string &idStr) { return "/" ADMIN_PATHC "/" USERS_PATHC "/" REGIONS_PATHC "/" REGION_PREFIX + idStr; }
 
 		std::string name;
@@ -377,10 +390,7 @@ namespace ERP
 			Dbo::hasMany(a, incomeCyclesCollection, Dbo::ManyToOne, "region");
 			Dbo::hasMany(a, expenseCyclesCollection, Dbo::ManyToOne, "region");
 		}
-		static const char *tableName()
-		{
-			return "region";
-		}
+		DEFINE_DBO_TABLENAME("region");
 	};
 
 	class Permission
@@ -391,7 +401,7 @@ namespace ERP
 	public:
 		Permission() = default;
 		Permission(long long id) : _id(id) { }
-		Permission(long long id, const std::string &name) : _id(id), name(name) { }
+		Permission(long long id, std::string name) : _id(id), name(move(name)) { }
 
 		std::string name;
 		bool requireStrongLogin = false;
@@ -412,10 +422,7 @@ namespace ERP
 			Dbo::hasMany(a, linkedToCollection, Dbo::ManyToMany, "linked_permission", "to");
 			Dbo::hasMany(a, linkedByCollection, Dbo::ManyToMany, "linked_permission", "by");
 		}
-		static const char *tableName()
-		{
-			return "permission";
-		}
+		DEFINE_DBO_TABLENAME("permission");
 	};
 	struct PermissionDdo
 	{
@@ -423,7 +430,7 @@ namespace ERP
 		std::string name;
 		bool requireStrongLogin = false;
 
-		PermissionDdo(Dbo::ptr<Permission> ptr)
+		PermissionDdo(const Dbo::ptr<Permission> &ptr)
 			: id(ptr.id()), name(ptr->name), requireStrongLogin(ptr->requireStrongLogin)
 		{ }
 	};
@@ -435,7 +442,7 @@ namespace ERP
 
 		UserPermissionPK() = default;
 		UserPermissionPK(Dbo::ptr<User> userPtr, Dbo::ptr<Permission> permissionPtr)
-			: userPtr(userPtr), permissionPtr(permissionPtr)
+			: userPtr(move(userPtr)), permissionPtr(move(permissionPtr))
 		{ }
 
 		bool operator==(const UserPermissionPK &other) const
@@ -462,8 +469,8 @@ namespace ERP
 		UserPermission() = default;
 		UserPermission(Dbo::ptr<User> userPtr, Dbo::ptr<Permission> permissionPtr)
 		{
-			_id.userPtr = userPtr;
-			_id.permissionPtr = permissionPtr;
+			_id.userPtr = move(userPtr);
+			_id.permissionPtr = move(permissionPtr);
 		}
 
 		template<class Action>void persist(Action &a)
@@ -471,10 +478,7 @@ namespace ERP
 			Dbo::id(a, _id, "id");
 			Dbo::field(a, denied, "denied");
 		}
-		static const char *tableName()
-		{
-			return "user_permission";
-		}
+		DEFINE_DBO_TABLENAME("user_permission");
 
 	private:
 		UserPermissionPK _id;
@@ -500,10 +504,7 @@ namespace ERP
 			Dbo::belongsTo(a, permissionPtr, "permission", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
 			Dbo::field(a, loginStates, "loginStates");
 		}
-		static const char *tableName()
-		{
-			return "default_permission";
-		}
+		DEFINE_DBO_TABLENAME("default_permission");
 	};
 // 	struct DefaultPermissionDdo
 // 	{
@@ -557,7 +558,7 @@ namespace ERP
 		{ }
 
 		static std::string newInternalPath() { return "/" ADMIN_PATHC "/" ENTITIES_PATHC "/" NEW_ENTITY_PATHC; }
-		static std::string viewInternalPath(long long id) { return viewInternalPath(boost::lexical_cast<std::string>(id)); }
+		static std::string viewInternalPath(long long id) { return viewInternalPath(std::to_string(id)); }
 		static std::string viewInternalPath(const std::string &idStr) { return "/" ADMIN_PATHC "/" ENTITIES_PATHC "/" ENTITY_PREFIX + idStr; }
 		static Wt::WString typeToArgString(Type type)
 		{
@@ -616,10 +617,7 @@ namespace ERP
 
 			BaseAdminRecord::persist(a);
 		}
-		static const char *tableName()
-		{
-			return "entity";
-		}
+		DEFINE_DBO_TABLENAME("entity");
 	};
 	class Person
 	{
@@ -680,10 +678,7 @@ namespace ERP
 			Dbo::belongsTo(a, cnicFile1Ptr, "cnicFile1", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 			Dbo::belongsTo(a, cnicFile2Ptr, "cnicFile2", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 		}
-		static const char *tableName()
-		{
-			return "person";
-		}
+		DEFINE_DBO_TABLENAME("person");
 
 	private:
 		friend class PersonFormModel;
@@ -719,10 +714,7 @@ namespace ERP
 			//Dbo::hasMany(a, assignedClothesCollection, Dbo::ManyToOne, "employee");
 			Dbo::hasOne(a, personnelWPtr, "employee");
 		}
-		static const char *tableName()
-		{
-			return "employee";
-		}
+		DEFINE_DBO_TABLENAME("employee");
 
 	private:
 		friend class EmployeeFormModel;
@@ -754,10 +746,7 @@ namespace ERP
 
 			Dbo::hasMany(a, witnessCollection, Dbo::ManyToMany, "personnel_witness");
 		}
-		static const char *tableName()
-		{
-			return "personnel";
-		}
+		DEFINE_DBO_TABLENAME("personnel");
 
 	private:
 		friend class PersonnelFormModel;
@@ -783,10 +772,7 @@ namespace ERP
 			Dbo::field(a, type, "type");
 			Dbo::hasMany(a, employeeAssignmentCollection, Dbo::ManyToOne, "employeeposition");
 		}
-		static const char *tableName()
-		{
-			return "employeeposition";
-		}
+		DEFINE_DBO_TABLENAME("employeeposition");
 	};
 
 	class ClientService
@@ -801,10 +787,7 @@ namespace ERP
 			Dbo::field(a, title, "title", 70);
 			Dbo::hasMany(a, clientAssignmentCollection, Dbo::ManyToOne, "clientservice");
 		}
-		static const char *tableName()
-		{
-			return "clientservice";
-		}
+		DEFINE_DBO_TABLENAME("clientservice");
 	};
 
 	class Business
@@ -820,10 +803,7 @@ namespace ERP
 		{
 			Dbo::id(a, _entityPtr, "entity", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
 		}
-		static const char *tableName()
-		{
-			return "business";
-		}
+		DEFINE_DBO_TABLENAME("business");
 
 	private:
 		friend class BusinessFormModel;
@@ -845,10 +825,7 @@ namespace ERP
 			Dbo::field(a, countryCode, "countryCode", 3);
 			Dbo::field(a, nationalNumber, "nationalNumber", 15);
 		}
-		static const char *tableName()
-		{
-			return "contactnumber";
-		}
+		DEFINE_DBO_TABLENAME("contactnumber");
 	};
 	class Country
 	{
@@ -858,7 +835,7 @@ namespace ERP
 		CityCollection cityCollection;
 		
 		Country() = default;
-		Country(const std::string &code, const std::string &name = "") : code(code), name(name) { }
+		Country(std::string code, std::string name = "") : code(move(code)), name(move(name)) { }
 
 		template<class Action>
 		void persist(Action& a)
@@ -867,10 +844,7 @@ namespace ERP
 			Dbo::field(a, name, "name", 70);
 			Dbo::hasMany(a, cityCollection, Dbo::ManyToOne, "country");
 		}
-		static const char *tableName()
-		{
-			return "country";
-		}
+		DEFINE_DBO_TABLENAME("country");
 	};
 	class City
 	{
@@ -879,7 +853,7 @@ namespace ERP
 		std::string name;
 
 		City() = default;
-		City(Dbo::ptr<Country> countryPtr, const std::string &name = "") : countryPtr(countryPtr), name(name) { }
+		City(Dbo::ptr<Country> countryPtr, std::string name = "") : countryPtr(move(countryPtr)), name(move(name)) { }
 
 		template<class Action>
 		void persist(Action& a)
@@ -887,10 +861,7 @@ namespace ERP
 			Dbo::belongsTo(a, countryPtr, "country", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
 			Dbo::field(a, name, "name", 70);
 		}
-		static const char *tableName()
-		{
-			return "city";
-		}
+		DEFINE_DBO_TABLENAME("city");
 	};
 	class Location : public BaseAdminRecord
 	{
@@ -926,10 +897,7 @@ namespace ERP
 
 			BaseAdminRecord::persist(a);
 		}
-		static const char *tableName()
-		{
-			return "location";
-		}
+		DEFINE_DBO_TABLENAME("location");
 	};
 
 	class EmployeeAssignment : public BaseAdminRecord
@@ -948,7 +916,7 @@ namespace ERP
 		Dbo::ptr<EmployeeAssignment> transferredFromPtr;
 
 		static std::string newInternalPath() { return "/" ADMIN_PATHC "/" ENTITIES_PATHC "/" EMPLOYEES_PATHC "/" NEW_EMPLOYEEASSIGNMENT_PATHC; }
-		static std::string viewInternalPath(long long id) { return viewInternalPath(boost::lexical_cast<std::string>(id)); }
+		static std::string viewInternalPath(long long id) { return viewInternalPath(std::to_string(id)); }
 		static std::string viewInternalPath(const std::string &idStr) { return "/" ADMIN_PATHC "/" ENTITIES_PATHC "/" EMPLOYEES_PATHC "/" EMPLOYEEASSIGNMENTS_PREFIX + idStr; }
 
 		template<class Action>
@@ -968,10 +936,7 @@ namespace ERP
 
 			BaseAdminRecord::persist(a);
 		}
-		static const char *tableName()
-		{
-			return "employeeassignment";
-		}
+		DEFINE_DBO_TABLENAME("employeeassignment");
 	};
 
 	class ClientAssignment : public BaseAdminRecord
@@ -987,7 +952,7 @@ namespace ERP
 		EmployeeAssignmentCollection employeeAssignmentCollection;
 
 		static std::string newInternalPath() { return "/" ADMIN_PATHC "/" ENTITIES_PATHC "/" EMPLOYEES_PATHC "/" NEW_CLIENTASSIGNMENT_PATHC; }
-		static std::string viewInternalPath(long long id) { return viewInternalPath(boost::lexical_cast<std::string>(id)); }
+		static std::string viewInternalPath(long long id) { return viewInternalPath(std::to_string(id)); }
 		static std::string viewInternalPath(const std::string &idStr) { return "/" ADMIN_PATHC "/" ENTITIES_PATHC "/" CLIENTS_PATHC "/" CLIENTASSIGNMENTS_PREFIX + idStr; }
 
 		template<class Action>
@@ -1004,10 +969,7 @@ namespace ERP
 
 			BaseAdminRecord::persist(a);
 		}
-		static const char *tableName()
-		{
-			return "clientassignment";
-		}
+		DEFINE_DBO_TABLENAME("clientassignment");
 	};
 
 	class Account : public BaseAdminRecord
@@ -1026,7 +988,7 @@ namespace ERP
 		Account(Type t) : type(t) { }
 
 		static std::string newInternalPath() { return "/" ADMIN_PATHC "/" ACCOUNTS_PATHC "/" NEW_ACCOUNT_PATHC; }
-		static std::string viewInternalPath(long long id) { return viewInternalPath(boost::lexical_cast<std::string>(id)); }
+		static std::string viewInternalPath(long long id) { return viewInternalPath(std::to_string(id)); }
 		static std::string viewInternalPath(const std::string &idStr) { return "/" ADMIN_PATHC "/" ACCOUNTS_PATHC "/" ACCOUNT_PREFIX + idStr; }
 
 		std::string name;
@@ -1054,10 +1016,7 @@ namespace ERP
 
 			BaseAdminRecord::persist(a);
 		}
-		static const char *tableName()
-		{
-			return "account";
-		}
+		DEFINE_DBO_TABLENAME("account");
 
 	private:
 		std::string _currency = DEFAULT_CURRENCY;
@@ -1069,8 +1028,8 @@ namespace ERP
 	class AccountEntry : public BaseAdminRecord
 	{
 	private:
-		AccountEntry(Money amount, Dbo::ptr<Account> debitAccountPtr, Dbo::ptr<Account> creditAccountPtr)
-			: _amountInCents(amount.valueInCents()), _debitAccountPtr(debitAccountPtr), _creditAccountPtr(creditAccountPtr)
+		AccountEntry(const Money &amount, Dbo::ptr<Account> debitAccountPtr, Dbo::ptr<Account> creditAccountPtr)
+			: _amountInCents(amount.valueInCents()), _debitAccountPtr(move(debitAccountPtr)), _creditAccountPtr(move(creditAccountPtr))
 		{ }
 		AccountEntry(const AccountEntry &) = default;
 
@@ -1092,7 +1051,7 @@ namespace ERP
 		AccountEntry() = default;
 		AccountEntry(AccountEntry &&) = default;
 		static std::string newInternalPath() { return "/" ADMIN_PATHC "/" ACCOUNTS_PATHC "/" NEW_ACCOUNTENTRY_PATHC; }
-		static std::string viewInternalPath(long long id) { return viewInternalPath(boost::lexical_cast<std::string>(id)); }
+		static std::string viewInternalPath(long long id) { return viewInternalPath(std::to_string(id)); }
 		static std::string viewInternalPath(const std::string &idStr) { return "/" ADMIN_PATHC "/" ACCOUNTS_PATHC "/" ACCOUNTENTRY_PREFIX + idStr; }
 
 		Type type = UnspecifiedType;
@@ -1128,11 +1087,9 @@ namespace ERP
 
 			BaseAdminRecord::persist(a);
 		}
-		static const char *tableName()
-		{
-			return "accountentry";
-		}
+		DEFINE_DBO_TABLENAME("accountentry");
 	};
+
 	class OvertimeInfo
 	{
 	private:
@@ -1144,11 +1101,9 @@ namespace ERP
 		{
 			Dbo::id(a, entryPtr, "accountentry", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
 		}
-		static const char *tableName()
-		{
-			return "overtimeInfo";
-		}
+		DEFINE_DBO_TABLENAME("overtimeInfo");
 	};
+
 	class FineInfo
 	{
 	private:
@@ -1160,11 +1115,9 @@ namespace ERP
 		{
 			Dbo::id(a, entryPtr, "accountentry", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
 		}
-		static const char *tableName()
-		{
-			return "fineinfo";
-		}
+		DEFINE_DBO_TABLENAME("fineinfo");
 	};
+
 	class PettyExpenditureInfo
 	{
 	private:
@@ -1176,10 +1129,7 @@ namespace ERP
 		{
 			Dbo::id(a, entryPtr, "accountentry", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
 		}
-		static const char *tableName()
-		{
-			return "pettyexpenditureinfo";
-		}
+		DEFINE_DBO_TABLENAME("pettyexpenditureinfo");
 	};
 
 	enum CycleInterval
@@ -1238,7 +1188,7 @@ namespace ERP
 		};
 
 		static std::string newInternalPath() { return "/" ADMIN_PATHC "/" ACCOUNTS_PATHC "/" INCOMECYCLES_PATHC "/" NEW_INCOMECYCLE_PATHC; }
-		static std::string viewInternalPath(long long id) { return viewInternalPath(boost::lexical_cast<std::string>(id)); }
+		static std::string viewInternalPath(long long id) { return viewInternalPath(std::to_string(id)); }
 		static std::string viewInternalPath(const std::string &idStr) { return "/" ADMIN_PATHC "/" ACCOUNTS_PATHC "/" INCOMECYCLES_PATHC "/" INCOMECYCLE_PREFIX + idStr; }
 
 		ClientAssignmentCollection clientAssignmentCollection;
@@ -1249,10 +1199,7 @@ namespace ERP
 			EntryCycle::persist(a, "incomecycle");
 			Dbo::hasMany(a, clientAssignmentCollection, Dbo::ManyToOne, "incomecycle");
 		}
-		static const char *tableName()
-		{
-			return "incomecycle";
-		}
+		DEFINE_DBO_TABLENAME("incomecycle");
 
 	private:
 		friend class IncomeCycleFormModel;
@@ -1268,7 +1215,7 @@ namespace ERP
 		};
 
 		static std::string newInternalPath() { return "/" ADMIN_PATHC "/" ACCOUNTS_PATHC "/" EXPENSECYCLES_PATHC "/" NEW_EXPENSECYCLE_PATHC; }
-		static std::string viewInternalPath(long long id) { return viewInternalPath(boost::lexical_cast<std::string>(id)); }
+		static std::string viewInternalPath(long long id) { return viewInternalPath(std::to_string(id)); }
 		static std::string viewInternalPath(const std::string &idStr) { return "/" ADMIN_PATHC "/" ACCOUNTS_PATHC "/" EXPENSECYCLES_PATHC "/" EXPENSECYCLE_PREFIX + idStr; }
 		
 		EmployeeAssignmentCollection employeeAssignmentCollection;
@@ -1281,10 +1228,7 @@ namespace ERP
 			Dbo::hasMany(a, employeeAssignmentCollection, Dbo::ManyToOne, "expensecycle");
 			//Dbo::hasOne(a, rentHouseWPtr, "expensecycle");
 		}
-		static const char *tableName()
-		{
-			return "expensecycle";
-		}
+		DEFINE_DBO_TABLENAME("expensecycle");
 
 	private:
 		friend class ExpenseCycleFormModel;
@@ -1316,10 +1260,7 @@ namespace ERP
 		}
 		std::string pathToFile() const;
 		std::string pathToDirectory() const;
-		static const char *tableName()
-		{
-			return "uploadedfile";
-		}
+		DEFINE_DBO_TABLENAME("uploadedfile");
 	};
 
 	class AttendanceDevice
@@ -1329,7 +1270,7 @@ namespace ERP
 		AttendanceEntryCollection attendanceCollection;
 
 		static std::string newInternalPath() { return "/" ADMIN_PATHC "/" ATTENDANCE_PATHC "/" ATTENDANCEDEVICES_PATHC "/" NEW_ATTENDANCEDEVICE_PATHC; }
-		static std::string viewInternalPath(long long id) { return viewInternalPath(boost::lexical_cast<std::string>(id)); }
+		static std::string viewInternalPath(long long id) { return viewInternalPath(std::to_string(id)); }
 		static std::string viewInternalPath(const std::string &idStr) { return "/" ADMIN_PATHC "/" ATTENDANCE_PATHC "/" ATTENDANCEDEVICES_PATHC "/" ATTENDANCEDEVICE_PREFIX + idStr; }
 
 		template<class Action>
@@ -1338,16 +1279,13 @@ namespace ERP
 			Dbo::hasMany(a, versionsCollection, Dbo::ManyToOne, "parent");
 			Dbo::hasMany(a, attendanceCollection, Dbo::ManyToOne, "attendancedevice");
 		}
-		static const char *tableName()
-		{
-			return "attendancedevice";
-		}
+		DEFINE_DBO_TABLENAME("attendancedevice");
 	};
 	class AttendanceDeviceV : public BaseRecordVersion<AttendanceDevice>
 	{
 	public:
 		AttendanceDeviceV() = default;
-		AttendanceDeviceV(Dbo::ptr<AttendanceDevice> parentPtr) : BaseRecordVersion(parentPtr) { }
+		AttendanceDeviceV(Dbo::ptr<AttendanceDevice> parentPtr) : BaseRecordVersion(move(parentPtr)) { }
 
 		std::string hostName;
 		Dbo::ptr<Location> locationPtr;
@@ -1360,10 +1298,7 @@ namespace ERP
 			Dbo::field(a, hostName, "hostName", 255);
 			Dbo::belongsTo(a, locationPtr, "location", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 		}
-		static const char *tableName()
-		{
-			return "attendancedevice_v";
-		}
+		DEFINE_DBO_TABLENAME("attendancedevice_v");
 	};
 
 	class AttendanceEntry
@@ -1376,7 +1311,7 @@ namespace ERP
 		Dbo::ptr<Location> locationPtr;
 
 		static std::string newInternalPath() { return "/" ADMIN_PATHC "/" ATTENDANCE_PATHC "/" NEW_ATTENDANCEENTRY_PATHC; }
-		static std::string viewInternalPath(long long id) { return viewInternalPath(boost::lexical_cast<std::string>(id)); }
+		static std::string viewInternalPath(long long id) { return viewInternalPath(std::to_string(id)); }
 		static std::string viewInternalPath(const std::string &idStr) { return "/" ADMIN_PATHC "/" ATTENDANCE_PATHC "/" ATTENDANCEENTRY_PREFIX + idStr; }
 
 		template<class Action>
@@ -1388,13 +1323,8 @@ namespace ERP
 			Dbo::belongsTo(a, attendanceDevicePtr, "attendancedevice", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 			Dbo::belongsTo(a, locationPtr, "location", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 		}
-		static const char *tableName()
-		{
-			return "attendanceentry";
-		}
+		DEFINE_DBO_TABLENAME("attendanceentry");
 	};
-
-	void mapDboTree(Dbo::Session &dboSession);
 
 // 	class Inquiry
 // 	{
@@ -1418,10 +1348,7 @@ namespace ERP
 // 			Dbo::belongsTo(a, locationPtr, "location", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 // 			Dbo::belongsTo(a, assetPtr, "asset", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 // 		}
-// 		static const char *tableName()
-// 		{
-// 			return "inquiry";
-// 		}
+// 		DEFINE_DBO_TABLENAME("inquiry");
 // 	};
 // 
 // 	class Asset
@@ -1456,10 +1383,7 @@ namespace ERP
 // 			Dbo::hasOne(a, weaponWPtr, "asset");
 // 			Dbo::hasOne(a, vehicleWPtr, "asset");
 // 		}
-// 		static const char *tableName()
-// 		{
-// 			return "asset";
-// 		}
+// 		DEFINE_DBO_TABLENAME("asset");
 // 	};
 // 	class Inventory
 // 	{
@@ -1475,10 +1399,7 @@ namespace ERP
 // 			Dbo::id(a, assetPtr, "asset", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
 // 			Dbo::field(a, quantity, "quantity");
 // 		}
-// 		static const char *tableName()
-// 		{
-// 			return "inventory";
-// 		}
+// 		DEFINE_DBO_TABLENAME("inventory");
 // 	};
 // 	class ClothingTemplate
 // 	{
@@ -1490,10 +1411,7 @@ namespace ERP
 // 		{
 // 			Dbo::hasMany(a, clothingItemCollection, Dbo::ManyToOne, "clothingtemplate");
 // 		}
-// 		static const char *tableName()
-// 		{
-// 			return "clothingtemplate";
-// 		}
+// 		DEFINE_DBO_TABLENAME("clothingtemplate");
 // 	};
 // 	class ClothingItem
 // 	{
@@ -1513,10 +1431,7 @@ namespace ERP
 // 			Dbo::field(a, serviceable, "serviceable");
 // 			Dbo::belongsTo(a, assignedEmployeePtr, "employee", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 // 		}
-// 		static const char *tableName()
-// 		{
-// 			return "clothingitem";
-// 		}
+// 		DEFINE_DBO_TABLENAME("clothingitem");
 // 	};
 // 	class AlarmTemplate
 // 	{
@@ -1528,10 +1443,7 @@ namespace ERP
 // 		{
 // 			Dbo::hasMany(a, alarmItemCollection, Dbo::ManyToOne, "alarmtemplate");
 // 		}
-// 		static const char *tableName()
-// 		{
-// 			return "alarmtemplate";
-// 		}
+// 		DEFINE_DBO_TABLENAME("alarmtemplate");
 // 	};
 // 	class AlarmItem
 // 	{
@@ -1551,10 +1463,7 @@ namespace ERP
 // 			Dbo::field(a, serviceable, "serviceable");
 // 			Dbo::belongsTo(a, assignedEntityPtr, "entity", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 // 		}
-// 		static const char *tableName()
-// 		{
-// 			return "alarmitem";
-// 		}
+// 		DEFINE_DBO_TABLENAME("alarmitem");
 // 	};
 // 	class WeaponTemplate
 // 	{
@@ -1566,10 +1475,7 @@ namespace ERP
 // 		{
 // 			Dbo::hasMany(a, weaponCollection, Dbo::ManyToOne, "weapontemplate");
 // 		}
-// 		static const char *tableName()
-// 		{
-// 			return "weapontemplate";
-// 		}
+// 		DEFINE_DBO_TABLENAME("weapontemplate");
 // 	};
 // 	class Weapon
 // 	{
@@ -1587,10 +1493,7 @@ namespace ERP
 // 			Dbo::belongsTo(a, weaponTemplatePtr, "weapontemplate", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade);
 // 			Dbo::field(a, weaponNumber, "weaponNumber");
 // 		}
-// 		static const char *tableName()
-// 		{
-// 			return "weapon";
-// 		}
+// 		DEFINE_DBO_TABLENAME("weapon");
 // 	};
 // 	class VehicleTemplate
 // 	{
@@ -1602,10 +1505,7 @@ namespace ERP
 // 		{
 // 			Dbo::hasMany(a, vehicleCollection, Dbo::ManyToOne, "vehicletemplate");
 // 		}
-// 		static const char *tableName()
-// 		{
-// 			return "vehicletemplate";
-// 		}
+// 		DEFINE_DBO_TABLENAME("vehicletemplate");
 // 	};
 // 	class Vehicle
 // 	{
@@ -1621,10 +1521,7 @@ namespace ERP
 // 			Dbo::id(a, assetPtr, "asset", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
 // 			Dbo::belongsTo(a, vehicleTemplatePtr, "vehicletemplate", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade);
 // 		}
-// 		static const char *tableName()
-// 		{
-// 			return "vehicle";
-// 		}
+// 		DEFINE_DBO_TABLENAME("vehicle");
 // 	};
 // 
 // 	class AssetRegistration
@@ -1651,10 +1548,7 @@ namespace ERP
 // 
 // 			Dbo::hasOne(a, assetWPtr, "assetregistration");
 // 		}
-// 		static const char *tableName()
-// 		{
-// 			return "assetregistration";
-// 		}
+// 		DEFINE_DBO_TABLENAME("assetregistration");
 // 	};
 // 	class Office
 // 	{
@@ -1666,10 +1560,7 @@ namespace ERP
 // 		{
 // 			Dbo::belongsTo(a, assetPtr, "asset", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 // 		}
-// 		static const char *tableName()
-// 		{
-// 			return "office";
-// 		}
+// 		DEFINE_DBO_TABLENAME("office");
 // 	};
 // 	class RentHouse
 // 	{
@@ -1693,10 +1584,7 @@ namespace ERP
 // 
 // 			Dbo::hasMany(a, depositEntryCollection, Dbo::ManyToOne, "deposit_renthouse");
 // 		}
-// 		static const char *tableName()
-// 		{
-// 			return "renthouse";
-// 		}
+// 		DEFINE_DBO_TABLENAME("renthouse");
 // 	};
 
 
@@ -1881,7 +1769,7 @@ namespace Wt
 	{
 		//User Permissions
 		template<class Action>
-		void field(Action &a, ERP::UserPermissionPK &key, const std::string &, int size)
+		void field(Action &a, ERP::UserPermissionPK &key, const std::string &, int)
 		{
 			belongsTo(a, key.userPtr, "user", OnDeleteCascade | OnUpdateCascade | NotNull);
 			belongsTo(a, key.permissionPtr, "permission", OnDeleteCascade | OnUpdateCascade | NotNull);

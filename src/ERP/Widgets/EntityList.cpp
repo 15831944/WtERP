@@ -31,10 +31,10 @@ namespace ERP
 
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
-			"SELECT e.id, e.name, e.type, ea.id, p.id, ca.id FROM " + std::string(Entity::tableName()) + " e "
-			"LEFT JOIN " + EmployeeAssignment::tableName() + " ea ON (ea.entity_id = e.id AND ea.startDate <= ? AND (ea.endDate IS NULL OR ea.endDate > ?)) "
-			"LEFT JOIN " + EmployeePosition::tableName() + " p ON (p.id = ea.employeeposition_id AND p.type = " + boost::lexical_cast<std::string>(EmployeePosition::PersonnelType) + ") "
-			"LEFT JOIN " + ClientAssignment::tableName() + " ca ON (ca.entity_id = e.id AND ca.startDate <= ? AND (ca.endDate IS NULL OR ca.endDate > ?))"
+			"SELECT e.id, e.name, e.type, ea.id, p.id, ca.id FROM " + Entity::tStr() + " e "
+			"LEFT JOIN " + EmployeeAssignment::tStr() + " ea ON (ea.entity_id = e.id AND ea.startDate <= ? AND (ea.endDate IS NULL OR ea.endDate > ?)) "
+			"LEFT JOIN " + EmployeePosition::tStr() + " p ON (p.id = ea.employeeposition_id AND p.type = " + boost::lexical_cast<std::string>(EmployeePosition::PersonnelType) + ") "
+			"LEFT JOIN " + ClientAssignment::tStr() + " ca ON (ca.entity_id = e.id AND ca.startDate <= ? AND (ca.endDate IS NULL OR ca.endDate > ?))"
 			).groupBy("e.id");
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "e.");
 
@@ -68,10 +68,10 @@ namespace ERP
 
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
-			"SELECT e.id, e.name, ea.id, p.id, ca.id FROM " + std::string(Entity::tableName()) + " e "
-			"LEFT JOIN " + EmployeeAssignment::tableName() + " ea ON (ea.entity_id = e.id AND ea.startDate <= ? AND (ea.endDate IS NULL OR ea.endDate > ?)) "
-			"LEFT JOIN " + EmployeePosition::tableName() + " p ON (p.id = ea.employeeposition_id AND p.type = " + boost::lexical_cast<std::string>(EmployeePosition::PersonnelType) + ") "
-			"LEFT JOIN " + ClientAssignment::tableName() + " ca ON (ca.entity_id = e.id AND ca.startDate <= ? AND (ca.endDate IS NULL OR ca.endDate > ?))"
+			"SELECT e.id, e.name, ea.id, p.id, ca.id FROM " + Entity::tStr() + " e "
+			"LEFT JOIN " + EmployeeAssignment::tStr() + " ea ON (ea.entity_id = e.id AND ea.startDate <= ? AND (ea.endDate IS NULL OR ea.endDate > ?)) "
+			"LEFT JOIN " + EmployeePosition::tStr() + " p ON (p.id = ea.employeeposition_id AND p.type = " + boost::lexical_cast<std::string>(EmployeePosition::PersonnelType) + ") "
+			"LEFT JOIN " + ClientAssignment::tStr() + " ca ON (ca.entity_id = e.id AND ca.startDate <= ? AND (ca.endDate IS NULL OR ca.endDate > ?))"
 			).where("e.type = " + boost::lexical_cast<std::string>(Entity::PersonType)).groupBy("e.id");
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "e.");
 
@@ -104,10 +104,10 @@ namespace ERP
 
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
-			"SELECT e.id, e.name, ea.id, p.id, ca.id FROM " + std::string(Entity::tableName()) + " e "
-			"LEFT JOIN " + EmployeeAssignment::tableName() + " ea ON (ea.entity_id = e.id AND ea.startDate <= ? AND (ea.endDate IS NULL OR ea.endDate > ?)) "
-			"LEFT JOIN " + EmployeePosition::tableName() + " p ON (p.id = ea.employeeposition_id AND p.type = " + boost::lexical_cast<std::string>(EmployeePosition::PersonnelType) + ") "
-			"LEFT JOIN " + ClientAssignment::tableName() + " ca ON (ca.entity_id = e.id AND ca.startDate <= ? AND (ca.endDate IS NULL OR ca.endDate > ?))"
+			"SELECT e.id, e.name, ea.id, p.id, ca.id FROM " + Entity::tStr() + " e "
+			"LEFT JOIN " + EmployeeAssignment::tStr() + " ea ON (ea.entity_id = e.id AND ea.startDate <= ? AND (ea.endDate IS NULL OR ea.endDate > ?)) "
+			"LEFT JOIN " + EmployeePosition::tStr() + " p ON (p.id = ea.employeeposition_id AND p.type = " + boost::lexical_cast<std::string>(EmployeePosition::PersonnelType) + ") "
+			"LEFT JOIN " + ClientAssignment::tStr() + " ca ON (ca.entity_id = e.id AND ca.startDate <= ? AND (ca.endDate IS NULL OR ca.endDate > ?))"
 			).where("e.type = " + boost::lexical_cast<std::string>(Entity::BusinessType)).groupBy("e.id");
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "e.");
 
@@ -140,10 +140,10 @@ namespace ERP
 
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
-			"SELECT e.id, e.name, ea.id, p.id, ca.id FROM " + std::string(Entity::tableName()) + " e "
-			"INNER JOIN " + EmployeeAssignment::tableName() + " ea ON (ea.entity_id = e.id AND ea.startDate <= ? AND (ea.endDate IS NULL OR ea.endDate > ?)) "
-			"LEFT JOIN " + EmployeePosition::tableName() + " p ON (p.id = ea.employeeposition_id AND p.type = " + boost::lexical_cast<std::string>(EmployeePosition::PersonnelType) + ") "
-			"LEFT JOIN " + ClientAssignment::tableName() + " ca ON (ca.entity_id = e.id AND ca.startDate <= ? AND (ca.endDate IS NULL OR ca.endDate > ?))"
+			"SELECT e.id, e.name, ea.id, p.id, ca.id FROM " + Entity::tStr() + " e "
+			"INNER JOIN " + EmployeeAssignment::tStr() + " ea ON (ea.entity_id = e.id AND ea.startDate <= ? AND (ea.endDate IS NULL OR ea.endDate > ?)) "
+			"LEFT JOIN " + EmployeePosition::tStr() + " p ON (p.id = ea.employeeposition_id AND p.type = " + boost::lexical_cast<std::string>(EmployeePosition::PersonnelType) + ") "
+			"LEFT JOIN " + ClientAssignment::tStr() + " ca ON (ca.entity_id = e.id AND ca.startDate <= ? AND (ca.endDate IS NULL OR ca.endDate > ?))"
 			).groupBy("e.id");
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "e.");
 
@@ -176,10 +176,10 @@ namespace ERP
 
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
-			"SELECT e.id, e.name, ea.id, p.id, ca.id FROM " + std::string(Entity::tableName()) + " e "
-			"INNER JOIN " + EmployeeAssignment::tableName() + " ea ON (ea.entity_id = e.id AND ea.startDate <= ? AND (ea.endDate IS NULL OR ea.endDate > ?)) "
-			"INNER JOIN " + EmployeePosition::tableName() + " p ON (p.id = ea.employeeposition_id AND p.type = " + boost::lexical_cast<std::string>(EmployeePosition::PersonnelType) + ") "
-			"LEFT JOIN " + ClientAssignment::tableName() + " ca ON (ca.entity_id = e.id AND ca.startDate <= ? AND (ca.endDate IS NULL OR ca.endDate > ?))"
+			"SELECT e.id, e.name, ea.id, p.id, ca.id FROM " + Entity::tStr() + " e "
+			"INNER JOIN " + EmployeeAssignment::tStr() + " ea ON (ea.entity_id = e.id AND ea.startDate <= ? AND (ea.endDate IS NULL OR ea.endDate > ?)) "
+			"INNER JOIN " + EmployeePosition::tStr() + " p ON (p.id = ea.employeeposition_id AND p.type = " + boost::lexical_cast<std::string>(EmployeePosition::PersonnelType) + ") "
+			"LEFT JOIN " + ClientAssignment::tStr() + " ca ON (ca.entity_id = e.id AND ca.startDate <= ? AND (ca.endDate IS NULL OR ca.endDate > ?))"
 			).groupBy("e.id");
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "e.");
 
@@ -213,10 +213,10 @@ namespace ERP
 
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
-			"SELECT e.id, e.name, e.type, ea.id, p.id, ca.id FROM " + std::string(Entity::tableName()) + " e "
-			"LEFT JOIN " + EmployeeAssignment::tableName() + " ea ON (ea.entity_id = e.id AND ea.startDate <= ? AND (ea.endDate IS NULL OR ea.endDate > ?)) "
-			"LEFT JOIN " + EmployeePosition::tableName() + " p ON (p.id = ea.employeeposition_id AND p.type = " + boost::lexical_cast<std::string>(EmployeePosition::PersonnelType) + ") "
-			"INNER JOIN " + ClientAssignment::tableName() + " ca ON (ca.entity_id = e.id AND ca.startDate <= ? AND (ca.endDate IS NULL OR ca.endDate > ?))"
+			"SELECT e.id, e.name, e.type, ea.id, p.id, ca.id FROM " + Entity::tStr() + " e "
+			"LEFT JOIN " + EmployeeAssignment::tStr() + " ea ON (ea.entity_id = e.id AND ea.startDate <= ? AND (ea.endDate IS NULL OR ea.endDate > ?)) "
+			"LEFT JOIN " + EmployeePosition::tStr() + " p ON (p.id = ea.employeeposition_id AND p.type = " + boost::lexical_cast<std::string>(EmployeePosition::PersonnelType) + ") "
+			"INNER JOIN " + ClientAssignment::tStr() + " ca ON (ca.entity_id = e.id AND ca.startDate <= ? AND (ca.endDate IS NULL OR ca.endDate > ?))"
 			).groupBy("e.id");
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "e.");
 

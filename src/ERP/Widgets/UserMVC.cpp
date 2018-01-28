@@ -26,8 +26,8 @@ namespace ERP
 			"SELECT ainfo.id, aid.identity, ainfo.email, r.name FROM "
 			"auth_info ainfo "
 			"INNER JOIN auth_identity aid ON (aid.auth_info_id = ainfo.id AND aid.provider = ?) "
-			"LEFT JOIN " + std::string(User::tableName()) + " u ON (u.id = ainfo.user_id) "
-			"LEFT JOIN " + std::string(Region::tableName()) + " r ON (r.id = u.region_id)"
+			"LEFT JOIN " + User::tStr() + " u ON (u.id = ainfo.user_id) "
+			"LEFT JOIN " + Region::tStr() + " r ON (r.id = u.region_id)"
 		).bind(Wt::Auth::Identity::LoginName);
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "u.");
 
@@ -394,7 +394,7 @@ namespace ERP
 
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
-			"SELECT r.id, r.name FROM " + std::string(Region::tableName()) + " r ");
+			"SELECT r.id, r.name FROM " + Region::tStr() + " r ");
 
 		model->setQuery(generateQuery());
 		addColumn(ViewId, model->addColumn("r.id"), tr("ID"), IdColumnWidth);

@@ -11,7 +11,7 @@
 
 //TODO: Follow Multiple Dialogs error report
 
-//TODO: Better solution to std::string(Dbo::tableName())
+//TODO: Fix navbar-left on navbar-stacked
 //TODO: Fix SuggestionPopups
 //TODO: Location ViewName and other missing ViewNames
 //TODO: Check what else should be made a BaseAdminRecord

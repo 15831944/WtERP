@@ -178,8 +178,8 @@ namespace ERP
 		//Initialize Dbo session
 		WServer *server = SERVER;
 		_dboSession.setConnectionPool(server->sqlPool());
-		mapDboTree(_dboSession);
-		mapConfigurationDboTree(_dboSession);
+		mapERPDbos(_dboSession);
+		mapConfigurationDbos(_dboSession);
 
 		//Localization and Strings
 		messageResourceBundle().use(appRoot() + "templates", false); //CHECK_BEFORE_RELEASE

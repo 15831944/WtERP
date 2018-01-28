@@ -96,12 +96,12 @@ namespace ERP
 		}
 	}
 
-	PermissionCPtr PermissionsDatabase::getPermissionPtr(long long permissionId) const
+	shared_ptr<const PermissionDdo> PermissionsDatabase::getPermissionPtr(long long permissionId) const
 	{
 		boost::shared_lock<boost::shared_mutex> lock(_mutex);
 		auto itr = _permissionItemMap.find(permissionId);
 		if(itr == _permissionItemMap.end())
-			return PermissionCPtr();
+			return nullptr;
 
 		return itr->second.permissionPtr;
 	}

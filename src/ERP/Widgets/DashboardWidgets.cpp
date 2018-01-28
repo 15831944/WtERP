@@ -24,20 +24,20 @@ namespace ERP
 		bindNew<RecordCountTemplate>("employees", []() -> long long {
 			Wt::WDate currentDate = Wt::WDate::currentServerDate();
 			return APP->dboSession().query<long long>(
-				"SELECT COUNT(DISTINCT a.entity_id) FROM " + std::string(EmployeeAssignment::tableName()) + " a"
+				"SELECT COUNT(DISTINCT a.entity_id) FROM " + EmployeeAssignment::tStr() + " a"
 				).where("? >= startDate AND (endDate IS null OR ? < endDate)").bind(currentDate).bind(currentDate);
 		}, totalEntities);
 		bindNew<RecordCountTemplate>("personnel", []() -> long long {
 			Wt::WDate currentDate = Wt::WDate::currentServerDate();
 			return APP->dboSession().query<long long>(
-				"SELECT COUNT(DISTINCT a.entity_id) FROM " + std::string(EmployeeAssignment::tableName()) + " a "
-				"INNER JOIN " + EmployeePosition::tableName() + " p ON (p.id = a.employeeposition_id AND p.type = " + boost::lexical_cast<std::string>(EmployeePosition::PersonnelType) + ")"
+				"SELECT COUNT(DISTINCT a.entity_id) FROM " + EmployeeAssignment::tStr() + " a "
+				"INNER JOIN " + EmployeePosition::tStr() + " p ON (p.id = a.employeeposition_id AND p.type = " + boost::lexical_cast<std::string>(EmployeePosition::PersonnelType) + ")"
 				).where("? >= startDate AND (endDate IS null OR ? < endDate)").bind(currentDate).bind(currentDate);
 		}, totalEntities);
 		bindNew<RecordCountTemplate>("clients", []() -> long long {
 			Wt::WDate currentDate = Wt::WDate::currentServerDate();
 			return APP->dboSession().query<long long>(
-				"SELECT COUNT(DISTINCT a.entity_id) FROM " + std::string(ClientAssignment::tableName()) + " a"
+				"SELECT COUNT(DISTINCT a.entity_id) FROM " + ClientAssignment::tStr() + " a"
 				).where("? >= startDate AND (endDate IS null OR ? < endDate)").bind(currentDate).bind(currentDate);
 		}, totalEntities);
 
@@ -68,7 +68,7 @@ namespace ERP
 		});
 		auto entityAccounts = bindNew<RecordCountTemplate>("entityAccounts", []() -> long long {
 			return APP->dboSession().query<long long>(
-				"SELECT COUNT(1) FROM " + std::string(Account::tableName()) + " acc INNER JOIN " + Entity::tableName() + " e ON (e.bal_account_id = acc.id OR e.pnl_account_id = acc.id)"
+				"SELECT COUNT(1) FROM " + Account::tStr() + " acc INNER JOIN " + Entity::tStr() + " e ON (e.bal_account_id = acc.id OR e.pnl_account_id = acc.id)"
 			);
 		}, totalAccounts);
 
@@ -271,8 +271,8 @@ namespace ERP
 			TRANSACTION(app);
 
 			double balanceInCents = app->dboSession().query<double>(
-				"SELECT COALESCE(SUM(acc.balance), 0) FROM " + std::string(Account::tableName()) + " acc "
-				"INNER JOIN " + Entity::tableName() + " e ON e.bal_account_id = acc.id"
+				"SELECT COALESCE(SUM(acc.balance), 0) FROM " + Account::tStr() + " acc "
+				"INNER JOIN " + Entity::tStr() + " e ON e.bal_account_id = acc.id"
 				).where("acc.balance > 0");
 
 			Wt::WString balanceStr = Wt::WLocale::currentLocale().toString(Money(std::abs(static_cast<long long>(balanceInCents)), DEFAULT_CURRENCY));
@@ -311,8 +311,8 @@ namespace ERP
 			TRANSACTION(app);
 
 			double balanceInCents = app->dboSession().query<double>(
-				"SELECT COALESCE(SUM(acc.balance), 0) FROM " + std::string(Account::tableName()) + " acc "
-				"INNER JOIN " + Entity::tableName() + " e ON e.bal_account_id = acc.id"
+				"SELECT COALESCE(SUM(acc.balance), 0) FROM " + Account::tStr() + " acc "
+				"INNER JOIN " + Entity::tStr() + " e ON e.bal_account_id = acc.id"
 				).where("acc.balance < 0");
 
 			Wt::WString balanceStr = Wt::WLocale::currentLocale().toString(Money(std::abs(static_cast<long long>(balanceInCents)), DEFAULT_CURRENCY));

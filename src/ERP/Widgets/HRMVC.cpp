@@ -686,11 +686,11 @@ namespace ERP
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
 			"SELECT a.id, a.timestamp, e.name, a.startDate, a.endDate, cnt.name, city.name, l.address FROM "
-			+ std::string(EmployeeAssignment::tableName()) + " a "
-			"INNER JOIN " + Entity::tableName() + " e ON (e.id = a.entity_id) "
-			"LEFT JOIN " + Location::tableName() + " l ON (l.id = a.location_id) "
-			"LEFT JOIN " + Country::tableName() + " cnt ON (cnt.code = l.country_code) "
-			"LEFT JOIN " + City::tableName() + " city ON (city.id = l.city_id)");
+			+ EmployeeAssignment::tStr() + " a "
+			"INNER JOIN " + Entity::tStr() + " e ON (e.id = a.entity_id) "
+			"LEFT JOIN " + Location::tStr() + " l ON (l.id = a.location_id) "
+			"LEFT JOIN " + Country::tStr() + " cnt ON (cnt.code = l.country_code) "
+			"LEFT JOIN " + City::tStr() + " city ON (city.id = l.city_id)");
 
 		if(_entityPtr.id() != -1)
 			_baseQuery.where("a.entity_id = ?").bind(_entityPtr.id());
@@ -1037,9 +1037,9 @@ namespace ERP
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
 			"SELECT ca.id, ca.timestamp, e.name, ca.startDate, ca.endDate, COUNT(ea.id) FROM "
-			+ std::string(ClientAssignment::tableName()) + " ca "
-			"INNER JOIN " + Entity::tableName() + " e ON (e.id = ca.entity_id) "
-			"LEFT JOIN " + EmployeeAssignment::tableName() + " ea ON ea.clientassignment_id = ca.id"
+			+ ClientAssignment::tStr() + " ca "
+			"INNER JOIN " + Entity::tStr() + " e ON (e.id = ca.entity_id) "
+			"LEFT JOIN " + EmployeeAssignment::tStr() + " ea ON ea.clientassignment_id = ca.id"
 			).groupBy("ca.id");
 
 		if(_entityPtr.id() != -1)

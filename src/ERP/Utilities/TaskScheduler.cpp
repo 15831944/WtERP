@@ -18,17 +18,17 @@ namespace ERP
 		Dbo::Transaction t(dboSession);
 		//Recalculate balance update query
 		{
-			_recalculateBalanceCall = make_unique<Dbo::Call>(dboSession.execute("UPDATE " + std::string(Account::tableName()) + " SET balance = "
-				"COALESCE((SELECT SUM(dE.amount) FROM " + AccountEntry::tableName() + " dE WHERE dE.debit_account_id = " + Account::tableName() + ".id), 0) - COALESCE((SELECT SUM(cE.amount) FROM " + AccountEntry::tableName() + " cE WHERE cE.credit_account_id = " + Account::tableName() + ".id), 0)"
+			_recalculateBalanceCall = make_unique<Dbo::Call>(dboSession.execute("UPDATE " + Account::tStr() + " SET balance = "
+				"COALESCE((SELECT SUM(dE.amount) FROM " + AccountEntry::tStr() + " dE WHERE dE.debit_account_id = " + Account::tStr() + ".id), 0) - COALESCE((SELECT SUM(cE.amount) FROM " + AccountEntry::tStr() + " cE WHERE cE.credit_account_id = " + Account::tStr() + ".id), 0)"
 				", \"version\" = \"version\" + 1"));
 			t.rollback();
 		}
 
 		//Abnormal account check query
 		{
-			_accountCheckAbnormal = dboSession.query<long long>("SELECT COUNT(*) FROM " + std::string(Account::tableName()) + " acc "
-				"INNER JOIN " + Entity::tableName() + " balE ON (balE.bal_account_id = acc.id) "
-				"INNER JOIN " + Entity::tableName() + " pnlE ON (pnlE.pnl_account_id = acc.id)");
+			_accountCheckAbnormal = dboSession.query<long long>("SELECT COUNT(*) FROM " + Account::tStr() + " acc "
+				"INNER JOIN " + Entity::tStr() + " balE ON (balE.bal_account_id = acc.id) "
+				"INNER JOIN " + Entity::tStr() + " pnlE ON (pnlE.pnl_account_id = acc.id)");
 		}
 
 		//Abnormal entry check query
@@ -46,8 +46,8 @@ namespace ERP
 		//Abnormal location query
 		{
 			_locationCheckAbnormal = dboSession.query<long long>(
-				"SELECT COUNT(*) FROM " + std::string(Location::tableName()) + " l "
-				"INNER JOIN " + City::tableName() + " city ON (city.id = l.city_id)"
+				"SELECT COUNT(*) FROM " + Location::tStr() + " l "
+				"INNER JOIN " + City::tStr() + " city ON (city.id = l.city_id)"
 				).where("city.country_code <> l.country_code");
 		}
 
@@ -59,17 +59,17 @@ namespace ERP
 		//Entry cycle queries
 		{
 			std::string query = std::string("SELECT cycle, lastEntry FROM %1% cycle ") +
-				"LEFT JOIN " + AccountEntry::tableName() + " lastEntry ON (cycle.id = lastEntry.%2%) "
-				"LEFT JOIN " + AccountEntry::tableName() + " e2 ON (cycle.id = e2.%2% AND (lastEntry.timestamp < e2.timestamp OR lastEntry.timestamp = e2.timestamp AND lastEntry.id < e2.id)) "
+				"LEFT JOIN " + AccountEntry::tStr() + " lastEntry ON (cycle.id = lastEntry.%2%) "
+				"LEFT JOIN " + AccountEntry::tStr() + " e2 ON (cycle.id = e2.%2% AND (lastEntry.timestamp < e2.timestamp OR lastEntry.timestamp = e2.timestamp AND lastEntry.id < e2.id)) "
 				"WHERE (e2.id IS null) "
 				"AND (cycle.startDate <= ? AND cycle.timestamp <= ?) "
 				"AND (lastEntry.id IS null OR cycle.endDate IS null OR (lastEntry.timestamp <= ? AND cycle.endDate > lastEntry.timestamp AND cycle.endDate > cycle.startDate))";
 			boost::format fString(query);
 
-			fString % IncomeCycle::tableName() % "incomecycle_id";
+			fString % IncomeCycle::tStr() % "incomecycle_id";
 			_incomeCycleQuery = dboSession.query<IncomeCycleTuple>(fString.str());
 
-			fString % ExpenseCycle::tableName() % "expensecycle_id";
+			fString % ExpenseCycle::tStr() % "expensecycle_id";
 			_expenseCycleQuery = dboSession.query<ExpenseCycleTuple>(fString.str());
 		}
 

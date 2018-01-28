@@ -6,6 +6,8 @@
 
 namespace ERP
 {
+	void mapConfigurationDbos(Dbo::Session &dboSession);
+
 	class Configuration;
 	class ConfigurationBool;
 	class ConfigurationDouble;
@@ -143,10 +145,7 @@ namespace ERP
 			Dbo::hasOne(a, longIntPtr, "configuration");
 			Dbo::hasOne(a, stringPtr, "configuration");
 		}
-		constexpr static const char *tableName()
-		{
-			return "configuration";
-		}
+		DEFINE_DBO_TABLENAME("configuration");
 	};
 
 	//ConfigurationBool DBO Class
@@ -176,10 +175,7 @@ namespace ERP
 			Dbo::field(a, defaultValue, "defaultValue");
 			Dbo::field(a, recommendedValue, "recommendedValue");
 		}
-		constexpr static const char *tableName()
-		{
-			return "configurationbool";
-		}
+		DEFINE_DBO_TABLENAME("configurationbool");
 	};
 
 	//ConfigurationDouble DBO Class
@@ -213,10 +209,7 @@ namespace ERP
 			Dbo::field(a, minValue, "minValue");
 			Dbo::field(a, maxValue, "maxValue");
 		}
-		constexpr static const char *tableName()
-		{
-			return "configurationdouble";
-		}
+		DEFINE_DBO_TABLENAME("configurationdouble");
 	};
 
 	class ConfigurationEnumValue
@@ -236,10 +229,7 @@ namespace ERP
 
 			Dbo::belongsTo(a, enumPtr, "enum", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
 		}
-		constexpr static const char *tableName()
-		{
-			return "configurationenumvalue";
-		}
+		DEFINE_DBO_TABLENAME("configurationenumvalue");
 	};
 
 	//ConfigurationEnum DBO Class
@@ -273,10 +263,7 @@ namespace ERP
 
 			Dbo::hasMany(a, enumValueCollection, Dbo::ManyToOne, "enum");
 		}
-		constexpr static const char *tableName()
-		{
-			return "configurationenum";
-		}
+		DEFINE_DBO_TABLENAME("configurationenum");
 	};
 
 	//ConfigurationFloat DBO Class
@@ -310,10 +297,7 @@ namespace ERP
 			Dbo::field(a, minValue, "minValue");
 			Dbo::field(a, maxValue, "maxValue");
 		}
-		constexpr static const char *tableName()
-		{
-			return "configurationfloat";
-		}
+		DEFINE_DBO_TABLENAME("configurationfloat");
 	};
 
 	//ConfigurationInt DBO Class
@@ -347,10 +331,7 @@ namespace ERP
 			Dbo::field(a, minValue, "minValue");
 			Dbo::field(a, maxValue, "maxValue");
 		}
-		constexpr static const char *tableName()
-		{
-			return "configurationint";
-		}
+		DEFINE_DBO_TABLENAME("configurationint");
 	};
 
 	//ConfigurationLongInt DBO Class
@@ -384,10 +365,7 @@ namespace ERP
 			Dbo::field(a, minValue, "minValue");
 			Dbo::field(a, maxValue, "maxValue");
 		}
-		constexpr static const char *tableName()
-		{
-			return "configurationlongint";
-		}
+		DEFINE_DBO_TABLENAME("configurationlongint");
 	};
 
 	//ConfigurationString DBO Class
@@ -423,10 +401,7 @@ namespace ERP
 			Dbo::field(a, minLength, "minLength");
 			Dbo::field(a, maxLength, "maxLength");
 		}
-		constexpr static const char *tableName()
-		{
-			return "configurationstring";
-		}
+		DEFINE_DBO_TABLENAME("configurationstring");
 	};
 
 	namespace Ddo
@@ -497,8 +472,6 @@ namespace ERP
 			{ }
 		};
 	}
-
-	void mapConfigurationDboTree(Dbo::Session &dboSession);
 }
 
 #endif

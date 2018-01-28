@@ -16,7 +16,7 @@ namespace ERP
 	private:
 		struct PermissionItem
 		{
-			PermissionSPtr permissionPtr;
+			shared_ptr<PermissionDdo> permissionPtr;
 			PermissionMap linkedPermissions;
 		};
 		typedef std::map<long long, PermissionItem> _PermissionItemMap;
@@ -25,7 +25,7 @@ namespace ERP
 		PermissionsDatabase(Dbo::Session &session);
 		void reload() { fetchAll(); }
 
-		PermissionCPtr getPermissionPtr(long long permissionId) const;
+		shared_ptr<const PermissionDdo> getPermissionPtr(long long permissionId) const;
 		PermissionMap getUserPermissions(Dbo::ptr<User> userPtr, Wt::Auth::LoginState loginState, Dbo::Session *altSession = nullptr);
 
 	protected:

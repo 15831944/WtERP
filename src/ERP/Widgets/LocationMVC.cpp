@@ -110,7 +110,7 @@ namespace ERP
 		try
 		{
 			TRANSACTION(app);
-			int rows = app->dboSession().query<int>("SELECT COUNT(1) FROM " + std::string(Country::tableName())).where("code = ?").bind(input);
+			int rows = app->dboSession().query<int>("SELECT COUNT(1) FROM " + Country::tStr()).where("code = ?").bind(input);
 			t.commit();
 
 			if(rows != 0)
@@ -504,10 +504,10 @@ namespace ERP
 
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
-			"SELECT l.id, l.address, cnt.name, city.name, e.name FROM " + std::string(Location::tableName()) + " l "
-			"LEFT JOIN " + Country::tableName() + " cnt ON cnt.code = l.country_code "
-			"LEFT JOIN " + City::tableName() + " city ON city.id = l.city_id "
-			"LEFT JOIN " + Entity::tableName() + " e ON e.id = l.entity_id ");
+			"SELECT l.id, l.address, cnt.name, city.name, e.name FROM " + Location::tStr() + " l "
+			"LEFT JOIN " + Country::tStr() + " cnt ON cnt.code = l.country_code "
+			"LEFT JOIN " + City::tStr() + " city ON city.id = l.city_id "
+			"LEFT JOIN " + Entity::tStr() + " e ON e.id = l.entity_id ");
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, true, "l.");
 
 		model->setQuery(generateQuery());

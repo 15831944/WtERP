@@ -20,12 +20,12 @@ namespace ERP
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
 			"SELECT d.id, dv.hostName, cnt.name, city.name, l.address FROM "
-			+ std::string(AttendanceDevice::tableName()) + " d "
-			"INNER JOIN " + AttendanceDeviceV::tableName() + " dv "
-			"ON dv.id = (SELECT dvi.id FROM "+AttendanceDeviceV::tableName()+" dvi WHERE dvi.parent_id = d.id ORDER BY dvi.`timestamp` DESC LIMIT 1) "
-			"LEFT JOIN " + Location::tableName() + " l ON (l.id = dv.location_id) "
-			"LEFT JOIN " + Country::tableName() + " cnt ON (cnt.code = l.country_code) "
-			"LEFT JOIN " + City::tableName() + " city ON (city.id = l.city_id)");
+			+ AttendanceDevice::tStr() + " d "
+			"INNER JOIN " + AttendanceDeviceV::tStr() + " dv "
+			"ON dv.id = (SELECT dvi.id FROM "+AttendanceDeviceV::tStr()+" dvi WHERE dvi.parent_id = d.id ORDER BY dvi.`timestamp` DESC LIMIT 1) "
+			"LEFT JOIN " + Location::tStr() + " l ON (l.id = dv.location_id) "
+			"LEFT JOIN " + Country::tStr() + " cnt ON (cnt.code = l.country_code) "
+			"LEFT JOIN " + City::tStr() + " city ON (city.id = l.city_id)");
 
 		model->setQuery(generateQuery());
 		addColumn(ViewId, model->addColumn("d.id"), tr("ID"), IdColumnWidth);
@@ -334,11 +334,11 @@ namespace ERP
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
 			"SELECT a.id, e.name, a.timestampIn, a.timestampOut, cnt.name, city.name, l.address FROM "
-			+ std::string(AttendanceEntry::tableName()) + " a "
-			"INNER JOIN " + Entity::tableName() + " e ON (e.id = a.entity_id) "
-			"LEFT JOIN " + Location::tableName() + " l ON (l.id = a.location_id) "
-			"LEFT JOIN " + Country::tableName() + " cnt ON (cnt.code = l.country_code) "
-			"LEFT JOIN " + City::tableName() + " city ON (city.id = l.city_id)");
+			+ AttendanceEntry::tStr() + " a "
+			"INNER JOIN " + Entity::tStr() + " e ON (e.id = a.entity_id) "
+			"LEFT JOIN " + Location::tStr() + " l ON (l.id = a.location_id) "
+			"LEFT JOIN " + Country::tStr() + " cnt ON (cnt.code = l.country_code) "
+			"LEFT JOIN " + City::tStr() + " city ON (city.id = l.city_id)");
 
 		model->setQuery(generateQuery());
 		addColumn(ViewId, model->addColumn("a.id"), tr("ID"), IdColumnWidth);

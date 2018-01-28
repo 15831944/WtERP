@@ -88,8 +88,8 @@ namespace ERP
 
 		//Prepare server's Dbo::Session
 		_dboSession.setConnectionPool(*_sqlPool);
-		mapDboTree(_dboSession);
-		mapConfigurationDboTree(_dboSession);
+		mapERPDbos(_dboSession);
+		mapConfigurationDbos(_dboSession);
 
 		//Configure authorization module
 		configureAuth();
@@ -121,7 +121,7 @@ namespace ERP
 			{
 				Dbo::Transaction t(_dboSession);
 				_dboSession.createTables();
-				_dboSession.execute("CREATE UNIQUE INDEX unique_configuration ON " + std::string(Configuration::tableName()) + " (name, type)");
+				_dboSession.execute("CREATE UNIQUE INDEX unique_configuration ON " + Configuration::tStr() + " (name, type)");
 				t.commit();
 			}
 			catch(const Dbo::Exception &e)

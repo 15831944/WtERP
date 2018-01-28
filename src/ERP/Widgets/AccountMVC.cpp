@@ -31,8 +31,8 @@ namespace ERP
 		
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
-			"SELECT acc.id, acc.name, acc.type, e.id, acc.balance, e.name FROM " + std::string(Account::tableName()) + " acc "
-			"LEFT JOIN " + Entity::tableName() + " e ON (e.bal_account_id = acc.id OR e.pnl_account_id = acc.id)");
+			"SELECT acc.id, acc.name, acc.type, e.id, acc.balance, e.name FROM " + Account::tStr() + " acc "
+			"LEFT JOIN " + Entity::tStr() + " e ON (e.bal_account_id = acc.id OR e.pnl_account_id = acc.id)");
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "acc.");
 
 		model->setQuery(generateQuery());
@@ -168,8 +168,8 @@ namespace ERP
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
 			"SELECT e.timestamp, e.description, e.amount, e.debit_account_id, e.credit_account_id, oAcc.id, oAcc.name, e.id FROM " + 
-			std::string(AccountEntry::tableName()) + " e "
-			"INNER JOIN " + Account::tableName() + " oAcc ON (oAcc.id <> ? AND (oAcc.id = e.debit_account_id OR oAcc.id = e.credit_account_id))").bind(_accountPtr.id())
+			AccountEntry::tStr() + " e "
+			"INNER JOIN " + Account::tStr() + " oAcc ON (oAcc.id <> ? AND (oAcc.id = e.debit_account_id OR oAcc.id = e.credit_account_id))").bind(_accountPtr.id())
 			.where("e.debit_account_id = ? OR e.credit_account_id = ?").bind(_accountPtr.id()).bind(_accountPtr.id());
 
 		if(_incomeCyclePtr.id() != -1)
@@ -217,9 +217,9 @@ namespace ERP
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
 			"SELECT e.timestamp, e.description, e.amount, e.debit_account_id, e.credit_account_id, dAcc.name, cAcc.name, e.id "
-			"FROM " + std::string(AccountEntry::tableName()) + " e "
-			"INNER JOIN " + Account::tableName() + " dAcc ON (dAcc.id = e.debit_account_id) "
-			"INNER JOIN " + Account::tableName() + " cAcc ON (cAcc.id = e.credit_account_id)");
+			"FROM " + AccountEntry::tStr() + " e "
+			"INNER JOIN " + Account::tStr() + " dAcc ON (dAcc.id = e.debit_account_id) "
+			"INNER JOIN " + Account::tStr() + " cAcc ON (cAcc.id = e.credit_account_id)");
 
 		if(_incomeCyclePtr.id() != -1)
 			_baseQuery.where("e.incomecycle_id = ?").bind(_incomeCyclePtr.id());
@@ -431,7 +431,7 @@ namespace ERP
 		TRANSACTION(app);
 		try
 		{
-			int rows = app->dboSession().query<int>("SELECT COUNT(1) FROM " + std::string(Account::tableName())).where("name = ?").bind(input);
+			int rows = app->dboSession().query<int>("SELECT COUNT(1) FROM " + Account::tStr()).where("name = ?").bind(input);
 			t.commit();
 
 			if(rows != 0)

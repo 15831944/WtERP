@@ -62,6 +62,10 @@
 			#define REGION_PREFIX "region-"
 			#define NEW_REGION_PATHC "new"
 
+#define DEFINE_DBO_TABLENAME(tName) \
+constexpr static const char *tableName() { return tName; } \
+static std::string tStr() { return tName; }
+
 namespace ERP
 {
 	namespace Permissions

@@ -584,8 +584,8 @@ namespace ERP
 
 		WApplication *app = APP;
 		typedef tuple<std::string, long long> FEMTuple;
-		auto query = app->dboSession().query<FEMTuple>("SELECT name, id FROM " + std::string(Entity::tableName())).limit(50);
-		auto countQuery = app->dboSession().query<int>("SELECT COUNT(1) FROM " + std::string(Entity::tableName()));
+		auto query = app->dboSession().query<FEMTuple>("SELECT name, id FROM " + Entity::tStr()).limit(50);
+		auto countQuery = app->dboSession().query<int>("SELECT COUNT(1) FROM " + Entity::tStr());
 
 		app->authLogin().setPermissionConditionsToQuery(query, false, "", modifyPermissionRequired);
 		app->authLogin().setPermissionConditionsToQuery(countQuery, false, "", modifyPermissionRequired);
@@ -665,9 +665,9 @@ namespace ERP
 
 		WApplication *app = APP;
 		typedef tuple<std::string, long long, Account::Type, std::string> FAMTuple;
-		std::string joinPart = "LEFT JOIN " + std::string(Entity::tableName()) + " e ON (e.bal_account_id = acc.id OR e.pnl_account_id = acc.id)";
-		auto query = app->dboSession().query<FAMTuple>("SELECT acc.name, acc.id, acc.type, e.name FROM " + std::string(Account::tableName()) + " acc " + joinPart).limit(50);
-		auto countQuery = app->dboSession().query<int>("SELECT COUNT(acc.id) FROM " + std::string(Account::tableName()) + " acc " + joinPart);
+		std::string joinPart = "LEFT JOIN " + Entity::tStr() + " e ON (e.bal_account_id = acc.id OR e.pnl_account_id = acc.id)";
+		auto query = app->dboSession().query<FAMTuple>("SELECT acc.name, acc.id, acc.type, e.name FROM " + Account::tStr() + " acc " + joinPart).limit(50);
+		auto countQuery = app->dboSession().query<int>("SELECT COUNT(acc.id) FROM " + Account::tStr() + " acc " + joinPart);
 
 		app->authLogin().setPermissionConditionsToQuery(query, false, "acc.", modifyPermissionRequired);
 		app->authLogin().setPermissionConditionsToQuery(countQuery, false, "acc.", modifyPermissionRequired);
@@ -745,11 +745,11 @@ namespace ERP
 
 		WApplication *app = APP;
 		std::string joinPart = 
-			"LEFT JOIN " + std::string(Country::tableName()) + " cnt ON cnt.code = l.country_code "
-			"LEFT JOIN " + std::string(City::tableName()) + " city ON city.id = l.city_id "
-			"LEFT JOIN " + std::string(Entity::tableName()) + " e ON e.id = l.entity_id";
-		auto query = app->dboSession().query<ResultTuple>("SELECT l.id, l.address, cnt.name, city.name, e.name FROM " + std::string(Location::tableName()) + " l " + joinPart).limit(50);
-		auto countQuery = app->dboSession().query<int>("SELECT COUNT(l.id) FROM " + std::string(Location::tableName()) + " l " + joinPart);
+			"LEFT JOIN " + Country::tStr() + " cnt ON cnt.code = l.country_code "
+			"LEFT JOIN " + City::tStr() + " city ON city.id = l.city_id "
+			"LEFT JOIN " + Entity::tStr() + " e ON e.id = l.entity_id";
+		auto query = app->dboSession().query<ResultTuple>("SELECT l.id, l.address, cnt.name, city.name, e.name FROM " + Location::tStr() + " l " + joinPart).limit(50);
+		auto countQuery = app->dboSession().query<int>("SELECT COUNT(l.id) FROM " + Location::tStr() + " l " + joinPart);
 
 		app->authLogin().setPermissionConditionsToQuery(query, false, "l.", modifyPermissionRequired);
 		app->authLogin().setPermissionConditionsToQuery(countQuery, false, "l.", modifyPermissionRequired);

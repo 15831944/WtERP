@@ -2,7 +2,7 @@
 
 namespace ERP
 {
-	void mapConfigurationDboTree(Wt::Dbo::Session &dboSession)
+	void mapConfigurationDbos(Wt::Dbo::Session &dboSession)
 	{
 		dboSession.mapClass<Configuration>(Configuration::tableName());
 		dboSession.mapClass<ConfigurationBool>(ConfigurationBool::tableName());

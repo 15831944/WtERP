@@ -5,7 +5,7 @@
 
 namespace ERP
 {
-	void mapDboTree(Dbo::Session &dboSession)
+	void mapERPDbos(Dbo::Session &dboSession)
 	{
 		dboSession.mapClass<User>(User::tableName());
 		dboSession.mapClass<Region>(Region::tableName());

@@ -426,9 +426,9 @@ namespace ERP
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
 			"SELECT c.id, c.timestamp, e.name, c.startDate, c.endDate, c.amount, COUNT(a.id), c.interval, c.nIntervals, e.id "
-			"FROM " + std::string(IncomeCycle::tableName()) + " c "
-			"INNER JOIN " + std::string(Entity::tableName()) + " e ON (e.id = c.entity_id) "
-			"LEFT JOIN " + ClientAssignment::tableName() + " a ON (a.incomecycle_id = c.id)").groupBy("c.id");
+			"FROM " + IncomeCycle::tStr() + " c "
+			"INNER JOIN " + Entity::tStr() + " e ON (e.id = c.entity_id) "
+			"LEFT JOIN " + ClientAssignment::tStr() + " a ON (a.incomecycle_id = c.id)").groupBy("c.id");
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "c.");
 
 		if(_entityPtr.id() != -1)
@@ -457,9 +457,9 @@ namespace ERP
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
 			"SELECT c.id, c.timestamp, e.name, c.startDate, c.endDate, c.amount, COUNT(a.id), c.interval, c.nIntervals, e.id "
-			"FROM " + std::string(ExpenseCycle::tableName()) + " c "
-			"INNER JOIN " + std::string(Entity::tableName()) + " e ON (e.id = c.entity_id) "
-			"LEFT JOIN " + EmployeeAssignment::tableName() + " a ON (a.expensecycle_id = c.id)").groupBy("c.id");
+			"FROM " + ExpenseCycle::tStr() + " c "
+			"INNER JOIN " + Entity::tStr() + " e ON (e.id = c.entity_id) "
+			"LEFT JOIN " + EmployeeAssignment::tStr() + " a ON (a.expensecycle_id = c.id)").groupBy("c.id");
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "c.");
 
 		if(_entityPtr.id() != -1)
