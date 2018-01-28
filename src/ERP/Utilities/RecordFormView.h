@@ -50,7 +50,7 @@ namespace ERP
 
 		virtual Wt::WString recordName() const { return tr("Unknown"); }
 
-		shared_ptr<AbstractRecordFormModel> model() { return _firstModel; }
+		AbstractRecordFormModel *model() { return _firstModel; }
 		Wt::WPushButton *submitBtn() { return _submitBtn; }
 
 	protected:
@@ -59,10 +59,21 @@ namespace ERP
 		virtual void submit();
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Wt::WFormModel::Field field) override;
 
-		typedef pair<ModelKey, shared_ptr<AbstractRecordFormModel>> ModelKeyPair;
+		typedef pair<ModelKey, unique_ptr<AbstractRecordFormModel>> ModelKeyPair;
 		typedef std::vector<ModelKeyPair> FormModelVector;
-		void addFormModel(ModelKey key, shared_ptr<AbstractRecordFormModel> model);
 		FormModelVector &modelVector() { return _modelVector; }
+
+		template<class FormModel, typename ...Args>
+		FormModel *newFormModel(ModelKey key, Args && ...a)
+		{
+			auto formModel = make_unique<FormModel>(std::forward<Args>(a)...);
+			FormModel *res = formModel.get();
+
+			if(!_firstModel) _firstModel = res;
+			setCondition("m:" + std::string(key), true);
+			_modelVector.emplace_back(key, move(formModel));
+			return res;
+		}
 
 		using Wt::WTemplateFormView::updateView;
 		using Wt::WTemplateFormView::updateModel;
@@ -74,7 +85,7 @@ namespace ERP
 		std::bitset<FlagsCount> _viewFlags;
 
 		FormModelVector _modelVector;
-		shared_ptr<AbstractRecordFormModel> _firstModel = nullptr;
+		AbstractRecordFormModel *_firstModel = nullptr;
 		Wt::WPushButton *_submitBtn = nullptr;
 	};
 
@@ -152,15 +163,14 @@ namespace ERP
 	{
 	public:
 		typedef DboType RecordDbo;
-		ChildRecordFormModel(shared_ptr<AbstractRecordFormModel> parentModel, RecordFormView *view, Dbo::ptr<RecordDbo> recordPtr = nullptr)
+		ChildRecordFormModel(AbstractRecordFormModel *parentModel, RecordFormView *view, Dbo::ptr<RecordDbo> recordPtr = nullptr)
 			: RecordFormModel<DboType>(view, recordPtr), _parentModel(parentModel) { }
 
 		virtual AuthLogin::PermissionResult checkViewPermission() const override { return _parentModel->checkViewPermission(); }
 		virtual AuthLogin::PermissionResult checkModifyPermission() const override { return _parentModel->checkModifyPermission(); }
 
 	protected:
-
-		shared_ptr<AbstractRecordFormModel> _parentModel = nullptr;
+		AbstractRecordFormModel *_parentModel = nullptr;
 	};
 
 	class AbstractMultipleRecordModel : public AbstractRecordFormModel
@@ -182,7 +192,7 @@ namespace ERP
 		typedef std::vector<Dbo::ptr<RecordDbo>> PtrVector;
 		typedef Dbo::collection<Dbo::ptr<RecordDbo>> PtrCollection;
 		typedef RecordFormModel<RecordDbo> ModelType;
-		typedef std::vector<shared_ptr<ModelType>> ModelVector;
+		typedef std::vector<ModelType*> ModelVector;
 
 		static const Field field;
 
@@ -199,8 +209,8 @@ namespace ERP
 
 	protected:
 		MultipleRecordModel(RecordFormView *view, PtrCollection collection = PtrCollection());
-		tuple<unique_ptr<RecordFormView>, shared_ptr<ModelType>> createRecordView() { return createRecordView(nullptr); }
-		virtual tuple<unique_ptr<RecordFormView>, shared_ptr<ModelType>> createRecordView(Dbo::ptr<RecordDbo> recordPtr) = 0;
+		tuple<unique_ptr<RecordFormView>, ModelType*> createRecordView() { return createRecordView(nullptr); }
+		virtual tuple<unique_ptr<RecordFormView>, ModelType*> createRecordView(Dbo::ptr<RecordDbo> recordPtr) = 0;
 
 		ModelVector _modelVector;
 	};

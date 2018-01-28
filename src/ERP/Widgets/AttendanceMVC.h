@@ -61,14 +61,14 @@ namespace ERP
 		virtual void initView() override;
 
 		Dbo::ptr<AttendanceDevice> attendanceDevicePtr() const { return _model->recordPtr(); }
-		shared_ptr<AttendanceDeviceFormModel> model() const { return _model; }
+		AttendanceDeviceFormModel *model() const { return _model; }
 
-		virtual Wt::WString viewName() const override { return tr("AttendanceDeviceViewName").arg(attendanceDevicePtr().id()); }
+		virtual Wt::WString viewName() const override;
 		virtual std::string viewInternalPath() const override { return attendanceDevicePtr() ? AttendanceDevice::viewInternalPath(attendanceDevicePtr().id()) : ""; }
 		virtual unique_ptr<RecordFormView> createFormView() override { return make_unique<AttendanceDeviceView>(); }
 
 	protected:
-		shared_ptr<AttendanceDeviceFormModel> _model;
+		AttendanceDeviceFormModel *_model;
 		Dbo::ptr<AttendanceDevice> _tempPtr;
 	};
 
@@ -128,7 +128,7 @@ namespace ERP
 		virtual void initView() override;
 
 		Dbo::ptr<AttendanceEntry> attendanceEntryPtr() const { return _model->recordPtr(); }
-		shared_ptr<AttendanceEntryFormModel> model() const { return _model; }
+		AttendanceEntryFormModel *model() const { return _model; }
 
 		virtual Wt::WString viewName() const override;
 		virtual std::string viewInternalPath() const override { return attendanceEntryPtr() ? AttendanceEntry::viewInternalPath(attendanceEntryPtr().id()) : ""; }
@@ -138,7 +138,7 @@ namespace ERP
 		virtual void updateView(Wt::WFormModel *model) override;
 		virtual void updateModel(Wt::WFormModel *model) override;
 
-		shared_ptr<AttendanceEntryFormModel> _model = nullptr;
+		AttendanceEntryFormModel *_model = nullptr;
 		Dbo::ptr<AttendanceEntry> _tempPtr;
 	};
 }

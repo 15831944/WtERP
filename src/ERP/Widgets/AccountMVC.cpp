@@ -167,9 +167,10 @@ namespace ERP
 
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
-			"SELECT e.timestamp, e.description, e.amount, e.debit_account_id, e.credit_account_id, oAcc.id, oAcc.name, e.id FROM " + 
-			AccountEntry::tStr() + " e "
-			"INNER JOIN " + Account::tStr() + " oAcc ON (oAcc.id <> ? AND (oAcc.id = e.debit_account_id OR oAcc.id = e.credit_account_id))").bind(_accountPtr.id())
+			"SELECT e.timestamp, e.description, e.amount, e.debit_account_id, e.credit_account_id, oAcc.id, oAcc.name, e.id "
+			"FROM " + AccountEntry::tStr() + " e "
+			"INNER JOIN " + Account::tStr() + " oAcc ON (oAcc.id <> ? AND (oAcc.id = e.debit_account_id OR oAcc.id = e.credit_account_id))")
+			.bind(_accountPtr.id())
 			.where("e.debit_account_id = ? OR e.credit_account_id = ?").bind(_accountPtr.id()).bind(_accountPtr.id());
 
 		if(_incomeCyclePtr.id() != -1)
@@ -546,8 +547,7 @@ namespace ERP
 
 	void AccountView::initView()
 	{
-		_model = make_shared<AccountFormModel>(this, _tempPtr);
-		addFormModel("account", _model);
+		_model = newFormModel<AccountFormModel>("account", this, _tempPtr);
 	}
 
 	Wt::WString AccountView::viewName() const
@@ -812,8 +812,7 @@ namespace ERP
 
 	void AccountEntryView::initView()
 	{
-		_model = make_shared<AccountEntryFormModel>(this, _tempPtr);
-		addFormModel("account", _model);
+		_model = newFormModel<AccountEntryFormModel>("account", this, _tempPtr);
 	}
 
 	Wt::WString AccountEntryView::viewName() const
@@ -842,8 +841,7 @@ namespace ERP
 
 	void TransactionView::initView()
 	{
-		_model = make_shared<TransactionFormModel>(this, _tempPtr);
-		addFormModel("account", _model);
+		_model = newFormModel<TransactionFormModel>("account", this, _tempPtr);
 
 		setCondition("select-direction", true);
 		setCondition("direction-selected", false);

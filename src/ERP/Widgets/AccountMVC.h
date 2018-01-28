@@ -150,7 +150,7 @@ namespace ERP
 		virtual void initView() override;
 
 		Dbo::ptr<Account> accountPtr() const { return _model->recordPtr(); }
-		shared_ptr<AccountFormModel> model() const { return _model; }
+		AccountFormModel *model() const { return _model; }
 
 		virtual Wt::WString viewName() const override;
 		virtual std::string viewInternalPath() const override { return accountPtr() ? Account::viewInternalPath(accountPtr().id()) : ""; }
@@ -158,7 +158,7 @@ namespace ERP
 
 	protected:
 		AccountChildrenEntryList *_entryList = nullptr;
-		shared_ptr<AccountFormModel> _model;
+		AccountFormModel *_model;
 		Dbo::ptr<Account> _tempPtr;
 	};
 
@@ -213,14 +213,14 @@ namespace ERP
 		virtual void initView() override;
 
 		Dbo::ptr<AccountEntry> accountEntryPtr() const { return _model->recordPtr(); }
-		shared_ptr<BaseAccountEntryFormModel> model() const { return _model; }
+		BaseAccountEntryFormModel *model() const { return _model; }
 
 		virtual Wt::WString viewName() const override;
 		virtual std::string viewInternalPath() const override { return accountEntryPtr() ? AccountEntry::viewInternalPath(accountEntryPtr().id()) : ""; }
 		virtual unique_ptr<RecordFormView> createFormView() override { return make_unique<AccountEntryView>(); }
 
 	protected:
-		shared_ptr<BaseAccountEntryFormModel> _model = nullptr;
+		BaseAccountEntryFormModel *_model = nullptr;
 		Dbo::ptr<AccountEntry> _tempPtr;
 	};
 
@@ -232,7 +232,7 @@ namespace ERP
 		virtual void initView() override;
 
 		void selectDirection(bool isReceipt);
-		shared_ptr<TransactionFormModel> model() const { return dynamic_pointer_cast<TransactionFormModel>(_model); }
+		TransactionFormModel *model() const { return dynamic_cast<TransactionFormModel*>(_model); }
 		virtual unique_ptr<RecordFormView> createFormView() override { return make_unique<TransactionView>(); }
 
 	protected:

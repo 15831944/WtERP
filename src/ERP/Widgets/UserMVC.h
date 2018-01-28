@@ -107,14 +107,14 @@ namespace ERP
 		virtual void initView() override;
 
 		Dbo::ptr<AuthInfo> authInfoPtr() const { return _model->authInfoPtr(); }
-		shared_ptr<UserFormModel> model() const { return _model; }
+		UserFormModel *model() const { return _model; }
 
 		virtual Wt::WString viewName() const override;
 		virtual std::string viewInternalPath() const override { return authInfoPtr() ? User::viewInternalPath(authInfoPtr().id()) : ""; }
 		virtual unique_ptr<RecordFormView> createFormView() override { return make_unique<UserView>(); }
 
 	protected:
-		shared_ptr<UserFormModel> _model;
+		UserFormModel *_model;
 		Dbo::ptr<AuthInfo> _tempPtr;
 	};
 
@@ -167,14 +167,14 @@ namespace ERP
 		virtual void initView() override;
 
 		Dbo::ptr<Region> regionPtr() const { return _model->recordPtr(); }
-		shared_ptr<RegionFormModel> model() const { return _model; }
+		RegionFormModel *model() const { return _model; }
 
 		virtual Wt::WString viewName() const override;
 		virtual std::string viewInternalPath() const override { return regionPtr() ? Region::viewInternalPath(regionPtr().id()) : ""; }
 		virtual unique_ptr<RecordFormView> createFormView() override { return make_unique<RegionView>(); }
 
 	protected:
-		shared_ptr<RegionFormModel> _model;
+		RegionFormModel *_model;
 		Dbo::ptr<Region> _tempPtr;
 	};
 

@@ -287,8 +287,7 @@ namespace ERP
 
 	void ExpenseCycleView::initView()
 	{
-		_model = make_shared<ExpenseCycleFormModel>(this, _tempPtr);
-		addFormModel("expense", _model);
+		_model = newFormModel<ExpenseCycleFormModel>("expense", this, _tempPtr);
 	}
 
 	unique_ptr<Wt::WWidget> ExpenseCycleView::createFormWidget(Wt::WFormModel::Field field)
@@ -374,8 +373,7 @@ namespace ERP
 
 	void IncomeCycleView::initView()
 	{
-		_model = make_shared<IncomeCycleFormModel>(this, _tempPtr);
-		addFormModel("income", _model);
+		_model = newFormModel<IncomeCycleFormModel>("income", this, _tempPtr);
 	}
 
 	unique_ptr<Wt::WWidget> IncomeCycleView::createFormWidget(Wt::WFormModel::Field field)

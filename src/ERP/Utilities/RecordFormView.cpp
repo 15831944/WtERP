@@ -330,18 +330,6 @@ namespace ERP
 			submitted().emit();
 	}
 
-	void RecordFormView::addFormModel(ModelKey key, shared_ptr<AbstractRecordFormModel> model)
-	{
-		if(!model)
-			return;
-
-		if(!_firstModel)
-			_firstModel = model;
-
-		_modelVector.push_back(std::make_pair(key, model));
-		setCondition("m:" + std::string(key), true);
-	}
-
 	Wt::WString RecordFormView::templateText() const
 	{
 		return tr("ERP.RecordFormView").arg(Wt::WTemplateFormView::templateText());

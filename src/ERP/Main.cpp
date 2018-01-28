@@ -13,7 +13,6 @@
 
 //TODO: Location ViewName and other missing ViewNames
 //TODO: Check what else should be made a BaseAdminRecord
-//TODO: shared_ptr RecordFormModel to unique_ptr
 //TODO: A better way to create indexes on Dbos (create index on AttendaceDeviceV and all record version dbos)
 //TODO: Read only view and reloadable RecordFormView
 //TODO: Improve RecordFormModel API (and remove unnecessary pointers)

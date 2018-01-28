@@ -78,10 +78,10 @@ namespace ERP
 		virtual void initView() override;
 
 		Dbo::ptr<Country> countryPtr() const { return _model->recordPtr(); }
-		shared_ptr<CountryFormModel> model() const { return _model; }
+		CountryFormModel *model() const { return _model; }
 
 	protected:
-		shared_ptr<CountryFormModel> _model;
+		CountryFormModel *_model;
 		Dbo::ptr<Country> _tempPtr;
 	};
 
@@ -122,10 +122,10 @@ namespace ERP
 		virtual void initView() override;
 
 		Dbo::ptr<City> cityPtr() const { return _model->recordPtr(); }
-		shared_ptr<CityFormModel> model() const { return _model; }
+		CityFormModel *model() const { return _model; }
 
 	protected:
-		shared_ptr<CityFormModel> _model = nullptr;
+		CityFormModel *_model = nullptr;
 		Dbo::ptr<City> _tempPtr;
 	};
 
@@ -158,7 +158,7 @@ namespace ERP
 
 		QueryProxyModelCB<CountryProxyModel> *countryCombo() const { return _countryCombo; }
 		QueryProxyModelCB<CityProxyModel> *cityCombo() const { return _cityCombo; }
-		shared_ptr<LocationFormModel> model() const { return _model; }
+		LocationFormModel *model() const { return _model; }
 		Dbo::ptr<Location> locationPtr() const { return _model->recordPtr(); }
 		using RecordFormView::updateView;
 
@@ -169,7 +169,7 @@ namespace ERP
 		QueryProxyModelCB<CityProxyModel> *_cityCombo = nullptr;
 		Wt::WDialog *_dialog = nullptr;
 		shared_ptr<CityProxyModel> _cityProxyModel;
-		shared_ptr<LocationFormModel> _model;
+		LocationFormModel *_model;
 		Dbo::ptr<Location> _tempPtr;
 	};
 

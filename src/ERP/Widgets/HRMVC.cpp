@@ -93,8 +93,7 @@ namespace ERP
 
 	void PositionView::initView()
 	{
-		_model = make_shared<PositionFormModel>(this, _tempPtr);
-		addFormModel("position", _model);
+		_model = newFormModel<PositionFormModel>("position", this, _tempPtr);
 	}
 
 	//POSITION PROXY MODEL
@@ -180,8 +179,7 @@ namespace ERP
 
 	void ServiceView::initView()
 	{
-		_model = make_shared<ServiceFormModel>(this, _tempPtr);
-		addFormModel("service", _model);
+		_model = newFormModel<ServiceFormModel>("service", this, _tempPtr);
 	}
 
 	//SERVICE PROXY MODEL
@@ -430,8 +428,7 @@ namespace ERP
 
 	void EmployeeAssignmentView::initView()
 	{
-		_model = make_shared<EmployeeAssignmentFormModel>(this, _tempPtr);
-		addFormModel("assignment", _model);
+		_model = newFormModel<EmployeeAssignmentFormModel>("assignment", this, _tempPtr);
 	}
 
 	void EmployeeAssignmentFormModel::persistedHandler()
@@ -527,7 +524,7 @@ namespace ERP
 			if(code == Wt::DialogCode::Rejected)
 			{
 				_model->setValue(EmployeeAssignmentFormModel::positionField, Dbo::ptr<EmployeePosition>());
-				updateViewField(_model.get(), EmployeeAssignmentFormModel::positionField);
+				updateViewField(_model, EmployeeAssignmentFormModel::positionField);
 			}
 			_dialog->removeFromParent();
 			_dialog = nullptr;
@@ -535,7 +532,7 @@ namespace ERP
 
 		positionView->submitted().connect(this, std::bind([this, positionView]() {
 			_model->setValue(EmployeeAssignmentFormModel::positionField, positionView->positionPtr());
-			updateViewField(_model.get(), EmployeeAssignmentFormModel::positionField);
+			updateViewField(_model, EmployeeAssignmentFormModel::positionField);
 			_dialog->accept();
 		}));
 
@@ -887,8 +884,7 @@ namespace ERP
 
 	void ClientAssignmentView::initView()
 	{
-		_model = make_shared<ClientAssignmentFormModel>(this, _tempPtr);
-		addFormModel("assignment", _model);
+		_model = newFormModel<ClientAssignmentFormModel>("assignment", this, _tempPtr);
 
 		bindNew<Wt::WAnchor>("incomeCycle");
 	}
@@ -950,7 +946,7 @@ namespace ERP
 			if(code == Wt::DialogCode::Rejected)
 			{
 				_model->setValue(ClientAssignmentFormModel::serviceField, Dbo::ptr<ClientService>());
-				updateViewField(_model.get(), ClientAssignmentFormModel::serviceField);
+				updateViewField(_model, ClientAssignmentFormModel::serviceField);
 			}
 			_dialog->removeFromParent();
 			_dialog = nullptr;
@@ -958,7 +954,7 @@ namespace ERP
 
 		serviceView->submitted().connect(this, std::bind([this, serviceView]() {
 			_model->setValue(ClientAssignmentFormModel::serviceField, serviceView->servicePtr());
-			updateViewField(_model.get(), ClientAssignmentFormModel::serviceField);
+			updateViewField(_model, ClientAssignmentFormModel::serviceField);
 			_dialog->accept();
 		}));
 

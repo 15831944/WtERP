@@ -138,10 +138,10 @@ namespace ERP
 		virtual void initView() override;
 
 		Dbo::ptr<ContactNumber> contactNumberPtr() const { return _model->recordPtr(); }
-		shared_ptr<ContactNumberFormModel> model() const { return _model; }
+		ContactNumberFormModel *model() const { return _model; }
 
 	protected:
-		shared_ptr<ContactNumberFormModel> _model;
+		ContactNumberFormModel *_model;
 		Dbo::ptr<ContactNumber> _tempPtr;
 	};
 
@@ -154,7 +154,7 @@ namespace ERP
 	protected:
 		virtual bool saveChanges() override;
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
-		virtual tuple<unique_ptr<RecordFormView>, shared_ptr<ModelType>> createRecordView(Dbo::ptr<RecordDbo> recordPtr) override;
+		virtual tuple<unique_ptr<RecordFormView>, ModelType*> createRecordView(Dbo::ptr<RecordDbo> recordPtr) override;
 
 		EntityView *_view = nullptr;
 	};
@@ -168,7 +168,7 @@ namespace ERP
 	protected:
 		virtual bool saveChanges() override;
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
-		virtual tuple<unique_ptr<RecordFormView>, shared_ptr<ModelType>> createRecordView(Dbo::ptr<RecordDbo> recordPtr) override;
+		virtual tuple<unique_ptr<RecordFormView>, ModelType*> createRecordView(Dbo::ptr<RecordDbo> recordPtr) override;
 
 		EntityView *_view = nullptr;
 	};
@@ -202,13 +202,13 @@ namespace ERP
 		ExpenseCycleList *_expenseCycles = nullptr;
 		IncomeCycleList *_incomeCycles = nullptr;
 
-		shared_ptr<EntityFormModel> _entityModel;
-		shared_ptr<PersonFormModel> _personModel;
-		shared_ptr<EmployeeFormModel> _employeeModel;
-		shared_ptr<PersonnelFormModel> _personnelModel;
-		shared_ptr<ContactNumbersManagerModel> _contactNumbersModel;
-		shared_ptr<LocationsManagerModel> _locationsModel;
-		shared_ptr<BusinessFormModel> _businessModel;
+		EntityFormModel *_entityModel;
+		PersonFormModel *_personModel;
+		EmployeeFormModel *_employeeModel;
+		PersonnelFormModel *_personnelModel;
+		ContactNumbersManagerModel *_contactNumbersModel;
+		LocationsManagerModel *_locationsModel;
+		BusinessFormModel *_businessModel;
 
 		Entity::Type _type = Entity::InvalidType;
 		Entity::Type _defaultType = Entity::InvalidType;

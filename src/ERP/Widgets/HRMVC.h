@@ -51,10 +51,10 @@ namespace ERP
 		virtual void initView() override;
 
 		Dbo::ptr<EmployeePosition> positionPtr() const { return _model->recordPtr(); }
-		shared_ptr<Wt::WFormModel> model() const { return _model; }
+		Wt::WFormModel *model() const { return _model; }
 
 	protected:
-		shared_ptr<PositionFormModel> _model;
+		PositionFormModel *_model;
 		Dbo::ptr<EmployeePosition> _tempPtr;
 	};
 
@@ -90,10 +90,10 @@ namespace ERP
 		virtual void initView() override;
 
 		Dbo::ptr<ClientService> servicePtr() const { return _model->recordPtr(); }
-		shared_ptr<ServiceFormModel> model() const { return _model; }
+		ServiceFormModel *model() const { return _model; }
 
 	protected:
-		shared_ptr<ServiceFormModel> _model;
+		ServiceFormModel *_model;
 		Dbo::ptr<ClientService> _tempPtr;
 	};
 
@@ -149,7 +149,7 @@ namespace ERP
 		virtual unique_ptr<RecordFormView> createFormView() override { return make_unique<EmployeeAssignmentView>(); }
 
 		Dbo::ptr<EmployeeAssignment> employeeAssignmentPtr() const { return _model->recordPtr(); }
-		shared_ptr<EmployeeAssignmentFormModel> model() const { return _model; }
+		EmployeeAssignmentFormModel *model() const { return _model; }
 
 	protected:
 		virtual void initView() override;
@@ -158,7 +158,7 @@ namespace ERP
 
 		QueryProxyModelCB<PositionProxyModel> *_positionCombo = nullptr;
 		Wt::WDialog *_dialog = nullptr;
-		shared_ptr<EmployeeAssignmentFormModel> _model;
+		EmployeeAssignmentFormModel *_model;
 		Dbo::ptr<EmployeeAssignment> _tempPtr;
 
 	private:
@@ -215,7 +215,7 @@ namespace ERP
 		virtual unique_ptr<RecordFormView> createFormView() override { return make_unique<ClientAssignmentView>(); }
 
 		Dbo::ptr<ClientAssignment> clientAssignmentPtr() const { return _model->recordPtr(); }
-		shared_ptr<ClientAssignmentFormModel> model() const { return _model; }
+		ClientAssignmentFormModel *model() const { return _model; }
 
 	protected:
 		virtual void updateView(Wt::WFormModel *model) override;
@@ -223,7 +223,7 @@ namespace ERP
 
 		QueryProxyModelCB<ServiceProxyModel> *_serviceCombo = nullptr;
 		Wt::WDialog *_dialog = nullptr;
-		shared_ptr<ClientAssignmentFormModel> _model;
+		ClientAssignmentFormModel *_model;
 		Dbo::ptr<ClientAssignment> _tempPtr;
 
 	private:

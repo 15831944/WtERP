@@ -372,8 +372,7 @@ namespace ERP
 
 	void UserView::initView()
 	{
-		_model = make_shared<UserFormModel>(this, _tempPtr);
-		addFormModel("user", _model);
+		_model = newFormModel<UserFormModel>("user", this, _tempPtr);
 	}
 
 	Wt::WString UserView::viewName() const
@@ -536,8 +535,7 @@ namespace ERP
 
 	void RegionView::initView()
 	{
-		_model = make_shared<RegionFormModel>(this, _tempPtr);
-		addFormModel("region", _model);
+		_model = newFormModel<RegionFormModel>("region", this, _tempPtr);
 	}
 
 	Wt::WString RegionView::viewName() const

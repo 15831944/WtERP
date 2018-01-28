@@ -502,14 +502,14 @@ namespace ERP
 		return nullptr;
 	}
 
-	tuple<unique_ptr<RecordFormView>, shared_ptr<ContactNumbersManagerModel::ModelType>> ContactNumbersManagerModel::createRecordView(Dbo::ptr<RecordDbo> recordPtr)
+	tuple<unique_ptr<RecordFormView>, ContactNumbersManagerModel::ModelType*> ContactNumbersManagerModel::createRecordView(Dbo::ptr<RecordDbo> recordPtr)
 	{
 		auto view = make_unique<ContactNumberView>(recordPtr);
 		view->load();
 		view->model()->setVisible(ContactNumberFormModel::entityField, false);
 		view->model()->setReadOnly(ContactNumberFormModel::entityField, true);
 		view->model()->setValue(ContactNumberFormModel::entityField, _view->entityPtr());
-		view->updateViewField(view->model().get(), ContactNumberFormModel::entityField);
+		view->updateViewField(view->model(), ContactNumberFormModel::entityField);
 
 		auto model = view->model();
 		return std::make_tuple(move(view), model);
@@ -552,7 +552,7 @@ namespace ERP
 		return nullptr;
 	}
 
-	tuple<unique_ptr<RecordFormView>, shared_ptr<LocationsManagerModel::ModelType>> LocationsManagerModel::createRecordView(Dbo::ptr<RecordDbo> recordPtr)
+	tuple<unique_ptr<RecordFormView>, LocationsManagerModel::ModelType*> LocationsManagerModel::createRecordView(Dbo::ptr<RecordDbo> recordPtr)
 	{
 		auto view = make_unique<LocationView>(recordPtr);
 		view->load();
@@ -560,7 +560,7 @@ namespace ERP
 		view->model()->setVisible(LocationFormModel::entityField, false);
 		view->model()->setReadOnly(LocationFormModel::entityField, true);
 		view->model()->setValue(LocationFormModel::entityField, _view->entityPtr());
-		view->updateViewField(view->model().get(), LocationFormModel::entityField);
+		view->updateViewField(view->model(), LocationFormModel::entityField);
 
 		auto model = view->model();
 		return std::make_tuple(move(view), model);
@@ -605,8 +605,7 @@ namespace ERP
 
 	void EntityView::initView()
 	{
-		_entityModel = make_shared<EntityFormModel>(this, _tempPtr);
-		addFormModel("entity", _entityModel);
+		_entityModel = newFormModel<EntityFormModel>("entity", this, _tempPtr);
 
 		if(entityPtr())
 		{
@@ -624,7 +623,7 @@ namespace ERP
 					personnelPtr = employeePtr->personnelWPtr;
 
 				if(personPtr)
-					addFormModel("person", _personModel = make_shared<PersonFormModel>(this, personPtr));
+					_personModel = newFormModel<PersonFormModel>("person", this, personPtr);
 				if(employeePtr)
 					addEmployeeModel(employeePtr);
 				if(personnelPtr)
@@ -635,7 +634,7 @@ namespace ERP
 				_type = _defaultType = Entity::BusinessType;
 				Dbo::ptr<Business> businessPtr = entityPtr()->businessWPtr;
 				if(businessPtr)
-					addFormModel("business", _businessModel = make_shared<BusinessFormModel>(this, businessPtr));
+					_businessModel = newFormModel<BusinessFormModel>("business", this, businessPtr);
 			}
 		}
 
@@ -647,15 +646,14 @@ namespace ERP
 			break;
 		case Entity::PersonType:
 			setCondition("is-person", true);
-			if(!_personModel) addFormModel("person", _personModel = make_shared<PersonFormModel>(this));
+			if(!_personModel) _personModel = newFormModel<PersonFormModel>("person", this);
 			break;
 		case Entity::BusinessType:
 			setCondition("is-business", true);
-			if(!_businessModel) addFormModel("business", _businessModel = make_shared<BusinessFormModel>(this));
+			if(!_businessModel) _businessModel = newFormModel<BusinessFormModel>("business",  this);
 			break;
 		default:
-			throw std::runtime_error("NewEntityTemplate: Invalid EntityType");
-			break;
+			throw std::runtime_error("EntityView: Invalid EntityType");
 		}
 		setCondition("type-selection", !conditionValue("type-chosen"));
 
@@ -675,8 +673,10 @@ namespace ERP
 		if(_personnelModel)
 			addPersonnel->disable();
 
-		addFormModel("contactnumbers", _contactNumbersModel = make_shared<ContactNumbersManagerModel>(this, entityPtr() ? entityPtr()->contactNumberCollection : ContactNumberCollection()));
-		addFormModel("locations", _locationsModel = make_shared<LocationsManagerModel>(this, entityPtr() ? entityPtr()->locationCollection : LocationCollection()));
+		_contactNumbersModel = newFormModel<ContactNumbersManagerModel>("contactnumbers",
+				this, entityPtr() ? entityPtr()->contactNumberCollection : ContactNumberCollection());
+		_locationsModel = newFormModel<LocationsManagerModel>("locations",
+				this, entityPtr() ? entityPtr()->locationCollection : LocationCollection());
 		
 		bindEmpty("expenseCycles");
 		setCondition("show-expenseCycles", false);
@@ -693,14 +693,14 @@ namespace ERP
 		case Entity::PersonType:
 			setCondition("is-person", true);
 			setCondition("is-business", false);
-			if(!_personModel) addFormModel("person", _personModel = make_shared<PersonFormModel>(this));
+			if(!_personModel) _personModel = newFormModel<PersonFormModel>("person", this);
 			_selectPerson->addStyleClass("btn-primary");
 			_selectBusiness->removeStyleClass("btn-primary");
 			break;
 		case Entity::BusinessType:
 			setCondition("is-business", true);
 			setCondition("is-person", false);
-			if(!_businessModel) addFormModel("business", _businessModel = make_shared<BusinessFormModel>(this));
+			if(!_businessModel) _businessModel = newFormModel<BusinessFormModel>("business", this);
 			_selectBusiness->addStyleClass("btn-primary");
 			_selectPerson->removeStyleClass("btn-primary");
 			break;
@@ -720,16 +720,16 @@ namespace ERP
 		if(type == Entity::EmployeeType)
 		{
 			addEmployeeModel();
-			updateModel(_employeeModel.get());
-			updateView(_employeeModel.get());
+			updateModel(_employeeModel);
+			updateView(_employeeModel);
 		}
 		if(type == Entity::PersonnelType)
 		{
 			addPersonnelModel();
-			updateModel(_employeeModel.get());
-			updateView(_employeeModel.get());
-			updateModel(_personnelModel.get());
-			updateView(_personnelModel.get());
+			updateModel(_employeeModel);
+			updateView(_employeeModel);
+			updateModel(_personnelModel);
+			updateView(_personnelModel);
 		}
 	}
 
@@ -739,9 +739,9 @@ namespace ERP
 			return;
 
 		if(!_personModel)
-			addFormModel("person", _personModel = make_shared<PersonFormModel>(this));
+			_personModel = newFormModel<PersonFormModel>("person", this);
 
-		addFormModel("employee", _employeeModel = make_shared<EmployeeFormModel>(this, employeePtr));
+	_employeeModel = newFormModel<EmployeeFormModel>("employee", this, employeePtr);
 
 		if(auto btn = resolveWidget("add-employee"))
 			btn->disable();
@@ -755,7 +755,7 @@ namespace ERP
 		if(!_employeeModel)
 			addEmployeeModel();
 
-		addFormModel("personnel", _personnelModel = make_shared<PersonnelFormModel>(this, personnelPtr));
+		_personnelModel = newFormModel<PersonnelFormModel>("personnel", this, personnelPtr);
 
 		if(auto btn = resolveWidget("add-personnel"))
 			btn->disable();
@@ -963,7 +963,6 @@ namespace ERP
 
 	void ContactNumberView::initView()
 	{
-		_model = make_shared<ContactNumberFormModel>(this, _tempPtr);
-		addFormModel("contactnumber", _model);
+		_model = newFormModel<ContactNumberFormModel>("contactnumber", this, _tempPtr);
 	}
 }

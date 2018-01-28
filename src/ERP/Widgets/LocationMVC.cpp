@@ -90,8 +90,7 @@ namespace ERP
 
 	void CountryView::initView()
 	{
-		_model = make_shared<CountryFormModel>(this, _tempPtr);
-		addFormModel("country", _model);
+		_model = newFormModel<CountryFormModel>("country", this, _tempPtr);
 	}
 
 	Wt::WValidator::Result CountryCodeValidator::validate(const Wt::WString &input) const
@@ -200,8 +199,7 @@ namespace ERP
 
 	void CityView::initView()
 	{
-		_model = make_shared<CityFormModel>(this, _tempPtr);
-		addFormModel("city", _model);
+		_model = newFormModel<CityFormModel>("city", this, _tempPtr);
 	}
 
 	CityFilterModel::CityFilterModel()
@@ -357,8 +355,7 @@ namespace ERP
 
 	void LocationView::initView()
 	{
-		_model = make_shared<LocationFormModel>(this, _tempPtr);
-		addFormModel("location", _model);
+		_model = newFormModel<LocationFormModel>("location", this, _tempPtr);
 
 		WApplication *app = WApplication::instance();
 		app->initCountryQueryModel();
@@ -398,7 +395,7 @@ namespace ERP
 		if(resetCity)
 		{
 			model()->setValue(LocationFormModel::cityField, Dbo::ptr<City>());
-			updateViewField(model().get(), LocationFormModel::cityField);
+			updateViewField(model(), LocationFormModel::cityField);
 		}
 	}
 
@@ -428,7 +425,7 @@ namespace ERP
 			if(code == Wt::DialogCode::Rejected)
 			{
 				model()->setValue(LocationFormModel::countryField, Dbo::ptr<Country>());
-				updateViewField(model().get(), LocationFormModel::countryField);
+				updateViewField(model(), LocationFormModel::countryField);
 				handleCountryChanged(true);
 			}
 			_dialog->removeFromParent();
@@ -437,7 +434,7 @@ namespace ERP
 
 		countryView->submitted().connect(this, std::bind([this, countryView]() {
 			model()->setValue(LocationFormModel::countryField, countryView->countryPtr());
-			updateViewField(model().get(), LocationFormModel::countryField);
+			updateViewField(model(), LocationFormModel::countryField);
 			handleCountryChanged(true);
 			_dialog->accept();
 		}));
@@ -462,7 +459,7 @@ namespace ERP
 			if(code == Wt::DialogCode::Rejected)
 			{
 				model()->setValue(LocationFormModel::cityField, Dbo::ptr<City>());
-				updateViewField(model().get(), LocationFormModel::cityField);
+				updateViewField(model(), LocationFormModel::cityField);
 			}
 			_dialog->removeFromParent();
 			_dialog = nullptr;
@@ -473,10 +470,10 @@ namespace ERP
 		cityView->submitted().connect(this, std::bind([this, cityView]() {
 			TRANSACTION(APP);
 			model()->setValue(LocationFormModel::countryField, cityView->cityPtr()->countryPtr);
-			updateViewField(model().get(), LocationFormModel::countryField);
+			updateViewField(model(), LocationFormModel::countryField);
 			handleCountryChanged(false);
 			model()->setValue(LocationFormModel::cityField, cityView->cityPtr());
-			updateViewField(model().get(), LocationFormModel::cityField);
+			updateViewField(model(), LocationFormModel::cityField);
 			_dialog->accept();
 		}));
 

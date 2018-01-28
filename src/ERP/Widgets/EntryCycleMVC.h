@@ -91,11 +91,11 @@ namespace ERP
 		virtual std::string viewInternalPath() const override { return cyclePtr() ? ExpenseCycle::viewInternalPath(cyclePtr().id()) : ""; }
 		virtual unique_ptr<RecordFormView> createFormView() override { return make_unique<ExpenseCycleView>(); }
 
-		shared_ptr<ExpenseCycleFormModel> model() const { return _model; }
+		ExpenseCycleFormModel *model() const { return _model; }
 		Dbo::ptr<ExpenseCycle> cyclePtr() const { return _model->recordPtr(); }
 
 	protected:
-		shared_ptr<ExpenseCycleFormModel> _model = nullptr;
+		ExpenseCycleFormModel *_model = nullptr;
 		Dbo::ptr<ExpenseCycle> _tempPtr;
 	};
 
@@ -124,11 +124,11 @@ namespace ERP
 		virtual std::string viewInternalPath() const override { return cyclePtr() ? IncomeCycle::viewInternalPath(cyclePtr().id()) : ""; }
 		virtual unique_ptr<RecordFormView> createFormView() override { return make_unique<IncomeCycleView>(); }
 
-		shared_ptr<IncomeCycleFormModel> model() const { return _model; }
+		IncomeCycleFormModel *model() const { return _model; }
 		Dbo::ptr<IncomeCycle> cyclePtr() const { return _model->recordPtr(); }
 
 	protected:
-		shared_ptr<IncomeCycleFormModel> _model = nullptr;
+		IncomeCycleFormModel *_model = nullptr;
 		Dbo::ptr<IncomeCycle> _tempPtr;
 	};
 

@@ -154,8 +154,17 @@ namespace ERP
 
 	void AttendanceDeviceView::initView()
 	{
-		_model = make_shared<AttendanceDeviceFormModel>(this, _tempPtr);
-		addFormModel("attendance-device", _model);
+		_model = newFormModel<AttendanceDeviceFormModel>("attendance-device", this, _tempPtr);
+	}
+
+	Wt::WString AttendanceDeviceView::viewName() const
+	{
+		/*if(attendanceDevicePtr())
+		{
+			TRANSACTION(APP);
+			return tr("AttendanceEntryViewName").arg(attendanceEntryPtr().id()).arg(attendanceEntryPtr()->entityPtr->name);
+		}*/
+		return tr("AttendanceDeviceViewName").arg(attendanceDevicePtr().id());
 	}
 
 	const Wt::WFormModel::Field AttendanceEntryFormModel::entityField = "entity";
@@ -280,8 +289,7 @@ namespace ERP
 
 	void AttendanceEntryView::initView()
 	{
-		_model = make_shared<AttendanceEntryFormModel>(this, _tempPtr);
-		addFormModel("attendance-entry", _model);
+		_model = newFormModel<AttendanceEntryFormModel>("attendance-entry", this, _tempPtr);
 	}
 
 	Wt::WString AttendanceEntryView::viewName() const
