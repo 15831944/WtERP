@@ -165,7 +165,7 @@ namespace ERP
 		ConfigurationBool() = default;
 		ConfigurationBool(const ConfigurationBool &) = default;
 		ConfigurationBool(Dbo::ptr<Configuration> configurationPtr)
-			: _configurationPtr(std::move(configurationPtr))
+			: _configurationPtr(move(configurationPtr))
 		{ }
 
 		template<class Action>void persist(Action &a)

@@ -11,8 +11,6 @@
 
 //TODO: Follow Multiple Dialogs error report
 
-//TODO: Fix navbar-left on navbar-stacked
-//TODO: Fix SuggestionPopups
 //TODO: Location ViewName and other missing ViewNames
 //TODO: Check what else should be made a BaseAdminRecord
 //TODO: shared_ptr RecordFormModel to unique_ptr

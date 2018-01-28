@@ -135,7 +135,7 @@ WMenu *WNavigationBar::addMenu(std::unique_ptr<WMenu> menu,
                              AlignmentFlag alignment, bool stacked)
 {
   WMenu *m = menu.get();
-  addWidget(std::move(menu), alignment);
+  addWidget(std::move(menu), alignment, stacked);
   if(stacked)
     wApp->theme()->apply(this, m, WidgetThemeRole::NavbarStackedMenu);
   else
@@ -196,6 +196,7 @@ void WNavigationBar::addSearch(std::unique_ptr<WLineEdit> field,
 
 void WNavigationBar::align(WWidget *widget, AlignmentFlag alignment)
 {
+
   switch (alignment) {
   case AlignmentFlag::Left:
     wApp->theme()->apply(this, widget, WidgetThemeRole::NavbarAlignLeft);
