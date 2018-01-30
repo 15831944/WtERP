@@ -556,7 +556,7 @@ namespace ERP
 		if(employeeAssignmentPtr())
 			return tr("EmployeeAssignmentViewName").arg(employeeAssignmentPtr().id());
 
-		return RecordFormView::viewName();
+		return "EmployeeAssignmentView";
 	}
 
 	void EmployeeAssignmentFormModel::updateEndDateValidator(bool update)
@@ -978,7 +978,7 @@ namespace ERP
 		if(clientAssignmentPtr())
 			return tr("ClientAssignmentViewName").arg(clientAssignmentPtr().id());
 
-		return RecordFormView::viewName();
+		return "ClientAssingmentView";
 	}
 
 	void ClientAssignmentFormModel::persistedHandler()

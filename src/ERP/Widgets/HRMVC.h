@@ -53,6 +53,8 @@ namespace ERP
 		Dbo::ptr<EmployeePosition> positionPtr() const { return _model->recordPtr(); }
 		Wt::WFormModel *model() const { return _model; }
 
+		virtual Wt::WString viewName() const override { return "PositionView"; }
+
 	protected:
 		PositionFormModel *_model;
 		Dbo::ptr<EmployeePosition> _tempPtr;
@@ -91,6 +93,8 @@ namespace ERP
 
 		Dbo::ptr<ClientService> servicePtr() const { return _model->recordPtr(); }
 		ServiceFormModel *model() const { return _model; }
+
+		virtual Wt::WString viewName() const override { return "ServiceView"; }
 
 	protected:
 		ServiceFormModel *_model;

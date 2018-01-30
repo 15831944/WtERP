@@ -308,7 +308,7 @@ namespace ERP
 			else
 				return tr("ExpenseCycleViewNameWithoutEntity").arg(cyclePtr().id());
 		}
-		return RecordFormView::viewName();
+		return "ExpenseCycleView";
 	}
 
 	//INCOME CYCLE MODEL
@@ -391,7 +391,7 @@ namespace ERP
 			else
 				return tr("IncomeCycleViewNameWithoutEntity").arg(cyclePtr().id());
 		}
-		return RecordFormView::viewName();
+		return "IncomeCycleView";
 	}
 
 #define EntityColumnWidth 180

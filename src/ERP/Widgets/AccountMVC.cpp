@@ -557,7 +557,7 @@ namespace ERP
 			TRANSACTION(APP);
 			return accountPtr()->name;
 		}
-		return RecordFormView::viewName();
+		return "AccountView";
 	}
 
 	const Wt::WFormModel::Field BaseAccountEntryFormModel::descriptionField = "description";
@@ -818,7 +818,7 @@ namespace ERP
 	Wt::WString AccountEntryView::viewName() const
 	{
 		if(!accountEntryPtr())
-			return RecordFormView::viewName();
+			return "AccountEntryView";
 
 		const Wt::any &entityData = _model->value(BaseAccountEntryFormModel::entityField);
 		if(!entityData.empty())

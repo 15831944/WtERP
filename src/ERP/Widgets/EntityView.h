@@ -140,6 +140,8 @@ namespace ERP
 		Dbo::ptr<ContactNumber> contactNumberPtr() const { return _model->recordPtr(); }
 		ContactNumberFormModel *model() const { return _model; }
 
+		virtual Wt::WString viewName() const override { return "ContactNumberView"; }
+
 	protected:
 		ContactNumberFormModel *_model;
 		Dbo::ptr<ContactNumber> _tempPtr;
@@ -189,7 +191,7 @@ namespace ERP
 		Entity::Type entityType() const { return _type; }
 		Dbo::ptr<Entity> entityPtr() const { return _entityModel->recordPtr(); }
 
-		virtual Wt::WString viewName() const override { return _entityModel->valueText(EntityFormModel::nameField); }
+		virtual Wt::WString viewName() const override;
 		virtual std::string viewInternalPath() const override { return entityPtr() ? Entity::viewInternalPath(entityPtr().id()) : ""; }
 		virtual unique_ptr<RecordFormView> createFormView() override { return make_unique<EntityView>(); }
 

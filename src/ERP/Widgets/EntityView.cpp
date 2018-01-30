@@ -712,6 +712,11 @@ namespace ERP
 		updateView();
 	}
 
+	Wt::WString EntityView::viewName() const
+	{
+		return _entityModel ? _entityModel->valueText(EntityFormModel::nameField) : "EntityView";
+	}
+
 	void EntityView::setSpecificType(Entity::SpecificType type)
 	{
 		if(type == Entity::UnspecificType)

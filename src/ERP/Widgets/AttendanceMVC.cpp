@@ -159,12 +159,12 @@ namespace ERP
 
 	Wt::WString AttendanceDeviceView::viewName() const
 	{
-		/*if(attendanceDevicePtr())
+		if(attendanceDevicePtr())
 		{
 			TRANSACTION(APP);
-			return tr("AttendanceEntryViewName").arg(attendanceEntryPtr().id()).arg(attendanceEntryPtr()->entityPtr->name);
-		}*/
-		return tr("AttendanceDeviceViewName").arg(attendanceDevicePtr().id());
+			return tr("AttendanceDeviceViewName").arg(attendanceDevicePtr().id());
+		}
+		return "AttendanceDeviceView";
 	}
 
 	const Wt::WFormModel::Field AttendanceEntryFormModel::entityField = "entity";

@@ -80,6 +80,8 @@ namespace ERP
 		Dbo::ptr<Country> countryPtr() const { return _model->recordPtr(); }
 		CountryFormModel *model() const { return _model; }
 
+		virtual Wt::WString viewName() const override { return "CountryView"; }
+
 	protected:
 		CountryFormModel *_model;
 		Dbo::ptr<Country> _tempPtr;
@@ -124,6 +126,8 @@ namespace ERP
 		Dbo::ptr<City> cityPtr() const { return _model->recordPtr(); }
 		CityFormModel *model() const { return _model; }
 
+		virtual Wt::WString viewName() const override { return "CityView"; }
+
 	protected:
 		CityFormModel *_model = nullptr;
 		Dbo::ptr<City> _tempPtr;
@@ -161,6 +165,8 @@ namespace ERP
 		LocationFormModel *model() const { return _model; }
 		Dbo::ptr<Location> locationPtr() const { return _model->recordPtr(); }
 		using RecordFormView::updateView;
+
+		virtual Wt::WString viewName() const override { return "LocationView"; }
 
 	protected:
 		virtual void updateView(Wt::WFormModel *model) override;

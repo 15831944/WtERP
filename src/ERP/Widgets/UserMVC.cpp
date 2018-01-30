@@ -377,8 +377,12 @@ namespace ERP
 
 	Wt::WString UserView::viewName() const
 	{
-		TRANSACTION(APP);
-		return tr("UserViewName").arg(authInfoPtr()->identity(Wt::Auth::Identity::LoginName));
+		if(authInfoPtr())
+		{
+			TRANSACTION(APP);
+			return tr("UserViewName").arg(authInfoPtr()->identity(Wt::Auth::Identity::LoginName));
+		}
+		return "UserView";
 	}
 
 	void RegionList::initFilters()
@@ -540,8 +544,12 @@ namespace ERP
 
 	Wt::WString RegionView::viewName() const
 	{
-		TRANSACTION(APP);
-		return tr("RegionViewName").arg(regionPtr()->name);
+		if(regionPtr())
+		{
+			TRANSACTION(APP);
+			return tr("RegionViewName").arg(regionPtr()->name);
+		}
+		return "RegionView";
 	}
 
 	RegionProxyModel::RegionProxyModel(shared_ptr<QueryModel> sourceModel)
