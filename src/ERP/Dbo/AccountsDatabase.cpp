@@ -49,8 +49,8 @@ namespace ERP
 		if(!entityPtr->balAccountPtr)
 		{
 			auto accountPtr = dboSession.addNew<Account>(Account::EntityBalanceAccount);
-			accountPtr.modify()->creatorUserPtr = entityPtr->creatorUserPtr;
-			accountPtr.modify()->regionPtr = entityPtr->regionPtr;
+			accountPtr.modify()->_creatorUserPtr = entityPtr->creatorUserPtr();
+			accountPtr.modify()->_regionPtr = entityPtr->regionPtr();
 			accountPtr.modify()->name = tr("EntityIdBalanceAccount").arg(entityPtr.id()).toUTF8();
 
 			entityPtr.modify()->balAccountPtr = accountPtr;
@@ -58,8 +58,8 @@ namespace ERP
 		if(!entityPtr->pnlAccountPtr)
 		{
 			auto accountPtr = dboSession.addNew<Account>(Account::EntityPnlAccount);
-			accountPtr.modify()->creatorUserPtr = entityPtr->creatorUserPtr;
-			accountPtr.modify()->regionPtr = entityPtr->regionPtr;
+			accountPtr.modify()->_creatorUserPtr = entityPtr->creatorUserPtr();
+			accountPtr.modify()->_regionPtr = entityPtr->regionPtr();
 			accountPtr.modify()->name = tr("EntityIdPnlAccount").arg(entityPtr.id()).toUTF8();
 
 			entityPtr.modify()->pnlAccountPtr = accountPtr;
@@ -195,11 +195,11 @@ namespace ERP
 		steady_clock::duration *nextEntryDuration)
 	{
 		//DO NOT ALLOW THESE NULL DATES(in scan query)
-		if(cycle.startDate.isNull() || cycle.timestamp.isNull())
+		if(cycle.startDate.isNull() || cycle.timestamp().isNull())
 			return nullptr;
 
 		//Do not allow cycles with start dates later than today and creation dt later than now(already filtered, reasserted)
-		if(cycle.startDate > currentDt.date() || cycle.timestamp > currentDt)
+		if(cycle.startDate > currentDt.date() || cycle.timestamp() > currentDt)
 			return nullptr;
 
 		//Do not allow cycles with end dates earlier or equal to start date
@@ -215,11 +215,11 @@ namespace ERP
 		if(lastEntryPtr)
 		{
 			//Do not allow cycles which have ended and the final entry had already been made(already filtered, reasserted)
-			if(cycle.endDate.isValid() && cycle.endDate <= lastEntryPtr->timestamp.date())
+			if(cycle.endDate.isValid() && cycle.endDate <= lastEntryPtr->timestamp().date())
 				return nullptr;
 
 			//Do not allow entries with invalid date(in scan query)
-			if(lastEntryPtr->timestamp.isNull() || lastEntryPtr->timestamp > currentDt)
+			if(lastEntryPtr->timestamp().isNull() || lastEntryPtr->timestamp() > currentDt)
 				return nullptr;
 		}
 
@@ -238,7 +238,7 @@ namespace ERP
 		if(checkElapsedDuration)
 		{
 			if(lastEntryPtr)
-				previousCyclePeriodDt = lastEntryPtr->timestamp;
+				previousCyclePeriodDt = lastEntryPtr->timestamp();
 			else if(cycle.firstEntryAfterCycle)
 				previousCyclePeriodDt = addCycleInterval(Wt::WDateTime(cycle.startDate), cycle.interval, cycle.nIntervals);
 			else
@@ -305,11 +305,11 @@ namespace ERP
 
 			//Timestamp
 			if(!lastEntryPtr && cycle.endDate == currentDt.date())
-				newEntry.timestamp = currentDt;
+				newEntry._timestamp = currentDt;
 			else if(lastEntryPtr)
-				newEntry.timestamp = Wt::WDateTime(cycle.endDate, lastEntryPtr->timestamp.time());
+				newEntry._timestamp = Wt::WDateTime(cycle.endDate, lastEntryPtr->timestamp().time());
 			else
-				newEntry.timestamp = Wt::WDateTime(cycle.endDate, Wt::WTime(0, 0));
+				newEntry._timestamp = Wt::WDateTime(cycle.endDate, Wt::WTime(0, 0));
 
 			//Description
 			newEntry.description = tr("IncompleteEntry");
@@ -320,9 +320,9 @@ namespace ERP
 
 			//Timestamp
 			if(!lastEntryPtr && nextCyclePeriodDt.date() == currentDt.date())
-				newEntry.timestamp = currentDt;
+				newEntry._timestamp = currentDt;
 			else
-				newEntry.timestamp = nextCyclePeriodDt;
+				newEntry._timestamp = nextCyclePeriodDt;
 
 			//Description
 			if(finalCompleteEntry)

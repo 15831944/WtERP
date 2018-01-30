@@ -8,11 +8,11 @@
 //TODO: Check for shared_ptr circular references
 //TODO: Localize DateTimes
 //TODO: Modernize code
+//TODO: ViewName() and ViewTitle()
+//TODO: Make Location-Entity a ManyToMany relation
 
 //TODO: Follow Multiple Dialogs error report
 
-//TODO: Location ViewName and other missing ViewNames
-//TODO: Check what else should be made a BaseAdminRecord
 //TODO: A better way to create indexes on Dbos (create index on AttendaceDeviceV and all record version dbos)
 //TODO: Read only view and reloadable RecordFormView
 //TODO: Improve RecordFormModel API (and remove unnecessary pointers)
@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
 		{
 			//And wait till a shutdown signal is given
 			int sig = ERP::WServer::waitForShutdown();
-			Wt::log("erp-info") << "Shutdown (Signal = " << sig << ")";
+			Wt::log("erp-info") << "SHUTDOWN SIGNAL (" << sig << ")";
 			Server.stop();
 		}
 	}

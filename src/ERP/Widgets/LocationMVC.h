@@ -37,7 +37,7 @@ namespace ERP
 		CityFilterModel();
 		virtual bool filterAcceptRow(int sourceRow, const Wt::WModelIndex &sourceParent) const override;
 
-		void setCountryCode(const std::string code);
+		void setCountryCode(std::string code);
 		std::string countryCode() const { return _countryCode; }
 
 	protected:

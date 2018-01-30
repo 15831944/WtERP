@@ -57,24 +57,25 @@ namespace ERP
 // 		dboSession.mapClass<RentHouse>(RentHouse::tableName());
 	}
 
-	void BaseAdminRecord::setCreatedByValues(bool setRegion)
+	void RestrictedRecordDbo::setCreatedByValues(bool setRegion)
 	{
 		WApplication *app = APP;
 		if(app->authLogin().userPtr())
 		{
-			creatorUserPtr = app->authLogin().userPtr();
+			_creatorUserPtr = app->authLogin().userPtr();
 
 			if(setRegion)
-				regionPtr = app->authLogin().userPtr()->regionPtr;
+				_regionPtr = app->authLogin().userPtr()->regionPtr();
 		}
 	}
-	void BaseRecordVersionInfo::setModifiedByValues()
+
+	void BaseRecordVersionDbo::setModifiedByValues()
 	{
 		WApplication *app = APP;
 		if(app->authLogin().userPtr())
 			_modifierUserPtr = app->authLogin().userPtr();
 	}
-	
+
 	std::string UploadedFile::pathToFile() const
 	{
 		boost::filesystem::path result(pathToDirectory());

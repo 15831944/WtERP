@@ -216,11 +216,11 @@ namespace ERP
 		return code == countryCode();
 	}
 
-	void CityFilterModel::setCountryCode(const std::string code)
+	void CityFilterModel::setCountryCode(std::string code)
 	{
 		if(code != _countryCode)
 		{
-			_countryCode = code;
+			_countryCode = move(code);
 			invalidate();
 		}
 	}
@@ -332,9 +332,7 @@ namespace ERP
 		{
 			if(address.empty() && !countryPtr && !cityPtr)
 				return false;
-
 			_recordPtr = app->dboSession().addNew<Location>();
-			_recordPtr.modify()->setCreatedByValues();
 		}
 
 		_recordPtr.modify()->entityPtr = Wt::any_cast<Dbo::ptr<Entity>>(value(entityField));
@@ -505,7 +503,6 @@ namespace ERP
 			"LEFT JOIN " + Country::tStr() + " cnt ON cnt.code = l.country_code "
 			"LEFT JOIN " + City::tStr() + " city ON city.id = l.city_id "
 			"LEFT JOIN " + Entity::tStr() + " e ON e.id = l.entity_id ");
-		app->authLogin().setPermissionConditionsToQuery(_baseQuery, true, "l.");
 
 		model->setQuery(generateQuery());
 		addColumn(ViewId, model->addColumn("l.id"), tr("ID"), IdColumnWidth);

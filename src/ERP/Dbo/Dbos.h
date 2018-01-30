@@ -269,126 +269,79 @@ namespace Wt
 //Dbos
 namespace ERP
 {
-	class BaseAdminRecord
+	class BaseRecordDbo
 	{
-	public:
-		Dbo::ptr<User> creatorUserPtr;
-		Dbo::ptr<Region> regionPtr;
-		Wt::WDateTime timestamp = Wt::WDateTime::currentDateTime();
+	private:
+		Wt::WDateTime _timestamp = Wt::WDateTime::currentDateTime();
 
+		friend class AccountsDatabase;
+
+	public:
+		Wt::WDateTime timestamp() const { return _timestamp; }
+
+		template<class Action>
+		void persist(Action& a)
+		{
+			Dbo::field(a, _timestamp, "timestamp");
+		}
+	};
+
+	class RestrictedRecordDbo : public BaseRecordDbo
+	{
+	private:
+		Dbo::ptr<User> _creatorUserPtr;
+		Dbo::ptr<Region> _regionPtr;
+
+		friend class AccountsDatabase;
+		friend class UserFormModel;
+
+	public:
+		Dbo::ptr<User> creatorUserPtr() const { return _creatorUserPtr; }
+		Dbo::ptr<Region> regionPtr() const { return _regionPtr; }
 		void setCreatedByValues(bool setRegion = true);
 
 		template<class Action>
 		void persist(Action& a)
 		{
-			Dbo::belongsTo(a, creatorUserPtr, "creator_user", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
-			Dbo::belongsTo(a, regionPtr, "region", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
-			Dbo::field(a, timestamp, "timestamp");
+			Dbo::belongsTo(a, _creatorUserPtr, "creator_user", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
+			Dbo::belongsTo(a, _regionPtr, "region", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
+			BaseRecordDbo::persist(a);
 		}
 	};
 
-	class BaseRecordVersionInfo
+	class BaseRecordVersionDbo : public BaseRecordDbo
 	{
 	private:
 		Dbo::ptr<User> _modifierUserPtr;
-		Wt::WDateTime _timestamp = Wt::WDateTime::currentDateTime();
 
 	public:
+		Dbo::ptr<User> modifierUserPtr() const { return _modifierUserPtr; }
 		void setModifiedByValues();
 
 		template<class Action>
 		void persist(Action& a)
 		{
 			Dbo::belongsTo(a, _modifierUserPtr, "modifier_user", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
-			Dbo::field(a, _timestamp, "timestamp");
+			BaseRecordDbo::persist(a);
 		}
 	};
+
 	template<class C>
-	class BaseRecordVersion : public BaseRecordVersionInfo
+	class RecordVersionDbo : public BaseRecordVersionDbo
 	{
 	private:
 		Dbo::ptr<C> _parentPtr;
 
 	public:
-		BaseRecordVersion(Dbo::ptr<C> parentPtr = nullptr) : _parentPtr(move(parentPtr)) { }
+		RecordVersionDbo(Dbo::ptr<C> parentPtr = nullptr) : _parentPtr(move(parentPtr)) { }
+		Dbo::ptr<C> parentPtr() const { return _parentPtr; }
 
 		template<class Action>
 		void persist(Action& a)
 		{
 			Dbo::belongsTo(a, _parentPtr, "parent", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
-			BaseRecordVersionInfo::persist(a);
+			BaseRecordVersionDbo::persist(a);
 		}
-	};
-
-	class User : public BaseAdminRecord
-	{
-	public:
-		static std::string newInternalPath() { return "/" ADMIN_PATHC "/" USERS_PATHC "/" NEW_USER_PATHC; }
-		static std::string viewInternalPath(long long id) { return viewInternalPath(std::to_string(id)); }
-		static std::string viewInternalPath(const std::string &idStr) { return "/" ADMIN_PATHC "/" USERS_PATHC "/" USER_PREFIX + idStr; }
-
-		Dbo::weak_ptr<AuthInfo> authInfoWPtr;
-
-		UserPermissionCollection userPermissionCollection;
-
-		EntityCollection entitiesCollection;
-		AccountCollection accountsCollection;
-		AccountEntryCollection accountEntriesCollection;
-		IncomeCycleCollection incomeCyclesCollection;
-		ExpenseCycleCollection expenseCyclesCollection;
-		UserCollection createdUserCollection;
-
-		AttendanceDeviceVCollection attendanceDeviceVCollection;
-
-		template<class Action>
-		void persist(Action& a)
-		{
-			Dbo::hasOne(a, authInfoWPtr, "user");
-			Dbo::hasMany(a, userPermissionCollection, Dbo::ManyToOne, "user");
-
-			Dbo::hasMany(a, entitiesCollection, Dbo::ManyToOne, "creator_user");
-			Dbo::hasMany(a, accountsCollection, Dbo::ManyToOne, "creator_user");
-			Dbo::hasMany(a, accountEntriesCollection, Dbo::ManyToOne, "creator_user");
-			Dbo::hasMany(a, incomeCyclesCollection, Dbo::ManyToOne, "creator_user");
-			Dbo::hasMany(a, expenseCyclesCollection, Dbo::ManyToOne, "creator_user");
-			Dbo::hasMany(a, createdUserCollection, Dbo::ManyToOne, "creator_user");
-
-			Dbo::hasMany(a, attendanceDeviceVCollection, Dbo::ManyToOne, "modifier_user");
-
-			BaseAdminRecord::persist(a);
-		}
-		DEFINE_DBO_TABLENAME("user");
-	};
-
-	class Region
-	{
-	public:
-		static std::string newInternalPath() { return "/" ADMIN_PATHC "/" USERS_PATHC "/" REGIONS_PATHC "/" NEW_REGION_PATHC; }
-		static std::string viewInternalPath(long long id) { return viewInternalPath(std::to_string(id)); }
-		static std::string viewInternalPath(const std::string &idStr) { return "/" ADMIN_PATHC "/" USERS_PATHC "/" REGIONS_PATHC "/" REGION_PREFIX + idStr; }
-
-		std::string name;
-
-		UserCollection userCollection;
-		EntityCollection entitiesCollection;
-		AccountCollection accountsCollection;
-		AccountEntryCollection accountEntriesCollection;
-		IncomeCycleCollection incomeCyclesCollection;
-		ExpenseCycleCollection expenseCyclesCollection;
-
-		template<class Action>
-		void persist(Action& a)
-		{
-			Dbo::field(a, name, "name", 70);
-			Dbo::hasMany(a, userCollection, Dbo::ManyToOne, "region");
-
-			Dbo::hasMany(a, entitiesCollection, Dbo::ManyToOne, "region");
-			Dbo::hasMany(a, accountsCollection, Dbo::ManyToOne, "region");
-			Dbo::hasMany(a, accountEntriesCollection, Dbo::ManyToOne, "region");
-			Dbo::hasMany(a, incomeCyclesCollection, Dbo::ManyToOne, "region");
-			Dbo::hasMany(a, expenseCyclesCollection, Dbo::ManyToOne, "region");
-		}
-		DEFINE_DBO_TABLENAME("region");
 	};
 
 	class Permission
@@ -429,7 +382,7 @@ namespace ERP
 		bool requireStrongLogin = false;
 
 		PermissionDdo(const Dbo::ptr<Permission> &ptr)
-			: id(ptr.id()), name(ptr->name), requireStrongLogin(ptr->requireStrongLogin)
+				: id(ptr.id()), name(ptr->name), requireStrongLogin(ptr->requireStrongLogin)
 		{ }
 	};
 
@@ -440,7 +393,7 @@ namespace ERP
 
 		UserPermissionPK() = default;
 		UserPermissionPK(Dbo::ptr<User> userPtr, Dbo::ptr<Permission> permissionPtr)
-			: userPtr(move(userPtr)), permissionPtr(move(permissionPtr))
+				: userPtr(move(userPtr)), permissionPtr(move(permissionPtr))
 		{ }
 
 		bool operator==(const UserPermissionPK &other) const
@@ -504,15 +457,79 @@ namespace ERP
 		}
 		DEFINE_DBO_TABLENAME("default_permission");
 	};
-// 	struct DefaultPermissionDdo
-// 	{
-// 		long long permissionId;
-// 		DefaultPermission::LoginStates loginStates = DefaultPermission::AllStates;
-// 
-// 		DefaultPermissionDdo(Dbo::ptr<DefaultPermission> ptr)
-// 			: permissionId(ptr->permissionPtr.id()), loginStates(ptr->loginStates)
-// 		{ }
-// 	};
+
+	class User : public RestrictedRecordDbo
+	{
+	public:
+		static std::string newInternalPath() { return "/" ADMIN_PATHC "/" USERS_PATHC "/" NEW_USER_PATHC; }
+		static std::string viewInternalPath(long long id) { return viewInternalPath(std::to_string(id)); }
+		static std::string viewInternalPath(const std::string &idStr) { return "/" ADMIN_PATHC "/" USERS_PATHC "/" USER_PREFIX + idStr; }
+
+		Dbo::weak_ptr<AuthInfo> authInfoWPtr;
+
+		UserPermissionCollection userPermissionCollection;
+
+		EntityCollection entitiesCollection;
+		AccountCollection accountsCollection;
+		AccountEntryCollection accountEntriesCollection;
+		IncomeCycleCollection incomeCyclesCollection;
+		ExpenseCycleCollection expenseCyclesCollection;
+		UserCollection createdUserCollection;
+
+		AttendanceDeviceVCollection attendanceDeviceVCollection;
+
+		template<class Action>
+		void persist(Action& a)
+		{
+			Dbo::hasOne(a, authInfoWPtr, "user");
+			Dbo::hasMany(a, userPermissionCollection, Dbo::ManyToOne, "user");
+
+			Dbo::hasMany(a, entitiesCollection, Dbo::ManyToOne, "creator_user");
+			Dbo::hasMany(a, accountsCollection, Dbo::ManyToOne, "creator_user");
+			Dbo::hasMany(a, accountEntriesCollection, Dbo::ManyToOne, "creator_user");
+			Dbo::hasMany(a, incomeCyclesCollection, Dbo::ManyToOne, "creator_user");
+			Dbo::hasMany(a, expenseCyclesCollection, Dbo::ManyToOne, "creator_user");
+			Dbo::hasMany(a, createdUserCollection, Dbo::ManyToOne, "creator_user");
+
+			Dbo::hasMany(a, attendanceDeviceVCollection, Dbo::ManyToOne, "modifier_user");
+
+			RestrictedRecordDbo::persist(a);
+		}
+		DEFINE_DBO_TABLENAME("user");
+	};
+
+	class Region : public BaseRecordDbo
+	{
+	public:
+		static std::string newInternalPath() { return "/" ADMIN_PATHC "/" USERS_PATHC "/" REGIONS_PATHC "/" NEW_REGION_PATHC; }
+		static std::string viewInternalPath(long long id) { return viewInternalPath(std::to_string(id)); }
+		static std::string viewInternalPath(const std::string &idStr) { return "/" ADMIN_PATHC "/" USERS_PATHC "/" REGIONS_PATHC "/" REGION_PREFIX + idStr; }
+
+		std::string name;
+
+		UserCollection userCollection;
+		EntityCollection entitiesCollection;
+		AccountCollection accountsCollection;
+		AccountEntryCollection accountEntriesCollection;
+		IncomeCycleCollection incomeCyclesCollection;
+		ExpenseCycleCollection expenseCyclesCollection;
+
+		template<class Action>
+		void persist(Action& a)
+		{
+			Dbo::field(a, name, "name", 70);
+			Dbo::hasMany(a, userCollection, Dbo::ManyToOne, "region");
+
+			Dbo::hasMany(a, entitiesCollection, Dbo::ManyToOne, "region");
+			Dbo::hasMany(a, accountsCollection, Dbo::ManyToOne, "region");
+			Dbo::hasMany(a, accountEntriesCollection, Dbo::ManyToOne, "region");
+			Dbo::hasMany(a, incomeCyclesCollection, Dbo::ManyToOne, "region");
+			Dbo::hasMany(a, expenseCyclesCollection, Dbo::ManyToOne, "region");
+
+			BaseRecordDbo::persist(a);
+		}
+		DEFINE_DBO_TABLENAME("region");
+	};
 
 	enum BloodType
 	{
@@ -533,7 +550,7 @@ namespace ERP
 		Unmarried = 2
 	};
 
-	class Entity : public BaseAdminRecord
+	class Entity : public RestrictedRecordDbo
 	{
 	public:
 		enum Type
@@ -613,7 +630,7 @@ namespace ERP
 // 			Dbo::hasMany(a, owningRentHouseCollection, Dbo::ManyToOne, "owner_entity");
 // 			Dbo::hasMany(a, assignedAlarmItemCollection, Dbo::ManyToOne, "entity");
 
-			BaseAdminRecord::persist(a);
+			RestrictedRecordDbo::persist(a);
 		}
 		DEFINE_DBO_TABLENAME("entity");
 	};
@@ -750,7 +767,7 @@ namespace ERP
 		friend class PersonnelFormModel;
 	};
 
-	class EmployeePosition
+	class EmployeePosition : public BaseRecordDbo
 	{
 	public:
 		enum Type
@@ -769,11 +786,13 @@ namespace ERP
 			Dbo::field(a, title, "title", 70);
 			Dbo::field(a, type, "type");
 			Dbo::hasMany(a, employeeAssignmentCollection, Dbo::ManyToOne, "employeeposition");
+
+			BaseRecordDbo::persist(a);
 		}
 		DEFINE_DBO_TABLENAME("employeeposition");
 	};
 
-	class ClientService
+	class ClientService : public BaseRecordDbo
 	{
 	public:
 		std::string title;
@@ -784,6 +803,8 @@ namespace ERP
 		{
 			Dbo::field(a, title, "title", 70);
 			Dbo::hasMany(a, clientAssignmentCollection, Dbo::ManyToOne, "clientservice");
+
+			BaseRecordDbo::persist(a);
 		}
 		DEFINE_DBO_TABLENAME("clientservice");
 	};
@@ -807,11 +828,10 @@ namespace ERP
 		friend class BusinessFormModel;
 	};
 
-	class ContactNumber
+	class ContactNumber : public BaseRecordDbo
 	{
 	public:
 		Dbo::ptr<Entity> entityPtr;
-		Dbo::ptr<Location> locationPtr;
 		std::string countryCode;
 		std::string nationalNumber;
 
@@ -819,13 +839,14 @@ namespace ERP
 		void persist(Action& a)
 		{
 			Dbo::belongsTo(a, entityPtr, "entity", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
-			Dbo::belongsTo(a, locationPtr, "location", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 			Dbo::field(a, countryCode, "countryCode", 3);
 			Dbo::field(a, nationalNumber, "nationalNumber", 15);
+
+			BaseRecordDbo::persist(a);
 		}
 		DEFINE_DBO_TABLENAME("contactnumber");
 	};
-	class Country
+	class Country : public BaseRecordDbo
 	{
 	public:
 		std::string code;
@@ -841,10 +862,12 @@ namespace ERP
 			Dbo::id(a, code, "code", 3);
 			Dbo::field(a, name, "name", 70);
 			Dbo::hasMany(a, cityCollection, Dbo::ManyToOne, "country");
+
+			BaseRecordDbo::persist(a);
 		}
 		DEFINE_DBO_TABLENAME("country");
 	};
-	class City
+	class City : public BaseRecordDbo
 	{
 	public:
 		Dbo::ptr<Country> countryPtr;
@@ -858,10 +881,12 @@ namespace ERP
 		{
 			Dbo::belongsTo(a, countryPtr, "country", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
 			Dbo::field(a, name, "name", 70);
+
+			BaseRecordDbo::persist(a);
 		}
 		DEFINE_DBO_TABLENAME("city");
 	};
-	class Location : public BaseAdminRecord
+	class Location : public BaseRecordDbo
 	{
 	public:
 		Dbo::ptr<Entity> entityPtr;
@@ -869,7 +894,6 @@ namespace ERP
 		Dbo::ptr<Country> countryPtr;
 		Dbo::ptr<City> cityPtr;
 
-		ContactNumberCollection contactNumberCollection;
 		EmployeeAssignmentCollection assignedEmployeeCollection;
 		AttendanceDeviceVCollection attendanceDeviceVCollection;
 		AttendanceEntryCollection attendanceCollection;
@@ -885,7 +909,6 @@ namespace ERP
 			Dbo::belongsTo(a, countryPtr, "country", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 			Dbo::belongsTo(a, cityPtr, "city", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 
-			Dbo::hasMany(a, contactNumberCollection, Dbo::ManyToOne, "location");
 			Dbo::hasMany(a, assignedEmployeeCollection, Dbo::ManyToOne, "location");
 			Dbo::hasMany(a, attendanceDeviceVCollection, Dbo::ManyToOne, "location");
 			Dbo::hasMany(a, attendanceCollection, Dbo::ManyToOne, "location");
@@ -893,12 +916,12 @@ namespace ERP
 // 			Dbo::hasMany(a, assetCollection, Dbo::ManyToOne, "location");
 // 			Dbo::hasMany(a, rentHouseCollection, Dbo::ManyToOne, "location");
 
-			BaseAdminRecord::persist(a);
+			BaseRecordDbo::persist(a);
 		}
 		DEFINE_DBO_TABLENAME("location");
 	};
 
-	class EmployeeAssignment : public BaseAdminRecord
+	class EmployeeAssignment : public RestrictedRecordDbo
 	{
 	public:
 		Wt::WDate startDate;
@@ -909,9 +932,6 @@ namespace ERP
 		Dbo::ptr<Location> locationPtr;
 		Dbo::ptr<ExpenseCycle> expenseCyclePtr;
 		Dbo::ptr<ClientAssignment> clientAssignmentPtr;
-
-		Dbo::weak_ptr<EmployeeAssignment> transferredToWPtr;
-		Dbo::ptr<EmployeeAssignment> transferredFromPtr;
 
 		static std::string newInternalPath() { return "/" ADMIN_PATHC "/" ENTITIES_PATHC "/" EMPLOYEES_PATHC "/" NEW_EMPLOYEEASSIGNMENT_PATHC; }
 		static std::string viewInternalPath(long long id) { return viewInternalPath(std::to_string(id)); }
@@ -929,15 +949,12 @@ namespace ERP
 			Dbo::belongsTo(a, expenseCyclePtr, "expensecycle", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 			Dbo::belongsTo(a, clientAssignmentPtr, "clientassignment", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 
-			Dbo::hasOne(a, transferredToWPtr, "transferred_from");
-			Dbo::belongsTo(a, transferredFromPtr, "transferred_from", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
-
-			BaseAdminRecord::persist(a);
+			RestrictedRecordDbo::persist(a);
 		}
 		DEFINE_DBO_TABLENAME("employeeassignment");
 	};
 
-	class ClientAssignment : public BaseAdminRecord
+	class ClientAssignment : public RestrictedRecordDbo
 	{
 	public:
 		Wt::WDate startDate;
@@ -965,12 +982,12 @@ namespace ERP
 
 			Dbo::hasMany(a, employeeAssignmentCollection, Dbo::ManyToOne, "clientassignment");
 
-			BaseAdminRecord::persist(a);
+			RestrictedRecordDbo::persist(a);
 		}
 		DEFINE_DBO_TABLENAME("clientassignment");
 	};
 
-	class Account : public BaseAdminRecord
+	class Account : public RestrictedRecordDbo
 	{
 	public:
 		enum Type
@@ -1012,7 +1029,7 @@ namespace ERP
 			Dbo::hasOne(a, balOfEntityWPtr, "bal_account");
 			Dbo::hasOne(a, pnlOfEntityWPtr, "pnl_account");
 
-			BaseAdminRecord::persist(a);
+			RestrictedRecordDbo::persist(a);
 		}
 		DEFINE_DBO_TABLENAME("account");
 
@@ -1023,7 +1040,7 @@ namespace ERP
 		friend class AccountsDatabase;
 	};
 
-	class AccountEntry : public BaseAdminRecord
+	class AccountEntry : public RestrictedRecordDbo
 	{
 	private:
 		AccountEntry(const Money &amount, Dbo::ptr<Account> debitAccountPtr, Dbo::ptr<Account> creditAccountPtr)
@@ -1083,7 +1100,7 @@ namespace ERP
 			Dbo::hasOne(a, fineInfoWPtr, "accountentry");
 			Dbo::hasOne(a, pettyExpenditureInfoWPtr, "accountentry");
 
-			BaseAdminRecord::persist(a);
+			RestrictedRecordDbo::persist(a);
 		}
 		DEFINE_DBO_TABLENAME("accountentry");
 	};
@@ -1140,7 +1157,7 @@ namespace ERP
 	Wt::WDateTime addCycleInterval(const Wt::WDateTime &dt, CycleInterval interval, int nIntervals);
 	Wt::WString rsEveryNIntervals(const Money &amount, CycleInterval interval, uint64_t nIntervals);
 
-	class EntryCycle : public BaseAdminRecord
+	class EntryCycle : public RestrictedRecordDbo
 	{
 	public:
 		Dbo::ptr<Entity> entityPtr;
@@ -1167,7 +1184,7 @@ namespace ERP
 			Dbo::field(a, firstEntryAfterCycle, "firstEntryAfterCycle");
 
 			Dbo::hasMany(a, entryCollection, Dbo::ManyToOne, cycleName);
-			BaseAdminRecord::persist(a);
+			RestrictedRecordDbo::persist(a);
 		}
 
 	protected:
@@ -1232,7 +1249,7 @@ namespace ERP
 		friend class ExpenseCycleFormModel;
 	};
 
-	class UploadedFile : public Dbo::Dbo<UploadedFile>
+	class UploadedFile : public Dbo::Dbo<UploadedFile>, public BaseRecordDbo
 	{
 	public:
 		Wt::Dbo::ptr<Entity> entityPtr;
@@ -1255,13 +1272,15 @@ namespace ERP
 			Wt::Dbo::hasOne(a, profilePictureOfWPtr, "profilePictureFile");
 			Wt::Dbo::hasOne(a, cnicPicture1OfWPtr, "cnicFile1");
 			Wt::Dbo::hasOne(a, cnicPicture2OfWPtr, "cnicFile2");
+
+			BaseRecordDbo::persist(a);
 		}
 		std::string pathToFile() const;
 		std::string pathToDirectory() const;
 		DEFINE_DBO_TABLENAME("uploadedfile");
 	};
 
-	class AttendanceDevice
+	class AttendanceDevice : public RestrictedRecordDbo
 	{
 	public:
 		AttendanceDeviceVCollection versionsCollection;
@@ -1276,14 +1295,16 @@ namespace ERP
 		{
 			Dbo::hasMany(a, versionsCollection, Dbo::ManyToOne, "parent");
 			Dbo::hasMany(a, attendanceCollection, Dbo::ManyToOne, "attendancedevice");
+
+			RestrictedRecordDbo::persist(a);
 		}
 		DEFINE_DBO_TABLENAME("attendancedevice");
 	};
-	class AttendanceDeviceV : public BaseRecordVersion<AttendanceDevice>
+	class AttendanceDeviceV : public RecordVersionDbo<AttendanceDevice>
 	{
 	public:
 		AttendanceDeviceV() = default;
-		AttendanceDeviceV(Dbo::ptr<AttendanceDevice> parentPtr) : BaseRecordVersion(move(parentPtr)) { }
+		AttendanceDeviceV(Dbo::ptr<AttendanceDevice> parentPtr) : RecordVersionDbo(move(parentPtr)) { }
 
 		std::string hostName;
 		Dbo::ptr<Location> locationPtr;
@@ -1291,7 +1312,7 @@ namespace ERP
 		template<class Action>
 		void persist(Action& a)
 		{
-			BaseRecordVersion::persist(a);
+			RecordVersionDbo::persist(a);
 
 			Dbo::field(a, hostName, "hostName", 255);
 			Dbo::belongsTo(a, locationPtr, "location", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
@@ -1299,7 +1320,7 @@ namespace ERP
 		DEFINE_DBO_TABLENAME("attendancedevice_v");
 	};
 
-	class AttendanceEntry
+	class AttendanceEntry : public BaseRecordDbo
 	{
 	public:
 		Wt::WDateTime timestampIn;
@@ -1320,6 +1341,8 @@ namespace ERP
 			Dbo::belongsTo(a, entityPtr, "entity", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
 			Dbo::belongsTo(a, attendanceDevicePtr, "attendancedevice", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 			Dbo::belongsTo(a, locationPtr, "location", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
+
+			BaseRecordDbo::persist(a);
 		}
 		DEFINE_DBO_TABLENAME("attendanceentry");
 	};

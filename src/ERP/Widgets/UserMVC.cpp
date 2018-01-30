@@ -123,7 +123,7 @@ namespace ERP
 
 			setValue(loginNameField, _authInfoPtr->identity(Wt::Auth::Identity::LoginName));
 			setValue(emailField, _authInfoPtr->email());
-			setValue(regionField, _recordPtr->regionPtr);
+			setValue(regionField, _recordPtr->regionPtr());
 
 			_permissionMap = SERVER->permissionsDatabase().getUserPermissions(_recordPtr, Wt::Auth::LoginState::Strong, &app->dboSession());
 			if(_permissionMap.find(Permissions::GlobalAdministrator) != _permissionMap.end())
@@ -236,7 +236,7 @@ namespace ERP
 			}
 		}
 
-		_recordPtr.modify()->regionPtr = Wt::any_cast<Dbo::ptr<Region>>(value(regionField));
+		_recordPtr.modify()->_regionPtr = Wt::any_cast<Dbo::ptr<Region>>(value(regionField));
 		_authInfoPtr.modify()->setEmail(valueText(emailField).toUTF8());
 
 		if(isVisible(passwordField) && isVisible(password2Field))

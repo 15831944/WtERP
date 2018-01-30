@@ -99,7 +99,6 @@ namespace ERP
 		virtual void initModel() override;
 	};
 
-
 	class AttendanceEntryFormModel : public RecordFormModel<AttendanceEntry>
 	{
 	public:

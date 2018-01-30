@@ -51,9 +51,9 @@ namespace ERP
 
 		bool hasPermission(long long permissionId) { return checkPermission(permissionId) == Permitted; }
 		PermissionResult checkPermission(long long permissionId);
-		PermissionResult checkRecordViewPermission(const BaseAdminRecord *record);
+		PermissionResult checkRecordViewPermission(const RestrictedRecordDbo *record);
 		PermissionResult checkRecordViewPermission(const void *record);
-		PermissionResult checkRecordModifyPermission(const BaseAdminRecord *record);
+		PermissionResult checkRecordModifyPermission(const RestrictedRecordDbo *record);
 		PermissionResult checkRecordModifyPermission(const void *record);
 		PermissionResult checkRecordCreatePermission() { return _recordCreatePermission; }
 
@@ -236,7 +236,7 @@ namespace ERP
 			}
 			else
 			{
-				if(!selfUser->regionPtr)
+				if(!selfUser->regionPtr())
 					regionIdOptions = IdOptions::IsNull;
 				else
 				{
@@ -284,9 +284,9 @@ namespace ERP
 			else if(regionIdOptions == IdOptions::IsNull)
 				query.where(fieldPrefix + "region_id IS null");
 			else if(regionIdOptions == IdOptions::SelfId)
-				query.where(fieldPrefix + "region_id = ?").bind(selfUser->regionPtr.id());
+				query.where(fieldPrefix + "region_id = ?").bind(selfUser->regionPtr().id());
 			else if(regionIdOptions == IdOptions::SelfIdOrNull)
-				query.where(fieldPrefix + "region_id = ? OR " + fieldPrefix + "region_id IS null").bind(selfUser->regionPtr.id());
+				query.where(fieldPrefix + "region_id = ? OR " + fieldPrefix + "region_id IS null").bind(selfUser->regionPtr().id());
 
 			if(userIdOptions == IdOptions::NotNull)
 				query.where(fieldPrefix + "creator_user_id IS NOT null");

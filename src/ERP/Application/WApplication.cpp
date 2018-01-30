@@ -63,7 +63,7 @@ namespace ERP
 		return Permitted;
 	}
 
-	AuthLogin::PermissionResult AuthLogin::checkRecordViewPermission(const BaseAdminRecord *record)
+	AuthLogin::PermissionResult AuthLogin::checkRecordViewPermission(const RestrictedRecordDbo *record)
 	{
 		PermissionResult result = checkRecordViewPermission((void*)record);
 		if(result != Permitted)
@@ -78,7 +78,7 @@ namespace ERP
 			return result;
 
 		//Region
-		if(!record->regionPtr)
+		if(!record->regionPtr())
 		{
 			PermissionResult viewUnassignedRegionRecord = checkPermission(Permissions::ViewUnassignedRegionRecord);
 			if(viewUnassignedRegionRecord == Denied)
@@ -86,7 +86,7 @@ namespace ERP
 			if(viewUnassignedRegionRecord == RequiresStrongLogin)
 				result = RequiresStrongLogin;
 		}
-		else if(userSelf->regionPtr != record->regionPtr)
+		else if(userSelf->regionPtr() != record->regionPtr())
 		{
 			PermissionResult viewOtherRegionRecord = checkPermission(Permissions::ViewOtherRegionRecord);
 			if(viewOtherRegionRecord == Denied)
@@ -96,7 +96,7 @@ namespace ERP
 		}
 
 		//User
-		if(!record->creatorUserPtr)
+		if(!record->creatorUserPtr())
 		{
 			PermissionResult viewUnassignedUserRecord = checkPermission(Permissions::ViewUnassignedUserRecord);
 			if(viewUnassignedUserRecord == Denied)
@@ -104,7 +104,7 @@ namespace ERP
 			if(viewUnassignedUserRecord == RequiresStrongLogin)
 				result = RequiresStrongLogin;
 		}
-		else if(userSelf != record->creatorUserPtr)
+		else if(userSelf != record->creatorUserPtr())
 		{
 			PermissionResult viewOtherUserRecord = checkPermission(Permissions::ViewOtherUserRecord);
 			if(viewOtherUserRecord == Denied)
@@ -120,7 +120,7 @@ namespace ERP
 		return Permitted;
 	}
 
-	AuthLogin::PermissionResult AuthLogin::checkRecordModifyPermission(const BaseAdminRecord *record)
+	AuthLogin::PermissionResult AuthLogin::checkRecordModifyPermission(const RestrictedRecordDbo *record)
 	{
 		PermissionResult result = checkRecordModifyPermission((void*)record);
 		if(result != Permitted)
@@ -134,7 +134,7 @@ namespace ERP
 		if(!record)
 			return result;
 
-		if(userSelf->regionPtr != record->regionPtr)
+		if(userSelf->regionPtr() != record->regionPtr())
 		{
 			PermissionResult permission = checkPermission(Permissions::ViewOtherRegionRecord);
 			if(permission == Denied)
@@ -149,7 +149,7 @@ namespace ERP
 				result = RequiresStrongLogin;
 		}
 
-		if(userSelf != record->creatorUserPtr)
+		if(userSelf != record->creatorUserPtr())
 		{
 			PermissionResult permission = checkPermission(Permissions::ViewOtherUserRecord);
 			if(permission == Denied)

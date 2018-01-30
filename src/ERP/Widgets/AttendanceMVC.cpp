@@ -139,7 +139,10 @@ namespace ERP
 		TRANSACTION(app);
 
 		if(!_recordPtr)
+		{
 			_recordPtr = app->dboSession().addNew<AttendanceDevice>();
+			_recordPtr.modify()->setCreatedByValues();
+		}
 
 		Dbo::ptr<AttendanceDeviceV> newVersionPtr = app->dboSession().addNew<AttendanceDeviceV>(_recordPtr);
 		newVersionPtr.modify()->setModifiedByValues();
