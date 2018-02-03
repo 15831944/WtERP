@@ -67,43 +67,6 @@ namespace ERP
 		EntityView *_view = nullptr;
 	};
 
-	//EmployeeFormModel
-	class EmployeeFormModel : public ChildRecordFormModel<Employee>
-	{
-	public:
-		static const Field companyNumberField;
-		static const Field gradeField;
-		static const Field recruitmentDateField;
-		static const Field educationField;
-		static const Field experienceField;
-		static const Field addQualificationsField;
-
-		EmployeeFormModel(EntityView *view, Dbo::ptr<Employee> employeePtr = nullptr);
-		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
-		virtual bool saveChanges() override;
-
-	protected:
-		EntityView *_view = nullptr;
-	};
-
-	//PersonnelFormModel
-	class PersonnelFormModel : public ChildRecordFormModel<Personnel>
-	{
-	public:
-		static const Field policeStationField;
-		static const Field policeVerifiedField;
-		static const Field trainingCoursesField;
-		static const Field armyNumberField;
-		static const Field rankField;
-
-		PersonnelFormModel(EntityView *view, Dbo::ptr<Personnel> personnelPtr = nullptr);
-		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
-		virtual bool saveChanges() override;
-
-	protected:
-		EntityView *_view = nullptr;
-	};
-
 	//BusinessFormModel
 	class BusinessFormModel : public ChildRecordFormModel<Business>
 	{
@@ -184,9 +147,6 @@ namespace ERP
 		virtual void initView() override;
 
 		void selectEntityType(Entity::Type type);
-		void setSpecificType(Entity::SpecificType type);
-		void addEmployeeModel(Dbo::ptr<Employee> employeePtr = nullptr);
-		void addPersonnelModel(Dbo::ptr<Personnel> personnelPtr = nullptr);
 
 		Entity::Type entityType() const { return _type; }
 		Dbo::ptr<Entity> entityPtr() const { return _entityModel->recordPtr(); }
@@ -206,22 +166,17 @@ namespace ERP
 
 		EntityFormModel *_entityModel;
 		PersonFormModel *_personModel;
-		EmployeeFormModel *_employeeModel;
-		PersonnelFormModel *_personnelModel;
+		BusinessFormModel *_businessModel;
 		ContactNumbersManagerModel *_contactNumbersModel;
 		LocationsManagerModel *_locationsModel;
-		BusinessFormModel *_businessModel;
 
 		Entity::Type _type = Entity::InvalidType;
 		Entity::Type _defaultType = Entity::InvalidType;
-		Entity::SpecificType _specificType = Entity::UnspecificType;
 		Dbo::ptr<Entity> _tempPtr;
 
 	private:
 		friend class EntityFormModel;
 		friend class PersonFormModel;
-		friend class EmployeeFormModel;
-		friend class PersonnelFormModel;
 		friend class BusinessFormModel;
 		friend class ClientFormModel;
 		friend class ContactNumbersManagerModel;

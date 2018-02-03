@@ -321,7 +321,6 @@ namespace ERP
 		Wt::registerType<Money>();
 		Wt::registerType<Entity::Type>();
 		Wt::registerType<Account::Type>();
-		Wt::registerType<EmployeePosition::Type>();
 		Wt::registerType<Wt::WFlags<Entity::SpecificType>>();
 	}
 

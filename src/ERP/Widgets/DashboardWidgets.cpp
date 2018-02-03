@@ -27,13 +27,6 @@ namespace ERP
 				"SELECT COUNT(DISTINCT a.entity_id) FROM " + EmployeeAssignment::tStr() + " a"
 				).where("? >= startDate AND (endDate IS null OR ? < endDate)").bind(currentDate).bind(currentDate);
 		}, totalEntities);
-		bindNew<RecordCountTemplate>("personnel", []() -> long long {
-			Wt::WDate currentDate = Wt::WDate::currentServerDate();
-			return APP->dboSession().query<long long>(
-				"SELECT COUNT(DISTINCT a.entity_id) FROM " + EmployeeAssignment::tStr() + " a "
-				"INNER JOIN " + EmployeePosition::tStr() + " p ON (p.id = a.employeeposition_id AND p.type = " + std::to_string(EmployeePosition::PersonnelType) + ")"
-				).where("? >= startDate AND (endDate IS null OR ? < endDate)").bind(currentDate).bind(currentDate);
-		}, totalEntities);
 		bindNew<RecordCountTemplate>("clients", []() -> long long {
 			Wt::WDate currentDate = Wt::WDate::currentServerDate();
 			return APP->dboSession().query<long long>(
@@ -188,16 +181,16 @@ namespace ERP
 			if(_totalCount == 0)
 			{
 				_currentCount = 0;
-				_text->setText(_leftStr.arg(0));
-				_rightText->setText(_rightStr.arg(0));
+				_text->setText(Wt::WString(_leftStr).arg(0));
+				_rightText->setText(Wt::WString(_rightStr).arg(0));
 				resolveWidget("progress-bar")->setWidth(Wt::WLength(50,  Wt::LengthUnit::Percentage));
 				resolveWidget("progress-bar-right")->setWidth(Wt::WLength(50,  Wt::LengthUnit::Percentage));
 				return;
 			}
 
 			_currentCount = _queryFunction();
-			_text->setText(_leftStr.arg(_currentCount));
-			_rightText->setText(_rightStr.arg(_totalCount - _currentCount));
+			_text->setText(Wt::WString(_leftStr).arg(_currentCount));
+			_rightText->setText(Wt::WString(_rightStr).arg(_totalCount - _currentCount));
 
 			double leftWidth = static_cast<double>(_currentCount) / _totalCount * 100;
 			resolveWidget("progress-bar")->setWidth(Wt::WLength(leftWidth,  Wt::LengthUnit::Percentage));

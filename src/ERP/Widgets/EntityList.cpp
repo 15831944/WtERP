@@ -1,13 +1,9 @@
 #include "Widgets/EntityList.h"
 #include "Widgets/EntityView.h"
-#include "Utilities/FilteredList.h"
 
 #include <Wt/WCheckBox.h>
-#include <Wt/WComboBox.h>
 #include <Wt/WTableView.h>
-#include <Wt/WPushButton.h>
 #include <Wt/WIntValidator.h>
-#include <Wt/WSuggestionPopup.h>
 
 namespace ERP
 {
@@ -31,9 +27,8 @@ namespace ERP
 
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
-			"SELECT e.id, e.name, e.type, ea.id, p.id, ca.id FROM " + Entity::tStr() + " e "
+			"SELECT e.id, e.name, e.type, ea.id, ca.id FROM " + Entity::tStr() + " e "
 			"LEFT JOIN " + EmployeeAssignment::tStr() + " ea ON (ea.entity_id = e.id AND ea.startDate <= ? AND (ea.endDate IS NULL OR ea.endDate > ?)) "
-			"LEFT JOIN " + EmployeePosition::tStr() + " p ON (p.id = ea.employeeposition_id AND p.type = " + std::to_string(EmployeePosition::PersonnelType) + ") "
 			"LEFT JOIN " + ClientAssignment::tStr() + " ca ON (ca.entity_id = e.id AND ca.startDate <= ? AND (ca.endDate IS NULL OR ca.endDate > ?))"
 			).groupBy("e.id");
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "e.");
@@ -68,9 +63,8 @@ namespace ERP
 
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
-			"SELECT e.id, e.name, ea.id, p.id, ca.id FROM " + Entity::tStr() + " e "
+			"SELECT e.id, e.name, ea.id, ca.id FROM " + Entity::tStr() + " e "
 			"LEFT JOIN " + EmployeeAssignment::tStr() + " ea ON (ea.entity_id = e.id AND ea.startDate <= ? AND (ea.endDate IS NULL OR ea.endDate > ?)) "
-			"LEFT JOIN " + EmployeePosition::tStr() + " p ON (p.id = ea.employeeposition_id AND p.type = " + std::to_string(EmployeePosition::PersonnelType) + ") "
 			"LEFT JOIN " + ClientAssignment::tStr() + " ca ON (ca.entity_id = e.id AND ca.startDate <= ? AND (ca.endDate IS NULL OR ca.endDate > ?))"
 			).where("e.type = " + std::to_string(Entity::PersonType)).groupBy("e.id");
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "e.");
@@ -104,9 +98,8 @@ namespace ERP
 
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
-			"SELECT e.id, e.name, ea.id, p.id, ca.id FROM " + Entity::tStr() + " e "
+			"SELECT e.id, e.name, ea.id, ca.id FROM " + Entity::tStr() + " e "
 			"LEFT JOIN " + EmployeeAssignment::tStr() + " ea ON (ea.entity_id = e.id AND ea.startDate <= ? AND (ea.endDate IS NULL OR ea.endDate > ?)) "
-			"LEFT JOIN " + EmployeePosition::tStr() + " p ON (p.id = ea.employeeposition_id AND p.type = " + std::to_string(EmployeePosition::PersonnelType) + ") "
 			"LEFT JOIN " + ClientAssignment::tStr() + " ca ON (ca.entity_id = e.id AND ca.startDate <= ? AND (ca.endDate IS NULL OR ca.endDate > ?))"
 			).where("e.type = " + std::to_string(Entity::BusinessType)).groupBy("e.id");
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "e.");
@@ -140,9 +133,8 @@ namespace ERP
 
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
-			"SELECT e.id, e.name, ea.id, p.id, ca.id FROM " + Entity::tStr() + " e "
+			"SELECT e.id, e.name, ea.id, ca.id FROM " + Entity::tStr() + " e "
 			"INNER JOIN " + EmployeeAssignment::tStr() + " ea ON (ea.entity_id = e.id AND ea.startDate <= ? AND (ea.endDate IS NULL OR ea.endDate > ?)) "
-			"LEFT JOIN " + EmployeePosition::tStr() + " p ON (p.id = ea.employeeposition_id AND p.type = " + std::to_string(EmployeePosition::PersonnelType) + ") "
 			"LEFT JOIN " + ClientAssignment::tStr() + " ca ON (ca.entity_id = e.id AND ca.startDate <= ? AND (ca.endDate IS NULL OR ca.endDate > ?))"
 			).groupBy("e.id");
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "e.");
@@ -156,42 +148,6 @@ namespace ERP
 	}
 
 	Dbo::Query<EmployeeList::ResultType> EmployeeList::generateQuery() const
-	{
-		Dbo::Query<ResultType> query(_baseQuery);
-		Wt::WDate currentDate = Wt::WDate::currentServerDate();
-		query.bind(currentDate).bind(currentDate).bind(currentDate).bind(currentDate);
-		return query;
-	}
-
-	void PersonnelList::initFilters()
-	{
-		filtersTemplate()->addFilterModel(make_shared<WLineEditFilterModel>(tr("ID"), "e.id", std::bind(&FiltersTemplate::initIdEdit, _1)));
-		filtersTemplate()->addFilterModel(make_shared<NameFilterModel>(tr("Name"), "e.name")); filtersTemplate()->addFilter(2);
-	}
-
-	void PersonnelList::initModel()
-	{
-		shared_ptr<QueryModelType> model;
-		_model = model = make_shared<QueryModelType>();
-
-		WApplication *app = APP;
-		_baseQuery = app->dboSession().query<ResultType>(
-			"SELECT e.id, e.name, ea.id, p.id, ca.id FROM " + Entity::tStr() + " e "
-			"INNER JOIN " + EmployeeAssignment::tStr() + " ea ON (ea.entity_id = e.id AND ea.startDate <= ? AND (ea.endDate IS NULL OR ea.endDate > ?)) "
-			"INNER JOIN " + EmployeePosition::tStr() + " p ON (p.id = ea.employeeposition_id AND p.type = " + std::to_string(EmployeePosition::PersonnelType) + ") "
-			"LEFT JOIN " + ClientAssignment::tStr() + " ca ON (ca.entity_id = e.id AND ca.startDate <= ? AND (ca.endDate IS NULL OR ca.endDate > ?))"
-			).groupBy("e.id");
-		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "e.");
-
-		model->setQuery(generateQuery());
-		addColumn(ViewId, model->addColumn("e.id"), tr("ID"), IdColumnWidth);
-		addColumn(ViewName, model->addColumn("e.name"), tr("Name"), NameColumnWidth);
-		addColumn(ViewRole, model->addColumn("ea.id"), tr("Roles"), RolesColumnWidth);
-
-		_proxyModel = make_shared<EntityListProxyModel<PersonnelList>>(_model);
-	}
-
-	Dbo::Query<PersonnelList::ResultType> PersonnelList::generateQuery() const
 	{
 		Dbo::Query<ResultType> query(_baseQuery);
 		Wt::WDate currentDate = Wt::WDate::currentServerDate();
@@ -213,9 +169,8 @@ namespace ERP
 
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
-			"SELECT e.id, e.name, e.type, ea.id, p.id, ca.id FROM " + Entity::tStr() + " e "
+			"SELECT e.id, e.name, e.type, ea.id, ca.id FROM " + Entity::tStr() + " e "
 			"LEFT JOIN " + EmployeeAssignment::tStr() + " ea ON (ea.entity_id = e.id AND ea.startDate <= ? AND (ea.endDate IS NULL OR ea.endDate > ?)) "
-			"LEFT JOIN " + EmployeePosition::tStr() + " p ON (p.id = ea.employeeposition_id AND p.type = " + std::to_string(EmployeePosition::PersonnelType) + ") "
 			"INNER JOIN " + ClientAssignment::tStr() + " ca ON (ca.entity_id = e.id AND ca.startDate <= ? AND (ca.endDate IS NULL OR ca.endDate > ?))"
 			).groupBy("e.id");
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "e.");
@@ -243,11 +198,8 @@ namespace ERP
 		edit->insertItem(0, tr("Employee"));
 		edit->model()->setData(edit->model()->index(0, 0), Entity::EmployeeType, Wt::ItemDataRole::User);
 
-		edit->insertItem(1, tr("Personnel"));
-		edit->model()->setData(edit->model()->index(1, 0), Entity::PersonnelType, Wt::ItemDataRole::User);
-
-		edit->insertItem(2, tr("Client"));
-		edit->model()->setData(edit->model()->index(2, 0), Entity::ClientType, Wt::ItemDataRole::User);
+		edit->insertItem(1, tr("Client"));
+		edit->model()->setData(edit->model()->index(1, 0), Entity::ClientType, Wt::ItemDataRole::User);
 	}
 
 	void FiltersTemplate::initEntityTypeEdit(Wt::WComboBox *edit)

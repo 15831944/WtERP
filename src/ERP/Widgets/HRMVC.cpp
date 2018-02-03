@@ -14,19 +14,16 @@ namespace ERP
 {
 	//POSITION VIEW
 	const Wt::WFormModel::Field PositionFormModel::titleField = "title";
-	const Wt::WFormModel::Field PositionFormModel::typeField = "type";
 
 	PositionFormModel::PositionFormModel(PositionView *view, Dbo::ptr<EmployeePosition> positionPtr)
 		: RecordFormModel(view, positionPtr), _view(view)
 	{
 		addField(titleField);
-		addField(typeField);
 
 		if(_recordPtr)
 		{
 			TRANSACTION(APP);
 			setValue(titleField, Wt::WString::fromUTF8(_recordPtr->title));
-			setValue(typeField, (int)_recordPtr->type);
 		}
 	}
 
@@ -40,24 +37,6 @@ namespace ERP
 			titleValidator->setMandatory(true);
 			setValidator(titleField, titleValidator);
 			return title;
-		}
-		if(field == typeField)
-		{
-			//WApplication *app = APP;
-			auto cb = make_unique<Wt::WComboBox>();
-			cb->insertItem(EmployeePosition::OtherType, Wt::any_traits<EmployeePosition::Type>::asString(EmployeePosition::OtherType, ""));
-			cb->insertItem(EmployeePosition::PersonnelType, Wt::any_traits<EmployeePosition::Type>::asString(EmployeePosition::PersonnelType, ""));
-
-			auto proxyModel = make_shared<Wt::WBatchEditProxyModel>();
-			proxyModel->setSourceModel(cb->model());
-			proxyModel->insertRow(0);
-			proxyModel->setData(proxyModel->index(0, 0), tr("SelectType"));
-			cb->setModel(proxyModel);
-
-			auto validator = make_shared<ProxyModelCBValidator>(cb.get());
-			validator->setErrorString(tr("MustSelectType"));
-			setValidator(field, validator);
-			return cb;
 		}
 		return RecordFormModel::createFormWidget(field);
 	}
@@ -74,7 +53,6 @@ namespace ERP
 			_recordPtr = app->dboSession().addNew<EmployeePosition>();
 
 		_recordPtr.modify()->title = valueText(titleField).toUTF8();
-		_recordPtr.modify()->type = EmployeePosition::Type(Wt::any_cast<int>(value(typeField)) - 1);
 
 		if(app->positionQueryModel())
 			app->positionQueryModel()->reload();

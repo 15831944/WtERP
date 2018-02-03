@@ -126,8 +126,8 @@ namespace ERP
 		setTextFromValuePtr();
 	}
 
-	FindEntityEdit::FindEntityEdit(Entity::Type entityType, Entity::SpecificType specificType)
-		: _entityType(entityType), _specificType(specificType)
+	FindEntityEdit::FindEntityEdit(Entity::Type entityType)
+		: _entityType(entityType)
 	{
 		_lineEdit->setPlaceholderText(tr("FindEntityEditPlaceholder"));
 
@@ -170,7 +170,6 @@ namespace ERP
 			_newDialog->setWindowTitle(tr("AddNewX").arg(tr("entity")));
 
 		EntityView *newEntityView = _newDialog->contents()->addNew<EntityView>(_entityType);
-		newEntityView->setSpecificType(_specificType);
 		newEntityView->submitted().connect(this, std::bind(&FindEntityEdit::handleEntityViewSubmitted, this, newEntityView));
 
 		_newDialog->show();
@@ -278,34 +277,6 @@ namespace ERP
 
 		if(_findEdit->valuePtr())
 		{
-			//Check role
-			if((_findEdit->valuePtr()->specificTypeMask & _findEdit->_specificType) != _findEdit->_specificType)
-			{
-				if(_findEdit->_specificType == Entity::EmployeeType)
-				{
-					if(isMandatory())
-						return Result(Wt::ValidationState::Invalid, tr("InvalidVSelectionMandatory").arg(tr("employee")));
-					else
-						return Result(Wt::ValidationState::Invalid, tr("InvalidVSelection").arg(tr("employee")));
-				}
-				else if(_findEdit->_specificType == Entity::PersonnelType)
-				{
-					if(isMandatory())
-						return Result(Wt::ValidationState::Invalid, tr("InvalidXSelectionMandatory").arg(tr("personnel")));
-					else
-						return Result(Wt::ValidationState::Invalid, tr("InvalidXSelection").arg(tr("personnel")));
-				}
-				else if(_findEdit->_specificType == Entity::ClientType)
-				{
-					if(isMandatory())
-						return Result(Wt::ValidationState::Invalid, tr("InvalidXSelectionMandatory").arg(tr("client")));
-					else
-						return Result(Wt::ValidationState::Invalid, tr("InvalidXSelection").arg(tr("client")));
-				}
-				else
-					return Result(Wt::ValidationState::Invalid, tr("InvalidSelectionSpecificType"));
-			}
-
 			//Check permission
 			if(app->authLogin().checkRecordViewPermission(_findEdit->valuePtr().get()) != AuthLogin::Permitted)
 				return Result(Wt::ValidationState::Invalid, tr("InvalidXSelectionPermissionDenied").arg(tr("entity")));
@@ -569,14 +540,10 @@ namespace ERP
 			modifyPermissionRequired = validator->modifyPermissionRequired();
 
 		Entity::Type typeFilter = Entity::InvalidType;
-		Entity::SpecificType specificTypeFilter = Entity::UnspecificType;
 		if(edit->parent() && edit->parent()->parent())
 		{
 			if(FindEntityEdit *findEdit = dynamic_cast<FindEntityEdit*>(edit->parent()->parent()))
-			{
 				typeFilter = findEdit->entityType();
-				specificTypeFilter = findEdit->specificType();
-			}
 		}
 
 		auto stringList = static_pointer_cast<Wt::WStringListModel>(model());
@@ -618,11 +585,6 @@ namespace ERP
 		{
 			query.where("type = ?").bind(typeFilter);
 			countQuery.where("type = ?").bind(typeFilter);
-		}
-		if(specificTypeFilter != Entity::UnspecificType)
-		{
-			query.where("(specificTypeMask & ?) = ?").bind(specificTypeFilter).bind(specificTypeFilter);
-			countQuery.where("(specificTypeMask & ?) = ?").bind(specificTypeFilter).bind(specificTypeFilter);
 		}
 
 		TRANSACTION(app);

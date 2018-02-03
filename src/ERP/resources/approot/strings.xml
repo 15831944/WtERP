@@ -212,21 +212,16 @@
 <message id="Employees">Employees</message>
 <message id="Employee">Employee</message>
 <message id="employee">employee</message>
-<message id="Personnel">Personnel</message>
-<message id="personnel">personnel</message>
 <message id="Clients">Clients</message>
 <message id="Client">Client</message>
 <message id="client">client</message>
 
 <!-- EntityView -->
 <message id="CNICLabel">National identity card number</message>
-<message id="AddEmployeeLabel">Add employee information to this person</message>
-<message id="AddPersonnelLabel">Add personnel information to this person</message>
 
 <message id="SelectEntityType">Select an entity type</message>
 <message id="PersonalInfo">Personal Information</message>
 <message id="EmployeeInfo">Employee Information</message>
-<message id="PersonnelInfo">Personnel Information</message>
 <message id="BusinessInfo">Business Information</message>
 <message id="ClientInfo">Client Information</message>
 <message id="ContactInfo">Contact Information</message>
@@ -246,7 +241,6 @@
 <message id="TrainingCourses">Training Courses</message>
 
 <!-- FindRecordEdit -->
-<message id="InvalidSelectionSpecificType">Invalid selected entity role</message>
 <message id="InvalidXSelection">You must select a {1} or leave this field empty</message>
 <message id="InvalidVSelection">You must select an {1} or leave this field empty</message>
 <message id="InvalidXSelectionMandatory">You must select a {1}</message>
@@ -300,8 +294,6 @@
 <message id="Position">Position</message>
 <message id="position">position</message>
 <message id="PositionTitle">Position title</message>
-<message id="PositionType">Position type</message>
-<message id="PersonnelPosition">Personnel position</message>
 <message id="SelectPosition">Select position</message>
 <message id="MustSelectPosition">You must select a position or select a different type</message>
 

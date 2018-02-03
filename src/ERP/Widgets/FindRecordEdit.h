@@ -90,9 +90,8 @@ namespace ERP
 	class FindEntityEdit : public FindRecordEdit<Entity>
 	{
 	public:
-		FindEntityEdit(Entity::Type entityType = Entity::InvalidType, Entity::SpecificType specificType = Entity::UnspecificType);
+		FindEntityEdit(Entity::Type entityType = Entity::InvalidType);
 		Entity::Type entityType() const { return _entityType; }
-		Entity::SpecificType specificType() const { return _specificType; }
 
 		void showNewEntityDialog();
 		void showEntityListDialog();
@@ -103,7 +102,6 @@ namespace ERP
 		void handleListSelectionChanged(long long id);
 
 		Entity::Type _entityType;
-		Entity::SpecificType _specificType;
 		Wt::WDialog *_newDialog = nullptr;
 		Wt::WDialog *_listDialog = nullptr;
 

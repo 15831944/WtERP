@@ -2,23 +2,23 @@
 #include "Application/WServer.h"
 #include "Application/WApplication.h"
 
+//TODO: Create indexes
+
 //TODO: Exception handling
 //TODO: Record deletion
-//TODO: Find solution to Dbo::ptr circular reference
-//TODO: Check for shared_ptr circular references
+//TODO: Check for shared_ptr and Dbo::ptr circular circular references
 //TODO: Localize DateTimes
 //TODO: Modernize code
 //TODO: ViewName() and ViewTitle()
 //TODO: Make Location-Entity a ManyToMany relation
+//TODO: Fix LOG_ERROR(Wt::Dbo::ptr) useless errors
 
 //TODO: Follow Multiple Dialogs error report
+//TODO: Create indexes
 
-//TODO: A better way to create indexes on Dbos (create index on AttendaceDeviceV and all record version dbos)
 //TODO: Read only view and reloadable RecordFormView
 //TODO: Improve RecordFormModel API (and remove unnecessary pointers)
 //TODO: Create abstraction for list proxy models
-//TODO: Fix LOG_ERROR(Wt::Dbo::ptr) useless errors
-//TODO: Remove Employee and Personnel DBOs
 //TODO: Versioned record keeping for all Record Dbos
 
 int main(int argc, char *argv[])

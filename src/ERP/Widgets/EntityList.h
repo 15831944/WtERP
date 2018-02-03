@@ -28,7 +28,7 @@ namespace ERP
 	class EntityListProxyModel : public Wt::WBatchEditProxyModel
 	{
 	public:
-		EntityListProxyModel(shared_ptr<Wt::WAbstractItemModel> model);
+		EntityListProxyModel(const shared_ptr<Wt::WAbstractItemModel> &model);
 		virtual Wt::any data(const Wt::WModelIndex &idx, Wt::ItemDataRole role = Wt::ItemDataRole::Display) const override;
 		virtual Wt::any headerData(int section, Wt::Orientation orientation = Wt::Orientation::Horizontal, Wt::ItemDataRole role = Wt::ItemDataRole::Display) const override;
 		virtual Wt::WFlags<Wt::ItemFlag> flags(const Wt::WModelIndex &index) const override;
@@ -39,10 +39,10 @@ namespace ERP
 	};
 
 	//ENTITY LISTS
-	class AllEntityList : public QueryModelFilteredList<tuple<long long, std::string, Entity::Type, optional<long long>, optional<long long>, optional<long long>>>
+	class AllEntityList : public QueryModelFilteredList<tuple<long long, std::string, Entity::Type, optional<long long>, optional<long long>>>
 	{
 	public:
-		enum ResultColumns { ResId, ResName, ResEntityType, ResEmployeeAssignment, ResPersonnelPosition, ResClientAssignment };
+		enum ResultColumns { ResId, ResName, ResEntityType, ResEmployeeAssignment, ResClientAssignment };
 		enum ViewColumns { ViewId, ViewName, ViewEntityType, ViewRole };
 
 	protected:
@@ -51,10 +51,10 @@ namespace ERP
 		virtual void initModel() override;
 	};
 
-	class PersonList : public QueryModelFilteredList<tuple<long long, std::string, optional<long long>, optional<long long>, optional<long long>>>
+	class PersonList : public QueryModelFilteredList<tuple<long long, std::string, optional<long long>, optional<long long>>>
 	{
 	public:
-		enum ResultColumns { ResId, ResName, ResEmployeeAssignment, ResPersonnelPosition, ResClientAssignment };
+		enum ResultColumns { ResId, ResName, ResEmployeeAssignment, ResClientAssignment };
 		enum ViewColumns { ViewId, ViewName, ViewRole };
 
 	protected:
@@ -63,10 +63,10 @@ namespace ERP
 		virtual void initModel() override;
 	};
 
-	class EmployeeList : public QueryModelFilteredList<tuple<long long, std::string, optional<long long>, optional<long long>, optional<long long>>>
+	class EmployeeList : public QueryModelFilteredList<tuple<long long, std::string, optional<long long>, optional<long long>>>
 	{
 	public:
-		enum ResultColumns { ResId, ResName, ResEmployeeAssignment, ResPersonnelPosition, ResClientAssignment };
+		enum ResultColumns { ResId, ResName, ResEmployeeAssignment, ResClientAssignment };
 		enum ViewColumns { ViewId, ViewName, ViewRole };
 
 	protected:
@@ -75,10 +75,10 @@ namespace ERP
 		virtual void initModel() override;
 	};
 
-	class PersonnelList : public QueryModelFilteredList<tuple<long long, std::string, optional<long long>, optional<long long>, optional<long long>>>
+	class BusinessList : public QueryModelFilteredList<tuple<long long, std::string, optional<long long>, optional<long long>>>
 	{
 	public:
-		enum ResultColumns { ResId, ResName, ResEmployeeAssignment, ResPersonnelPosition, ResClientAssignment };
+		enum ResultColumns { ResId, ResName, ResEmployeeAssignment, ResClientAssignment };
 		enum ViewColumns { ViewId, ViewName, ViewRole };
 
 	protected:
@@ -87,22 +87,10 @@ namespace ERP
 		virtual void initModel() override;
 	};
 
-	class BusinessList : public QueryModelFilteredList<tuple<long long, std::string, optional<long long>, optional<long long>, optional<long long>>>
+	class ClientList : public QueryModelFilteredList<tuple<long long, std::string, Entity::Type, optional<long long>, optional<long long>>>
 	{
 	public:
-		enum ResultColumns { ResId, ResName, ResEmployeeAssignment, ResPersonnelPosition, ResClientAssignment };
-		enum ViewColumns { ViewId, ViewName, ViewRole };
-
-	protected:
-		virtual Dbo::Query<ResultType> generateQuery() const override;
-		virtual void initFilters() override;
-		virtual void initModel() override;
-	};
-
-	class ClientList : public QueryModelFilteredList<tuple<long long, std::string, Entity::Type, optional<long long>, optional<long long>, optional<long long>>>
-	{
-	public:
-		enum ResultColumns { ResId, ResName, ResEntityType, ResEmployeeAssignment, ResPersonnelPosition, ResClientAssignment };
+		enum ResultColumns { ResId, ResName, ResEntityType, ResEmployeeAssignment, ResClientAssignment };
 		enum ViewColumns { ViewId, ViewName, ViewEntityType, ViewRole };
 
 	protected:
@@ -113,7 +101,7 @@ namespace ERP
 
 	//TEMPLATE CLASS DEFINITIONS
 	template<class FilteredList>
-	EntityListProxyModel<FilteredList>::EntityListProxyModel(shared_ptr<Wt::WAbstractItemModel> model)
+	EntityListProxyModel<FilteredList>::EntityListProxyModel(const shared_ptr<Wt::WAbstractItemModel> &model)
 	{
 		setSourceModel(model);
 		addAdditionalColumns();
@@ -137,7 +125,7 @@ namespace ERP
 		Wt::any viewIndexData = headerData(idx.column(), Wt::Orientation::Horizontal, Wt::ItemDataRole::ViewIndex);
 		if(viewIndexData.empty())
 			return Wt::WBatchEditProxyModel::data(idx, role);
-		int viewIndex = Wt::any_cast<int>(viewIndexData);
+		auto viewIndex = Wt::any_cast<int>(viewIndexData);
 
 		if(viewIndex == FilteredList::ViewRole && role == Wt::ItemDataRole::Display)
 		{
@@ -145,8 +133,6 @@ namespace ERP
 			int typeMask = Entity::UnspecificType;
 			if(std::get<FilteredList::ResEmployeeAssignment>(res).is_initialized())
 				typeMask |= Entity::EmployeeType;
-			if(std::get<FilteredList::ResPersonnelPosition>(res).is_initialized())
-				typeMask |= Entity::PersonnelType;
 			if(std::get<FilteredList::ResClientAssignment>(res).is_initialized())
 				typeMask |= Entity::ClientType;
 

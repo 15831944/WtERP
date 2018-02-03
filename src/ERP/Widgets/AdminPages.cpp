@@ -164,7 +164,6 @@ namespace ERP
 		auto personsMenuItem = createMenuItemWrapped(tr("Persons"), PERSONS_PATHC, make_unique<PersonList>());
 		auto businessesMenuItem = createMenuItemWrapped(tr("Businesses"), BUSINESSES_PATHC, make_unique<BusinessList>());
 		auto employeesMenuItem = createMenuItemWrapped(tr("Employees"), EMPLOYEES_PATHC, make_unique<EmployeeList>());
-		auto personnelMenuItem = createMenuItemWrapped(tr("Personnel"), PERSONNEL_PATHC, make_unique<PersonnelList>());
 		auto clientsMenuItem = createMenuItemWrapped(tr("Clients"), CLIENTS_PATHC, make_unique<ClientList>());
 		menu()->addSeparator();
 

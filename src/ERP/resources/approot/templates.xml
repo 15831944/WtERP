@@ -267,7 +267,6 @@ ${block:ERP.RecordCountTemplate.Block TotalEntities totalEntities}
 ${block:ERP.RecordCountTemplate.Block Persons persons}
 ${block:ERP.RecordCountTemplate.Block Businesses businesses}
 ${block:ERP.RecordCountTemplate.Block Employees employees}
-${block:ERP.RecordCountTemplate.Block Personnel personnel}
 ${block:ERP.RecordCountTemplate.Block Clients clients}
 <hr />
 ${block:ERP.RecordCountTemplate.Block ClientAssignments clientAssignments}
@@ -375,33 +374,6 @@ ${<type-chosen>}
 		</div>
 		
 		${block:ERP.Admin.Entities.ContactBlock}
-		
-		${<m:employee>}
-			<div class="panel panel-default">
-				<div class="panel-heading">${tr:EmployeeInfo}</div>
-				<div class="panel-body form-horizontal">
-					${block:ERP.FieldH companyNumber CompanyNumber}
-					${block:ERP.FieldH recruitmentDate RecruitmentDate}
-					${block:ERP.FieldH education Education}
-					${block:ERP.FieldH experience Experience}
-					${block:ERP.FieldH addQualifications GradeLabel}
-					${block:ERP.FieldH grade AdditionalQualifications}
-				</div>
-			</div>
-		${</m:employee>}
-		
-		${<m:personnel>}
-			<div class="panel panel-default">
-				<div class="panel-heading">${tr:PersonnelInfo}</div>
-				<div class="panel-body form-horizontal">
-						${block:ERP.FieldH policeStation PoliceStation}
-						${block:ERP.FieldH.CB policeVerified PoliceVerified}
-						${block:ERP.FieldH armyNumber ArmyNumber}
-						${block:ERP.FieldH rank Rank}
-						${block:ERP.FieldH trainingCourses TrainingCourses}
-				</div>
-			</div>
-		${</m:personnel>}
 	${</is-person>}
 
 	${<is-business>}
@@ -430,10 +402,6 @@ ${<type-chosen>}
 	${</m:entity-persisted>}
 	
 	${submitBtn class="btn-primary"}
-	${<is-person>}
-		${add-employee}
-		${add-personnel}
-	${</is-person>}
 ${</type-chosen>}
 </message>
 
@@ -658,7 +626,6 @@ ${block:ERP.FieldH.CW entity Entity}
 <message id="ERP.Admin.PositionView">
 <div class="form-horizontal">
 	${block:ERP.FieldH.Narrow title PositionTitle}
-	${block:ERP.FieldH.Narrow type PositionType}
 	<div class="form-group">
 		<div class="col-sm-9 col-sm-offset-3">${submitBtn class="btn-primary"}</div>
 	</div>

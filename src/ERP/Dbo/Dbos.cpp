@@ -19,8 +19,6 @@ namespace ERP
 		dboSession.mapClass<Entity>(Entity::tableName());
 		dboSession.mapClass<Person>(Person::tableName());
 		dboSession.mapClass<Business>(Business::tableName());
-		dboSession.mapClass<Employee>(Employee::tableName());
-		dboSession.mapClass<Personnel>(Personnel::tableName());
 		dboSession.mapClass<EmployeePosition>(EmployeePosition::tableName());
 		dboSession.mapClass<ClientService>(ClientService::tableName());
 		dboSession.mapClass<ContactNumber>(ContactNumber::tableName());

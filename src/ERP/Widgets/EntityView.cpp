@@ -1,28 +1,18 @@
 #include "Widgets/EntityView.h"
 #include "Widgets/EntityList.h"
-#include "Application/WApplication.h"
 #include "Application/WServer.h"
 #include "Widgets/AdminPages.h"
 #include "Widgets/ImageUpload.h"
 #include "Widgets/LocationMVC.h"
 #include "Widgets/EntryCycleMVC.h"
-#include "Widgets/FindRecordEdit.h"
 
 #include <Wt/WLabel.h>
-#include <Wt/WBreak.h>
-#include <Wt/WMenu.h>
-#include <Wt/WPushButton.h>
-#include <Wt/WLineEdit.h>
 #include <Wt/WDateEdit.h>
 #include <Wt/WTextArea.h>
 #include <Wt/WPopupMenu.h>
-#include <Wt/WComboBox.h>
 #include <Wt/WCheckBox.h>
 #include <Wt/WFileUpload.h>
-#include <Wt/WImage.h>
 #include <Wt/WIntValidator.h>
-
-#include <Wt/Dbo/QueryModel.h>
 
 #include <boost/algorithm/string.hpp>
 
@@ -32,7 +22,7 @@ namespace ERP
 	const Wt::WFormModel::Field EntityFormModel::nameField = "name";
 
 	EntityFormModel::EntityFormModel(EntityView *view, Dbo::ptr<Entity> entityPtr)
-		: RecordFormModel(view, entityPtr), _view(view)
+		: RecordFormModel(view, move(entityPtr)), _view(view)
 	{
 		addField(nameField);
 
@@ -70,8 +60,6 @@ namespace ERP
 			_recordPtr = app->dboSession().addNew<Entity>();
 			_recordPtr.modify()->setCreatedByValues();
 		}
-
-		_recordPtr.modify()->specificTypeMask = Wt::WFlags<Entity::SpecificType>();
 		_recordPtr.modify()->name = valueText(nameField).toUTF8();
 
 		t.commit();
@@ -101,7 +89,7 @@ namespace ERP
 	const Wt::WFormModel::Field PersonFormModel::cnicUpload2Field = "cnicUpload2";
 
 	PersonFormModel::PersonFormModel(EntityView *view, Dbo::ptr<Person> personPtr)
-		: ChildRecordFormModel(view->_entityModel, view, personPtr), _view(view)
+		: ChildRecordFormModel(view->_entityModel, view, move(personPtr)), _view(view)
 	{
 		addField(dobField);
 		addField(cnicField);
@@ -303,179 +291,18 @@ namespace ERP
 		return true;
 	}
 
-	//EMPLOYEE MODEL
-	const Wt::WFormModel::Field EmployeeFormModel::companyNumberField = "companyNumber";
-	const Wt::WFormModel::Field EmployeeFormModel::gradeField = "grade";
-	const Wt::WFormModel::Field EmployeeFormModel::recruitmentDateField = "recruitmentDate";
-	const Wt::WFormModel::Field EmployeeFormModel::educationField = "education";
-	const Wt::WFormModel::Field EmployeeFormModel::experienceField = "experience";
-	const Wt::WFormModel::Field EmployeeFormModel::addQualificationsField = "addQualifications";
-
-	EmployeeFormModel::EmployeeFormModel(EntityView *view, Dbo::ptr<Employee> employeePtr)
-		: ChildRecordFormModel(view->_entityModel, view, employeePtr), _view(view)
-	{
-		addField(companyNumberField);
-		addField(gradeField);
-		addField(recruitmentDateField);
-		addField(educationField);
-		addField(experienceField);
-		addField(addQualificationsField);
-
-		if(_recordPtr)
-		{
-			TRANSACTION(APP);
-			setValue(companyNumberField, Wt::WString::fromUTF8(_recordPtr->companyNumber));
-			setValue(gradeField, Wt::WString::fromUTF8(_recordPtr->grade));
-			setValue(recruitmentDateField, _recordPtr->recruitmentDate);
-			setValue(educationField, Wt::WString::fromUTF8(_recordPtr->education));
-			setValue(experienceField, Wt::WString::fromUTF8(_recordPtr->experience));
-			setValue(addQualificationsField, Wt::WString::fromUTF8(_recordPtr->addtionalQualifications));
-		}
-	}
-
-	unique_ptr<Wt::WWidget> EmployeeFormModel::createFormWidget(Field field)
-	{
-		if(field == companyNumberField || field == gradeField)
-		{
-			auto w = make_unique<Wt::WLineEdit>();
-			w->setMaxLength(35);
-			setValidator(field, make_shared<Wt::WLengthValidator>(0, 35));
-			return w;
-		}
-		if(field == recruitmentDateField)
-		{
-			auto w = make_unique<Wt::WDateEdit>();
-			w->setPlaceholderText(WApplication::instance()->locale().dateFormat());
-			w->setDate(Wt::WDate::currentServerDate());
-			auto validator = make_shared<Wt::WDateValidator>();
-			validator->setMandatory(true);
-			setValidator(field, validator);
-			return w;
-		}
-		if(field == experienceField || field == addQualificationsField || field == educationField)
-		{
-			auto w = make_unique<Wt::WTextArea>();
-			w->setRows(3);
-			return w;
-		}
-		return ChildRecordFormModel::createFormWidget(field);
-	}
-
-	bool EmployeeFormModel::saveChanges()
-	{
-		if(!valid())
-			return false;
-
-		WApplication *app = WApplication::instance();
-		TRANSACTION(app);
-		if(!_recordPtr)
-			_recordPtr = app->dboSession().addNew<Employee>();
-		if(!_recordPtr->personPtr())
-			_recordPtr.modify()->_personPtr = _view->_personModel->recordPtr();
-
-		_recordPtr->personPtr()->entityPtr().modify()->specificTypeMask |= Entity::EmployeeType;
-		_recordPtr.modify()->companyNumber = valueText(companyNumberField).toUTF8();
-		_recordPtr.modify()->grade = valueText(gradeField).toUTF8();
-		_recordPtr.modify()->recruitmentDate = Wt::any_cast<Wt::WDate>(value(recruitmentDateField));
-		_recordPtr.modify()->education = valueText(educationField).toUTF8();
-		_recordPtr.modify()->experience = valueText(experienceField).toUTF8();
-		_recordPtr.modify()->addtionalQualifications = valueText(addQualificationsField).toUTF8();
-
-		t.commit();
-		return true;
-	}
-
-	//PERSONNEL MODEL
-	const Wt::WFormModel::Field PersonnelFormModel::policeStationField = "policeStation";
-	const Wt::WFormModel::Field PersonnelFormModel::policeVerifiedField = "policeVerified";
-	const Wt::WFormModel::Field PersonnelFormModel::trainingCoursesField = "trainingCourses";
-	const Wt::WFormModel::Field PersonnelFormModel::armyNumberField = "armyNumber";
-	const Wt::WFormModel::Field PersonnelFormModel::rankField = "rank";
-
-	PersonnelFormModel::PersonnelFormModel(EntityView *view, Dbo::ptr<Personnel> personnelPtr)
-		: ChildRecordFormModel(view->_entityModel, view, personnelPtr), _view(view)
-	{
-		addField(policeStationField);
-		addField(policeVerifiedField);
-		addField(trainingCoursesField);
-		addField(armyNumberField);
-		addField(rankField);
-
-		if(_recordPtr)
-		{
-			TRANSACTION(APP);
-			setValue(policeStationField, Wt::WString::fromUTF8(_recordPtr->policeStation));
-			setValue(policeVerifiedField, _recordPtr->policeVerified);
-			setValue(trainingCoursesField, Wt::WString::fromUTF8(_recordPtr->trainingCourses));
-			setValue(armyNumberField, Wt::WString::fromUTF8(_recordPtr->armyNumber));
-			setValue(rankField, Wt::WString::fromUTF8(_recordPtr->rank));
-		}
-	}
-
-	unique_ptr<Wt::WWidget> PersonnelFormModel::createFormWidget(Field field)
-	{
-		if(field == policeStationField)
-		{
-			auto w = make_unique<Wt::WLineEdit>();
-			w->setMaxLength(70);
-			setValidator(field, make_shared<Wt::WLengthValidator>(0, 70));
-			return w;
-		}
-		if(field == policeVerifiedField)
-		{
-			return make_unique<Wt::WCheckBox>();
-		}
-		if(field == trainingCoursesField)
-		{
-			auto w = make_unique<Wt::WTextArea>();
-			w->setRows(3);
-			return w;
-		}
-		if(field == armyNumberField || field == rankField)
-		{
-			auto w = make_unique<Wt::WLineEdit>();
-			w->setMaxLength(35);
-			setValidator(field, make_shared<Wt::WLengthValidator>(0, 35));
-			return w;
-		}
-		return ChildRecordFormModel::createFormWidget(field);
-	}
-
-	bool PersonnelFormModel::saveChanges()
-	{
-		if(!valid())
-			return false;
-
-		WApplication *app = APP;
-		TRANSACTION(app);
-		if(!_recordPtr)
-			_recordPtr = app->dboSession().addNew<Personnel>();
-		if(!_recordPtr->employeePtr())
-			_recordPtr.modify()->_employeePtr = _view->_employeeModel->recordPtr();
-
-		_recordPtr->employeePtr()->personPtr()->entityPtr().modify()->specificTypeMask |= Entity::PersonnelType;
-		_recordPtr.modify()->policeStation = valueText(policeStationField).toUTF8();
-		_recordPtr.modify()->policeVerified = Wt::any_cast<bool>(value(policeVerifiedField));
-		_recordPtr.modify()->armyNumber = valueText(armyNumberField).toUTF8();
-		_recordPtr.modify()->rank = valueText(rankField).toUTF8();
-		_recordPtr.modify()->trainingCourses = valueText(trainingCoursesField).toUTF8();
-
-		t.commit();
-		return true;
-	}
-
 	//CONTACT NUMBER MODEL
 	template<>
 	const Wt::WFormModel::Field MultipleRecordModel<ContactNumber>::field = "contactNumbers";
 
 	ContactNumbersManagerModel::ContactNumbersManagerModel(EntityView *view, PtrCollection collection)
-		: MultipleRecordModel(view, collection), _view(view)
+		: MultipleRecordModel(view, move(collection)), _view(view)
 	{
 		const PtrVector &vec = Wt::any_cast<PtrVector>(value(field));
 		if(vec.empty())
 		{
 			PtrVector newVec;
-			newVec.push_back(nullptr);
+			newVec.emplace_back(nullptr);
 			setValue(field, newVec);
 		}
 	}
@@ -483,9 +310,8 @@ namespace ERP
 	bool ContactNumbersManagerModel::saveChanges()
 	{
 		for(const auto &model : _modelVector)
-		{
 			model->setValue(ContactNumberFormModel::entityField, _view->entityPtr());
-		}
+
 		return MultipleRecordModel::saveChanges();
 	}
 
@@ -520,13 +346,13 @@ namespace ERP
 	const Wt::WFormModel::Field MultipleRecordModel<Location>::field = "locations";
 
 	LocationsManagerModel::LocationsManagerModel(EntityView *view, PtrCollection collection)
-		: MultipleRecordModel(view, collection), _view(view)
+		: MultipleRecordModel(view, move(collection)), _view(view)
 	{
 		const PtrVector &vec = Wt::any_cast<PtrVector>(value(field));
 		if(vec.empty())
 		{
 			PtrVector newVec;
-			newVec.push_back(nullptr);
+			newVec.emplace_back(nullptr);
 			setValue(field, newVec);
 		}
 	}
@@ -568,7 +394,7 @@ namespace ERP
 
 	//BUSINESS MODEL
 	BusinessFormModel::BusinessFormModel(EntityView *view, Dbo::ptr<Business> businessPtr)
-		: ChildRecordFormModel(view->_entityModel, view, businessPtr), _view(view)
+		: ChildRecordFormModel(view->_entityModel, view, move(businessPtr)), _view(view)
 	{ }
 
 	unique_ptr<Wt::WWidget> BusinessFormModel::createFormWidget(Field field)
@@ -600,7 +426,7 @@ namespace ERP
 	{ }
 
 	EntityView::EntityView(Dbo::ptr<Entity> entityPtr)
-		: RecordFormView(tr("ERP.Admin.Entities.New")), _tempPtr(entityPtr)
+		: RecordFormView(tr("ERP.Admin.Entities.New")), _tempPtr(move(entityPtr))
 	{ }
 
 	void EntityView::initView()
@@ -615,19 +441,8 @@ namespace ERP
 				_type = _defaultType = Entity::PersonType;
 
 				Dbo::ptr<Person> personPtr = entityPtr()->personWPtr;
-				Dbo::ptr<Employee> employeePtr;
-				Dbo::ptr<Personnel> personnelPtr;
-				if(personPtr)
-					employeePtr = personPtr->employeeWPtr;
-				if(employeePtr)
-					personnelPtr = employeePtr->personnelWPtr;
-
 				if(personPtr)
 					_personModel = newFormModel<PersonFormModel>("person", this, personPtr);
-				if(employeePtr)
-					addEmployeeModel(employeePtr);
-				if(personnelPtr)
-					addPersonnelModel(personnelPtr);
 			}
 			if(entityPtr()->type == Entity::BusinessType)
 			{
@@ -662,16 +477,6 @@ namespace ERP
 
 		_selectBusiness = bindNew<Wt::WPushButton>("selectBusiness", tr("Business"));
 		_selectBusiness->clicked().connect(this, std::bind(&EntityView::selectEntityType, this, Entity::BusinessType));
-
-		auto addEmployee = bindNew<ShowEnabledButton>("add-employee", tr("AddEmployeeLabel"));
-		addEmployee->clicked().connect(this, std::bind(&EntityView::setSpecificType, this, Entity::EmployeeType));
-		if(_employeeModel)
-			addEmployee->disable();
-
-		auto addPersonnel = bindNew<ShowEnabledButton>("add-personnel", tr("AddPersonnelLabel"));
-		addPersonnel->clicked().connect(this, std::bind(&EntityView::setSpecificType, this, Entity::PersonnelType));
-		if(_personnelModel)
-			addPersonnel->disable();
 
 		_contactNumbersModel = newFormModel<ContactNumbersManagerModel>("contactnumbers",
 				this, entityPtr() ? entityPtr()->contactNumberCollection : ContactNumberCollection());
@@ -717,55 +522,6 @@ namespace ERP
 		return _entityModel ? _entityModel->valueText(EntityFormModel::nameField) : "EntityView";
 	}
 
-	void EntityView::setSpecificType(Entity::SpecificType type)
-	{
-		if(type == Entity::UnspecificType)
-			return;
-
-		if(type == Entity::EmployeeType)
-		{
-			addEmployeeModel();
-			updateModel(_employeeModel);
-			updateView(_employeeModel);
-		}
-		if(type == Entity::PersonnelType)
-		{
-			addPersonnelModel();
-			updateModel(_employeeModel);
-			updateView(_employeeModel);
-			updateModel(_personnelModel);
-			updateView(_personnelModel);
-		}
-	}
-
-	void EntityView::addEmployeeModel(Dbo::ptr<Employee> employeePtr)
-{
-		if(_employeeModel || _type != Entity::PersonType)
-			return;
-
-		if(!_personModel)
-			_personModel = newFormModel<PersonFormModel>("person", this);
-
-	_employeeModel = newFormModel<EmployeeFormModel>("employee", this, employeePtr);
-
-		if(auto btn = resolveWidget("add-employee"))
-			btn->disable();
-	}
-
-	void EntityView::addPersonnelModel(Dbo::ptr<Personnel> personnelPtr)
-	{
-		if(_personnelModel || _type != Entity::PersonType)
-			return;
-
-		if(!_employeeModel)
-			addEmployeeModel();
-
-		_personnelModel = newFormModel<PersonnelFormModel>("personnel", this, personnelPtr);
-
-		if(auto btn = resolveWidget("add-personnel"))
-			btn->disable();
-	}
-
 	void EntityView::submit()
 	{
 		if(_type == Entity::InvalidType)
@@ -782,19 +538,19 @@ namespace ERP
 	HeightEdit::HeightEdit()
 		: Wt::WTemplate(tr("ERP.HeightEdit"))
 	{
-		Wt::WPushButton *unitSelect = bindNew<Wt::WPushButton>("unit-select");
+		auto *unitSelect = bindNew<Wt::WPushButton>("unit-select");
 		auto unitMenu = make_unique<Wt::WPopupMenu>();
 		unitMenu->addItem("cm")->clicked().connect(this, std::bind(&HeightEdit::selectUnit, this, cm));
 		unitMenu->addItem("ft")->clicked().connect(this, std::bind(&HeightEdit::selectUnit, this, ft));
 		unitSelect->setMenu(move(unitMenu));
 
-		Wt::WLineEdit *cmEdit = bindNew<Wt::WLineEdit>("cm-edit");
+		auto *cmEdit = bindNew<Wt::WLineEdit>("cm-edit");
 		cmEdit->setValidator(make_shared<Wt::WIntValidator>());
 
-		Wt::WLineEdit *ftEdit = bindNew<Wt::WLineEdit>("ft-edit");
+		auto *ftEdit = bindNew<Wt::WLineEdit>("ft-edit");
 		ftEdit->setValidator(make_shared<Wt::WIntValidator>());
 
-		Wt::WLineEdit *inEdit = bindNew<Wt::WLineEdit>("in-edit");
+		auto *inEdit = bindNew<Wt::WLineEdit>("in-edit");
 		inEdit->setValidator(make_shared<Wt::WIntValidator>());
 
 		setUnit(ft);
@@ -823,8 +579,8 @@ namespace ERP
 		const Wt::WLocale& locale = Wt::WLocale::currentLocale();
 		if(_unit == ft)
 		{
-			Wt::WLineEdit *ftEdit = resolve<Wt::WLineEdit*>("ft-edit");
-			Wt::WLineEdit *inEdit = resolve<Wt::WLineEdit*>("in-edit");
+			auto *ftEdit = resolve<Wt::WLineEdit*>("ft-edit");
+			auto *inEdit = resolve<Wt::WLineEdit*>("in-edit");
 
 			if(ftEdit->valueText().empty())
 				return -1;
@@ -838,7 +594,7 @@ namespace ERP
 		}
 		else
 		{
-			Wt::WLineEdit *cmEdit = resolve<Wt::WLineEdit*>("cm-edit");
+			auto *cmEdit = resolve<Wt::WLineEdit*>("cm-edit");
 			if(cmEdit->valueText().empty())
 				return -1;
 
@@ -851,8 +607,8 @@ namespace ERP
 		WApplication *app = APP;
 		if(_unit == ft)
 		{
-			Wt::WLineEdit *ftEdit = resolve<Wt::WLineEdit*>("ft-edit");
-			Wt::WLineEdit *inEdit = resolve<Wt::WLineEdit*>("in-edit");
+			auto *ftEdit = resolve<Wt::WLineEdit*>("ft-edit");
+			auto *inEdit = resolve<Wt::WLineEdit*>("in-edit");
 
 			if(val == -1)
 			{
@@ -861,7 +617,7 @@ namespace ERP
 			}
 			else
 			{
-				long long ftVal = (long long)std::floor(val / 30.48f);
+				auto ftVal = (long long)std::floor(val / 30.48f);
 				float inVal = std::round((val / 30.48f - ftVal) * 12);
 				ftEdit->setValueText(app->locale().toString(ftVal));
 				inEdit->setValueText(app->locale().toString(inVal));
@@ -869,7 +625,7 @@ namespace ERP
 		}
 		else
 		{
-			Wt::WLineEdit *cmEdit = resolve<Wt::WLineEdit*>("cm-edit");
+			auto *cmEdit = resolve<Wt::WLineEdit*>("cm-edit");
 			if(val == -1)
 				cmEdit->setValueText("");
 			else
@@ -892,7 +648,7 @@ namespace ERP
 	const Wt::WFormModel::Field ContactNumberFormModel::numberField = "number";
 
 	ContactNumberFormModel::ContactNumberFormModel(ContactNumberView *view, Dbo::ptr<ContactNumber> countryPtr)
-		: RecordFormModel(view, countryPtr), _view(view)
+		: RecordFormModel(view, move(countryPtr)), _view(view)
 	{
 		addField(entityField);
 		addField(numberField);
@@ -959,7 +715,7 @@ namespace ERP
 	}
 
 	ContactNumberView::ContactNumberView(Dbo::ptr<ContactNumber> countryPtr)
-		: RecordFormView(tr("ERP.Admin.ContactNumberView")), _tempPtr(countryPtr)
+		: RecordFormView(tr("ERP.Admin.ContactNumberView")), _tempPtr(move(countryPtr))
 	{ }
 
 	ContactNumberView::ContactNumberView()

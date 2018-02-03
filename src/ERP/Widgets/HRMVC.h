@@ -33,7 +33,6 @@ namespace ERP
 	{
 	public:
 		static const Wt::WFormModel::Field titleField;
-		static const Wt::WFormModel::Field typeField;
 
 		PositionFormModel(PositionView *view, Dbo::ptr<EmployeePosition> positionPtr = nullptr);
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;

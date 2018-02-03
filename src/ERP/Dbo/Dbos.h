@@ -52,12 +52,6 @@ namespace ERP
 	class Business;
 	typedef Dbo::collection<Dbo::ptr<Business>> BusinessCollection;
 
-	class Employee;
-	typedef Dbo::collection<Dbo::ptr<Employee>> EmployeeCollection;
-
-	class Personnel;
-	typedef Dbo::collection<Dbo::ptr<Personnel>> PersonnelCollection;
-
 	class EmployeePosition;
 	typedef Dbo::collection<Dbo::ptr<EmployeePosition>> EmployeePositionCollection;
 
@@ -179,20 +173,6 @@ namespace Wt
 		struct dbo_traits<ERP::Business> : public dbo_default_traits
 		{
 			typedef ptr<ERP::Entity> IdType;
-			static IdType invalidId() { return IdType(); }
-			static const char *surrogateIdField() { return nullptr; }
-		};
-		template<>
-		struct dbo_traits<ERP::Employee> : public dbo_default_traits
-		{
-			typedef ptr<ERP::Person> IdType;
-			static IdType invalidId() { return IdType(); }
-			static const char *surrogateIdField() { return nullptr; }
-		};
-		template<>
-		struct dbo_traits<ERP::Personnel> : public dbo_default_traits
-		{
-			typedef ptr<ERP::Employee> IdType;
 			static IdType invalidId() { return IdType(); }
 			static const char *surrogateIdField() { return nullptr; }
 		};
@@ -563,8 +543,7 @@ namespace ERP
 		{
 			UnspecificType	= 0x00,
 			EmployeeType	= 0x01,
-			PersonnelType	= 0x02,
-			ClientType		= 0x04
+			ClientType		= 0x02
 		};
 
 		Entity() = default;
@@ -587,7 +566,6 @@ namespace ERP
 
 		std::string name;
 		Type type = InvalidType;
-		Wt::WFlags<SpecificType> specificTypeMask = UnspecificType;
 		Dbo::ptr<Account> balAccountPtr;
 		Dbo::ptr<Account> pnlAccountPtr;
 
@@ -611,7 +589,6 @@ namespace ERP
 		{
 			Dbo::field(a, name, "name", 70);
 			Dbo::field(a, type, "type");
-			Dbo::field(a, specificTypeMask, "specificTypeMask");
 			Dbo::belongsTo(a, balAccountPtr, "bal_account", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 			Dbo::belongsTo(a, pnlAccountPtr, "pnl_account", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 
@@ -658,9 +635,6 @@ namespace ERP
 		PersonCollection nextOfKinCollection;
 		Dbo::ptr<Person> nextOfKinOfPtr;
 
-		Dbo::weak_ptr<Employee> employeeWPtr;
-		PersonnelCollection witnesserCollection;
-
 		Dbo::ptr<UploadedFile> profilePictureFilePtr;
 		Dbo::ptr<UploadedFile> cnicFile1Ptr;
 		Dbo::ptr<UploadedFile> cnicFile2Ptr;
@@ -686,9 +660,6 @@ namespace ERP
 			Dbo::hasMany(a, nextOfKinCollection, Dbo::ManyToOne, "nextOfKin_person");
 			Dbo::belongsTo(a, nextOfKinOfPtr, "nextOfKin_person", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 
-			Dbo::hasOne(a, employeeWPtr, "person");
-			Dbo::hasMany(a, witnesserCollection, Dbo::ManyToMany, "personnel_witness");
-
 			Dbo::belongsTo(a, profilePictureFilePtr, "profilePictureFile", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 			Dbo::belongsTo(a, cnicFile1Ptr, "cnicFile1", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 			Dbo::belongsTo(a, cnicFile2Ptr, "cnicFile2", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
@@ -698,93 +669,17 @@ namespace ERP
 	private:
 		friend class PersonFormModel;
 	};
-	class Employee
-	{
-	private:
-		Dbo::ptr<Person> _personPtr;
-
-	public:
-		Dbo::ptr<Person> personPtr() const { return _personPtr; }
-		std::string companyNumber;
-		std::string grade;
-		Wt::WDate recruitmentDate;
-		std::string education;
-		std::string experience;
-		std::string addtionalQualifications;
-
-		//ClothingItemCollection assignedClothesCollection;
-		Dbo::weak_ptr<Personnel> personnelWPtr;
-
-		template<class Action>
-		void persist(Action& a)
-		{
-			Dbo::id(a, _personPtr, "person", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
-			Dbo::field(a, companyNumber, "companyNumber", 35);
-			Dbo::field(a, grade, "grade", 35);
-			Dbo::field(a, recruitmentDate, "recruitmentDate");
-			Dbo::field(a, education, "education");
-			Dbo::field(a, experience, "experience");
-			Dbo::field(a, addtionalQualifications, "addtionalQualifications");
-
-			//Dbo::hasMany(a, assignedClothesCollection, Dbo::ManyToOne, "employee");
-			Dbo::hasOne(a, personnelWPtr, "employee");
-		}
-		DEFINE_DBO_TABLENAME("employee");
-
-	private:
-		friend class EmployeeFormModel;
-	};
-	class Personnel
-	{
-	private:
-		Dbo::ptr<Employee> _employeePtr;
-
-	public:
-		Dbo::ptr<Employee> employeePtr() const { return _employeePtr; }
-		std::string policeStation;
-		bool policeVerified = false;
-		std::string trainingCourses;
-		std::string armyNumber;
-		std::string rank;
-
-		PersonCollection witnessCollection;
-
-		template<class Action>
-		void persist(Action& a)
-		{
-			Dbo::id(a, _employeePtr, "employee", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
-			Dbo::field(a, policeStation, "policeStation", 70);
-			Dbo::field(a, policeVerified, "policeVerified");
-			Dbo::field(a, trainingCourses, "trainingCourses");
-			Dbo::field(a, armyNumber, "armyNumber", 35);
-			Dbo::field(a, rank, "rank", 35);
-
-			Dbo::hasMany(a, witnessCollection, Dbo::ManyToMany, "personnel_witness");
-		}
-		DEFINE_DBO_TABLENAME("personnel");
-
-	private:
-		friend class PersonnelFormModel;
-	};
 
 	class EmployeePosition : public BaseRecordDbo
 	{
 	public:
-		enum Type
-		{
-			OtherType = 0,
-			PersonnelType = 1
-		};
-
 		std::string title;
-		Type type;
 		EmployeeAssignmentCollection employeeAssignmentCollection;
 
 		template<class Action>
 		void persist(Action& a)
 		{
 			Dbo::field(a, title, "title", 70);
-			Dbo::field(a, type, "type");
 			Dbo::hasMany(a, employeeAssignmentCollection, Dbo::ManyToOne, "employeeposition");
 
 			BaseRecordDbo::persist(a);
@@ -1442,7 +1337,6 @@ namespace ERP
 // 	public:
 // 		Dbo::ptr<ClothingTemplate> clothingTemplatePtr;
 // 		bool serviceable = false;
-// 		Dbo::ptr<Employee> assignedEmployeePtr;
 // 
 // 		template<class Action>
 // 		void persist(Action& a)
@@ -1450,7 +1344,6 @@ namespace ERP
 // 			Dbo::id(a, assetPtr, "asset", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
 // 			Dbo::belongsTo(a, clothingTemplatePtr, "clothingtemplate", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade);
 // 			Dbo::field(a, serviceable, "serviceable");
-// 			Dbo::belongsTo(a, assignedEmployeePtr, "employee", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 // 		}
 // 		DEFINE_DBO_TABLENAME("clothingitem");
 // 	};
@@ -1660,11 +1553,9 @@ namespace Wt
 		static Wt::WString asString(const Wt::WFlags<Entity::SpecificType> &value, const Wt::WString &)
 		{
 			std::string result;
-			if(value & Entity::EmployeeType)
+			if(value.test(Entity::EmployeeType))
 				result += tr("Employee").toUTF8() + ", ";
-			if(value & Entity::PersonnelType)
-				result += tr("Personnel").toUTF8() + ", ";
-			if(value & Entity::ClientType)
+			if(value.test(Entity::ClientType))
 				result += tr("Client").toUTF8() + ", ";
 
 			result = result.substr(0, result.size() - 2);
@@ -1745,20 +1636,6 @@ namespace Wt
 			{
 			case ExpenseCycle::UnspecifiedPurpose: return tr("UnspecificPurpose");
 			case ExpenseCycle::Salary: return tr("Salary");
-			default: return tr("Unknown");
-			}
-		}
-	};
-
-	template<>
-	struct any_traits<EmployeePosition::Type> : public any_traits<int>
-	{
-		static Wt::WString asString(const EmployeePosition::Type &value, const Wt::WString &)
-		{
-			switch(value)
-			{
-			case EmployeePosition::OtherType: return tr("Other");
-			case EmployeePosition::PersonnelType: return tr("PersonnelPosition");
 			default: return tr("Unknown");
 			}
 		}
