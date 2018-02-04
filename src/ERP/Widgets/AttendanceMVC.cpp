@@ -313,7 +313,6 @@ namespace ERP
 
 	void AttendanceEntryView::updateModel(Wt::WFormModel *model)
 	{
-
 		RecordFormView::updateModel(model);
 		_model->updateTimestampOutValidator(false);
 	}

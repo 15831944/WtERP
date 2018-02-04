@@ -476,7 +476,14 @@ WWidget *WMenuItem::contents() const
 
 WWidget *WMenuItem::contentsSafe() const
 {
-	return uContents_.get();
+	if(uContents_)
+		return uContents_.get();
+	else if(oContents_)
+		return oContents_.get();
+	else if(uContentsContainer_)
+		return uContentsContainer_->widget(0);
+	else if(oContentsContainer_)
+		return oContentsContainer_->widget(0);
 }
 
 WWidget *WMenuItem::contentsInStack() const
@@ -496,11 +503,7 @@ std::unique_ptr<WWidget> WMenuItem::removeContents()
   if (c) {
     /* Remove from stack */
     std::unique_ptr<WWidget> w = c->parent()->removeWidget(c);
-
-    if (oContentsContainer_)
-      return oContentsContainer_->removeWidget(oContents_.get());
-    else
-      return w;
+    return w;
   } else
     return std::move(uContents_);
 }

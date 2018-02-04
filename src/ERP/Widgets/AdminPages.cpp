@@ -38,7 +38,7 @@ namespace ERP
 	{
 		auto name = contents->viewName();
 		auto internalPath = contents->viewInternalPath();
-		return createMenuItem(name, internalPath, move(contents), true);
+		return createMenuItemWrapped(name, internalPath, move(contents), true);
 	}
 
 	Wt::WMenuItem *AdminPageWidget::createMenuItemWrapped(const Wt::WString &label, const std::string &pathComponent, unique_ptr<AbstractFilteredList> contents)
@@ -131,7 +131,7 @@ namespace ERP
 
 	Wt::WWidget *AdminPageWidget::itemContent(Wt::WMenuItem *item)
 	{
-		return dynamic_cast<AdminPageContentWidget*>(item->contentsSafe())->content();
+		return static_cast<AdminPageContentWidget*>(item->contentsSafe())->content();
 	}
 
 	void AdminPageWidget::setDeniedPermissionWidget()

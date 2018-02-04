@@ -148,7 +148,7 @@ namespace ERP
 
 		Wt::WDate startDate = Wt::any_cast<Wt::WDate>(startDateVal);
 		CycleInterval interval = (CycleInterval)Wt::any_cast<int>(model->value(EntryCycleFormModel::intervalField));
-		Wt::WString nIntervalsStr = Wt::asString(model->value(EntryCycleFormModel::nIntervalsField));
+		Wt::WString nIntervalsStr = model->valueText(EntryCycleFormModel::nIntervalsField);
 		int FEAC = Wt::any_cast<int>(model->value(EntryCycleFormModel::firstEntryAfterCycleField));
 
 		auto endDateValidator = static_pointer_cast<Wt::WDateValidator>(model->validator(EntryCycleFormModel::endDateField));
