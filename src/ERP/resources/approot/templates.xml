@@ -400,7 +400,8 @@ ${<type-chosen>}
 		</div>
 	</div>
 	${</m:entity-persisted>}
-	
+
+	${editBtn}
 	${submitBtn class="btn-primary"}
 ${</type-chosen>}
 </message>
@@ -437,6 +438,7 @@ ${block:ERP.Field.Rs amount Amount}
 
 <message id="ERP.Admin.EntryCycleBlock2">
 ${block:ERP.Field firstEntryAfterCycle CreateFirstEntry}
+${editBtn}
 ${submitBtn class="btn-primary"}
 </message>
 
@@ -519,7 +521,8 @@ ${</m:assignment-persisted>}
 		${block:ERP.Field service Service}
 		${block:ERP.Field startDate StartingDate}
 		${block:ERP.Field endDate EndDate}
-		
+
+        ${editBtn}
 		${submitBtn class="btn-primary"}
 		${<m:assignment-persisted>}${setIncomeCycle}${</m:assignment-persisted>}
 	</div>
@@ -561,7 +564,8 @@ ${</m:assignment-persisted>}
 		${block:ERP.Field.CW location Location}
 		${block:ERP.Field startDate StartingDate}
 		${block:ERP.Field endDate EndDate}
-		
+
+        ${editBtn}
 		${submitBtn class="btn-primary"}
 		${<m:assignment-persisted>}
 			${setExpenseCycle}
@@ -575,6 +579,7 @@ ${</m:assignment-persisted>}
 <message id="ERP.Admin.LocationView">
 <div class="form-horizontal">
 ${block:ERP.Admin.LocationView.Content}
+${editBtn}
 ${submitBtn class="btn-primary"}
 </div>
 </message>
@@ -606,7 +611,7 @@ ${block:ERP.FieldH.CW entity Entity}
 	${block:ERP.FieldH.Narrow code CountryCode}
 	${block:ERP.FieldH.Narrow name CountryName}
 	<div class="form-group">
-		<div class="col-sm-9 col-sm-offset-3">${submitBtn class="btn-primary"}</div>
+		<div class="col-sm-9 col-sm-offset-3">${editBtn}${submitBtn class="btn-primary"}</div>
 	</div>
 </div>
 </message>
@@ -617,7 +622,7 @@ ${block:ERP.FieldH.CW entity Entity}
 	${block:ERP.FieldH.Narrow country Country}
 	${block:ERP.FieldH.Narrow name CityName}
 	<div class="form-group">
-		<div class="col-sm-9 col-sm-offset-3">${submitBtn class="btn-primary"}</div>
+		<div class="col-sm-9 col-sm-offset-3">${editBtn}${submitBtn class="btn-primary"}</div>
 	</div>
 </div>
 </message>
@@ -627,7 +632,7 @@ ${block:ERP.FieldH.CW entity Entity}
 <div class="form-horizontal">
 	${block:ERP.FieldH.Narrow title PositionTitle}
 	<div class="form-group">
-		<div class="col-sm-9 col-sm-offset-3">${submitBtn class="btn-primary"}</div>
+		<div class="col-sm-9 col-sm-offset-3">${editBtn}${submitBtn class="btn-primary"}</div>
 	</div>
 </div>
 </message>
@@ -637,7 +642,7 @@ ${block:ERP.FieldH.CW entity Entity}
 <div class="form-horizontal">
 	${block:ERP.FieldH.Narrow title ServiceTitle}
 	<div class="form-group">
-		<div class="col-sm-9 col-sm-offset-3">${submitBtn class="btn-primary"}</div>
+		<div class="col-sm-9 col-sm-offset-3">${editBtn}${submitBtn class="btn-primary"}</div>
 	</div>
 </div>
 </message>
@@ -649,6 +654,7 @@ ${block:ERP.FieldH.CW entity Entity}
 	<div class="panel-body">
 		${block:ERP.Field name AccountName}
 		${block:ERP.Field type AccountType}
+        ${editBtn}
 		${submitBtn class="btn-primary"}
 	</div>
 </div>
@@ -669,6 +675,7 @@ ${block:ERP.Field.CW debitAccount DebitAccount}
 ${block:ERP.Field.CW creditAccount CreditAccount}
 ${block:ERP.Field.CW entity Entity}
 ${block:ERP.Field.Rs amount Amount}
+${editBtn}
 ${submitBtn class="btn-primary"}
 </message>
 
@@ -702,7 +709,8 @@ ${</direction-selected>}
 		${block:ERP.Field email EmailAddress}
 		${block:ERP.Field region Region}
 		${block:ERP.Field permissions Permissions}
-		
+
+        ${editBtn}
 		${submitBtn class="btn-primary"}
 		${<m:user-modify>}${<m:user-persisted>}${changePassword}${</m:user-persisted>}${</m:user-modify>}
 	</div>
@@ -715,6 +723,7 @@ ${</direction-selected>}
 	<div class="panel-heading">${tr:RegionInfo}</div>
 	<div class="panel-body">
 		${block:ERP.Field name Name}
+        ${editBtn}
 		${submitBtn class="btn-primary"}
 	</div>
 </div>

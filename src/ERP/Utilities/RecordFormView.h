@@ -49,9 +49,11 @@ namespace ERP
 		void resetValidationAll();
 
 		virtual Wt::WString recordName() const { return tr("Unknown"); }
+		bool isWriteMode() const;
 
 		AbstractRecordFormModel *model() { return _firstModel; }
 		Wt::WPushButton *submitBtn() { return _submitBtn; }
+		Wt::WPushButton *modifyBtn() { return _editBtn; }
 
 	protected:
 		virtual void initView() { }
@@ -79,14 +81,18 @@ namespace ERP
 		using Wt::WTemplateFormView::updateModel;
 
 	private:
-		void handleSubmitted();
+		void handleSubmitBtn();
+		void handleEditBtn();
 
 		enum ViewFlags { AllTransient, NoViewPermission, NoModifyPermission, NoCreatePermission, AllReadOnly, FlagsCount };
 		std::bitset<FlagsCount> _viewFlags;
 
+		Wt::WPushButton *_submitBtn = nullptr;
+		Wt::WPushButton *_editBtn = nullptr;
+
 		FormModelVector _modelVector;
 		AbstractRecordFormModel *_firstModel = nullptr;
-		Wt::WPushButton *_submitBtn = nullptr;
+		bool _writeModeEnabled = false;
 	};
 
 	class RecordViewsContainer : public Wt::WContainerWidget
@@ -112,7 +118,7 @@ namespace ERP
 		ShowEnabledButton(const Wt::WString &text) : Wt::WPushButton(text) { addStyleClass("hidden-print"); }
 
 	protected:
-		virtual void propagateSetEnabled(bool enabled) override { setHidden(!enabled); }
+		virtual void propagateSetEnabled(bool enabled) override;
 	};
 
 	//MODELS
@@ -122,8 +128,8 @@ namespace ERP
 	public:
 		virtual bool saveChanges() { return false; }
 		virtual bool isRecordPersisted() const { return false; }
-		RecordFormView *formView() const { return _view; }
 		bool validateUpdateField(Wt::WFormModel::Field field);
+		RecordFormView *formView() const { return _view; }
 
 		virtual AuthLogin::PermissionResult checkViewPermission() const { return AuthLogin::Permitted; }
 		virtual AuthLogin::PermissionResult checkModifyPermission() const { return AuthLogin::Denied; }
@@ -146,7 +152,9 @@ namespace ERP
 	{
 	public:
 		typedef DboType RecordDbo;
-		RecordFormModel(RecordFormView *view, Dbo::ptr<RecordDbo> recordPtr) : AbstractRecordFormModel(view), _recordPtr(recordPtr) { }
+		RecordFormModel(RecordFormView *view, Dbo::ptr<RecordDbo> recordPtr)
+			: AbstractRecordFormModel(view), _recordPtr(recordPtr)
+		{ }
 
 		Dbo::ptr<RecordDbo> recordPtr() const { return _recordPtr; }
 		virtual bool isRecordPersisted() const override { return !_recordPtr.isTransient(); }
@@ -238,7 +246,7 @@ namespace ERP
 	{
 		auto ptrs = ptrVector();
 		_modelVector.resize(ptrs.size(), nullptr);
-		for(size_t i = container->count(); i < ptrs.size(); ++i)
+		for(int i = container->count(); i < ptrs.size(); ++i)
 		{
 			auto createRes = createRecordView(ptrs[i]);
 			auto w = move(std::get<0>(createRes));

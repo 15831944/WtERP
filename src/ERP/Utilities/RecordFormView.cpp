@@ -6,8 +6,6 @@
 
 #include <Wt/WDateEdit.h>
 #include <Wt/WTimeEdit.h>
-#include <Wt/WComboBox.h>
-#include <Wt/WPushButton.h>
 
 namespace ERP
 {
@@ -137,6 +135,8 @@ namespace ERP
 		_viewFlags.set();
 		for(const auto &res : _modelVector)
 		{
+			res.second->setAllReadOnly(false);
+
 			bool isPersisted = res.second->isRecordPersisted();
 			setCondition("m:" + std::string(res.first) + "-transient", !isPersisted);
 			setCondition("m:" + std::string(res.first) + "-persisted", isPersisted);
@@ -168,9 +168,14 @@ namespace ERP
 					res.second->setAllReadOnly(true);
 			}
 
+			if(!isWriteMode())
+				res.second->setAllReadOnly(true);
+
 			if(!res.second->isAllReadOnly())
 				_viewFlags[AllReadOnly] = false;
 		}
+
+		_editBtn->setEnabled(!_viewFlags[NoModifyPermission] && !_viewFlags[AllTransient]);
 
 		if(_viewFlags[AllTransient])
 		{
@@ -236,7 +241,10 @@ namespace ERP
 			_viewFlags.set();
 
 			_submitBtn = bindNew<ShowEnabledButton>("submitBtn", tr("Submit"));
-			_submitBtn->clicked().connect(this, &RecordFormView::handleSubmitted);
+			_submitBtn->clicked().connect(this, &RecordFormView::handleSubmitBtn);
+
+			_editBtn = bindNew<ShowEnabledButton>("editBtn", tr("Edit"));
+			_editBtn->clicked().connect(this, &RecordFormView::handleEditBtn);
 
 			initView();
 			for(const auto &val : _modelVector)
@@ -255,14 +263,25 @@ namespace ERP
 			updateView();
 	}
 
-	void RecordFormView::handleSubmitted()
+	void RecordFormView::handleSubmitBtn()
 	{
 		submit();
 	}
 
+	void RecordFormView::handleEditBtn()
+	{
+		_writeModeEnabled = !isWriteMode();
+		if(_writeModeEnabled)
+			_editBtn->setText(tr("Cancel"));
+		else
+			_editBtn->setText(tr("Edit"));
+		//TODO Reload
+		updateView();
+	}
+
 	void RecordFormView::submit()
 	{
-		if(!loaded() || _modelVector.empty() || _submitBtn->isDisabled() || !isEnabled())
+		if(!loaded() || _modelVector.empty() || _submitBtn->isDisabled() || !isEnabled() || !isWriteMode())
 			return;
 
 		if(_viewFlags[NoViewPermission] || _viewFlags[AllReadOnly])
@@ -324,6 +343,8 @@ namespace ERP
 
 		if(nothingSaved)
 			resetValidationAll();
+		else
+			_writeModeEnabled = false;
 
 		updateView();
 		if(!nothingSaved)
@@ -333,6 +354,11 @@ namespace ERP
 	Wt::WString RecordFormView::templateText() const
 	{
 		return tr("ERP.RecordFormView").arg(Wt::WTemplateFormView::templateText());
+	}
+
+	bool RecordFormView::isWriteMode() const
+	{
+		return _writeModeEnabled || (_firstModel && !_firstModel->isRecordPersisted());
 	}
 
 	RecordFormView *RecordViewsContainer::viewWidget(int index) const
@@ -399,4 +425,9 @@ namespace ERP
 		return res;
 	}
 
+	void ShowEnabledButton::propagateSetEnabled(bool enabled)
+	{
+		setHidden(!enabled);
+		Wt::WPushButton::propagateSetEnabled(enabled);
+	}
 }

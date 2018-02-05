@@ -17,7 +17,7 @@
 //TODO: Follow WMenuItem bug report
 //TODO: Create indexes
 
-//TODO: Read only view and reloadable RecordFormView
+//TODO: Reloadable RecordFormView
 //TODO: Improve RecordFormModel API (and remove unnecessary pointers)
 //TODO: Create abstraction for list proxy models
 //TODO: Versioned record keeping for all Record Dbos

@@ -50,6 +50,8 @@
 <message id="Description">Description</message>
 <message id="Preview">Preview</message>
 <message id="Submit">Submit</message>
+<message id="Edit">Edit</message>
+<message id="Cancel">Cancel</message>
 <message id="Continue">Continue</message>
 <message id="Error">Error</message>
 <message id="Loading">Loading</message>
