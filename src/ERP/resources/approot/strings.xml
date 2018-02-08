@@ -54,6 +54,7 @@
 <message id="Cancel">Cancel</message>
 <message id="Continue">Continue</message>
 <message id="Error">Error</message>
+<messaege id="Refresh">Refresh</messaege>
 <message id="Loading">Loading</message>
 <message id="Loading...">Loading...</message>
 <message id="Hostname">Hostname</message>
@@ -121,10 +122,12 @@
 <!-- Errors -->
 <message id="AnErrorOccurred">An error occurred</message>
 <message id="StaleObjectError">Changes were made in another session. Submit the form again to save your changes. Note: Changes made by the other session may be overridden.</message>
-<message id="DbConnectionError">The system could not connect to the database backend. If this problem persists, please contact an administrator.</message>
-<message id="DbInternalError">An internal database error occurred, please contact an administrator.</message>
+<message id="DbConnectionError">Could not connect to the database backend. If this problem persists, please report to an administrator.</message>
+<message id="DbInternalError">An internal database error occurred, please report to an administrator.</message>
+<message id="ErrorLoadingFormView">Could not load due to an internal error, please report to an administrator.</message>
+<message id="RecordNotFound">Record not found.</message>
 <message id="GMThumbnailError">An incompatible file was uploaded.</message>
-<message id="ImageRelocationError">Could not save image(s) to permanent location, please contact an administrator.</message>
+<message id="ImageRelocationError">Could not save image(s) to permanent location, please report to an administrator.</message>
 <message id="DatabaseValidationFailed">Validation failed due to an internal error, try again</message>
 
 <!-- Permission related -->

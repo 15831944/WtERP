@@ -76,9 +76,9 @@ namespace ERP
 		enum ResultColumns { ResTimestamp, ResDescription, ResAmount, ResDebitAccountId, ResCreditAccountId, ResOppositeAccountId, ResOppositeAccountName, ResId };
 		enum ViewColumns { ViewTimestamp, ViewDescription, ViewOppositeAccount, ViewDebitAmount, ViewCreditAmount };
 
-		AccountChildrenEntryList(Dbo::ptr<Account> accountPtr) : _accountPtr(accountPtr) { }
-		AccountChildrenEntryList(Dbo::ptr<IncomeCycle> cyclePtr) : _incomeCyclePtr(cyclePtr) { }
-		AccountChildrenEntryList(Dbo::ptr<ExpenseCycle> cyclePtr) : _expenseCyclePtr(cyclePtr) { }
+		AccountChildrenEntryList(Dbo::ptr<Account> accountPtr) : _accountPtr(move(accountPtr)) { }
+		AccountChildrenEntryList(Dbo::ptr<IncomeCycle> cyclePtr) : _incomeCyclePtr(move(cyclePtr)) { }
+		AccountChildrenEntryList(Dbo::ptr<ExpenseCycle> cyclePtr) : _expenseCyclePtr(move(cyclePtr)) { }
 		virtual void load() override;
 		Dbo::ptr<Account> accountPtr() const { return _accountPtr; }
 
@@ -98,8 +98,8 @@ namespace ERP
 		enum ViewColumns { ViewTimestamp, ViewDescription, ViewAmount, ViewDebitAccount, ViewCreditAccount };
 
 		AccountEntryList() = default;
-		AccountEntryList(Dbo::ptr<IncomeCycle> cyclePtr) : _incomeCyclePtr(cyclePtr) { }
-		AccountEntryList(Dbo::ptr<ExpenseCycle> cyclePtr) : _expenseCyclePtr(cyclePtr) { }
+		AccountEntryList(Dbo::ptr<IncomeCycle> cyclePtr) : _incomeCyclePtr(move(cyclePtr)) { }
+		AccountEntryList(Dbo::ptr<ExpenseCycle> cyclePtr) : _expenseCyclePtr(move(cyclePtr)) { }
 		virtual void load() override;
 
 	protected:
@@ -114,8 +114,8 @@ namespace ERP
 	class AccountNameValidator : public Wt::WLengthValidator
 	{
 	public:
-		AccountNameValidator(bool mandatory = false, const Wt::WString &allowedName = "")
-			: Wt::WLengthValidator(0, 70), _allowedName(allowedName)
+		AccountNameValidator(bool mandatory = false, Wt::WString allowedName = "")
+			: Wt::WLengthValidator(0, 70), _allowedName(move(allowedName))
 		{
 			setMandatory(mandatory);
 		}
@@ -134,6 +134,7 @@ namespace ERP
 		static const Wt::WFormModel::Field nameField;
 
 		AccountFormModel(AccountView *view, Dbo::ptr<Account> accountPtr = nullptr);
+		virtual void updateFromDb() override;
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
@@ -147,7 +148,6 @@ namespace ERP
 	{
 	public:
 		AccountView(Dbo::ptr<Account> accountPtr = nullptr);
-		virtual void initView() override;
 
 		Dbo::ptr<Account> accountPtr() const { return _model->recordPtr(); }
 		AccountFormModel *model() const { return _model; }
@@ -158,8 +158,7 @@ namespace ERP
 
 	protected:
 		AccountChildrenEntryList *_entryList = nullptr;
-		AccountFormModel *_model;
-		Dbo::ptr<Account> _tempPtr;
+		AccountFormModel *_model = nullptr;
 	};
 
 	//ACCOUNT ENTRY view
@@ -173,14 +172,15 @@ namespace ERP
 		static const Wt::WFormModel::Field amountField;
 		static const Wt::WFormModel::Field entityField;
 
+		virtual void updateFromDb() override;
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
 		void handleAccountChanged(bool update = true);
 
 	protected:
-		virtual void persistedHandler() override;
 		BaseAccountEntryFormModel(AccountEntryView *view, Dbo::ptr<AccountEntry> accountEntryPtr = nullptr);
+		virtual void persistedHandler() override;
 		AccountEntryView *_view = nullptr;
 	};
 
@@ -188,6 +188,7 @@ namespace ERP
 	{
 	public:
 		AccountEntryFormModel(AccountEntryView *view, Dbo::ptr<AccountEntry> accountEntryPtr = nullptr);
+		virtual void updateFromDb() override;
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 	};
 
@@ -200,6 +201,7 @@ namespace ERP
 		
 	protected:
 		void setAccountsFromEntity();
+		void handleEntityChanged();
 		optional<bool> _isReceipt;
 
 	private:
@@ -210,7 +212,6 @@ namespace ERP
 	{
 	public:
 		AccountEntryView(Dbo::ptr<AccountEntry> accountEntryPtr = nullptr);
-		virtual void initView() override;
 
 		Dbo::ptr<AccountEntry> accountEntryPtr() const { return _model->recordPtr(); }
 		BaseAccountEntryFormModel *model() const { return _model; }
@@ -221,7 +222,6 @@ namespace ERP
 
 	protected:
 		BaseAccountEntryFormModel *_model = nullptr;
-		Dbo::ptr<AccountEntry> _tempPtr;
 	};
 
 	//Transaction view
@@ -229,13 +229,13 @@ namespace ERP
 	{
 	public:
 		TransactionView();
-		virtual void initView() override;
 
 		void selectDirection(bool isReceipt);
 		TransactionFormModel *model() const { return dynamic_cast<TransactionFormModel*>(_model); }
 		virtual unique_ptr<RecordFormView> createFormView() override { return make_unique<TransactionView>(); }
 
 	protected:
+		virtual void initView() override;
 		virtual void afterSubmitHandler() override;
 		virtual void submit() override;
 

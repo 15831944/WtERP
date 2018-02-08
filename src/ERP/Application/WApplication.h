@@ -2,6 +2,7 @@
 #define ERP_WAPPLICATION_H
 
 #include "Common.h"
+#include "Application/DboSession.h"
 #include "Dbo/Dbos.h"
 #include "Dbo/EntitiesDatabase.h"
 #include "Dbo/AccountsDatabase.h"
@@ -86,7 +87,7 @@ namespace ERP
 		static WApplication *instance() { return dynamic_cast<WApplication*>(Wt::WApplication::instance()); }
 		static unique_ptr<WApplication> createApplication(const Wt::WEnvironment &env) { return make_unique<WApplication>(env); }
 
-		Dbo::Session &dboSession() { return _dboSession; }
+		DboSession &dboSession() { return _dboSession; }
 		AuthLogin &authLogin() { return _login; }
 		UserDatabase &userDatabase() { return _userDatabase; }
 		EntitiesDatabase &entitiesDatabase() { return _entitiesDatabase; }
@@ -201,7 +202,7 @@ namespace ERP
 		shared_ptr<RegionProxyModel> _regionProxyModel;
 		
 		//Session related
-		Dbo::Session _dboSession;
+		DboSession _dboSession;
 		AuthLogin _login;
 
 		//Some databases

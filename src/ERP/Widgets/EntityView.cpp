@@ -25,12 +25,13 @@ namespace ERP
 		: RecordFormModel(view, move(entityPtr)), _view(view)
 	{
 		addField(nameField);
+	}
 
-		if(_recordPtr)
-		{
-			TRANSACTION(APP);
-			setValue(nameField, Wt::WString::fromUTF8(_recordPtr->name));
-		}
+	void EntityFormModel::updateFromDb()
+	{
+		TRANSACTION(APP);
+		_recordPtr.reread();
+		setValue(nameField, Wt::WString::fromUTF8(_recordPtr->name));
 	}
 
 	unique_ptr<Wt::WWidget> EntityFormModel::createFormWidget(Field field)
@@ -105,26 +106,27 @@ namespace ERP
 		addField(profileUploadField);
 		addField(cnicUploadField);
 		addField(cnicUpload2Field);
+	}
 
-		if(_recordPtr)
-		{
-			TRANSACTION(APP);
-			setValue(dobField, _recordPtr->dateOfBirth);
-			setValue(cnicField, Wt::WString::fromUTF8(_recordPtr->cnicNumber));
-			setValue(motherTongueField, Wt::WString::fromUTF8(_recordPtr->motherTongue));
-			setValue(identificationMarkField, Wt::WString::fromUTF8(_recordPtr->identificationMark));
-			setValue(heightField, _recordPtr->height);
-			setValue(bloodTypeField, (int)_recordPtr->bloodType);
-			setValue(marriedField, (int)_recordPtr->maritalStatus);
-			setValue(nextOfKinField, _recordPtr->nextOfKinOfPtr.id());
-			setValue(fatherField, _recordPtr->fatherPersonPtr.id());
-			setValue(motherField, _recordPtr->motherPersonPtr.id());
-			setValue(remarksField, Wt::WString::fromUTF8(_recordPtr->remarks));
+	void PersonFormModel::updateFromDb()
+	{
+		TRANSACTION(APP);
+		_recordPtr.reread();
+		setValue(dobField, _recordPtr->dateOfBirth);
+		setValue(cnicField, Wt::WString::fromUTF8(_recordPtr->cnicNumber));
+		setValue(motherTongueField, Wt::WString::fromUTF8(_recordPtr->motherTongue));
+		setValue(identificationMarkField, Wt::WString::fromUTF8(_recordPtr->identificationMark));
+		setValue(heightField, _recordPtr->height);
+		setValue(bloodTypeField, (int)_recordPtr->bloodType);
+		setValue(marriedField, (int)_recordPtr->maritalStatus);
+		setValue(nextOfKinField, _recordPtr->nextOfKinOfPtr.id());
+		setValue(fatherField, _recordPtr->fatherPersonPtr.id());
+		setValue(motherField, _recordPtr->motherPersonPtr.id());
+		setValue(remarksField, Wt::WString::fromUTF8(_recordPtr->remarks));
 
-			if(_recordPtr->profilePictureFilePtr) setValue(profileUploadField, UploadedImage(_recordPtr->profilePictureFilePtr));
-			if(_recordPtr->cnicFile1Ptr) setValue(cnicUploadField, UploadedImage(_recordPtr->cnicFile1Ptr));
-			if(_recordPtr->cnicFile2Ptr) setValue(cnicUpload2Field, UploadedImage(_recordPtr->cnicFile2Ptr));
-		}
+		if(_recordPtr->profilePictureFilePtr) setValue(profileUploadField, UploadedImage(_recordPtr->profilePictureFilePtr));
+		if(_recordPtr->cnicFile1Ptr) setValue(cnicUploadField, UploadedImage(_recordPtr->cnicFile1Ptr));
+		if(_recordPtr->cnicFile2Ptr) setValue(cnicUpload2Field, UploadedImage(_recordPtr->cnicFile2Ptr));
 	}
 
 	unique_ptr<Wt::WWidget> PersonFormModel::createFormWidget(Field field)
@@ -423,16 +425,18 @@ namespace ERP
 	//NEW ENTITIY VIEW
 	EntityView::EntityView(Entity::Type type)
 		: RecordFormView(tr("ERP.Admin.Entities.New")), _type(type), _defaultType(type)
-	{ }
+	{
+		_entityModel = newFormModel<EntityFormModel>("entity", this);
+	}
 
 	EntityView::EntityView(Dbo::ptr<Entity> entityPtr)
-		: RecordFormView(tr("ERP.Admin.Entities.New")), _tempPtr(move(entityPtr))
-	{ }
+		: RecordFormView(tr("ERP.Admin.Entities.New"))
+	{
+		_entityModel = newFormModel<EntityFormModel>("entity", this, move(entityPtr));
+	}
 
 	void EntityView::initView()
 	{
-		_entityModel = newFormModel<EntityFormModel>("entity", this, _tempPtr);
-
 		if(entityPtr())
 		{
 			TRANSACTION(APP);
@@ -652,13 +656,14 @@ namespace ERP
 	{
 		addField(entityField);
 		addField(numberField);
+	}
 
-		if(_recordPtr)
-		{
-			TRANSACTION(APP);
-			setValue(entityField, _recordPtr->entityPtr);
-			setValue(numberField, Wt::WString::fromUTF8(_recordPtr->nationalNumber));
-		}
+	void ContactNumberFormModel::updateFromDb()
+	{
+		TRANSACTION(APP);
+		_recordPtr.reread();
+		setValue(entityField, _recordPtr->entityPtr);
+		setValue(numberField, Wt::WString::fromUTF8(_recordPtr->nationalNumber));
 	}
 
 	unique_ptr<Wt::WWidget> ContactNumberFormModel::createFormWidget(Field field)
@@ -715,15 +720,8 @@ namespace ERP
 	}
 
 	ContactNumberView::ContactNumberView(Dbo::ptr<ContactNumber> countryPtr)
-		: RecordFormView(tr("ERP.Admin.ContactNumberView")), _tempPtr(move(countryPtr))
-	{ }
-
-	ContactNumberView::ContactNumberView()
 		: RecordFormView(tr("ERP.Admin.ContactNumberView"))
-	{ }
-
-	void ContactNumberView::initView()
 	{
-		_model = newFormModel<ContactNumberFormModel>("contactnumber", this, _tempPtr);
+		_model = newFormModel<ContactNumberFormModel>("contactnumber", this, move(countryPtr));
 	}
 }

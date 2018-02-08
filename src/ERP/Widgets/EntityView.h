@@ -32,6 +32,7 @@ namespace ERP
 		static const Field nameField;
 
 		EntityFormModel(EntityView *view, Dbo::ptr<Entity> entityPtr = nullptr);
+		virtual void updateFromDb() override;
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
@@ -60,6 +61,7 @@ namespace ERP
 		static const Field cnicUpload2Field;
 
 		PersonFormModel(EntityView *view, Dbo::ptr<Person> personPtr = nullptr);
+		virtual void updateFromDb() override;
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
@@ -72,6 +74,7 @@ namespace ERP
 	{
 	public:
 		BusinessFormModel(EntityView *view, Dbo::ptr<Business> businessPtr = nullptr);
+		virtual void updateFromDb() override { }
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
@@ -86,6 +89,7 @@ namespace ERP
 		static const Wt::WFormModel::Field numberField;
 
 		ContactNumberFormModel(ContactNumberView *view, Dbo::ptr<ContactNumber> contactNumberPtr = nullptr);
+		virtual void updateFromDb() override;
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
@@ -96,9 +100,7 @@ namespace ERP
 	class ContactNumberView : public RecordFormView
 	{
 	public:
-		ContactNumberView(Dbo::ptr<ContactNumber> contactNumberPtr);
-		ContactNumberView();
-		virtual void initView() override;
+		ContactNumberView(Dbo::ptr<ContactNumber> contactNumberPtr = nullptr);
 
 		Dbo::ptr<ContactNumber> contactNumberPtr() const { return _model->recordPtr(); }
 		ContactNumberFormModel *model() const { return _model; }
@@ -107,7 +109,6 @@ namespace ERP
 
 	protected:
 		ContactNumberFormModel *_model;
-		Dbo::ptr<ContactNumber> _tempPtr;
 	};
 
 	//ContactNumbersFormModel
@@ -144,7 +145,6 @@ namespace ERP
 	public:
 		EntityView(Entity::Type type = Entity::InvalidType);
 		EntityView(Dbo::ptr<Entity> entityPtr);
-		virtual void initView() override;
 
 		void selectEntityType(Entity::Type type);
 
@@ -156,6 +156,7 @@ namespace ERP
 		virtual unique_ptr<RecordFormView> createFormView() override { return make_unique<EntityView>(); }
 
 	protected:
+		virtual void initView() override;
 		virtual void submit() override;
 		virtual void afterSubmitHandler() override;
 
@@ -172,7 +173,6 @@ namespace ERP
 
 		Entity::Type _type = Entity::InvalidType;
 		Entity::Type _defaultType = Entity::InvalidType;
-		Dbo::ptr<Entity> _tempPtr;
 
 	private:
 		friend class EntityFormModel;

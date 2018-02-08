@@ -12,7 +12,7 @@
 namespace ERP
 {
 
-	TaskScheduler::TaskScheduler(WServer *server, Dbo::Session &session)
+	TaskScheduler::TaskScheduler(WServer *server, DboSession &session)
 		: dboSession(session), _server(server), _entitiesDatabase(dboSession), _accountsDatabase(dboSession)
 	{
 		Dbo::Transaction t(dboSession);

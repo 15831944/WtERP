@@ -5,7 +5,7 @@
 namespace ERP
 {
 
-	PermissionsDatabase::PermissionsDatabase(Dbo::Session &session)
+	PermissionsDatabase::PermissionsDatabase(DboSession &session)
 		: dboSession(session)
 	{
 		fetchAll();
@@ -106,7 +106,7 @@ namespace ERP
 		return itr->second.permissionPtr;
 	}
 
-	PermissionMap PermissionsDatabase::getUserPermissions(Dbo::ptr<User> userPtr, Wt::Auth::LoginState loginState, Dbo::Session *altSession)
+	PermissionMap PermissionsDatabase::getUserPermissions(Dbo::ptr<User> userPtr, Wt::Auth::LoginState loginState, DboSession *altSession)
 	{
 		if(!altSession)
 			altSession = &dboSession;

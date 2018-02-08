@@ -35,6 +35,7 @@ namespace ERP
 		static const Wt::WFormModel::Field titleField;
 
 		PositionFormModel(PositionView *view, Dbo::ptr<EmployeePosition> positionPtr = nullptr);
+		virtual void updateFromDb() override;
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
@@ -45,9 +46,7 @@ namespace ERP
 	class PositionView : public RecordFormView
 	{
 	public:
-		PositionView(Dbo::ptr<EmployeePosition> positionPtr);
-		PositionView();
-		virtual void initView() override;
+		PositionView(Dbo::ptr<EmployeePosition> positionPtr = nullptr);
 
 		Dbo::ptr<EmployeePosition> positionPtr() const { return _model->recordPtr(); }
 		Wt::WFormModel *model() const { return _model; }
@@ -56,7 +55,6 @@ namespace ERP
 
 	protected:
 		PositionFormModel *_model;
-		Dbo::ptr<EmployeePosition> _tempPtr;
 	};
 
 	//ServiceProxyModel
@@ -77,6 +75,7 @@ namespace ERP
 		static const Wt::WFormModel::Field titleField;
 
 		ServiceFormModel(ServiceView *view, Dbo::ptr<ClientService> servicePtr = nullptr);
+		virtual void updateFromDb() override;
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
@@ -86,9 +85,7 @@ namespace ERP
 	class ServiceView : public RecordFormView
 	{
 	public:
-		ServiceView(Dbo::ptr<ClientService> servicePtr);
-		ServiceView();
-		virtual void initView() override;
+		ServiceView(Dbo::ptr<ClientService> servicePtr = nullptr);
 
 		Dbo::ptr<ClientService> servicePtr() const { return _model->recordPtr(); }
 		ServiceFormModel *model() const { return _model; }
@@ -97,7 +94,6 @@ namespace ERP
 
 	protected:
 		ServiceFormModel *_model;
-		Dbo::ptr<ClientService> _tempPtr;
 	};
 
 	//EmployeeAssignmentView
@@ -113,6 +109,7 @@ namespace ERP
 		static const Field positionField;
 
 		EmployeeAssignmentFormModel(EmployeeAssignmentView *view, Dbo::ptr<EmployeeAssignment> employeeAssignmentPtr = nullptr);
+		virtual void updateFromDb() override;
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Wt::WFormModel::Field field) override;
 		virtual bool saveChanges() override;
 
@@ -134,11 +131,10 @@ namespace ERP
 		friend class EmployeeAssignmentView;
 	};
 
-	class EmployeeAssignmentView : public ReloadOnVisibleWidget<RecordFormView>
+	class EmployeeAssignmentView : public RecordFormView
 	{
 	public:
 		EmployeeAssignmentView(Dbo::ptr<EmployeeAssignment> employeeAssignmentPtr = nullptr);
-		virtual void reload() override;
 
 		using RecordFormView::updateView;
 		using RecordFormView::updateModel;
@@ -155,14 +151,12 @@ namespace ERP
 		EmployeeAssignmentFormModel *model() const { return _model; }
 
 	protected:
-		virtual void initView() override;
 		virtual void updateView(Wt::WFormModel *model) override;
 		virtual void updateModel(Wt::WFormModel *model) override;
 
 		QueryProxyModelCB<PositionProxyModel> *_positionCombo = nullptr;
 		Wt::WDialog *_dialog = nullptr;
 		EmployeeAssignmentFormModel *_model;
-		Dbo::ptr<EmployeeAssignment> _tempPtr;
 
 	private:
 		friend class EmployeeAssignmentFormModel;
@@ -180,6 +174,7 @@ namespace ERP
 		static const Field serviceField;
 
 		ClientAssignmentFormModel(ClientAssignmentView *view, Dbo::ptr<ClientAssignment> clientAssignmentPtr = nullptr);
+		virtual void updateFromDb() override;
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Wt::WFormModel::Field field) override;
 		virtual bool saveChanges() override;
 
@@ -199,12 +194,10 @@ namespace ERP
 		friend class ClientAssignmentView;
 	};
 
-	class ClientAssignmentView : public ReloadOnVisibleWidget<RecordFormView>
+	class ClientAssignmentView : public RecordFormView
 	{
 	public:
 		ClientAssignmentView(Dbo::ptr<ClientAssignment> clientAssignmentPtr = nullptr);
-		virtual void reload() override;
-		virtual void initView() override;
 
 		using RecordFormView::updateView;
 		using RecordFormView::updateModel;
@@ -221,13 +214,13 @@ namespace ERP
 		ClientAssignmentFormModel *model() const { return _model; }
 
 	protected:
+		virtual void initView() override;
 		virtual void updateView(Wt::WFormModel *model) override;
 		virtual void updateModel(Wt::WFormModel *model) override;
 
 		QueryProxyModelCB<ServiceProxyModel> *_serviceCombo = nullptr;
 		Wt::WDialog *_dialog = nullptr;
 		ClientAssignmentFormModel *_model;
-		Dbo::ptr<ClientAssignment> _tempPtr;
 
 	private:
 		friend class ClientAssignmentFormModel;
@@ -237,9 +230,9 @@ namespace ERP
 	class EmployeeAssignmentList : public QueryModelFilteredList<tuple<long long, Wt::WDateTime, std::string, Wt::WDate, Wt::WDate, std::string, std::string, std::string>>
 	{
 	public:
-		EmployeeAssignmentList(Dbo::ptr<Entity> entityPtr = nullptr) : _entityPtr(entityPtr) { }
-		EmployeeAssignmentList(Dbo::ptr<ClientAssignment> clientAssignmentPtr) : _clientAssignmentPtr(clientAssignmentPtr) { }
-		EmployeeAssignmentList(Dbo::ptr<ExpenseCycle> cyclePtr) : _cyclePtr(cyclePtr) { }
+		EmployeeAssignmentList(Dbo::ptr<Entity> entityPtr = nullptr) : _entityPtr(move(entityPtr)) { }
+		EmployeeAssignmentList(Dbo::ptr<ClientAssignment> clientAssignmentPtr) : _clientAssignmentPtr(move(clientAssignmentPtr)) { }
+		EmployeeAssignmentList(Dbo::ptr<ExpenseCycle> cyclePtr) : _cyclePtr(move(cyclePtr)) { }
 		enum ResultColumns { ResId, ResTimestamp, ResEntityName, ResStartDate, ResEndDate, ResCountryName, ResCityName, ResAddress };
 		enum ViewColumns { ViewId, ViewCreatedOn, ViewEntity, ViewStartDate, ViewEndDate, ViewCountry, ViewCity, ViewAddress };
 		virtual void load() override;
@@ -272,8 +265,8 @@ namespace ERP
 	public:
 		enum ResultColumns { ResId, ResTimestamp, ResEntityName, ResStartDate, ResEndDate, ResEmployeesAssigned };
 		enum ViewColumns { ViewId, ViewCreatedOn, ViewEntity, ViewStartDate, ViewEndDate, ViewEmployeesAssigned };
-		ClientAssignmentList(Dbo::ptr<Entity> entityPtr = nullptr) : _entityPtr(entityPtr) { }
-		ClientAssignmentList(Dbo::ptr<IncomeCycle> cyclePtr) : _cyclePtr(cyclePtr) { }
+		ClientAssignmentList(Dbo::ptr<Entity> entityPtr = nullptr) : _entityPtr(move(entityPtr)) { }
+		ClientAssignmentList(Dbo::ptr<IncomeCycle> cyclePtr) : _cyclePtr(move(cyclePtr)) { }
 		virtual void load() override;
 
 	protected:

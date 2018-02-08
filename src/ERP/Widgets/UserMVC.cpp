@@ -5,7 +5,6 @@
 #include <Wt/WDateEdit.h>
 #include <Wt/WTimeEdit.h>
 #include <Wt/WTableView.h>
-#include <Wt/Auth/Identity.h>
 #include <Wt/Auth/PasswordStrengthValidator.h>
 
 namespace ERP
@@ -99,7 +98,7 @@ namespace ERP
 	const Wt::WFormModel::Field UserFormModel::permissionsField = "permissions";
 
 	UserFormModel::UserFormModel(UserView *view, Dbo::ptr<AuthInfo> authInfoPtr)
-		: RecordFormModel(view, Dbo::ptr<User>()), _view(view), _authInfoPtr(authInfoPtr)
+		: RecordFormModel(view, Dbo::ptr<User>()), _view(view), _authInfoPtr(move(authInfoPtr))
 	{
 		addField(loginNameField);
 		addField(passwordField);
@@ -107,38 +106,40 @@ namespace ERP
 		addField(emailField);
 		addField(regionField);
 		addField(permissionsField);
+	}
 
-		if(_authInfoPtr)
+	void UserFormModel::updateFromDb()
+	{
+		WApplication *app = APP;
+		TRANSACTION(app);
+
+		_recordPtr.reread();
+		_authInfoPtr.reread();
+		Dbo::ptr<User> userPtr = _authInfoPtr->user();
+		if(!userPtr)
 		{
-			WApplication *app = APP;
-			TRANSACTION(app);
-
-			Dbo::ptr<User> userPtr = _authInfoPtr->user();
-			if(!userPtr)
-			{
-				userPtr = app->dboSession().addNew<User>();
-				_authInfoPtr.modify()->setUser(userPtr);
-			}
-			_recordPtr = userPtr;
-
-			setValue(loginNameField, _authInfoPtr->identity(Wt::Auth::Identity::LoginName));
-			setValue(emailField, _authInfoPtr->email());
-			setValue(regionField, _recordPtr->regionPtr());
-
-			_permissionMap = SERVER->permissionsDatabase().getUserPermissions(_recordPtr, Wt::Auth::LoginState::Strong, &app->dboSession());
-			if(_permissionMap.find(Permissions::GlobalAdministrator) != _permissionMap.end())
-				setValue(permissionsField, (int)GlobalAdministrator);
-			else if(_permissionMap.find(Permissions::RegionalAdministrator) != _permissionMap.end())
-				setValue(permissionsField, (int)RegionalAdministrator);
-			else
-				setValue(permissionsField, (int)RegionalUser);
-
-			setVisible(passwordField, false);
-			setVisible(password2Field, false);
-
-			if(_authInfoPtr.id() == app->authLogin().authInfoPtr().id())
-				setReadOnly(permissionsField, true);
+			userPtr = app->dboSession().addNew<User>();
+			_authInfoPtr.modify()->setUser(userPtr);
 		}
+		_recordPtr = userPtr;
+
+		setValue(loginNameField, _authInfoPtr->identity(Wt::Auth::Identity::LoginName));
+		setValue(emailField, _authInfoPtr->email());
+		setValue(regionField, _recordPtr->regionPtr());
+
+		_permissionMap = SERVER->permissionsDatabase().getUserPermissions(_recordPtr, Wt::Auth::LoginState::Strong, &app->dboSession());
+		if(_permissionMap.find(Permissions::GlobalAdministrator) != _permissionMap.end())
+			setValue(permissionsField, (int)GlobalAdministrator);
+		else if(_permissionMap.find(Permissions::RegionalAdministrator) != _permissionMap.end())
+			setValue(permissionsField, (int)RegionalAdministrator);
+		else
+			setValue(permissionsField, (int)RegionalUser);
+
+		setVisible(passwordField, false);
+		setVisible(password2Field, false);
+
+		if(_authInfoPtr.id() == app->authLogin().authInfoPtr().id())
+			setReadOnly(permissionsField, true);
 	}
 
 	unique_ptr<Wt::WWidget> UserFormModel::createFormWidget(Field field)
@@ -247,7 +248,7 @@ namespace ERP
 
 		if(app->authLogin().hasPermission(Permissions::GlobalAdministrator) && app->authLogin().hasPermission(Permissions::ModifyUserPermission) && !isReadOnly(permissionsField))
 		{
-			int permissionIndex = Wt::any_cast<int>(value(permissionsField));
+			auto permissionIndex = Wt::any_cast<int>(value(permissionsField));
 
 			_recordPtr.modify()->userPermissionCollection.clear();
 			app->dboSession().addNew<UserPermission>(_recordPtr, app->dboSession().loadLazy<Permission>(permissionIndexToId(permissionIndex)));
@@ -367,12 +368,9 @@ namespace ERP
 	}
 
 	UserView::UserView(Dbo::ptr<AuthInfo> authInfoPtr)
-		: RecordFormView(tr("ERP.Admin.UserView")), _tempPtr(authInfoPtr)
-	{ }
-
-	void UserView::initView()
+		: RecordFormView(tr("ERP.Admin.UserView"))
 	{
-		_model = newFormModel<UserFormModel>("user", this, _tempPtr);
+		_model = newFormModel<UserFormModel>("user", this, move(authInfoPtr));
 	}
 
 	Wt::WString UserView::viewName() const
@@ -460,17 +458,16 @@ namespace ERP
 	const Wt::WFormModel::Field RegionFormModel::nameField = "name";
 
 	RegionFormModel::RegionFormModel(RegionView *view, Dbo::ptr<Region> regionPtr)
-		: RecordFormModel(view, regionPtr), _view(view)
+		: RecordFormModel(view, move(regionPtr)), _view(view)
 	{
 		addField(nameField);
+	}
 
-		if(_recordPtr)
-		{
-			WApplication *app = APP;
-			TRANSACTION(app);
-
-			setValue(nameField, Wt::WString::fromUTF8(_recordPtr->name));
-		}
+	void RegionFormModel::updateFromDb()
+	{
+		TRANSACTION(APP);
+		_recordPtr.reread();
+		setValue(nameField, Wt::WString::fromUTF8(_recordPtr->name));
 	}
 
 	unique_ptr<Wt::WWidget> RegionFormModel::createFormWidget(Field field)
@@ -534,12 +531,9 @@ namespace ERP
 	}
 
 	RegionView::RegionView(Dbo::ptr<Region> regionPtr)
-		: RecordFormView(tr("ERP.Admin.RegionView")), _tempPtr(regionPtr)
-	{ }
-
-	void RegionView::initView()
+		: RecordFormView(tr("ERP.Admin.RegionView"))
 	{
-		_model = newFormModel<RegionFormModel>("region", this, _tempPtr);
+		_model = newFormModel<RegionFormModel>("region", this, move(regionPtr));
 	}
 
 	Wt::WString RegionView::viewName() const

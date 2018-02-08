@@ -71,6 +71,7 @@ namespace ERP
 	{
 	public:
 		ExpenseCycleFormModel(ExpenseCycleView *view, Dbo::ptr<ExpenseCycle> cyclePtr = nullptr);
+		virtual void updateFromDb() override;
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Wt::WFormModel::Field field) override;
 		virtual bool saveChanges() override;
 
@@ -84,7 +85,6 @@ namespace ERP
 	{
 	public:
 		ExpenseCycleView(Dbo::ptr<ExpenseCycle> cyclePtr = nullptr);
-		virtual void initView() override;
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Wt::WFormModel::Field field) override;
 
 		virtual Wt::WString viewName() const override;
@@ -96,7 +96,6 @@ namespace ERP
 
 	protected:
 		ExpenseCycleFormModel *_model = nullptr;
-		Dbo::ptr<ExpenseCycle> _tempPtr;
 	};
 
 	//IncomeCycleFormModel
@@ -104,6 +103,7 @@ namespace ERP
 	{
 	public:
 		IncomeCycleFormModel(IncomeCycleView *view, Dbo::ptr<IncomeCycle> cyclePtr = nullptr);
+		virtual void updateFromDb() override;
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Wt::WFormModel::Field field) override;
 		virtual bool saveChanges() override;
 
@@ -117,7 +117,6 @@ namespace ERP
 	{
 	public:
 		IncomeCycleView(Dbo::ptr<IncomeCycle> cyclePtr = nullptr);
-		virtual void initView() override;
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Wt::WFormModel::Field field) override;
 
 		virtual Wt::WString viewName() const override;
@@ -129,7 +128,6 @@ namespace ERP
 
 	protected:
 		IncomeCycleFormModel *_model = nullptr;
-		Dbo::ptr<IncomeCycle> _tempPtr;
 	};
 
 	//LISTS
@@ -139,7 +137,7 @@ namespace ERP
 		enum ResultColumns { ResId, ResTimestamp, ResEntityName, ResStartDate, ResEndDate, ResAmount, ResExtra, ResInterval, ResNIntervals, ResEntityId };
 		enum ViewColumns { ViewId, ViewCreatedOn, ViewEntity, ViewStartDate, ViewEndDate, ViewAmount, ViewExtra };
 
-		EntryCycleList(Dbo::ptr<Entity> entityPtr) : _entityPtr(entityPtr) { }
+		EntryCycleList(Dbo::ptr<Entity> entityPtr) : _entityPtr(move(entityPtr)) { }
 		virtual void load() override;
 
 	protected:
@@ -150,7 +148,7 @@ namespace ERP
 	class IncomeCycleList : public EntryCycleList
 	{
 	public:
-		IncomeCycleList(Dbo::ptr<Entity> entityPtr = nullptr) : EntryCycleList(entityPtr) { }
+		IncomeCycleList(Dbo::ptr<Entity> entityPtr = nullptr) : EntryCycleList(move(entityPtr)) { }
 
 	protected:
 		virtual void initModel() override;
@@ -159,7 +157,7 @@ namespace ERP
 	class ExpenseCycleList : public EntryCycleList
 	{
 	public:
-		ExpenseCycleList(Dbo::ptr<Entity> entityPtr = nullptr) : EntryCycleList(entityPtr) { }
+		ExpenseCycleList(Dbo::ptr<Entity> entityPtr = nullptr) : EntryCycleList(move(entityPtr)) { }
 
 	protected:
 		virtual void initModel() override;
@@ -169,8 +167,8 @@ namespace ERP
 	class EntryCycleListProxyModel : public Wt::WBatchEditProxyModel
 	{
 	public:
-		EntryCycleListProxyModel(const std::string &pathPrefix, shared_ptr<Wt::WAbstractItemModel> model)
-			: _pathPrefix(pathPrefix)
+		EntryCycleListProxyModel(std::string pathPrefix, shared_ptr<Wt::WAbstractItemModel> model)
+			: _pathPrefix(move(pathPrefix))
 		{
 			setSourceModel(model);
 			addAdditionalColumns();

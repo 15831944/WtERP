@@ -88,7 +88,7 @@ namespace ERP
 			throw;
 		}
 
-		//Prepare server's Dbo::Session
+		//Prepare server's DboSession
 		_dboSession.setConnectionPool(*_sqlPool);
 		mapERPDbos(_dboSession);
 		mapConfigurationDbos(_dboSession);

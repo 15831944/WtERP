@@ -12,12 +12,16 @@
 //TODO: ViewName() and ViewTitle()
 //TODO: Make Location-Entity a ManyToMany relation
 //TODO: Fix LOG_ERROR(Wt::Dbo::ptr) useless errors
+//TODO: Upgrade Font Awesome
+//TODO: Look into QueryModel exception handling
 
 //TODO: Follow Multiple Dialogs error report
 //TODO: Follow WMenuItem bug report
 //TODO: Create indexes
 
-//TODO: Reloadable RecordFormView
+//TODO: viewName() for record not found
+//TODO: delete menu items with same internal path on submit handler
+//TODO: FormView error on initView() reload replace object, WApplication::initDboQueryModel exception safety
 //TODO: Improve RecordFormModel API (and remove unnecessary pointers)
 //TODO: Create abstraction for list proxy models
 //TODO: Versioned record keeping for all Record Dbos

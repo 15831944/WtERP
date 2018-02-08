@@ -2,11 +2,12 @@
 #define ERP_DBO_CONFIGURATION_H
 
 #include "Common.h"
+#include "Application/DboSession.h"
 #include <Wt/Dbo/Dbo.h>
 
 namespace ERP
 {
-	void mapConfigurationDbos(Dbo::Session &dboSession);
+	void mapConfigurationDbos(DboSession &dboSession);
 
 	class Configuration;
 	class ConfigurationBool;

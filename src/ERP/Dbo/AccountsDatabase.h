@@ -10,7 +10,7 @@ namespace ERP
 	class AccountsDatabase
 	{
 	public:
-		AccountsDatabase(Dbo::Session &session) : dboSession(session), _entitiesDatabase(dboSession) { }
+		AccountsDatabase(DboSession &session) : dboSession(session), _entitiesDatabase(dboSession) { }
 		void createEntityAccountsIfNotFound(Dbo::ptr<Entity> entityPtr);
 
 		Dbo::ptr<AccountEntry> createAccountEntry(const Money &amount, Dbo::ptr<Account> debitAccountPtr, Dbo::ptr<Account> creditAccountPtr);
@@ -29,7 +29,7 @@ namespace ERP
 	protected:
 		//void initEntityAccountValues(Dbo::ptr<Account> accountPtr, Dbo::ptr<Entity> entityPtr);
 
-		Dbo::Session &dboSession;
+		DboSession &dboSession;
 		EntitiesDatabase _entitiesDatabase;
 
 	private:

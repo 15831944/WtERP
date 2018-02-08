@@ -92,21 +92,22 @@ namespace ERP
 	const Wt::WFormModel::Field AttendanceDeviceFormModel::locationField = "location";
 
 	AttendanceDeviceFormModel::AttendanceDeviceFormModel(AttendanceDeviceView *view, Dbo::ptr<AttendanceDevice> attendanceDevicePtr)
-		: RecordFormModel(view, attendanceDevicePtr), _view(view)
+		: RecordFormModel(view, move(attendanceDevicePtr)), _view(view)
 	{
 		addField(hostNameField);
 		addField(locationField);
+	}
 
-		if(_recordPtr)
-		{
-			WApplication *app = APP;
-			TRANSACTION(app);
+	void AttendanceDeviceFormModel::updateFromDb()
+	{
+		WApplication *app = APP;
+		TRANSACTION(app);
 
-			Dbo::ptr<AttendanceDeviceV> latestVersionPtr = app->dboSession().find<AttendanceDeviceV>()
-					.where("parent_id = ?").bind(_recordPtr.id()).orderBy("timestamp desc").limit(1);
-			setValue(hostNameField, Wt::WString::fromUTF8(latestVersionPtr->hostName));
-			setValue(locationField, latestVersionPtr->locationPtr);
-		}
+		_recordPtr.reread();
+		auto latestVersionPtr = app->dboSession().loadLatestVersion<AttendanceDeviceV>(_recordPtr);
+
+		setValue(hostNameField, Wt::WString::fromUTF8(latestVersionPtr->hostName));
+		setValue(locationField, latestVersionPtr->locationPtr);
 	}
 
 	unique_ptr<Wt::WWidget> AttendanceDeviceFormModel::createFormWidget(Field field)
@@ -152,12 +153,9 @@ namespace ERP
 	}
 
 	AttendanceDeviceView::AttendanceDeviceView(Dbo::ptr<AttendanceDevice> attendanceDevicePtr)
-		: RecordFormView(tr("ERP.Admin.AttendanceDeviceView")), _tempPtr(attendanceDevicePtr)
-	{ }
-
-	void AttendanceDeviceView::initView()
+		: RecordFormView(tr("ERP.Admin.AttendanceDeviceView"))
 	{
-		_model = newFormModel<AttendanceDeviceFormModel>("attendance-device", this, _tempPtr);
+		_model = newFormModel<AttendanceDeviceFormModel>("attendance-device", this, move(attendanceDevicePtr));
 	}
 
 	Wt::WString AttendanceDeviceView::viewName() const
@@ -178,7 +176,7 @@ namespace ERP
 	const Wt::WFormModel::Field AttendanceEntryFormModel::locationField = "location";
 
 	AttendanceEntryFormModel::AttendanceEntryFormModel(AttendanceEntryView *view, Dbo::ptr<AttendanceEntry> attendanceEntryPtr)
-		: RecordFormModel(view, attendanceEntryPtr), _view(view)
+		: RecordFormModel(view, move(attendanceEntryPtr)), _view(view)
 	{
 		addField(entityField);
 		addField(dateInField);
@@ -186,17 +184,18 @@ namespace ERP
 		addField(dateOutField);
 		addField(timeOutField);
 		addField(locationField);
+	}
 
-		if(_recordPtr)
-		{
-			TRANSACTION(APP);
-			setValue(entityField, _recordPtr->entityPtr);
-			setValue(dateInField, _recordPtr->timestampIn.date());
-			setValue(timeInField, _recordPtr->timestampIn.time());
-			setValue(dateOutField, _recordPtr->timestampOut.date());
-			setValue(timeOutField, _recordPtr->timestampOut.time());
-			setValue(locationField, _recordPtr->locationPtr);
-		}
+	void AttendanceEntryFormModel::updateFromDb()
+	{
+		TRANSACTION(APP);
+		_recordPtr.reread();
+		setValue(entityField, _recordPtr->entityPtr);
+		setValue(dateInField, _recordPtr->timestampIn.date());
+		setValue(timeInField, _recordPtr->timestampIn.time());
+		setValue(dateOutField, _recordPtr->timestampOut.date());
+		setValue(timeOutField, _recordPtr->timestampOut.time());
+		setValue(locationField, _recordPtr->locationPtr);
 	}
 
 	unique_ptr<Wt::WWidget> AttendanceEntryFormModel::createFormWidget(Field field)
@@ -287,12 +286,9 @@ namespace ERP
 	}
 
 	AttendanceEntryView::AttendanceEntryView(Dbo::ptr<AttendanceEntry> attendanceEntryPtr)
-		: RecordFormView(tr("ERP.Admin.AttendanceEntryView")), _tempPtr(attendanceEntryPtr)
-	{ }
-
-	void AttendanceEntryView::initView()
+		: RecordFormView(tr("ERP.Admin.AttendanceEntryView"))
 	{
-		_model = newFormModel<AttendanceEntryFormModel>("attendance-entry", this, _tempPtr);
+		_model = newFormModel<AttendanceEntryFormModel>("attendance-entry", this, move(attendanceEntryPtr));
 	}
 
 	Wt::WString AttendanceEntryView::viewName() const

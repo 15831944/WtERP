@@ -8,7 +8,6 @@ namespace ERP
 	class Reloadable
 	{
 	public:
-		Reloadable() { }
 		virtual void reload() = 0;
 	};
 
@@ -16,8 +15,12 @@ namespace ERP
 	class ReloadOnVisibleWidget : public Base, public Reloadable
 	{
 	public:
-		ReloadOnVisibleWidget() { }
-		
+		ReloadOnVisibleWidget() = default;
+		template<typename ...Args>
+		ReloadOnVisibleWidget(Args &&...args)
+			: Base(std::forward<Args>(args)...)
+		{ }
+
 	protected:
 		virtual void propagateSetVisible(bool visible) override
 		{

@@ -301,7 +301,7 @@ namespace ERP
 			else
 				load();
 		}
-		catch(Dbo::Exception &e)
+		catch(const Dbo::Exception &e)
 		{
 			Wt::log("error") << "QueryModelFilteredList::reload(): Dbo error(" << e.code() << "): " << e.what();
 			APP->showDbBackendError(e.code());

@@ -299,224 +299,105 @@ namespace ERP
 			lazyLoadAdminWidgets();
 			_mainStack->setCurrentWidget(_mainAdminTemplate);
 
-			try
+			long long id;
+
+			//entity view
+			id = getUsableIdFromPathPrefix(Entity::viewInternalPath(""), _entitiesAdminPage, ENTITY_PREFIX);
+			if(id != -1)
 			{
-				long long id;
-
-				//entity view
-				id = getUsableIdFromPathPrefix(Entity::viewInternalPath(""), _entitiesAdminPage, ENTITY_PREFIX);
-				if(id != -1)
-				{
-					TRANSACTION(this);
-					Dbo::ptr<Entity> ptr = dboSession().load<Entity>(id, true);
-					if(ptr)
-					{
-						if(authLogin().checkRecordViewPermission(ptr.get()) == AuthLogin::Permitted)
-						{
-							auto view = make_unique<EntityView>(ptr);
-							view->load();
-							_entitiesAdminPage->createMenuItemWrapped(move(view));
-						}
-						else
-							_entitiesAdminPage->setDeniedPermissionWidget();
-					}
-				}
-
-				//employee assignment view
-				id = getUsableIdFromPathPrefix(EmployeeAssignment::viewInternalPath(""), _entitiesAdminPage, EMPLOYEES_PATHC "/" EMPLOYEEASSIGNMENTS_PREFIX);
-				if(id != -1)
-				{
-					TRANSACTION(this);
-					Dbo::ptr<EmployeeAssignment> ptr = dboSession().load<EmployeeAssignment>(id, true);
-					if(ptr)
-					{
-						if(authLogin().checkRecordViewPermission(ptr.get()) == AuthLogin::Permitted)
-						{
-							auto view = make_unique<EmployeeAssignmentView>(ptr);
-							view->load();
-							_entitiesAdminPage->createMenuItemWrapped(move(view));
-						}
-						else
-							_entitiesAdminPage->setDeniedPermissionWidget();
-					}
-				}
-
-				//client assignment view
-				id = getUsableIdFromPathPrefix(ClientAssignment::viewInternalPath(""), _entitiesAdminPage, CLIENTS_PATHC "/" CLIENTASSIGNMENTS_PREFIX);
-				if(id != -1)
-				{
-					TRANSACTION(this);
-					Dbo::ptr<ClientAssignment> ptr = dboSession().load<ClientAssignment>(id, true);
-					if(ptr)
-					{
-						if(authLogin().checkRecordViewPermission(ptr.get()) == AuthLogin::Permitted)
-						{
-							auto view = make_unique<ClientAssignmentView>(ptr);
-							view->load();
-							_entitiesAdminPage->createMenuItemWrapped(move(view));
-						}
-						else
-							_entitiesAdminPage->setDeniedPermissionWidget();
-					}
-				}
-
-				//account view
-				id = getUsableIdFromPathPrefix(Account::viewInternalPath(""), _accountsAdminPage, ACCOUNT_PREFIX);
-				if(id != -1)
-				{
-					TRANSACTION(this);
-					Dbo::ptr<Account> ptr = dboSession().load<Account>(id, true);
-					if(ptr)
-					{
-						if(authLogin().checkRecordViewPermission(ptr.get()) == AuthLogin::Permitted)
-						{
-							auto view = make_unique<AccountView>(ptr);
-							view->load();
-							_accountsAdminPage->createMenuItemWrapped(move(view));
-						}
-						else
-							_accountsAdminPage->setDeniedPermissionWidget();
-					}
-				}
-
-				//account entry view
-				id = getUsableIdFromPathPrefix(AccountEntry::viewInternalPath(""), _accountsAdminPage, ACCOUNTENTRY_PREFIX);
-				if(id != -1)
-				{
-					TRANSACTION(this);
-					Dbo::ptr<AccountEntry> ptr = dboSession().load<AccountEntry>(id, true);
-					if(ptr)
-					{
-						if(authLogin().checkRecordViewPermission(ptr.get()) == AuthLogin::Permitted)
-						{
-							auto view = make_unique<AccountEntryView>(ptr);
-							view->load();
-							_accountsAdminPage->createMenuItemWrapped(move(view));
-						}
-						else
-							_accountsAdminPage->setDeniedPermissionWidget();
-					}
-				}
-
-				//income cycle view
-				id = getUsableIdFromPathPrefix(IncomeCycle::viewInternalPath(""), _accountsAdminPage, INCOMECYCLES_PATHC "/" INCOMECYCLE_PREFIX);
-				if(id != -1)
-				{
-					TRANSACTION(this);
-					Dbo::ptr<IncomeCycle> ptr = dboSession().load<IncomeCycle>(id, true);
-					if(ptr)
-					{
-						if(authLogin().checkRecordViewPermission(ptr.get()) == AuthLogin::Permitted)
-						{
-							auto view = make_unique<IncomeCycleView>(ptr);
-							view->load();
-							_accountsAdminPage->createMenuItemWrapped(move(view));
-						}
-						else
-							_accountsAdminPage->setDeniedPermissionWidget();
-					}
-				}
-
-				//expense cycle view
-				id = getUsableIdFromPathPrefix(ExpenseCycle::viewInternalPath(""), _accountsAdminPage, EXPENSECYCLES_PATHC "/" EXPENSECYCLE_PREFIX);
-				if(id != -1)
-				{
-					TRANSACTION(this);
-					Dbo::ptr<ExpenseCycle> ptr = dboSession().load<ExpenseCycle>(id, true);
-					if(ptr)
-					{
-						if(authLogin().checkRecordViewPermission(ptr.get()) == AuthLogin::Permitted)
-						{
-							auto view = make_unique<ExpenseCycleView>(ptr);
-							view->load();
-							_accountsAdminPage->createMenuItemWrapped(move(view));
-						}
-						else
-							_accountsAdminPage->setDeniedPermissionWidget();
-					}
-				}
-
-				//attendance entry view
-				id = getUsableIdFromPathPrefix(AttendanceEntry::viewInternalPath(""), _attendanceAdminPage, ATTENDANCEENTRY_PREFIX);
-				if(id != -1)
-				{
-					TRANSACTION(this);
-					Dbo::ptr<AttendanceEntry> ptr = dboSession().load<AttendanceEntry>(id, true);
-					if(ptr)
-					{
-						if(authLogin().checkRecordViewPermission(ptr.get()) == AuthLogin::Permitted)
-						{
-							auto view = make_unique<AttendanceEntryView>(ptr);
-							view->load();
-							_attendanceAdminPage->createMenuItemWrapped(move(view));
-						}
-						else
-							_attendanceAdminPage->setDeniedPermissionWidget();
-					}
-				}
-
-				//attendance device view
-				id = getUsableIdFromPathPrefix(AttendanceDevice::viewInternalPath(""), _attendanceAdminPage, ATTENDANCEDEVICES_PATHC "/" ATTENDANCEDEVICE_PREFIX);
-				if(id != -1)
-				{
-					TRANSACTION(this);
-					Dbo::ptr<AttendanceDevice> ptr = dboSession().load<AttendanceDevice>(id, true);
-					if(ptr)
-					{
-						if(authLogin().checkRecordViewPermission(ptr.get()) == AuthLogin::Permitted)
-						{
-							auto view = make_unique<AttendanceDeviceView>(ptr);
-							view->load();
-							_attendanceAdminPage->createMenuItemWrapped(move(view));
-						}
-						else
-							_attendanceAdminPage->setDeniedPermissionWidget();
-					}
-				}
-
-				//user view
-				id = getUsableIdFromPathPrefix(User::viewInternalPath(""), _usersAdminPage, USER_PREFIX);
-				if(id != -1)
-				{
-					TRANSACTION(this);
-					Dbo::ptr<AuthInfo> ptr = dboSession().load<AuthInfo>(id, true);
-					if(ptr)
-					{
-						if(authLogin().checkRecordViewPermission(ptr.get()) == AuthLogin::Permitted && authLogin().hasPermission(Permissions::ViewUser))
-						{
-							auto view = make_unique<UserView>(ptr);
-							view->load();
-							_usersAdminPage->createMenuItemWrapped(move(view));
-						}
-						else
-							_usersAdminPage->setDeniedPermissionWidget();
-					}
-				}
-
-				//region view
-				id = getUsableIdFromPathPrefix(Region::viewInternalPath(""), _usersAdminPage, REGIONS_PATHC "/" REGION_PREFIX);
-				if(id != -1)
-				{
-					TRANSACTION(this);
-					Dbo::ptr<Region> ptr = dboSession().load<Region>(id, true);
-					if(ptr)
-					{
-						if(authLogin().checkRecordViewPermission(ptr.get()) == AuthLogin::Permitted && authLogin().hasPermission(Permissions::ViewRegion))
-						{
-							auto view = make_unique<RegionView>(ptr);
-							view->load();
-							_usersAdminPage->createMenuItemWrapped(move(view));
-						}
-						else
-							_usersAdminPage->setDeniedPermissionWidget();
-					}
-				}
+				auto view = make_unique<EntityView>(dboSession().loadLazy<Entity>(id));
+				_entitiesAdminPage->createMenuItemWrapped(move(view));
+				return;
 			}
-			catch(const Dbo::ObjectNotFoundException &) { }
-			catch(const Dbo::Exception &e)
+
+			//employee assignment view
+			id = getUsableIdFromPathPrefix(EmployeeAssignment::viewInternalPath(""), _entitiesAdminPage, EMPLOYEES_PATHC "/" EMPLOYEEASSIGNMENTS_PREFIX);
+			if(id != -1)
 			{
-				Wt::log("error") << "WApplication::handleInternalPathChanged(): Dbo error(" << e.code() << "): " << e.what();
-				showDbBackendError(e.code());
+				auto view = make_unique<EmployeeAssignmentView>(dboSession().loadLazy<EmployeeAssignment>(id));
+				_entitiesAdminPage->createMenuItemWrapped(move(view));
+				return;
+			}
+
+			//client assignment view
+			id = getUsableIdFromPathPrefix(ClientAssignment::viewInternalPath(""), _entitiesAdminPage, CLIENTS_PATHC "/" CLIENTASSIGNMENTS_PREFIX);
+			if(id != -1)
+			{
+				auto view = make_unique<ClientAssignmentView>(dboSession().loadLazy<ClientAssignment>(id));
+				_entitiesAdminPage->createMenuItemWrapped(move(view));
+				return;
+			}
+
+			//account view
+			id = getUsableIdFromPathPrefix(Account::viewInternalPath(""), _accountsAdminPage, ACCOUNT_PREFIX);
+			if(id != -1)
+			{
+				auto view = make_unique<AccountView>(dboSession().loadLazy<Account>(id));
+				_accountsAdminPage->createMenuItemWrapped(move(view));
+				return;
+			}
+
+			//account entry view
+			id = getUsableIdFromPathPrefix(AccountEntry::viewInternalPath(""), _accountsAdminPage, ACCOUNTENTRY_PREFIX);
+			if(id != -1)
+			{
+				auto view = make_unique<AccountEntryView>(dboSession().loadLazy<AccountEntry>(id));
+				_accountsAdminPage->createMenuItemWrapped(move(view));
+				return;
+			}
+
+			//income cycle view
+			id = getUsableIdFromPathPrefix(IncomeCycle::viewInternalPath(""), _accountsAdminPage, INCOMECYCLES_PATHC "/" INCOMECYCLE_PREFIX);
+			if(id != -1)
+			{
+				auto view = make_unique<IncomeCycleView>(dboSession().loadLazy<IncomeCycle>(id));
+				_accountsAdminPage->createMenuItemWrapped(move(view));
+				return;
+			}
+
+			//expense cycle view
+			id = getUsableIdFromPathPrefix(ExpenseCycle::viewInternalPath(""), _accountsAdminPage, EXPENSECYCLES_PATHC "/" EXPENSECYCLE_PREFIX);
+			if(id != -1)
+			{
+				auto view = make_unique<ExpenseCycleView>(dboSession().loadLazy<ExpenseCycle>(id));
+				_accountsAdminPage->createMenuItemWrapped(move(view));
+				return;
+			}
+
+			//attendance entry view
+			id = getUsableIdFromPathPrefix(AttendanceEntry::viewInternalPath(""), _attendanceAdminPage, ATTENDANCEENTRY_PREFIX);
+			if(id != -1)
+			{
+				auto view = make_unique<AttendanceEntryView>(dboSession().loadLazy<AttendanceEntry>(id));
+				_attendanceAdminPage->createMenuItemWrapped(move(view));
+				return;
+			}
+
+			//attendance device view
+			id = getUsableIdFromPathPrefix(AttendanceDevice::viewInternalPath(""), _attendanceAdminPage, ATTENDANCEDEVICES_PATHC "/" ATTENDANCEDEVICE_PREFIX);
+			if(id != -1)
+			{
+				auto view = make_unique<AttendanceDeviceView>(dboSession().loadLazy<AttendanceDevice>(id));
+				_attendanceAdminPage->createMenuItemWrapped(move(view));
+				return;
+			}
+
+			//user view
+			id = getUsableIdFromPathPrefix(User::viewInternalPath(""), _usersAdminPage, USER_PREFIX);
+			if(id != -1)
+			{
+				auto view = make_unique<UserView>(dboSession().loadLazy<AuthInfo>(id));
+				_usersAdminPage->createMenuItemWrapped(move(view));
+				return;
+			}
+
+			//region view
+			id = getUsableIdFromPathPrefix(Region::viewInternalPath(""), _usersAdminPage, REGIONS_PATHC "/" REGION_PREFIX);
+			if(id != -1)
+			{
+				auto view = make_unique<RegionView>(dboSession().loadLazy<Region>(id));
+				_usersAdminPage->createMenuItemWrapped(move(view));
+				return;
 			}
 		}
 	}
@@ -640,7 +521,7 @@ namespace ERP
 			return;
 
 		_cityQueryModel = make_shared<CityQueryModel>();
-		_cityQueryModel->setBatchSize(10000);
+		_cityQueryModel->setBatchSize(100000);
 		_cityQueryModel->setQuery(dboSession().find<City>());
 		_cityQueryModel->addColumn("name");
 		_cityQueryModel->addColumn("id");

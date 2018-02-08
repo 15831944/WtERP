@@ -22,11 +22,11 @@ namespace ERP
 		typedef std::map<long long, PermissionItem> _PermissionItemMap;
 
 	public:
-		PermissionsDatabase(Dbo::Session &session);
+		PermissionsDatabase(DboSession &session);
 		void reload() { fetchAll(); }
 
 		shared_ptr<const PermissionDdo> getPermissionPtr(long long permissionId) const;
-		PermissionMap getUserPermissions(Dbo::ptr<User> userPtr, Wt::Auth::LoginState loginState, Dbo::Session *altSession = nullptr);
+		PermissionMap getUserPermissions(Dbo::ptr<User> userPtr, Wt::Auth::LoginState loginState, DboSession *altSession = nullptr);
 
 	protected:
 		void fetchAll();
@@ -38,7 +38,7 @@ namespace ERP
 		PermissionMap _logggedInPermissions;
 
 		milliseconds _loadDuration;
-		Dbo::Session &dboSession;
+		DboSession &dboSession;
 
 	private:
 		mutable boost::shared_mutex _mutex;

@@ -3,6 +3,7 @@
 
 #include "Common.h"
 #include "Utilities/QueryProxyMVC.h"
+#include "Utilities/ReloadableWidget.h"
 #include "Application/WApplication.h"
 
 #include <Wt/WTemplateFormView.h>
@@ -29,15 +30,16 @@ namespace ERP
 	};
 
 	//VIEWS
-	class RecordFormView : public Wt::WTemplateFormView, public SubmittableRecordWidget
+	class RecordFormView : public ReloadOnVisibleWidget<Wt::WTemplateFormView>, public SubmittableRecordWidget
 	{
 	public:
 		typedef const char *ModelKey;
 
 		RecordFormView() = default;
-		RecordFormView(const Wt::WString &text) : Wt::WTemplateFormView(text) { }
+		RecordFormView(const Wt::WString &text) : ReloadOnVisibleWidget<Wt::WTemplateFormView>(text) { }
 
 		virtual void load() override;
+		virtual void reload() override;
 		virtual void render(Wt::WFlags<Wt::RenderFlag> flags) override;
 		virtual bool updateViewValue(Wt::WFormModel *model, Wt::WFormModel::Field field, Wt::WWidget *edit) override;
 		virtual bool updateModelValue(Wt::WFormModel *model, Wt::WFormModel::Field field, Wt::WWidget *edit) override;
@@ -48,18 +50,24 @@ namespace ERP
 		bool validateAll();
 		void resetValidationAll();
 
-		virtual Wt::WString recordName() const { return tr("Unknown"); }
+		enum LoadState { NotLoadedState, ValidState, ErrorState, NotFoundState };
+		LoadState loadState() const { return _loadState; }
+		bool isValidLoadState() const { return _loadState == ValidState; }
 		bool isWriteMode() const;
+
+		virtual Wt::WString recordName() const { return tr("Unknown"); }
 
 		AbstractRecordFormModel *model() { return _firstModel; }
 		Wt::WPushButton *submitBtn() { return _submitBtn; }
 		Wt::WPushButton *modifyBtn() { return _editBtn; }
+		Wt::WPushButton *reloadBtn() { return _reloadBtn; }
 
 	protected:
 		virtual void initView() { }
 		virtual void afterSubmitHandler() { }
 		virtual void submit();
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Wt::WFormModel::Field field) override;
+		void updateModelsFromDb();
 
 		typedef pair<ModelKey, unique_ptr<AbstractRecordFormModel>> ModelKeyPair;
 		typedef std::vector<ModelKeyPair> FormModelVector;
@@ -84,15 +92,17 @@ namespace ERP
 		void handleSubmitBtn();
 		void handleEditBtn();
 
-		enum ViewFlags { AllTransient, NoViewPermission, NoModifyPermission, NoCreatePermission, AllReadOnly, FlagsCount };
-		std::bitset<FlagsCount> _viewFlags;
+		enum ViewFlags { AllTransient, NoViewPermission, NoModifyPermission, NoCreatePermission, AllReadOnly, ViewFlagsCount };
+		std::bitset<ViewFlagsCount> _viewFlags;
+		LoadState _loadState = NotLoadedState;
 
 		Wt::WPushButton *_submitBtn = nullptr;
 		Wt::WPushButton *_editBtn = nullptr;
+		Wt::WPushButton *_reloadBtn = nullptr;
 
 		FormModelVector _modelVector;
 		AbstractRecordFormModel *_firstModel = nullptr;
-		bool _writeModeEnabled = false;
+		bool _editModeEnabled = false;
 	};
 
 	class RecordViewsContainer : public Wt::WContainerWidget
@@ -126,8 +136,10 @@ namespace ERP
 	class AbstractRecordFormModel : public Wt::WFormModel
 	{
 	public:
+		virtual void updateFromDb() = 0;
 		virtual bool saveChanges() { return false; }
 		virtual bool isRecordPersisted() const { return false; }
+		virtual bool isProxyModel() const { return false; }
 		bool validateUpdateField(Wt::WFormModel::Field field);
 		RecordFormView *formView() const { return _view; }
 
@@ -145,6 +157,8 @@ namespace ERP
 
 	private:
 		friend class RecordFormView;
+		template<class DboType>
+		friend class MultipleRecordModel;
 	};
 
 	template<class DboType>
@@ -187,6 +201,7 @@ namespace ERP
 		virtual void updateContainer(RecordViewsContainer *container) = 0;
 		virtual void updateModelValue() = 0;
 		virtual void addRecordPtr() = 0;
+		virtual bool isProxyModel() const override { return true; }
 
 	protected:
 		AbstractMultipleRecordModel(RecordFormView *view) : AbstractRecordFormModel(view) { }
@@ -204,14 +219,16 @@ namespace ERP
 
 		static const Field field;
 
+		virtual void updateFromDb() override;
 		virtual void addRecordPtr() override { addRecordPtr(nullptr); }
 		virtual void addRecordPtr(Dbo::ptr<RecordDbo> ptr);
 		virtual void updateContainer(RecordViewsContainer *container) override;
 		virtual void updateModelValue() override;
 		virtual bool saveChanges() override;
+		virtual bool validate() override;
+
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Field f) override { return f == field ? createContainer() : nullptr; }
 		unique_ptr<RecordViewsContainer> createContainer() { return make_unique<RecordViewsContainer>(this); }
-		virtual bool validate() override;
 
 		const PtrVector &ptrVector() const { return Wt::any_cast<const PtrVector&>(value(field)); }
 
@@ -219,6 +236,8 @@ namespace ERP
 		MultipleRecordModel(RecordFormView *view, PtrCollection collection = PtrCollection());
 		tuple<unique_ptr<RecordFormView>, ModelType*> createRecordView() { return createRecordView(nullptr); }
 		virtual tuple<unique_ptr<RecordFormView>, ModelType*> createRecordView(Dbo::ptr<RecordDbo> recordPtr) = 0;
+
+		virtual void persistedHandler() override;
 
 		ModelVector _modelVector;
 	};
@@ -305,6 +324,26 @@ namespace ERP
 		t.commit();
 		updateModelValue();
 		return !nothingSaved;
+	}
+
+	template<class DboType>
+	void MultipleRecordModel<DboType>::persistedHandler()
+	{
+		for(const auto &model : _modelVector)
+		{
+			if(model->isRecordPersisted())
+				model->persistedHandler();
+		}
+	}
+
+	template<class DboType>
+	void MultipleRecordModel<DboType>::updateFromDb()
+	{
+		for(const auto &model : _modelVector)
+		{
+			if(model->isRecordPersisted())
+				model->updateFromDb();
+		}
 	}
 }
 

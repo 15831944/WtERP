@@ -3,11 +3,9 @@
 #include "Widgets/FindRecordEdit.h"
 
 #include <Wt/WTextArea.h>
-#include <Wt/WPushButton.h>
 #include <Wt/WDateEdit.h>
 #include <Wt/WTableView.h>
 #include <Wt/WLengthValidator.h>
-#include <Wt/WAnchor.h>
 #include <Wt/WSplitButton.h>
 
 namespace ERP
@@ -16,15 +14,16 @@ namespace ERP
 	const Wt::WFormModel::Field PositionFormModel::titleField = "title";
 
 	PositionFormModel::PositionFormModel(PositionView *view, Dbo::ptr<EmployeePosition> positionPtr)
-		: RecordFormModel(view, positionPtr), _view(view)
+		: RecordFormModel(view, move(positionPtr)), _view(view)
 	{
 		addField(titleField);
+	}
 
-		if(_recordPtr)
-		{
-			TRANSACTION(APP);
-			setValue(titleField, Wt::WString::fromUTF8(_recordPtr->title));
-		}
+	void PositionFormModel::updateFromDb()
+	{
+		TRANSACTION(APP);
+		_recordPtr.reread();
+		setValue(titleField, Wt::WString::fromUTF8(_recordPtr->title));
 	}
 
 	unique_ptr<Wt::WWidget> PositionFormModel::createFormWidget(Field field)
@@ -61,17 +60,10 @@ namespace ERP
 		return true;
 	}
 
-	PositionView::PositionView()
-		: RecordFormView(tr("ERP.Admin.PositionView"))
-	{ }
-
 	PositionView::PositionView(Dbo::ptr<EmployeePosition> positionPtr)
-		: RecordFormView(tr("ERP.Admin.PositionView")), _tempPtr(positionPtr)
-	{ }
-
-	void PositionView::initView()
+		: RecordFormView(tr("ERP.Admin.PositionView"))
 	{
-		_model = newFormModel<PositionFormModel>("position", this, _tempPtr);
+		_model = newFormModel<PositionFormModel>("position", this, move(positionPtr));
 	}
 
 	//POSITION PROXY MODEL
@@ -102,15 +94,16 @@ namespace ERP
 	const Wt::WFormModel::Field ServiceFormModel::titleField = "title";
 
 	ServiceFormModel::ServiceFormModel(ServiceView *view, Dbo::ptr<ClientService> servicePtr)
-		: RecordFormModel(view, servicePtr), _view(view)
+		: RecordFormModel(view, move(servicePtr)), _view(view)
 	{
 		addField(titleField);
+	}
 
-		if(_recordPtr)
-		{
-			TRANSACTION(APP);
-			setValue(titleField, Wt::WString::fromUTF8(_recordPtr->title));
-		}
+	void ServiceFormModel::updateFromDb()
+	{
+		TRANSACTION(APP);
+		_recordPtr.reread();
+		setValue(titleField, Wt::WString::fromUTF8(_recordPtr->title));
 	}
 
 	unique_ptr<Wt::WWidget> ServiceFormModel::createFormWidget(Field field)
@@ -147,17 +140,10 @@ namespace ERP
 		return true;
 	}
 
-	ServiceView::ServiceView()
-		: RecordFormView(tr("ERP.Admin.ServiceView"))
-	{ }
-
 	ServiceView::ServiceView(Dbo::ptr<ClientService> servicePtr)
-		: RecordFormView(tr("ERP.Admin.ServiceView")), _tempPtr(servicePtr)
-	{ }
-
-	void ServiceView::initView()
+		: RecordFormView(tr("ERP.Admin.ServiceView"))
 	{
-		_model = newFormModel<ServiceFormModel>("service", this, _tempPtr);
+		_model = newFormModel<ServiceFormModel>("service", this, move(servicePtr));
 	}
 
 	//SERVICE PROXY MODEL
@@ -193,7 +179,7 @@ namespace ERP
 	const Wt::WFormModel::Field EmployeeAssignmentFormModel::positionField = "position";
 
 	EmployeeAssignmentFormModel::EmployeeAssignmentFormModel(EmployeeAssignmentView *view, Dbo::ptr<EmployeeAssignment> employeeAssignmentPtr)
-		: RecordFormModel(view, employeeAssignmentPtr), _view(view)
+		: RecordFormModel(view, move(employeeAssignmentPtr)), _view(view)
 	{
 		addField(descriptionField);
 		addField(startDateField);
@@ -204,18 +190,41 @@ namespace ERP
 		addField(positionField);
 
 		setVisible(cycleField, false);
+	}
 
-		if(_recordPtr)
+	void EmployeeAssignmentFormModel::updateFromDb()
+	{
+		TRANSACTION(APP);
+		_recordPtr.reread();
+		setValue(descriptionField, Wt::WString::fromUTF8(_recordPtr->description));
+		setValue(startDateField, _recordPtr->startDate);
+		setValue(endDateField, _recordPtr->endDate);
+		setValue(entityField, _recordPtr->entityPtr);
+		setValue(locationField, _recordPtr->locationPtr);
+		setValue(cycleField, _recordPtr->expenseCyclePtr);
+		setValue(positionField, _recordPtr->positionPtr);
+
+		if(_recordPtr->expenseCyclePtr)
 		{
-			TRANSACTION(APP);
-			setValue(descriptionField, Wt::WString::fromUTF8(_recordPtr->description));
-			setValue(startDateField, _recordPtr->startDate);
-			setValue(endDateField, _recordPtr->endDate);
-			setValue(entityField, _recordPtr->entityPtr);
-			setValue(locationField, _recordPtr->locationPtr);
-			setValue(cycleField, _recordPtr->expenseCyclePtr);
-			setValue(positionField, _recordPtr->positionPtr);
+			Wt::WString text = tr("AssociatedEntryCycleSummary").arg(_recordPtr->expenseCyclePtr->entityPtr->name)
+				.arg(rsEveryNIntervals(_recordPtr->expenseCyclePtr->amount(), _recordPtr->expenseCyclePtr->interval, _recordPtr->expenseCyclePtr->nIntervals));
+			auto *a = _view->resolve<Wt::WAnchor*>("expenseCycle");
+			a->setText(text);
+			a->setLink(Wt::WLink(Wt::LinkType::InternalPath, ExpenseCycle::viewInternalPath(_recordPtr->expenseCyclePtr.id())));
 		}
+		_view->setCondition("show-expenseCycle", (bool)_recordPtr->expenseCyclePtr);
+		_view->resolveWidget("setExpenseCycle")->setHidden((bool)_recordPtr->expenseCyclePtr);
+
+		if(_recordPtr->clientAssignmentPtr)
+		{
+			Wt::WString text = tr("AssociatedClientAssignmentSummary").arg(_recordPtr->clientAssignmentPtr->entityPtr->name)
+					.arg(_recordPtr->clientAssignmentPtr->servicePtr->title);
+			auto *a = _view->resolve<Wt::WAnchor*>("clientAssignment");
+			a->setText(text);
+			a->setLink(Wt::WLink(Wt::LinkType::InternalPath, ClientAssignment::viewInternalPath(_recordPtr->clientAssignmentPtr.id())));
+		}
+		_view->setCondition("show-clientAssignment", (bool)_recordPtr->clientAssignmentPtr);
+		_view->resolveWidget("setClientAssignment")->setHidden((bool)_recordPtr->clientAssignmentPtr);
 	}
 
 	unique_ptr<Wt::WWidget> EmployeeAssignmentFormModel::createFormWidget(Wt::WFormModel::Field field)
@@ -399,14 +408,9 @@ namespace ERP
 	}
 
 	EmployeeAssignmentView::EmployeeAssignmentView(Dbo::ptr<EmployeeAssignment> assignmentPtr)
-		: _tempPtr(assignmentPtr)
+		: RecordFormView(tr("ERP.Admin.EmployeeAssignmentView"))
 	{
-		setTemplateText(tr("ERP.Admin.EmployeeAssignmentView"));
-	}
-
-	void EmployeeAssignmentView::initView()
-	{
-		_model = newFormModel<EmployeeAssignmentFormModel>("assignment", this, _tempPtr);
+		_model = newFormModel<EmployeeAssignmentFormModel>("assignment", this, move(assignmentPtr));
 	}
 
 	void EmployeeAssignmentFormModel::persistedHandler()
@@ -416,64 +420,13 @@ namespace ERP
 		_view->bindNew<Wt::WAnchor>("expenseCycle");
 		_view->bindNew<Wt::WAnchor>("clientAssignment");
 
-		Wt::WPushButton *setExpenseCycle = _view->bindNew<Wt::WPushButton>("setExpenseCycle", tr("AssociateWithRecurringExpense"));
+		auto *setExpenseCycle = _view->bindNew<Wt::WPushButton>("setExpenseCycle", tr("AssociateWithRecurringExpense"));
 		setExpenseCycle->clicked().connect(this, &EmployeeAssignmentFormModel::showExpenseCycleDialog);
 
-		Wt::WPushButton *setClientAssignment = _view->bindNew<Wt::WPushButton>("setClientAssignment", tr("AssociateWithClientAssignment"));
+		auto *setClientAssignment = _view->bindNew<Wt::WPushButton>("setClientAssignment", tr("AssociateWithClientAssignment"));
 		setClientAssignment->clicked().connect(this, &EmployeeAssignmentFormModel::showClientAssignmentDialog);
 
 		_view->reload();
-	}
-
-	void EmployeeAssignmentView::reload()
-	{
-		TRANSACTION(APP);
-		bool isPersisted = _model->isRecordPersisted();
-		if(isPersisted)
-		{
-			Dbo::ptr<EmployeeAssignment> assignmentPtr = _model->recordPtr();
-			assignmentPtr.reread();
-
-			try
-			{
-				if(assignmentPtr->expenseCyclePtr)
-				{
-					Wt::WString text = tr("AssociatedEntryCycleSummary").arg(assignmentPtr->expenseCyclePtr->entityPtr->name)
-						.arg(rsEveryNIntervals(assignmentPtr->expenseCyclePtr->amount(), assignmentPtr->expenseCyclePtr->interval, assignmentPtr->expenseCyclePtr->nIntervals));
-					Wt::WAnchor *a = resolve<Wt::WAnchor*>("expenseCycle");
-					a->setText(text);
-					a->setLink(Wt::WLink(Wt::LinkType::InternalPath, ExpenseCycle::viewInternalPath(assignmentPtr->expenseCyclePtr.id())));
-				}
-				setCondition("show-expenseCycle", (bool)assignmentPtr->expenseCyclePtr);
-				resolveWidget("setExpenseCycle")->setHidden((bool)assignmentPtr->expenseCyclePtr);
-			}
-			catch(const Dbo::Exception &e)
-			{
-				Wt::log("error") << "EmployeeAssignmentView::reload(): Dbo error(" << e.code() << ") reloading expense cycle summary: " << e.what();
-				setCondition("show-expenseCycle", false);
-				resolveWidget("setExpenseCycle")->setHidden(true);
-			}
-
-			try
-			{
-				if(assignmentPtr->clientAssignmentPtr)
-				{
-					Wt::WString text = tr("AssociatedClientAssignmentSummary").arg(assignmentPtr->clientAssignmentPtr->entityPtr->name)
-						.arg(assignmentPtr->clientAssignmentPtr->servicePtr->title);
-					Wt::WAnchor *a = resolve<Wt::WAnchor*>("clientAssignment");
-					a->setText(text);
-					a->setLink(Wt::WLink(Wt::LinkType::InternalPath, ClientAssignment::viewInternalPath(assignmentPtr->clientAssignmentPtr.id())));
-				}
-				setCondition("show-clientAssignment", (bool)assignmentPtr->clientAssignmentPtr);
-				resolveWidget("setClientAssignment")->setHidden((bool)assignmentPtr->clientAssignmentPtr);
-			}
-			catch(const Dbo::Exception &e)
-			{
-				Wt::log("error") << "EmployeeAssignmentView::reload(): Dbo error(" << e.code() << ") reloading client assignment summary: " << e.what();
-				setCondition("show-clientAssignment", false);
-				resolveWidget("setClientAssignment")->setHidden(true);
-			}
-		}
 	}
 
 	void EmployeeAssignmentView::handlePositionChanged()
@@ -496,7 +449,7 @@ namespace ERP
 		_dialog->setTransient(true);
 		_dialog->rejectWhenEscapePressed(true);
 		_dialog->setWidth(Wt::WLength(500));
-		PositionView *positionView = _dialog->contents()->addNew<PositionView>();
+		auto *positionView = _dialog->contents()->addNew<PositionView>();
 
 		_dialog->finished().connect(this, std::bind([this](Wt::DialogCode code) {
 			if(code == Wt::DialogCode::Rejected)
@@ -603,7 +556,7 @@ namespace ERP
 		Wt::any viewIndexData = headerData(idx.column(), Wt::Orientation::Horizontal, Wt::ItemDataRole::ViewIndex);
 		if(viewIndexData.empty())
 			return Wt::WBatchEditProxyModel::data(idx, role);
-		int viewIndex = Wt::any_cast<int>(viewIndexData);
+		auto viewIndex = Wt::any_cast<int>(viewIndexData);
 
 		const EmployeeAssignmentList::ResultType &res = static_pointer_cast<Dbo::QueryModel<EmployeeAssignmentList::ResultType>>(sourceModel())->resultRow(idx.row());
 
@@ -702,7 +655,7 @@ namespace ERP
 	const Wt::WFormModel::Field ClientAssignmentFormModel::serviceField = "service";
 
 	ClientAssignmentFormModel::ClientAssignmentFormModel(ClientAssignmentView *view, Dbo::ptr<ClientAssignment> clientAssignmentPtr)
-		: RecordFormModel(view, clientAssignmentPtr), _view(view)
+		: RecordFormModel(view, move(clientAssignmentPtr)), _view(view)
 	{
 		addField(descriptionField);
 		addField(startDateField);
@@ -712,17 +665,29 @@ namespace ERP
 		addField(serviceField);
 
 		setVisible(cycleField, false);
+	}
 
-		if(_recordPtr)
+	void ClientAssignmentFormModel::updateFromDb()
+	{
+		TRANSACTION(APP);
+		_recordPtr.reread();
+		setValue(descriptionField, Wt::WString::fromUTF8(_recordPtr->description));
+		setValue(startDateField, _recordPtr->startDate);
+		setValue(endDateField, _recordPtr->endDate);
+		setValue(entityField, _recordPtr->entityPtr);
+		setValue(cycleField, _recordPtr->incomeCyclePtr);
+		setValue(serviceField, _recordPtr->servicePtr);
+
+		if(_recordPtr->incomeCyclePtr)
 		{
-			TRANSACTION(APP);
-			setValue(descriptionField, Wt::WString::fromUTF8(_recordPtr->description));
-			setValue(startDateField, _recordPtr->startDate);
-			setValue(endDateField, _recordPtr->endDate);
-			setValue(entityField, _recordPtr->entityPtr);
-			setValue(cycleField, _recordPtr->incomeCyclePtr);
-			setValue(serviceField, _recordPtr->servicePtr);
+			Wt::WString text = tr("AssociatedEntryCycleSummary").arg(_recordPtr->incomeCyclePtr->entityPtr->name)
+				.arg(rsEveryNIntervals(_recordPtr->incomeCyclePtr->amount(), _recordPtr->incomeCyclePtr->interval, _recordPtr->incomeCyclePtr->nIntervals));
+			auto *a = _view->resolve<Wt::WAnchor*>("incomeCycle");
+			a->setText(text);
+			a->setLink(Wt::WLink(Wt::LinkType::InternalPath, IncomeCycle::viewInternalPath(_recordPtr->incomeCyclePtr.id())));
 		}
+		_view->setCondition("show-incomeCycle", (bool)_recordPtr->incomeCyclePtr);
+		_view->setCondition("set-incomeCycle", !_recordPtr->incomeCyclePtr);
 	}
 
 	unique_ptr<Wt::WWidget> ClientAssignmentFormModel::createFormWidget(Wt::WFormModel::Field field)
@@ -855,47 +820,14 @@ namespace ERP
 	}
 
 	ClientAssignmentView::ClientAssignmentView(Dbo::ptr<ClientAssignment> assignmentPtr)
-		: _tempPtr(assignmentPtr)
+		: RecordFormView(tr("ERP.Admin.ClientAssignmentView"))
 	{
-		setTemplateText(tr("ERP.Admin.ClientAssignmentView"));
+		_model = newFormModel<ClientAssignmentFormModel>("assignment", this, move(assignmentPtr));
 	}
 
 	void ClientAssignmentView::initView()
 	{
-		_model = newFormModel<ClientAssignmentFormModel>("assignment", this, _tempPtr);
-
 		bindNew<Wt::WAnchor>("incomeCycle");
-	}
-
-	void ClientAssignmentView::reload()
-	{
-		TRANSACTION(APP);
-		bool isPersisted = _model->isRecordPersisted();
-		if(isPersisted)
-		{
-			Dbo::ptr<ClientAssignment> assignmentPtr = _model->recordPtr();
-			assignmentPtr.reread();
-
-			try
-			{
-				if(assignmentPtr->incomeCyclePtr)
-				{
-					Wt::WString text = tr("AssociatedEntryCycleSummary").arg(assignmentPtr->incomeCyclePtr->entityPtr->name)
-						.arg(rsEveryNIntervals(assignmentPtr->incomeCyclePtr->amount(), assignmentPtr->incomeCyclePtr->interval, assignmentPtr->incomeCyclePtr->nIntervals));
-					Wt::WAnchor *a = resolve<Wt::WAnchor*>("incomeCycle");
-					a->setText(text);
-					a->setLink(Wt::WLink(Wt::LinkType::InternalPath, IncomeCycle::viewInternalPath(assignmentPtr->incomeCyclePtr.id())));
-				}
-				setCondition("show-incomeCycle", (bool)assignmentPtr->incomeCyclePtr);
-				setCondition("set-incomeCycle", !assignmentPtr->incomeCyclePtr);
-			}
-			catch(const Dbo::Exception &e)
-			{
-				Wt::log("error") << "ClientAssignmentView::reload(): Dbo error(" << e.code() << ") reloading income cycle summary: " << e.what();
-				setCondition("show-incomeCycle", false);
-				setCondition("set-incomeCycle", false);
-			}
-		}
 	}
 
 	void ClientAssignmentView::handleServiceChanged()
@@ -918,7 +850,7 @@ namespace ERP
 		_dialog->rejectWhenEscapePressed(true);
 		_dialog->setClosable(true);
 		_dialog->setWidth(Wt::WLength(500));
-		ServiceView *serviceView  = _dialog->contents()->addNew<ServiceView>();
+		auto *serviceView  = _dialog->contents()->addNew<ServiceView>();
 
 		_dialog->finished().connect(this, std::bind([this](Wt::DialogCode code) {
 			if(code == Wt::DialogCode::Rejected)
@@ -965,7 +897,7 @@ namespace ERP
 
 		_view->bindNew<EmployeeAssignmentList>("employeeAssignments", recordPtr());
 
-		Wt::WPushButton *setIncomeCycle = _view->bindNew<Wt::WPushButton>("setIncomeCycle", tr("AssociateWithRecurringIncome"));
+		auto *setIncomeCycle = _view->bindNew<Wt::WPushButton>("setIncomeCycle", tr("AssociateWithRecurringIncome"));
 		setIncomeCycle->clicked().connect(this, &ClientAssignmentFormModel::showIncomeCycleDialog);
 
 		_view->reload();
@@ -1090,7 +1022,7 @@ namespace ERP
 		Wt::any viewIndexData = headerData(idx.column(), Wt::Orientation::Horizontal, Wt::ItemDataRole::ViewIndex);
 		if(viewIndexData.empty())
 			return Wt::WBatchEditProxyModel::data(idx, role);
-		int viewIndex = Wt::any_cast<int>(viewIndexData);
+		auto viewIndex = Wt::any_cast<int>(viewIndexData);
 
 		const ClientAssignmentList::ResultType &res = static_pointer_cast<Dbo::QueryModel<ClientAssignmentList::ResultType>>(sourceModel())->resultRow(idx.row());
 

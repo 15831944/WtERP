@@ -21,7 +21,7 @@ namespace ERP
 		typedef std::unordered_map< std::string, shared_ptr<Ddo::ConfigurationString> > StringMap;
 
 	public:
-		ConfigurationsDatabase(Wt::Dbo::Session &session);
+		ConfigurationsDatabase(DboSession &session);
 		void reload() { fetchAll(); }
 
 		shared_ptr<const Ddo::ConfigurationBool> getBoolPtr(const std::string &name) const;
@@ -40,7 +40,7 @@ namespace ERP
 		long long getLongInt(const std::string &name, long long defaultValue) const;
 		std::string getStr(const std::string &name, std::string defaultValue = "") const;
 
-		shared_ptr<const Ddo::ConfigurationLongInt> addLongInt(const std::string &name, long long value, Wt::Dbo::Session *alternateSession = nullptr);
+		shared_ptr<const Ddo::ConfigurationLongInt> addLongInt(const std::string &name, long long value, DboSession *alternateSession = nullptr);
 
 		long long getLoadDurationinMS() const;
 		std::size_t configurationsCount() const;
@@ -58,7 +58,7 @@ namespace ERP
 
 		milliseconds _loadDuration;
 		std::size_t _count = 0;
-		Wt::Dbo::Session &dboSession;
+		DboSession &dboSession;
 
 	private:
 		mutable boost::shared_mutex _mutex;

@@ -456,16 +456,17 @@ namespace ERP
 	{
 		addField(typeField);
 		addField(nameField);
+	}
 
-		if(_recordPtr)
-		{
-			TRANSACTION(APP);
-			setValue(typeField, (int)_recordPtr->type);
-			setValue(nameField, Wt::WString::fromUTF8(_recordPtr->name));
+	void AccountFormModel::updateFromDb()
+	{
+		TRANSACTION(APP);
+		_recordPtr.reread();
+		setValue(typeField, (int)_recordPtr->type);
+		setValue(nameField, Wt::WString::fromUTF8(_recordPtr->name));
 
-			if(_recordPtr->type != Account::Asset && _recordPtr->type != Account::Liability)
-				setVisible(typeField, false);
-		}
+		if(_recordPtr->type != Account::Asset && _recordPtr->type != Account::Liability)
+			setVisible(typeField, false);
 	}
 
 	void AccountFormModel::persistedHandler()
@@ -542,12 +543,9 @@ namespace ERP
 	}
 
 	AccountView::AccountView(Dbo::ptr<Account> accountPtr)
-		: RecordFormView(tr("ERP.Admin.AccountView")), _tempPtr(move(accountPtr))
-	{ }
-
-	void AccountView::initView()
+		: RecordFormView(tr("ERP.Admin.AccountView"))
 	{
-		_model = newFormModel<AccountFormModel>("account", this, _tempPtr);
+		_model = newFormModel<AccountFormModel>("account", this, move(accountPtr));
 	}
 
 	Wt::WString AccountView::viewName() const
@@ -581,15 +579,6 @@ namespace ERP
 		addField(creditAccountField);
 		addField(amountField);
 		addField(entityField);
-
-		if(_recordPtr)
-		{
-			TRANSACTION(APP);
-			setValue(descriptionField, _recordPtr->description);
-			setValue(debitAccountField, _recordPtr->debitAccountPtr());
-			setValue(creditAccountField, _recordPtr->creditAccountPtr());
-			setValue(amountField, _recordPtr->amount());
-		}
 	}
 
 	AccountEntryFormModel::AccountEntryFormModel(AccountEntryView *view, Dbo::ptr<AccountEntry> accountEntryPtr)
@@ -597,9 +586,6 @@ namespace ERP
 	{
 		setReadOnly(entityField, true);
 		setVisible(entityField, false);
-
-		if(_recordPtr)
-			handleAccountChanged(false);
 	}
 
 	TransactionFormModel::TransactionFormModel(AccountEntryView *view, Dbo::ptr<AccountEntry> accountEntryPtr)
@@ -609,6 +595,22 @@ namespace ERP
 		setVisible(entityField, true);
 		setReadOnly(debitAccountField, true);
 		setReadOnly(creditAccountField, true);
+	}
+
+	void BaseAccountEntryFormModel::updateFromDb()
+	{
+		TRANSACTION(APP);
+		_recordPtr.reread();
+		setValue(descriptionField, _recordPtr->description);
+		setValue(debitAccountField, _recordPtr->debitAccountPtr());
+		setValue(creditAccountField, _recordPtr->creditAccountPtr());
+		setValue(amountField, _recordPtr->amount());
+	}
+
+	void AccountEntryFormModel::updateFromDb()
+	{
+		BaseAccountEntryFormModel::updateFromDb();
+		handleAccountChanged(false);
 	}
 
 	bool TransactionFormModel::saveChanges()
@@ -688,7 +690,7 @@ namespace ERP
 			if(field == entityField)
 			{
 				auto *entityFindEdit = dynamic_cast<FindEntityEdit*>(w.get());
-				entityFindEdit->valueChanged().connect(this, &TransactionFormModel::setAccountsFromEntity);
+				entityFindEdit->valueChanged().connect(this, &TransactionFormModel::handleEntityChanged);
 				setValidator(entityField, make_shared<FindEntityValidator>(entityFindEdit, true));
 			}
 		}
@@ -783,6 +785,19 @@ namespace ERP
 		_view->updateViewField(this, creditAccountField);
 	}
 
+	void TransactionFormModel::handleEntityChanged()
+	{
+		try
+		{
+			setAccountsFromEntity();
+		}
+		catch(const Dbo::Exception &e)
+		{
+			Wt::log("error") << "TransactionFormModel::handleEntityChanged(): Dbo error(" << e.code() << "): " << e.what();
+			APP->showDbBackendError(e.code());
+		}
+	}
+
 	bool BaseAccountEntryFormModel::saveChanges()
 	{
 		if(!valid())
@@ -807,12 +822,9 @@ namespace ERP
 	}
 
 	AccountEntryView::AccountEntryView(Dbo::ptr<AccountEntry> accountEntryPtr)
-		: RecordFormView(tr("ERP.Admin.AccountEntryView")), _tempPtr(move(accountEntryPtr))
-	{ }
-
-	void AccountEntryView::initView()
+		: RecordFormView(tr("ERP.Admin.AccountEntryView"))
 	{
-		_model = newFormModel<AccountEntryFormModel>("account", this, _tempPtr);
+		_model = newFormModel<AccountEntryFormModel>("account", this, move(accountEntryPtr));
 	}
 
 	Wt::WString AccountEntryView::viewName() const
@@ -837,12 +849,11 @@ namespace ERP
 		: AccountEntryView(nullptr)
 	{
 		setTemplateText(tr("ERP.Admin.TransactionView"));
+		_model = newFormModel<TransactionFormModel>("account", this);
 	}
 
 	void TransactionView::initView()
 	{
-		_model = newFormModel<TransactionFormModel>("account", this, _tempPtr);
-
 		setCondition("select-direction", true);
 		setCondition("direction-selected", false);
 

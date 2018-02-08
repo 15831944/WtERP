@@ -2,6 +2,7 @@
 #define ERP_DBOS_H
 
 #include "Common.h"
+#include "Application/DboSession.h"
 #include <Wt/Dbo/Dbo.h>
 #include <Wt/Auth/Dbo/AuthInfo.h>
 #include <Wt/WDate.h>
@@ -15,7 +16,7 @@
 namespace ERP
 {
 	//Utilities
-	void mapERPDbos(Dbo::Session &dboSession);
+	void mapERPDbos(DboSession &dboSession);
 
 	//User related
 	class User;

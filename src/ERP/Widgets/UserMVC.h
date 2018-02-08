@@ -81,6 +81,7 @@ namespace ERP
 		Permissions::GSPermissions permissionIndexToId(int idx) const { return idx < PermissionCBValues ? _permissionIdxToId[idx] : Permissions::RegionalUser; }
 
 		UserFormModel(UserView *view, Dbo::ptr<AuthInfo> autoInfoPtr = nullptr);
+		virtual void updateFromDb() override;
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 		virtual bool validateField(Field field);
@@ -104,7 +105,6 @@ namespace ERP
 	{
 	public:
 		UserView(Dbo::ptr<AuthInfo> authInfoPtr = nullptr);
-		virtual void initView() override;
 
 		Dbo::ptr<AuthInfo> authInfoPtr() const { return _model->authInfoPtr(); }
 		UserFormModel *model() const { return _model; }
@@ -115,7 +115,6 @@ namespace ERP
 
 	protected:
 		UserFormModel *_model;
-		Dbo::ptr<AuthInfo> _tempPtr;
 	};
 
 	//REGIONS
@@ -149,6 +148,7 @@ namespace ERP
 		static const Wt::WFormModel::Field nameField;
 
 		RegionFormModel(RegionView *view, Dbo::ptr<Region> regionPtr = nullptr);
+		virtual void updateFromDb() override;
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
@@ -164,7 +164,6 @@ namespace ERP
 	{
 	public:
 		RegionView(Dbo::ptr<Region> regionPtr = nullptr);
-		virtual void initView() override;
 
 		Dbo::ptr<Region> regionPtr() const { return _model->recordPtr(); }
 		RegionFormModel *model() const { return _model; }
@@ -175,7 +174,6 @@ namespace ERP
 
 	protected:
 		RegionFormModel *_model;
-		Dbo::ptr<Region> _tempPtr;
 	};
 
 }

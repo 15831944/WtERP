@@ -63,6 +63,7 @@ namespace ERP
 		static const Wt::WFormModel::Field nameField;
 
 		CountryFormModel(CountryView *view, Dbo::ptr<Country> countryPtr = nullptr);
+		virtual void updateFromDb() override;
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
@@ -73,9 +74,7 @@ namespace ERP
 	class CountryView : public RecordFormView
 	{
 	public:
-		CountryView(Dbo::ptr<Country> countryPtr);
-		CountryView();
-		virtual void initView() override;
+		CountryView(Dbo::ptr<Country> countryPtr = nullptr);
 
 		Dbo::ptr<Country> countryPtr() const { return _model->recordPtr(); }
 		CountryFormModel *model() const { return _model; }
@@ -84,14 +83,13 @@ namespace ERP
 
 	protected:
 		CountryFormModel *_model;
-		Dbo::ptr<Country> _tempPtr;
 	};
 
 	class CountryCodeValidator : public Wt::WLengthValidator
 	{
 	public:
-		CountryCodeValidator(bool mandatory = false, const Wt::WString &allowedName = "")
-			: Wt::WLengthValidator(0, 3), _allowedCode(allowedName)
+		CountryCodeValidator(bool mandatory = false, Wt::WString allowedCode = "")
+			: Wt::WLengthValidator(0, 3), _allowedCode(move(allowedCode))
 		{
 			setMandatory(mandatory);
 		}
@@ -109,6 +107,7 @@ namespace ERP
 		static const Wt::WFormModel::Field nameField;
 
 		CityFormModel(CityView *view, Dbo::ptr<City> cityPtr = nullptr);
+		virtual void updateFromDb() override;
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
@@ -119,10 +118,7 @@ namespace ERP
 	class CityView : public RecordFormView
 	{
 	public:
-		CityView();
-		CityView(Dbo::ptr<City> cityPtr);
-		virtual void initView() override;
-
+		CityView(Dbo::ptr<City> cityPtr = nullptr);
 		Dbo::ptr<City> cityPtr() const { return _model->recordPtr(); }
 		CityFormModel *model() const { return _model; }
 
@@ -130,7 +126,6 @@ namespace ERP
 
 	protected:
 		CityFormModel *_model = nullptr;
-		Dbo::ptr<City> _tempPtr;
 	};
 
 	class LocationFormModel : public RecordFormModel<Location>
@@ -142,6 +137,7 @@ namespace ERP
 		static const Field addressField;
 
 		LocationFormModel(LocationView *view, Dbo::ptr<Location> locationPtr = nullptr);
+		virtual void updateFromDb() override;
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
@@ -153,7 +149,6 @@ namespace ERP
 	{
 	public:
 		LocationView(Dbo::ptr<Location> locationPtr = nullptr);
-		virtual void initView() override;
 
 		void handleCountryChanged(bool resetCity);
 		void handleCityChanged();
@@ -169,6 +164,7 @@ namespace ERP
 		virtual Wt::WString viewName() const override { return "LocationView"; }
 
 	protected:
+		virtual void initView() override;
 		virtual void updateView(Wt::WFormModel *model) override;
 
 		QueryProxyModelCB<CountryProxyModel> *_countryCombo = nullptr;
@@ -176,7 +172,6 @@ namespace ERP
 		Wt::WDialog *_dialog = nullptr;
 		shared_ptr<CityProxyModel> _cityProxyModel;
 		LocationFormModel *_model;
-		Dbo::ptr<Location> _tempPtr;
 	};
 
 	//LocationList

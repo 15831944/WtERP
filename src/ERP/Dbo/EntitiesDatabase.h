@@ -9,12 +9,12 @@ namespace ERP
 	class EntitiesDatabase
 	{
 	public:
-		EntitiesDatabase(Dbo::Session &session) : dboSession(session) { }
+		EntitiesDatabase(DboSession &session) : dboSession(session) { }
 
 		Dbo::ptr<Entity> findOrCreateSelfEntity();
 
 	protected:
-		Dbo::Session &dboSession;
+		DboSession &dboSession;
 	};
 }
 

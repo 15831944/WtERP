@@ -3,7 +3,7 @@
 
 namespace ERP
 {
-	ConfigurationsDatabase::ConfigurationsDatabase(Wt::Dbo::Session &session)
+	ConfigurationsDatabase::ConfigurationsDatabase(DboSession &session)
 		: dboSession(session)
 	{
 		fetchAll();
@@ -25,7 +25,7 @@ namespace ERP
 		std::size_t count = 0;
 
 		//Fetch em all
-		Wt::Dbo::Transaction transaction(dboSession);
+		Dbo::Transaction transaction(dboSession);
 		ConfigurationCollection configurationCollection = dboSession.find<Configuration>();
 		ConfigurationBoolCollection boolCollection = dboSession.find<ConfigurationBool>();
 		ConfigurationDoubleCollection doubleCollection = dboSession.find<ConfigurationDouble>();
@@ -258,7 +258,7 @@ namespace ERP
 		return stringPtr->value;
 	}
 
-	shared_ptr<const Ddo::ConfigurationLongInt> ConfigurationsDatabase::addLongInt(const std::string &name, long long value, Wt::Dbo::Session *alternateSession)
+	shared_ptr<const Ddo::ConfigurationLongInt> ConfigurationsDatabase::addLongInt(const std::string &name, long long value, DboSession *alternateSession)
 	{
 		boost::lock_guard<boost::shared_mutex> lock(_mutex);
 
@@ -269,7 +269,7 @@ namespace ERP
 		if(!alternateSession)
 			alternateSession = &dboSession;
 
-		Wt::Dbo::Transaction t(*alternateSession);
+		Dbo::Transaction t(*alternateSession);
 
 		configPtr = dboSession.find<Configuration>().where("name = ? AND type = ?").bind(name).bind(Configuration::LongInt);
 		if(!configPtr)

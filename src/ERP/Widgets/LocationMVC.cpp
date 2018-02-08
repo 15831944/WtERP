@@ -1,12 +1,6 @@
 #include "Widgets/LocationMVC.h"
 #include "Widgets/EntityView.h"
 #include "Widgets/FindRecordEdit.h"
-#include "Application/WApplication.h"
-
-#include <Wt/WLineEdit.h>
-#include <Wt/WPushButton.h>
-#include <Wt/WComboBox.h>
-#include <Wt/WDialog.h>
 
 namespace ERP
 {
@@ -14,17 +8,18 @@ namespace ERP
 	const Wt::WFormModel::Field CountryFormModel::nameField = "name";
 
 	CountryFormModel::CountryFormModel(CountryView *view, Dbo::ptr<Country> countryPtr)
-		: RecordFormModel(view, countryPtr), _view(view)
+		: RecordFormModel(view, move(countryPtr)), _view(view)
 	{
 		addField(codeField);
 		addField(nameField);
+	}
 
-		if(_recordPtr)
-		{
-			TRANSACTION(APP);
-			setValue(codeField, Wt::WString::fromUTF8(_recordPtr->code));
-			setValue(nameField, Wt::WString::fromUTF8(_recordPtr->name));
-		}
+	void CountryFormModel::updateFromDb()
+	{
+		TRANSACTION(APP);
+		_recordPtr.reread();
+		setValue(codeField, Wt::WString::fromUTF8(_recordPtr->code));
+		setValue(nameField, Wt::WString::fromUTF8(_recordPtr->name));
 	}
 
 	unique_ptr<Wt::WWidget> CountryFormModel::createFormWidget(Field field)
@@ -81,16 +76,9 @@ namespace ERP
 	}
 
 	CountryView::CountryView(Dbo::ptr<Country> countryPtr)
-		: RecordFormView(tr("ERP.Admin.CountryView")), _tempPtr(countryPtr)
-	{ }
-
-	CountryView::CountryView()
 		: RecordFormView(tr("ERP.Admin.CountryView"))
-	{ }
-
-	void CountryView::initView()
 	{
-		_model = newFormModel<CountryFormModel>("country", this, _tempPtr);
+		_model = newFormModel<CountryFormModel>("country", this, move(countryPtr));
 	}
 
 	Wt::WValidator::Result CountryCodeValidator::validate(const Wt::WString &input) const
@@ -129,17 +117,18 @@ namespace ERP
 	const Wt::WFormModel::Field CityFormModel::nameField = "name";
 
 	CityFormModel::CityFormModel(CityView *view, Dbo::ptr<City> cityPtr)
-		: RecordFormModel(view, cityPtr), _view(view)
+		: RecordFormModel(view, move(cityPtr)), _view(view)
 	{
 		addField(countryField);
 		addField(nameField);
+	}
 
-		if(_recordPtr)
-		{
-			TRANSACTION(APP);
-			setValue(countryField, _recordPtr->countryPtr);
-			setValue(nameField, Wt::WString::fromUTF8(_recordPtr->name));
-		}
+	void CityFormModel::updateFromDb()
+	{
+		TRANSACTION(APP);
+		_recordPtr.reread();
+		setValue(countryField, _recordPtr->countryPtr);
+		setValue(nameField, Wt::WString::fromUTF8(_recordPtr->name));
 	}
 
 	unique_ptr<Wt::WWidget> CityFormModel::createFormWidget(Field field)
@@ -190,16 +179,9 @@ namespace ERP
 	}
 
 	CityView::CityView(Dbo::ptr<City> cityPtr)
-		: RecordFormView(tr("ERP.Admin.CityView")), _tempPtr(cityPtr)
-	{ }
-
-	CityView::CityView()
 		: RecordFormView(tr("ERP.Admin.CityView"))
-	{ }
-
-	void CityView::initView()
 	{
-		_model = newFormModel<CityFormModel>("city", this, _tempPtr);
+		_model = newFormModel<CityFormModel>("city", this, move(cityPtr));
 	}
 
 	CityFilterModel::CityFilterModel()
@@ -281,21 +263,22 @@ namespace ERP
 	const Wt::WFormModel::Field LocationFormModel::addressField = "address";
 
 	LocationFormModel::LocationFormModel(LocationView *view, Dbo::ptr<Location> locationPtr)
-		: RecordFormModel(view, locationPtr), _view(view)
+		: RecordFormModel(view, move(locationPtr)), _view(view)
 	{
 		addField(entityField);
 		addField(countryField);
 		addField(cityField);
 		addField(addressField);
+	}
 
-		if(_recordPtr)
-		{
-			TRANSACTION(APP);
-			setValue(entityField, _recordPtr->entityPtr);
-			setValue(countryField, _recordPtr->countryPtr);
-			setValue(cityField, _recordPtr->cityPtr);
-			setValue(addressField, Wt::WString::fromUTF8(_recordPtr->address));
-		}
+	void LocationFormModel::updateFromDb()
+	{
+		TRANSACTION(APP);
+		_recordPtr.reread();
+		setValue(entityField, _recordPtr->entityPtr);
+		setValue(countryField, _recordPtr->countryPtr);
+		setValue(cityField, _recordPtr->cityPtr);
+		setValue(addressField, Wt::WString::fromUTF8(_recordPtr->address));
 	}
 
 	unique_ptr<Wt::WWidget> LocationFormModel::createFormWidget(Field field)
@@ -346,16 +329,16 @@ namespace ERP
 
 	//LocationView
 	LocationView::LocationView(Dbo::ptr<Location> locationPtr)
-		: RecordFormView(tr("ERP.Admin.LocationView")), _tempPtr(locationPtr)
+		: RecordFormView(tr("ERP.Admin.LocationView"))
 	{
-		bindEmpty("index");
+		_model = newFormModel<LocationFormModel>("location", this, move(locationPtr));
 	}
 
 	void LocationView::initView()
 	{
-		_model = newFormModel<LocationFormModel>("location", this, _tempPtr);
+		bindEmpty("index");
 
-		WApplication *app = WApplication::instance();
+		WApplication *app = APP;
 		app->initCountryQueryModel();
 		app->initCityQueryModel();
 
@@ -417,7 +400,7 @@ namespace ERP
 		_dialog->setTransient(true);
 		_dialog->rejectWhenEscapePressed(true);
 		_dialog->setWidth(Wt::WLength(500));
-		CountryView *countryView = _dialog->contents()->addNew<CountryView>();
+		auto *countryView = _dialog->contents()->addNew<CountryView>();
 
 		_dialog->finished().connect(this, std::bind([this](Wt::DialogCode code) {
 			if(code == Wt::DialogCode::Rejected)
@@ -451,7 +434,7 @@ namespace ERP
 		_dialog->setTransient(true);
 		_dialog->rejectWhenEscapePressed(true);
 		_dialog->setWidth(Wt::WLength(500));
-		CityView *cityView = _dialog->contents()->addNew<CityView>();
+		auto *cityView = _dialog->contents()->addNew<CityView>();
 
 		_dialog->finished().connect(this, std::bind([this](Wt::DialogCode code) {
 			if(code == Wt::DialogCode::Rejected)

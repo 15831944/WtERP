@@ -4,17 +4,11 @@
 #include "Widgets/EntityList.h"
 #include "Widgets/AccountMVC.h"
 #include "Widgets/HRMVC.h"
-#include "Widgets/FindRecordEdit.h"
 
-#include <Wt/WLineEdit.h>
-#include <Wt/WPushButton.h>
-#include <Wt/WDialog.h>
-#include <Wt/WComboBox.h>
 #include <Wt/WDateEdit.h>
 #include <Wt/WIntValidator.h>
 #include <Wt/WDoubleValidator.h>
 #include <Wt/WTableView.h>
-#include <Wt/WLengthValidator.h>
 
 namespace ERP
 {
@@ -147,9 +141,9 @@ namespace ERP
 			return;
 
 		Wt::WDate startDate = Wt::any_cast<Wt::WDate>(startDateVal);
-		CycleInterval interval = (CycleInterval)Wt::any_cast<int>(model->value(EntryCycleFormModel::intervalField));
+		auto interval = (CycleInterval)Wt::any_cast<int>(model->value(EntryCycleFormModel::intervalField));
 		Wt::WString nIntervalsStr = model->valueText(EntryCycleFormModel::nIntervalsField);
-		int FEAC = Wt::any_cast<int>(model->value(EntryCycleFormModel::firstEntryAfterCycleField));
+		auto FEAC = Wt::any_cast<int>(model->value(EntryCycleFormModel::firstEntryAfterCycleField));
 
 		auto endDateValidator = static_pointer_cast<Wt::WDateValidator>(model->validator(EntryCycleFormModel::endDateField));
 		if(!startDate.isValid())
@@ -228,14 +222,16 @@ namespace ERP
 
 	//EXPENSE CYCLE MODEL
 	ExpenseCycleFormModel::ExpenseCycleFormModel(ExpenseCycleView *view, Dbo::ptr<ExpenseCycle> cyclePtr)
-		: RecordFormModel(view, cyclePtr), _view(view)
+		: RecordFormModel(view, move(cyclePtr)), _view(view)
 	{
 		EntryCycleFormModel::addFields(this);
-		if(_recordPtr)
-		{
-			TRANSACTION(APP);
-			EntryCycleFormModel::updateModelFromCycle(this, *_recordPtr);
-		}
+	}
+
+	void ExpenseCycleFormModel::updateFromDb()
+	{
+		TRANSACTION(APP);
+		_recordPtr.reread();
+		EntryCycleFormModel::updateModelFromCycle(this, *_recordPtr);
 	}
 
 	unique_ptr<Wt::WWidget> ExpenseCycleFormModel::createFormWidget(Wt::WFormModel::Field field)
@@ -282,12 +278,9 @@ namespace ERP
 
 	//EXPENSE CYCLE VIEW
 	ExpenseCycleView::ExpenseCycleView(Dbo::ptr<ExpenseCycle> cyclePtr)
-		: EntryCycleView(tr("ERP.Admin.ExpenseCycleView")), _tempPtr(cyclePtr)
-	{ }
-
-	void ExpenseCycleView::initView()
+		: EntryCycleView(tr("ERP.Admin.ExpenseCycleView"))
 	{
-		_model = newFormModel<ExpenseCycleFormModel>("expense", this, _tempPtr);
+		_model = newFormModel<ExpenseCycleFormModel>("expense", this, move(cyclePtr));
 	}
 
 	unique_ptr<Wt::WWidget> ExpenseCycleView::createFormWidget(Wt::WFormModel::Field field)
@@ -313,16 +306,16 @@ namespace ERP
 
 	//INCOME CYCLE MODEL
 	IncomeCycleFormModel::IncomeCycleFormModel(IncomeCycleView *view, Dbo::ptr<IncomeCycle> cyclePtr)
-		: RecordFormModel(view, cyclePtr), _view(view)
+		: RecordFormModel(view, move(cyclePtr)), _view(view)
 	{
 		EntryCycleFormModel::addFields(this);
+	}
 
-		if(_recordPtr)
-		{
-			TRANSACTION(APP);
-			EntryCycleFormModel::updateModelFromCycle(this, *_recordPtr);
-		}
-
+	void IncomeCycleFormModel::updateFromDb()
+	{
+		TRANSACTION(APP);
+		_recordPtr.reread();
+		EntryCycleFormModel::updateModelFromCycle(this, *_recordPtr);
 	}
 
 	unique_ptr<Wt::WWidget> IncomeCycleFormModel::createFormWidget(Wt::WFormModel::Field field)
@@ -368,12 +361,9 @@ namespace ERP
 
 	//INCOME CYCLE VIEW
 	IncomeCycleView::IncomeCycleView(Dbo::ptr<IncomeCycle> cyclePtr)
-		: EntryCycleView(tr("ERP.Admin.IncomeCycleView")), _tempPtr(cyclePtr)
-	{ }
-
-	void IncomeCycleView::initView()
+		: EntryCycleView(tr("ERP.Admin.IncomeCycleView"))
 	{
-		_model = newFormModel<IncomeCycleFormModel>("income", this, _tempPtr);
+		_model = newFormModel<IncomeCycleFormModel>("income", this, move(cyclePtr));
 	}
 
 	unique_ptr<Wt::WWidget> IncomeCycleView::createFormWidget(Wt::WFormModel::Field field)
@@ -530,7 +520,7 @@ namespace ERP
 				return tr("ERP.LinkIcon");
 			else if(role == Wt::ItemDataRole::Link)
 			{
-				const typename FilteredList::ResultType &res = static_pointer_cast<Dbo::QueryModel<typename FilteredList::ResultType>>(sourceModel())->resultRow(idx.row());
+				const auto &res = static_pointer_cast<Dbo::QueryModel<typename FilteredList::ResultType>>(sourceModel())->resultRow(idx.row());
 				long long id = std::get<FilteredList::ResId>(res);
 				return Wt::WLink(Wt::LinkType::InternalPath, _pathPrefix + std::to_string(id));
 			}
@@ -539,9 +529,9 @@ namespace ERP
 		Wt::any viewIndexData = headerData(idx.column(), Wt::Orientation::Horizontal, Wt::ItemDataRole::ViewIndex);
 		if(viewIndexData.empty())
 			return Wt::WBatchEditProxyModel::data(idx, role);
-		int viewIndex = Wt::any_cast<int>(viewIndexData);
+		auto viewIndex = Wt::any_cast<int>(viewIndexData);
 
-		const typename FilteredList::ResultType &res = static_pointer_cast<Dbo::QueryModel<typename FilteredList::ResultType>>(sourceModel())->resultRow(idx.row());
+		const auto &res = static_pointer_cast<Dbo::QueryModel<typename FilteredList::ResultType>>(sourceModel())->resultRow(idx.row());
 
 		if(viewIndex == EntryCycleList::ViewAmount && role == Wt::ItemDataRole::Display)
 		{
@@ -565,7 +555,6 @@ namespace ERP
 		}
 		if(viewIndex == EntryCycleList::ViewEntity && role == Wt::ItemDataRole::Link)
 		{
-			const typename FilteredList::ResultType &res = static_pointer_cast<Dbo::QueryModel<typename FilteredList::ResultType>>(sourceModel())->resultRow(idx.row());
 			return Wt::WLink(Wt::LinkType::InternalPath, Entity::viewInternalPath(std::get<FilteredList::ResEntityId>(res)));
 		}
 

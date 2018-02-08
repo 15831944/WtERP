@@ -292,6 +292,7 @@ ${block:ERP.RecordCountTemplate.Block PayablesBalance payables}
 	<div class="panel-body">
 		${block:ERP.Field hostName Hostname}
 		${block:ERP.Field.CW location Location}
+		${editBtn}
 		${submitBtn class="btn-primary"}
 	</div>
 </div>
@@ -326,6 +327,7 @@ ${block:ERP.RecordCountTemplate.Block PayablesBalance payables}
 			<div class="help-block">${timeOut-info}</div>
 		</div>
 		${block:ERP.Field.CW location Location}
+		${editBtn}
 		${submitBtn class="btn-primary"}
 	</div>
 </div>
@@ -781,20 +783,36 @@ ${</not-readonly>}
 </div>
 </message>
 
+
+<message id="ERP.RecordFormViewError">
+<div class="text-center">
+	<h1><i class="fa fa-exclamation-triangle"></i></h1>
+	<h1>${tr:ErrorLoadingFormView}</h1>
+	<div>${reloadBtn}</div>
+</div>
+</message>
+
+<message id="ERP.RecordNotFound">
+<div class="text-center">
+	<h1><i class="fa fa-exclamation-triangle"></i></h1>
+	<h1>${tr:RecordNotFound}</h1>
+</div>
+</message>
+
 <message id="ERP.DeniedPermission">
-<div class="container text-center">
+<div class="text-center">
 	<h1><i class="fa fa-lock"></i></h1>
 	<h1>${tr:PermissionDenied}</h1>
 </div>
 </message>
 
 <message id="ERP.RecordFormView">
-${<p:denied>}
-	${block:ERP.DeniedPermission}
-${</p:denied>}
-${<p:permitted>}
-	{1}
-${</p:permitted>}
+${<s:error>}${block:ERP.RecordFormViewError}${</s:error>}
+${<s:not-found>}${block:ERP.RecordNotFound}${</s:not-found>}
+${<s:valid>}
+	${<p:denied>}${block:ERP.DeniedPermission}${</p:denied>}
+	${<p:permitted>}{1}${</p:permitted>}
+${</s:valid>}
 </message>
 
 <!-- 

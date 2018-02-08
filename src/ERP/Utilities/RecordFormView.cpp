@@ -132,6 +132,12 @@ namespace ERP
 
 	void RecordFormView::updateView()
 	{
+		setCondition("s:valid", isValidLoadState());
+		setCondition("s:not-found", _loadState == NotFoundState);
+		setCondition("s:error", _loadState == ErrorState);
+		if(!isValidLoadState())
+			return;
+
 		_viewFlags.set();
 		for(const auto &res : _modelVector)
 		{
@@ -203,12 +209,18 @@ namespace ERP
 
 	void RecordFormView::updateModel()
 	{
+		if(!isValidLoadState())
+			return;
+
 		for(const auto &res : _modelVector)
 			updateModel(res.second.get());
 	}
 
 	bool RecordFormView::validateAll()
 	{
+		if(!isValidLoadState())
+			return false;
+
 		bool valid = true;
 		for(const auto &res : _modelVector)
 		{
@@ -246,15 +258,63 @@ namespace ERP
 			_editBtn = bindNew<ShowEnabledButton>("editBtn", tr("Edit"));
 			_editBtn->clicked().connect(this, &RecordFormView::handleEditBtn);
 
-			initView();
+			_reloadBtn = bindNew<Wt::WPushButton>("reloadBtn", tr("Refresh"));
+			_reloadBtn->clicked().connect(this, &RecordFormView::reload);
+
+			try
+			{
+				initView();
+			}
+			catch(const Dbo::Exception &e)
+			{
+				Wt::log("error") << "RecordFormView::load(): initView(): (View: " << viewName() << ") Dbo error(" << e.code() << "): " << e.what();
+				_loadState = ErrorState;
+			}
+
+			updateModelsFromDb();
 			for(const auto &val : _modelVector)
 			{
-				if(val.second->isRecordPersisted())
+				if(val.second->isRecordPersisted() || val.second->isProxyModel())
 					val.second->persistedHandler();
 			}
 		}
 
 		Wt::WTemplateFormView::load();
+	}
+
+	void RecordFormView::reload()
+	{
+		if(!loaded())
+			load();
+		else if(!isWriteMode())
+		{
+			updateModelsFromDb();
+			updateView();
+		}
+	}
+
+	void RecordFormView::updateModelsFromDb()
+	{
+		try
+		{
+			TRANSACTION(APP);
+			for(const auto &val : _modelVector)
+			{
+				if(val.second->isRecordPersisted() || val.second->isProxyModel())
+					val.second->updateFromDb();
+			}
+			t.commit();
+			_loadState = ValidState;
+		}
+		catch(const Dbo::ObjectNotFoundException &)
+		{
+			_loadState = NotFoundState;
+		}
+		catch(const Dbo::Exception &e)
+		{
+			Wt::log("error") << "RecordFormView::updateModelsFromDb(): (View: " << viewName() << ") Dbo error(" << e.code() << "): " << e.what();
+			_loadState = ErrorState;
+		}
 	}
 
 	void RecordFormView::render(Wt::WFlags<Wt::RenderFlag> flags)
@@ -270,18 +330,19 @@ namespace ERP
 
 	void RecordFormView::handleEditBtn()
 	{
-		_writeModeEnabled = !isWriteMode();
-		if(_writeModeEnabled)
+		_editModeEnabled = !isWriteMode();
+		if(_editModeEnabled)
 			_editBtn->setText(tr("Cancel"));
 		else
 			_editBtn->setText(tr("Edit"));
-		//TODO Reload
+
+		updateModelsFromDb();
 		updateView();
 	}
 
 	void RecordFormView::submit()
 	{
-		if(!loaded() || _modelVector.empty() || _submitBtn->isDisabled() || !isEnabled() || !isWriteMode())
+		if(!loaded() || _modelVector.empty() || _submitBtn->isDisabled() || !isEnabled() || !isWriteMode() || !isValidLoadState())
 			return;
 
 		if(_viewFlags[NoViewPermission] || _viewFlags[AllReadOnly])
@@ -344,7 +405,7 @@ namespace ERP
 		if(nothingSaved)
 			resetValidationAll();
 		else
-			_writeModeEnabled = false;
+			_editModeEnabled = false;
 
 		updateView();
 		if(!nothingSaved)
@@ -358,7 +419,7 @@ namespace ERP
 
 	bool RecordFormView::isWriteMode() const
 	{
-		return _writeModeEnabled || (_firstModel && !_firstModel->isRecordPersisted());
+		return _editModeEnabled || (_firstModel && !_firstModel->isRecordPersisted());
 	}
 
 	RecordFormView *RecordViewsContainer::viewWidget(int index) const

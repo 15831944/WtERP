@@ -2,6 +2,7 @@
 #define ERP_WSERVER_H
 
 #include "Common.h"
+#include "Application/DboSession.h"
 #include <Wt/WServer.h>
 
 #include <Wt/Auth/AuthService.h>
@@ -40,7 +41,7 @@ namespace ERP
 	protected:
 		void configureAuth();
 
-		Dbo::Session _dboSession;
+		DboSession _dboSession;
 		unique_ptr<Dbo::SqlConnectionPool> _sqlPool;
 		unique_ptr<ConfigurationsDatabase> _configs;
 		unique_ptr<PermissionsDatabase> _permissionsDatabase;

@@ -15,7 +15,7 @@ namespace ERP
 	class TaskScheduler
 	{
 	public:
-		TaskScheduler(WServer *server, Dbo::Session &session);
+		TaskScheduler(WServer *server, DboSession &session);
 
 	protected:
 		typedef tuple<Dbo::ptr<IncomeCycle>, Dbo::ptr<AccountEntry>> IncomeCycleTuple;
@@ -41,7 +41,7 @@ namespace ERP
 		Dbo::Query<ExpenseCycleTuple> _expenseCycleQuery;
 		unique_ptr<Dbo::Call> _recalculateBalanceCall;
 
-		Dbo::Session &dboSession;
+		DboSession &dboSession;
 		EntitiesDatabase _entitiesDatabase;
 		AccountsDatabase _accountsDatabase;
 		WServer *_server = nullptr;

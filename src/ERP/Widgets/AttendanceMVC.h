@@ -47,6 +47,7 @@ namespace ERP
 		static const Wt::WFormModel::Field locationField;
 
 		AttendanceDeviceFormModel(AttendanceDeviceView *view, Dbo::ptr<AttendanceDevice> attendanceDevicePtr = nullptr);
+		virtual void updateFromDb() override;
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
@@ -58,7 +59,6 @@ namespace ERP
 	{
 	public:
 		AttendanceDeviceView(Dbo::ptr<AttendanceDevice> attendanceDevicePtr = nullptr);
-		virtual void initView() override;
 
 		Dbo::ptr<AttendanceDevice> attendanceDevicePtr() const { return _model->recordPtr(); }
 		AttendanceDeviceFormModel *model() const { return _model; }
@@ -69,7 +69,6 @@ namespace ERP
 
 	protected:
 		AttendanceDeviceFormModel *_model;
-		Dbo::ptr<AttendanceDevice> _tempPtr;
 	};
 
 	//ATTENDANCE ENTRY
@@ -110,6 +109,7 @@ namespace ERP
 		static const Wt::WFormModel::Field locationField;
 
 		AttendanceEntryFormModel(AttendanceEntryView *view, Dbo::ptr<AttendanceEntry> attendanceEntryPtr = nullptr);
+		virtual void updateFromDb() override;
 		virtual unique_ptr<Wt::WWidget> createFormWidget(Field field) override;
 		virtual bool saveChanges() override;
 
@@ -124,7 +124,6 @@ namespace ERP
 	{
 	public:
 		AttendanceEntryView(Dbo::ptr<AttendanceEntry> attendanceEntryPtr = nullptr);
-		virtual void initView() override;
 
 		Dbo::ptr<AttendanceEntry> attendanceEntryPtr() const { return _model->recordPtr(); }
 		AttendanceEntryFormModel *model() const { return _model; }
@@ -138,7 +137,6 @@ namespace ERP
 		virtual void updateModel(Wt::WFormModel *model) override;
 
 		AttendanceEntryFormModel *_model = nullptr;
-		Dbo::ptr<AttendanceEntry> _tempPtr;
 	};
 }
 
