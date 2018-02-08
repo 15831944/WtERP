@@ -110,33 +110,7 @@ namespace ERP
 	typedef Dbo::collection<Dbo::ptr<AttendanceEntry>> AttendanceEntryCollection;
 
 //	class Inquiry;
-// 	class Asset;
-// 	class Inventory;
-// 	class ClothingTemplate;
-// 	class ClothingItem;
-// 	class AlarmTemplate;
-// 	class AlarmItem;
-// 	class WeaponTemplate;
-// 	class Weapon;
-// 	class VehicleTemplate;
-// 	class Vehicle;
-// 	class Office;
-// 	class RentHouse;
-// 	class AssetRegistration;
 // 	typedef Dbo::collection<Dbo::ptr<Inquiry>> InquiryCollection;
-// 	typedef Dbo::collection<Dbo::ptr<Asset>> AssetCollection;
-// 	typedef Dbo::collection<Dbo::ptr<Inventory>> InventoryCollection;
-// 	typedef Dbo::collection<Dbo::ptr<ClothingTemplate>> ClothingTemplateCollection;
-// 	typedef Dbo::collection<Dbo::ptr<ClothingItem>> ClothingItemCollection;
-// 	typedef Dbo::collection<Dbo::ptr<AlarmTemplate>> AlarmTemplateCollection;
-// 	typedef Dbo::collection<Dbo::ptr<AlarmItem>> AlarmItemCollection;
-// 	typedef Dbo::collection<Dbo::ptr<WeaponTemplate>> WeaponTemplateCollection;
-// 	typedef Dbo::collection<Dbo::ptr<Weapon>> WeaponCollection;
-// 	typedef Dbo::collection<Dbo::ptr<VehicleTemplate>> VehicleTemplateCollection;
-// 	typedef Dbo::collection<Dbo::ptr<Vehicle>> VehicleCollection;
-// 	typedef Dbo::collection<Dbo::ptr<Office>> OfficeCollection;
-// 	typedef Dbo::collection<Dbo::ptr<RentHouse>> RentHouseCollection;
-// 	typedef Dbo::collection<Dbo::ptr<AssetRegistration>> LicenseCollection;
 }
 
 //Dbo traits
@@ -207,43 +181,6 @@ namespace Wt
 			static IdType invalidId() { return IdType(); }
 			static const char *surrogateIdField() { return nullptr; }
 		};
-
-// 		//Assets
-// 		template<>
-// 		struct dbo_traits<ERP::Inventory> : public dbo_default_traits
-// 		{
-// 			typedef ptr<ERP::Asset> IdType;
-// 			static IdType invalidId() { return IdType(); }
-// 			static const char *surrogateIdField() { return nullptr; }
-// 		};
-// 		template<>
-// 		struct dbo_traits<ERP::Weapon> : public dbo_default_traits
-// 		{
-// 			typedef ptr<ERP::Asset> IdType;
-// 			static IdType invalidId() { return IdType(); }
-// 			static const char *surrogateIdField() { return nullptr; }
-// 		};
-// 		template<>
-// 		struct dbo_traits<ERP::Vehicle> : public dbo_default_traits
-// 		{
-// 			typedef ptr<ERP::Asset> IdType;
-// 			static IdType invalidId() { return IdType(); }
-// 			static const char *surrogateIdField() { return nullptr; }
-// 		};
-// 		template<>
-// 		struct dbo_traits<ERP::ClothingItem> : public dbo_default_traits
-// 		{
-// 			typedef ptr<ERP::Asset> IdType;
-// 			static IdType invalidId() { return IdType(); }
-// 			static const char *surrogateIdField() { return nullptr; }
-// 		};
-// 		template<>
-// 		struct dbo_traits<ERP::AlarmItem> : public dbo_default_traits
-// 		{
-// 			typedef ptr<ERP::Asset> IdType;
-// 			static IdType invalidId() { return IdType(); }
-// 			static const char *surrogateIdField() { return nullptr; }
-// 		};
 	}
 }
 
@@ -582,8 +519,6 @@ namespace ERP
 		ClientAssignmentCollection clientAssignmentCollection;
 		AttendanceEntryCollection attendanceCollection;
 // 		InquiryCollection inquiryCollection;
-// 		RentHouseCollection owningRentHouseCollection;
-// 		AlarmItemCollection assignedAlarmItemCollection;
 
 		template<class Action>
 		void persist(Action& a)
@@ -605,8 +540,6 @@ namespace ERP
 			Dbo::hasMany(a, clientAssignmentCollection, Dbo::ManyToOne, "entity");
 			Dbo::hasMany(a, attendanceCollection, Dbo::ManyToOne, "entity");
 // 			Dbo::hasMany(a, inquiryCollection, Dbo::ManyToOne, "entity");
-// 			Dbo::hasMany(a, owningRentHouseCollection, Dbo::ManyToOne, "owner_entity");
-// 			Dbo::hasMany(a, assignedAlarmItemCollection, Dbo::ManyToOne, "entity");
 
 			RestrictedRecordDbo::persist(a);
 		}
@@ -794,8 +727,6 @@ namespace ERP
 		AttendanceDeviceVCollection attendanceDeviceVCollection;
 		AttendanceEntryCollection attendanceCollection;
 // 		InquiryCollection inquiryCollection;
-// 		AssetCollection assetCollection;
-// 		RentHouseCollection rentHouseCollection;
 
 		template<class Action>
 		void persist(Action& a)
@@ -809,8 +740,6 @@ namespace ERP
 			Dbo::hasMany(a, attendanceDeviceVCollection, Dbo::ManyToOne, "location");
 			Dbo::hasMany(a, attendanceCollection, Dbo::ManyToOne, "location");
 // 			Dbo::hasMany(a, inquiryCollection, Dbo::ManyToOne, "location");
-// 			Dbo::hasMany(a, assetCollection, Dbo::ManyToOne, "location");
-// 			Dbo::hasMany(a, rentHouseCollection, Dbo::ManyToOne, "location");
 
 			BaseRecordDbo::persist(a);
 		}
@@ -973,7 +902,6 @@ namespace ERP
 
 		Dbo::ptr<ExpenseCycle> expenseCyclePtr;
 		Dbo::ptr<IncomeCycle> incomeCyclePtr;
-		//Dbo::ptr<RentHouse> depositRentHousePtr;
 
 		Dbo::weak_ptr<OvertimeInfo> overtimeInfoWPtr;
 		Dbo::weak_ptr<FineInfo> fineInfoWPtr;
@@ -990,7 +918,6 @@ namespace ERP
 
 			Dbo::belongsTo(a, expenseCyclePtr, "expensecycle", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 			Dbo::belongsTo(a, incomeCyclePtr, "incomecycle", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
-			//Dbo::belongsTo(a, depositRentHousePtr, "deposit_renthouse", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 
 			Dbo::hasOne(a, overtimeInfoWPtr, "accountentry");
 			Dbo::hasOne(a, fineInfoWPtr, "accountentry");
@@ -1130,14 +1057,12 @@ namespace ERP
 		static std::string viewInternalPath(const std::string &idStr) { return "/" ADMIN_PATHC "/" ACCOUNTS_PATHC "/" EXPENSECYCLES_PATHC "/" EXPENSECYCLE_PREFIX + idStr; }
 		
 		EmployeeAssignmentCollection employeeAssignmentCollection;
-		//Dbo::weak_ptr<RentHouse> rentHouseWPtr;
 
 		template<class Action>
 		void persist(Action& a)
 		{
 			EntryCycle::persist(a, "expensecycle");
 			Dbo::hasMany(a, employeeAssignmentCollection, Dbo::ManyToOne, "expensecycle");
-			//Dbo::hasOne(a, rentHouseWPtr, "expensecycle");
 		}
 		DEFINE_DBO_TABLENAME("expensecycle");
 
@@ -1267,241 +1192,6 @@ namespace ERP
 // 		}
 // 		DEFINE_DBO_TABLENAME("inquiry");
 // 	};
-// 
-// 	class Asset
-// 	{
-// 	public:
-// 		std::string name;
-// 		Dbo::ptr<Location> locationPtr;
-// 		Dbo::ptr<AssetRegistration> registrationPtr;
-// 
-// 		InquiryCollection inquiryCollection;
-// 		Dbo::weak_ptr<Office> officeWPtr;
-// 		Dbo::weak_ptr<RentHouse> rentHouseWPtr;
-// 		Dbo::weak_ptr<Inventory> inventoryWPtr;
-// 		Dbo::weak_ptr<ClothingItem> clothingItemWPtr;
-// 		Dbo::weak_ptr<AlarmItem> alarmItemWPtr;
-// 		Dbo::weak_ptr<Weapon> weaponWPtr;
-// 		Dbo::weak_ptr<Vehicle> vehicleWPtr;
-// 
-// 		template<class Action>
-// 		void persist(Action& a)
-// 		{
-// 			Dbo::field(a, name, "name", 255);
-// 			Dbo::belongsTo(a, locationPtr, "location", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
-// 			Dbo::belongsTo(a, registrationPtr, "assetregistration", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
-// 
-// 			Dbo::hasMany(a, inquiryCollection, Dbo::ManyToOne, "asset");
-// 			Dbo::hasOne(a, officeWPtr, "asset");
-// 			Dbo::hasOne(a, rentHouseWPtr, "asset");
-// 			Dbo::hasOne(a, inventoryWPtr, "asset");
-// 			Dbo::hasOne(a, clothingItemWPtr, "asset");
-// 			Dbo::hasOne(a, alarmItemWPtr, "asset");
-// 			Dbo::hasOne(a, weaponWPtr, "asset");
-// 			Dbo::hasOne(a, vehicleWPtr, "asset");
-// 		}
-// 		DEFINE_DBO_TABLENAME("asset");
-// 	};
-// 	class Inventory
-// 	{
-// 	private:
-// 		Dbo::ptr<Asset> assetPtr;
-// 
-// 	public:
-// 		int quantity = 0;
-// 
-// 		template<class Action>
-// 		void persist(Action& a)
-// 		{
-// 			Dbo::id(a, assetPtr, "asset", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
-// 			Dbo::field(a, quantity, "quantity");
-// 		}
-// 		DEFINE_DBO_TABLENAME("inventory");
-// 	};
-// 	class ClothingTemplate
-// 	{
-// 	public:
-// 		ClothingItemCollection clothingItemCollection;
-// 
-// 		template<class Action>
-// 		void persist(Action& a)
-// 		{
-// 			Dbo::hasMany(a, clothingItemCollection, Dbo::ManyToOne, "clothingtemplate");
-// 		}
-// 		DEFINE_DBO_TABLENAME("clothingtemplate");
-// 	};
-// 	class ClothingItem
-// 	{
-// 	private:
-// 		Dbo::ptr<Asset> assetPtr;
-// 
-// 	public:
-// 		Dbo::ptr<ClothingTemplate> clothingTemplatePtr;
-// 		bool serviceable = false;
-// 
-// 		template<class Action>
-// 		void persist(Action& a)
-// 		{
-// 			Dbo::id(a, assetPtr, "asset", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
-// 			Dbo::belongsTo(a, clothingTemplatePtr, "clothingtemplate", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade);
-// 			Dbo::field(a, serviceable, "serviceable");
-// 		}
-// 		DEFINE_DBO_TABLENAME("clothingitem");
-// 	};
-// 	class AlarmTemplate
-// 	{
-// 	public:
-// 		AlarmItemCollection alarmItemCollection;
-// 
-// 		template<class Action>
-// 		void persist(Action& a)
-// 		{
-// 			Dbo::hasMany(a, alarmItemCollection, Dbo::ManyToOne, "alarmtemplate");
-// 		}
-// 		DEFINE_DBO_TABLENAME("alarmtemplate");
-// 	};
-// 	class AlarmItem
-// 	{
-// 	private:
-// 		Dbo::ptr<Asset> assetPtr;
-// 
-// 	public:
-// 		Dbo::ptr<AlarmTemplate> alarmTemplatePtr;
-// 		bool serviceable = false;
-// 		Dbo::ptr<Entity> assignedEntityPtr;
-// 
-// 		template<class Action>
-// 		void persist(Action& a)
-// 		{
-// 			Dbo::id(a, assetPtr, "asset", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
-// 			Dbo::belongsTo(a, alarmTemplatePtr, "alarmtemplate", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade);
-// 			Dbo::field(a, serviceable, "serviceable");
-// 			Dbo::belongsTo(a, assignedEntityPtr, "entity", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
-// 		}
-// 		DEFINE_DBO_TABLENAME("alarmitem");
-// 	};
-// 	class WeaponTemplate
-// 	{
-// 	public:
-// 		WeaponCollection weaponCollection;
-// 
-// 		template<class Action>
-// 		void persist(Action& a)
-// 		{
-// 			Dbo::hasMany(a, weaponCollection, Dbo::ManyToOne, "weapontemplate");
-// 		}
-// 		DEFINE_DBO_TABLENAME("weapontemplate");
-// 	};
-// 	class Weapon
-// 	{
-// 	private:
-// 		Dbo::ptr<Asset> assetPtr;
-// 
-// 	public:
-// 		Dbo::ptr<WeaponTemplate> weaponTemplatePtr;
-// 		int weaponNumber;
-// 
-// 		template<class Action>
-// 		void persist(Action& a)
-// 		{
-// 			Dbo::id(a, assetPtr, "asset", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
-// 			Dbo::belongsTo(a, weaponTemplatePtr, "weapontemplate", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade);
-// 			Dbo::field(a, weaponNumber, "weaponNumber");
-// 		}
-// 		DEFINE_DBO_TABLENAME("weapon");
-// 	};
-// 	class VehicleTemplate
-// 	{
-// 	public:
-// 		VehicleCollection vehicleCollection;
-// 
-// 		template<class Action>
-// 		void persist(Action& a)
-// 		{
-// 			Dbo::hasMany(a, vehicleCollection, Dbo::ManyToOne, "vehicletemplate");
-// 		}
-// 		DEFINE_DBO_TABLENAME("vehicletemplate");
-// 	};
-// 	class Vehicle
-// 	{
-// 	private:
-// 		Dbo::ptr<Asset> assetPtr;
-// 
-// 	public:
-// 		Dbo::ptr<VehicleTemplate> vehicleTemplatePtr;
-// 
-// 		template<class Action>
-// 		void persist(Action& a)
-// 		{
-// 			Dbo::id(a, assetPtr, "asset", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
-// 			Dbo::belongsTo(a, vehicleTemplatePtr, "vehicletemplate", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade);
-// 		}
-// 		DEFINE_DBO_TABLENAME("vehicle");
-// 	};
-// 
-// 	class AssetRegistration
-// 	{
-// 	public:
-// 		Wt::WDate registrationDate;
-// 		Wt::WDate expiryDate;
-// 		std::string registrationNumber;
-// 
-// 		Dbo::ptr<AssetRegistration> renewedLicensePtr;
-// 		Dbo::weak_ptr<AssetRegistration> previousLicenseWPtr;
-// 
-// 		Dbo::weak_ptr<Asset> assetWPtr;
-// 
-// 		template<class Action>
-// 		void persist(Action& a)
-// 		{
-// 			Dbo::field(a, registrationDate, "registrationDate");
-// 			Dbo::field(a, expiryDate, "expiryDate");
-// 			Dbo::field(a, registrationNumber, "registrationNumber", 20);
-// 
-// 			Dbo::belongsTo(a, renewedLicensePtr, "renewed_license", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
-// 			Dbo::hasOne(a, previousLicenseWPtr, "renewed_license");
-// 
-// 			Dbo::hasOne(a, assetWPtr, "assetregistration");
-// 		}
-// 		DEFINE_DBO_TABLENAME("assetregistration");
-// 	};
-// 	class Office
-// 	{
-// 	public:
-// 		Dbo::ptr<Asset> assetPtr;
-// 
-// 		template<class Action>
-// 		void persist(Action& a)
-// 		{
-// 			Dbo::belongsTo(a, assetPtr, "asset", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
-// 		}
-// 		DEFINE_DBO_TABLENAME("office");
-// 	};
-// 	class RentHouse
-// 	{
-// 	public:
-// 		Dbo::ptr<Asset> assetPtr;
-// 		std::string name;
-// 		Dbo::ptr<Location> locationPtr;
-// 		Dbo::ptr<ExpenseCycle> expenseCyclePtr;
-// 		Dbo::ptr<Entity> ownerEntityPtr;
-// 
-// 		AccountEntryCollection depositEntryCollection;
-// 
-// 		template<class Action>
-// 		void persist(Action& a)
-// 		{
-// 			Dbo::belongsTo(a, assetPtr, "asset", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade);
-// 			Dbo::field(a, name, "name", 255);
-// 			Dbo::belongsTo(a, locationPtr, "location", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
-// 			Dbo::belongsTo(a, expenseCyclePtr, "expensecycle", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
-// 			Dbo::belongsTo(a, ownerEntityPtr, "owner_entity", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
-// 
-// 			Dbo::hasMany(a, depositEntryCollection, Dbo::ManyToOne, "deposit_renthouse");
-// 		}
-// 		DEFINE_DBO_TABLENAME("renthouse");
-// 	};
-
 
 }
 
