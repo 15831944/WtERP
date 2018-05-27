@@ -82,12 +82,6 @@ public:
    *
    * The initial model is \c 0.
    *
-   * \if cpp
-   * Ownership of the model is not transferred (and thus the
-   * previously set model is not deleted). A model may not be deleted as
-   * long as a view exists for it.
-   * \endif
-   *
    * \sa setRootIndex()
    */
   virtual void setModel(const std::shared_ptr<WAbstractItemModel>& model);
@@ -727,6 +721,14 @@ public:
    */
   Signal<std::vector<WModelIndex>, WTouchEvent>& touchStarted() { return touchStarted_; }
 
+  /*! \brief %Signal emitted when one or more fingers are moved on the screen.
+   *
+   * When the event happened over an item, the first argument
+   * indicates the items that were touched. The indices in the model index
+   * vector match the indices in the \link WTouchEvent::changedTouches() changedTouches() of the WTouchEvent\endlink.
+   */
+  Signal<std::vector<WModelIndex>, WTouchEvent>& touchMoved() { return touchMoved_; }
+
   /*! \brief %Signal emitted when one or more fingers are removed from the screen.
    *
    * When the event happened over an item, the first argument
@@ -1038,6 +1040,11 @@ protected:
   virtual void handleTouchStart(const std::vector<WModelIndex>& indices,
 				const WTouchEvent& event);
 
+  /*! \brief Handles a touch moved event.
+   */
+  virtual void handleTouchMove(const std::vector<WModelIndex>& indices,
+                               const WTouchEvent& event);
+
   /*! \brief Handles a touch ended event.
    */
   virtual void handleTouchEnd(const std::vector<WModelIndex>& indices,
@@ -1114,6 +1121,7 @@ private:
   Signal<WModelIndex, WMouseEvent> mouseWentUp_;
   Signal<WModelIndex, WTouchEvent> touchStart_;
   Signal<std::vector<WModelIndex>, WTouchEvent> touchStarted_;
+  Signal<std::vector<WModelIndex>, WTouchEvent> touchMoved_;
   Signal<std::vector<WModelIndex>, WTouchEvent> touchEnded_;
   Signal<> selectionChanged_;
   Signal<> pageChanged_;

@@ -38,6 +38,12 @@ ELSE(CMAKE_BUILD_TYPE STREQUAL "Debug")
   FILE_TO_STRING(web/skeleton/Boot.min.js Boot_js.C Boot_js)
 ENDIF(CMAKE_BUILD_TYPE STREQUAL "Debug")
 
+IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  FILE_TO_STRING(js/WCartesianChart.js WCartesianChart_js.C WCartesianChart_js)
+ELSE(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  FILE_TO_STRING(js/WCartesianChart.min.js WCartesianChart_js.C WCartesianChart_js)
+ENDIF(CMAKE_BUILD_TYPE STREQUAL "Debug")
+
 FILE_TO_STRING(web/skeleton/jquery.min.js JQuery_js.C JQuery_js)
 
 FILE_TO_STRING(xml/wt.xml Wt_xml.C Wt_xml)
@@ -378,6 +384,7 @@ Boot_html.C
 Hybrid_html.C
 Boot_js.C
 Wt_js.C
+WCartesianChart_js.C
 Wt_xml.C
 AuthStrings_xml.C
 BootstrapTheme_xml.C
@@ -490,7 +497,11 @@ IF(ENABLE_LIBWTTEST)
     Wt/Test/WTestEnvironment.C
   )
 
-  TARGET_LINK_LIBRARIES(wttest wt)
+  TARGET_LINK_LIBRARIES(wttest PUBLIC wt)
+
+  IF(MULTI_THREADED_BUILD)
+    TARGET_LINK_LIBRARIES(wttest PRIVATE ${WT_THREAD_LIB})
+  ENDIF(MULTI_THREADED_BUILD)
 
   INSTALL(TARGETS wttest
           EXPORT wt-target-test
@@ -592,7 +603,7 @@ ELSE(HAVE_UNWIND)
 ENDIF(HAVE_UNWIND)
 
 IF(MULTI_THREADED_BUILD)
-  TARGET_LINK_LIBRARIES(wt PRIVATE ${CMAKE_THREAD_LIBS_INIT})
+  TARGET_LINK_LIBRARIES(wt PRIVATE ${WT_THREAD_LIB})
 ENDIF(MULTI_THREADED_BUILD)
 
 TARGET_INCLUDE_DIRECTORIES(wt INTERFACE

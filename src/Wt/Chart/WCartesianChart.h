@@ -549,6 +549,100 @@ public:
    */
   void setAxis(std::unique_ptr<WAxis> waxis, Axis axis);
 
+  /*! \brief Returns a vector of all Y axes associated with this chart.
+   *
+   * This defaults to a vector of two axes: the Y1 and Y2 axes. Y1 will
+   * be at index 0, and Y2 will be at index 1.
+   */
+  std::vector<WAxis*> yAxes();
+
+  /*! \brief Returns a vector of all Y axes associated with this chart.
+   *
+   * This defaults to a vector of two axes: the Y1 and Y2 axes. Y1 will
+   * be at index 0, and Y2 will be at index 1.
+   */
+  std::vector<const WAxis*> yAxes() const;
+
+  /*! \brief Returns the number of Y axes associated with this chart.
+   */
+  int yAxisCount() const;
+
+  /*! \brief Retrieves the Y axis at index i
+   *
+   * The following expressions are always true:
+   *
+   * \if cpp
+   * \code
+   * &axis(Y1) == &yAxis(0)
+   * &axis(Y2) == &yAxis(1)
+   * \endcode
+   * \endif
+   *
+   * \if java
+   * \code
+   * axis(Y1) == yAxis(0)
+   * axis(Y2) == yAxis(1)
+   * \endcode
+   * \endif
+   *
+   * \note Precondition: 0 <= i < yAxisCount()
+   */
+  WAxis &yAxis(int i);
+
+  /*! \brief Retrieves the Y axis at index i
+   *
+   * The following expressions are always true:
+   *
+   * \if cpp
+   * \code
+   * &axis(Y1) == &yAxis(0)
+   * &axis(Y2) == &yAxis(1)
+   * \endcode
+   * \endif
+   *
+   * \if java
+   * \code
+   * axis(Y1) == yAxis(0)
+   * axis(Y2) == yAxis(1)
+   * \endcode
+   * \endif
+   *
+   * \note Precondition: 0 <= i < yAxisCount()
+   */
+  const WAxis &yAxis(int i) const;
+
+  /*! \brief Adds a Y axis to this chart.
+   *
+   * The first extra axis will have index 2, the next index 3,...
+   *
+   * Returns the index of the added axis.
+   *
+   * \note This transfers ownership of the given WAxis to this chart.
+   *
+   * \note Precondition: waxis is not null
+   */
+  int addYAxis(std::unique_ptr<WAxis> waxis);
+
+  /*! \brief Removes the Y axis with the given id.
+   *
+   * The indices of the axes with an id higher than
+   * yAxisId will be decremented.
+   *
+   * Any WDataSeries associated with the removed axis
+   * are also removed.
+   *
+   * \note Precondition: 0 <= yAxisId < yAxisCount()
+   */
+  std::unique_ptr<WAxis> removeYAxis(int yAxisId);
+
+  /*! \brief Clears all Y axes.
+   *
+   * The effect is the same as repeatedly using removeYAxis()
+   * until are axes are removed, i.e. any WDataSeries will
+   * also be removed.
+   */
+  void clearYAxes();
+
   /*! \brief Sets the margin between bars of different series.
    *
    * Use this method to change the margin that is set between bars of
@@ -759,6 +853,23 @@ public:
   WPointF mapFromDevice(const WPointF& point,
 			Axis ordinateAxis = Axis::Ordinate) const;
 
+  /*! \brief Maps from device coordinates to model coordinates.
+   *
+   * Maps a position in the chart back to model coordinates.
+   *
+   * This uses the axis dimensions that are based on the latest chart
+   * rendering. If you have not yet rendered the chart, or wish that
+   * the mapping already reflects model changes since the last rendering,
+   * you should call initLayout() first.
+   *
+   * If the chart is interactive, mapFromDevice will correctly take the current
+   * zoom range into account.
+   *
+   * \sa mapToDevice()
+   */
+  WPointF mapFromDevice(const WPointF& point,
+                        int ordinateAxis) const;
+
   /*! \brief Maps from device coordinates to model coordinates, ignoring the current zoom range
    *
    * Maps a position in the chart back to model coordinates, as if the
@@ -777,6 +888,25 @@ public:
    */
   WPointF mapFromDeviceWithoutTransform(const WPointF& point,
 			Axis ordinateAxis = Axis::Ordinate) const;
+
+  /*! \brief Maps from device coordinates to model coordinates, ignoring the current zoom range
+   *
+   * Maps a position in the chart back to model coordinates, as if the
+   * chart was not zoomed in (nor panned).
+   *
+   * This uses the axis dimensions that are based on the latest chart
+   * rendering. If you have not yet rendered the chart, or wish that
+   * the mapping already reflects model changes since the last rendering,
+   * you should call initLayout() first.
+   *
+   * This function will not take the current zoom range into
+   * account. The mapping will be performed as if zoomRangeTransform()
+   * is the identity transform.
+   *
+   * \sa mapToDeviceWithoutTransform()
+   */
+  WPointF mapFromDeviceWithoutTransform(const WPointF& point,
+                        int ordinateAxis) const;
 
   /*! \brief Maps model values onto chart coordinates.
    *
@@ -802,6 +932,30 @@ public:
 		      Axis axis = Axis::Ordinate, int xSegment = 0,
 		      int ySegment = 0) const;
 
+  /*! \brief Maps model values onto chart coordinates.
+   *
+   * This returns the chart device coordinates for a (x,y) pair of model
+   * values.
+   *
+   * This uses the axis dimensions that are based on the latest chart
+   * rendering. If you have not yet rendered the chart, or wish that
+   * the mapping already reflects model changes since the last rendering,
+   * you should call initLayout() first.
+   *
+   * The \p xSegment and \p ySegment arguments are relevant only when
+   * the corresponding axis is broken using WAxis::setBreak(). Then,
+   * its possible values may be 0 (below the break) or 1 (above the
+   * break).
+   *
+   * If the chart is interactive, mapToDevice will correctly take the current
+   * zoom range into account.
+   *
+   * \sa mapFromDevice()
+   */
+  WPointF mapToDevice(const cpp17::any& xValue, const cpp17::any& yValue,
+                      int yAxis, int xSegment = 0,
+                      int ySegment = 0) const;
+
   /*! \brief Maps model values onto chart coordinates, ignoring the current zoom range
    *
    * This returns the chart device coordinates for a (x,y) pair of model
@@ -826,6 +980,31 @@ public:
   WPointF mapToDeviceWithoutTransform(const cpp17::any& xValue, const cpp17::any& yValue,
 		      Axis axis = Axis::Ordinate, int xSegment = 0,
 		      int ySegment = 0) const;
+
+  /*! \brief Maps model values onto chart coordinates, ignoring the current zoom range
+   *
+   * This returns the chart device coordinates for a (x,y) pair of model
+   * values.
+   *
+   * This uses the axis dimensions that are based on the latest chart
+   * rendering. If you have not yet rendered the chart, or wish that
+   * the mapping already reflects model changes since the last rendering,
+   * you should call initLayout() first.
+   *
+   * The \p xSegment and \p ySegment arguments are relevant only when
+   * the corresponding axis is broken using WAxis::setBreak(). Then,
+   * its possible values may be 0 (below the break) or 1 (above the
+   * break).
+   *
+   * This function will not take the current zoom range into
+   * account.The mapping will be performed as if zoomRangeTransform()
+   * is the identity transform.
+   *
+   * \sa mapFromDeviceWithoutTransform()
+   */
+  WPointF mapToDeviceWithoutTransform(const cpp17::any& xValue, const cpp17::any& yValue,
+                      int yAxis, int xSegment = 0,
+                      int ySegment = 0) const;
 
   /*! \brief Initializes the chart layout.
    *
@@ -1022,6 +1201,16 @@ public:
    */
   const WColor& crosshairColor() const { return crosshairColor_; }
 
+  /*! \brief Sets the Y axis to use for the crosshair.
+   *
+   * Defaults to 0 (first Y axis)
+   */
+  void setCrosshairYAxis(int yAxis);
+
+  /*! \brief Returns the Y axis to use for the crosshair.
+   */
+  int crosshairYAxis() const { return crosshairYAxis_; }
+
   /*! \brief Enables the follow curve functionality for a data series.
    *
    * This enables follow curve functionality for the data series
@@ -1184,69 +1373,85 @@ public:
    */
   bool curveManipulationEnabled() const { return curveManipulationEnabled_; }
 
+  /*! \brief Enable on-demand loading
+   *
+   * By default, when on-demand loading is not enabled, the
+   * entire chart area is loaded, regardless of whether it is
+   * within the current zoom range of the X axis.
+   *
+   * When on-demand loading is enabled only the currently visible area +
+   * some margin is loaded. As the visible area changes, different data
+   * is loaded. This improves performance for charts with a lot of data
+   * if not all of the data needs to be visible at the same time.
+   *
+   * This feature is especially useful in combination with WAxis::setMaximumZoomRange()
+   * or WAxis::setMinZoom(), which makes it impossible for the user to view
+   * all of the data at the same time, because that would incur too much overhead.
+   *
+   * \note On-demand loading requires that the X axis data for all data series
+   *       is sorted in ascending order. This feature is optimized for equidistant
+   *       X axis data, but that's not a requirement.
+   *
+   * \note If no minimum or maximum are set on the Y axis (or axes), then
+   *       the chart will still have to scan all data of its data series to automatically
+   *       determine the minimum and maximum Y axis values. If this performance hit is undesirable
+   *       and the Y axis range is known or guaranteed to be within a certain range, make sure to
+   *       \link WAxis::setRange() set a range\endlink on the Y axis (or axes).
+   *
+   * \sa onDemandLoadingEnabled()
+   */
+  void setOnDemandLoadingEnabled(bool enabled);
+
+  /*! \brief Returns whether on-demand loading is enabled.
+   *
+   * \sa setOnDemandLoadingEnabled()
+   */
+  bool onDemandLoadingEnabled() const { return onDemandLoadingEnabled_; }
+
+  /*! \brief Set the background brush for the unloaded area.
+   *
+   * \sa setOnDemandLoadingEnabled()
+   * \sa loadingBackground()
+   */
+  void setLoadingBackground(const WBrush& brush);
+
+  /*! \brief Returns the background brush for the unloaded area.
+   *
+   * \sa setOnDemandLoadingEnabled()
+   * \sa setLoadingBackground()
+   */
+  const WBrush& loadingBackground() const { return loadingBackground_; }
+
   /*! @}
    */
 
   void iterateSeries(SeriesIterator *iterator,
-		     WPainter *painter, bool reverseStacked = false) const;
+		     WPainter *painter, bool reverseStacked = false, bool extremesOnly = false) const;
 
   // For use in WAxisSliderWidget
   void addAxisSliderWidget(WAxisSliderWidget *slider);
   void removeAxisSliderWidget(WAxisSliderWidget *slider);
 
 private:
-  std::unique_ptr<WChart2DImplementation> interface_;
+  struct AxisLocation {
+    AxisLocation()
+      : minOffset(0),
+        maxOffset(0),
+        initLoc(AxisValue::Minimum),
+        finLoc(AxisValue::Minimum)
+    { }
 
-  Orientation orientation_;
-  int XSeriesColumn_;
-  ChartType type_;
-  std::vector<std::unique_ptr<WDataSeries>> series_;
-  std::unique_ptr<WAxis> axes_[3];
-  double barMargin_;
-  WLegend legend_;
-  int axisPadding_;
-  WPen borderPen_;
-  WPen textPen_;
-
-  /* render state */
-  mutable int width_, height_;
-  mutable WRectF chartArea_;
-  mutable AxisValue location_[3];
-  mutable bool hasDeferredToolTips_;
-
-  bool jsDefined_;
-  bool zoomEnabled_;
-  bool panEnabled_;
-  bool rubberBandEnabled_;
-  bool crosshairEnabled_;
-  WColor crosshairColor_;
-  bool seriesSelectionEnabled_;
-  const WDataSeries *selectedSeries_;
-  const WDataSeries *followCurve_;
-  bool curveManipulationEnabled_;
-  bool cObjCreated_;
-  JSignal<> xTransformChanged_;
-  JSignal<> yTransformChanged_;
-
-  Signal<const WDataSeries *, WPointF> seriesSelected_;
-  JSignal<double, double> jsSeriesSelected_;
-
-  typedef std::map<const WDataSeries *, WJavaScriptHandle<WPainterPath> > PainterPathMap;
-  PainterPathMap curvePaths_;
-  std::vector<WJavaScriptHandle<WPainterPath> > freePainterPaths_;
-
-  typedef std::map<const WDataSeries *, WJavaScriptHandle<WTransform> > TransformMap;
-  TransformMap curveTransforms_;
-  std::vector<WJavaScriptHandle<WTransform> > freeTransforms_;
-
-  mutable WTransform xTransform_;
-  mutable WTransform yTransform_;
-
-  // Scales and translates X axis
-  WJavaScriptHandle<WTransform> xTransformHandle_;
-  // Scales and translates Y axis
-  WJavaScriptHandle<WTransform> yTransformHandle_;
-
+    int minOffset; // the number of pixels the axis should be shifted beyond
+                   // the minimum due to this axis being an extra Y axis on
+                   // the MinimumValue side
+    int maxOffset; // the number of pixels the axis should be shifted beyond
+                   // the maximum due to this axis being an extra Y axis on
+                   // the MaximumValue side
+    AxisValue initLoc; // where the axis has been placed after the
+                       // ZeroValue out of bounds -> Minimum/Maximum transformation
+    AxisValue finLoc; // where the axis has been placed after the
+                      // Minimum/Maximum at the bound -> ZeroValue transformation
+  };
   struct PenAssignment {
     WJavaScriptHandle<WPen> pen;
     WJavaScriptHandle<WPen> textPen;
@@ -1258,8 +1463,69 @@ private:
       : pen(pen), textPen(textPen), gridPen(gridPen)
     { }
   };
-  typedef std::map<Axis,std::vector<PenAssignment> > PenMap;
-  PenMap pens_;
+  struct AxisStruct {
+    AxisStruct() noexcept;
+    AxisStruct(std::unique_ptr<WAxis> ax) noexcept;
+    AxisStruct(const AxisStruct &) = delete;
+    AxisStruct& operator=(const AxisStruct &) = delete;
+    AxisStruct(AxisStruct&&) noexcept;
+    AxisStruct& operator=(AxisStruct&&) noexcept;
+    ~AxisStruct();
+
+    std::unique_ptr<WAxis> axis;
+    mutable int calculatedWidth;
+    mutable AxisLocation location;
+    mutable WTransform transform;
+    WJavaScriptHandle<WTransform> transformHandle;
+    std::unique_ptr<JSignal<>> transformChanged;
+    std::vector<PenAssignment> pens;
+  };
+
+  std::unique_ptr<WChart2DImplementation> interface_;
+
+  Orientation orientation_;
+  int XSeriesColumn_;
+  ChartType type_;
+  std::vector<std::unique_ptr<WDataSeries>> series_;
+  AxisStruct xAxis_;
+  std::vector<AxisStruct> yAxes_;
+  double barMargin_;
+  WLegend legend_;
+  int axisPadding_;
+  WPen borderPen_;
+  WPen textPen_;
+
+  /* render state */
+  mutable int width_, height_;
+  mutable WRectF chartArea_;
+  mutable bool hasDeferredToolTips_;
+
+  bool jsDefined_;
+  bool zoomEnabled_;
+  bool panEnabled_;
+  bool rubberBandEnabled_;
+  bool crosshairEnabled_;
+  WColor crosshairColor_;
+  int crosshairYAxis_;
+  bool seriesSelectionEnabled_;
+  const WDataSeries *selectedSeries_;
+  const WDataSeries *followCurve_;
+  bool curveManipulationEnabled_;
+  bool onDemandLoadingEnabled_;
+  WBrush loadingBackground_;
+  bool cObjCreated_;
+
+  Signal<const WDataSeries *, WPointF> seriesSelected_;
+  JSignal<double, double> jsSeriesSelected_;
+
+  typedef std::map<const WDataSeries *, WJavaScriptHandle<WPainterPath> > PainterPathMap;
+  mutable PainterPathMap curvePaths_;
+  std::vector<WJavaScriptHandle<WPainterPath> > freePainterPaths_;
+
+  typedef std::map<const WDataSeries *, WJavaScriptHandle<WTransform> > TransformMap;
+  mutable TransformMap curveTransforms_;
+  std::vector<WJavaScriptHandle<WTransform> > freeTransforms_;
+
   std::vector<WJavaScriptHandle<WPen>> freePens_;
 
   std::vector<CurveLabel> curveLabels_;
@@ -1318,11 +1584,11 @@ protected:
    * painter.save();
    * painter.translate(rectangle.topLeft());
    *
-   * if (initLayout(rectangle)) {
+   * if (initLayout(rectangle, painter.device())) {
    *   renderBackground(painter);
    *   renderGrid(painter, axis(Axis::X));
-   *   renderGrid(painter, axis(Axis::Y1));
-   *   renderGrid(painter, axis(Axis::Y2));
+   *   for (int i = 0; i < yAxisCount(); ++i)
+   *     renderGrid(painter, yAxis(i));
    *   renderAxes(painter, AxisProperty::Line);
    *   renderSeries(painter);
    *   renderAxes(painter, AxisProperty::Labels);
@@ -1346,6 +1612,15 @@ protected:
   virtual WPointF map(double xValue, double yValue, 
 		      Axis yAxis = Axis::Ordinate,
 		      int currentXSegment = 0, int currentYSegment = 0) const;
+
+  /*! \brief Map (x, y) value pair to chart coordinates coordinates.
+   *
+   * The result needs further transformation using hv() to painter
+   * coordinates.
+   */
+  virtual WPointF map(double xValue, double yValue, int yAxis,
+                      int currentXSegment = 0, int currentYSegment = 0)
+    const;
 
   /*! \brief Utility function for rendering text.
    *
@@ -1409,7 +1684,7 @@ protected:
    *
    * \sa initLayout()
    */
-  virtual bool prepareAxes() const;
+  virtual bool prepareAxes(WPaintDevice *device) const;
 
   /*! \brief Renders the background.
    *
@@ -1508,14 +1783,17 @@ protected:
    * \sa setPanEnabled
    * \sa WAxis::setZoomRange()
    */
-  WTransform zoomRangeTransform() const;
+  WTransform zoomRangeTransform(int yAxis = 0) const;
 
 private:
   int calcNumBarGroups() const;
+  std::vector<const WAxis*> collectYAxesAtLocation(AxisValue side) const;
   int seriesIndexOf(int modelColumn) const;
   int seriesIndexOf(const WDataSeries &series) const;
+  bool hasInwardsYAxisOnMaximumSide() const;
   void clearPens();
-  void createPensForAxis(Axis axis);
+  void clearPensForAxis(Axis axis, int yAxis);
+  void createPensForAxis(Axis axis, int yAxis);
   std::string cObjJsRef() const; // WCartesianChart JS object
   void assignJSHandlesForAllSeries();
   void freeJSHandlesForAllSeries();
@@ -1526,22 +1804,23 @@ private:
   void freeJSTransformsForSeries(const WDataSeries &series);
   void freeAllJSTransforms();
   void updateJSPens(WStringStream& js) const;
-  void updateJSPensForAxis(WStringStream& js, Axis axis) const;
+  void updateJSPensForAxis(WStringStream& js, Axis axis, int yAxis) const;
   void updateJSConfig(const std::string &key, cpp17::any value);
   WPainterPath pathForSeries(const WDataSeries &series) const; // For use in WAxisSliderWidget
-  WTransform zoomRangeTransform(WTransform xTransform, WTransform yTransform) const;
+  WTransform zoomRangeTransform(const WTransform &xTransform, const WTransform &yTransform) const;
   WTransform calculateCurveTransform(const WDataSeries &series) const;
   WTransform curveTransform(const WDataSeries &series) const;
   void setZoomAndPan();
   void addAreaMask();
   void xTransformChanged();
-  void yTransformChanged();
+  void yTransformChanged(int yAxis);
   void jsSeriesSelected(double x, double y);
   void loadTooltip(double x, double y);
   WPointF hv(double x, double y, double width) const;
   WPointF inverseHv(double x, double y, double width) const;
   WPointF inverseHv(const WPointF &p) const;
   WRectF insideChartArea() const;
+  int calcAxisSize(const WAxis &axis, WPaintDevice *device) const;
   void defineJavaScript();
 
   bool axisSliderWidgetForSeries(WDataSeries *series) const;

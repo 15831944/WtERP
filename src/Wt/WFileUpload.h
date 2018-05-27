@@ -192,6 +192,17 @@ public:
    */
   bool canUpload() const { return fileUploadTarget_ != nullptr; }
 
+  /*! \brief Use the click signal of another widget to open the file picker.
+   *
+   * This hides the default WFileUpload widget and uses the click-signal of the argument to
+   * open the file picker. The upload logic is still handled by WFileUpload behind the scenes.
+   * This action cannot be undone.
+   * 
+   * WFileUpload does not take ownership of the widget, nor does it display it. You must still 
+   * place it in the widget tree yourself.
+   */
+  void setDisplayWidget(WInteractWidget *widget);
+  
   /*! \brief %Signal emitted when a new file was uploaded.
    *
    * This signal is emitted when file upload has been completed.  It
@@ -318,8 +329,9 @@ private:
   static const int BIT_MULTIPLE         	= 3;
   static const int BIT_ENABLED_CHANGED  	= 4;
   static const int BIT_ACCEPT_ATTRIBUTE_CHANGED = 5;
+  static const int BIT_USE_DISPLAY_WIDGET       = 6;
 
-  std::bitset<6> flags_;
+  std::bitset<7> flags_;
 
   int textSize_;
 
@@ -328,6 +340,9 @@ private:
   JSignal<::int64_t> fileTooLarge_;
 
   Signal<::uint64_t, ::uint64_t> dataReceived_;
+
+  Core::observing_ptr<WInteractWidget> displayWidget_;
+  JSlot displayWidgetRedirect_;
 
   std::unique_ptr<WResource> fileUploadTarget_;
   std::unique_ptr<WProgressBar> containedProgressBar_;
@@ -338,6 +353,8 @@ private:
 
   void onData(::uint64_t current, ::uint64_t total);
   void onDataExceeded(::uint64_t dataExceeded);
+
+  std::string displayWidgetClickJS();
 
   virtual void setRequestTooLarge(::int64_t size) override;
 

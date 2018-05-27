@@ -60,7 +60,7 @@ namespace Wt {
  * (using setSelectionMode()), and listen for changes in the selection
  * using the selectionChanged() signal.
  *
- * You may enable drag & drop support for this view, whith awareness
+ * You may enable drag & drop support for this view, with awareness
  * of the items in the model. When enabling dragging (see
  * setDragEnabled()), the current selection may be dragged, but only
  * when all items in the selection indicate support for dragging
@@ -173,6 +173,7 @@ private:
   JSignal<WTouchEvent> itemTouchSelectEvent_;
 
   Signals::connection touchStartConnection_;
+  Signals::connection touchMoveConnection_;
   Signals::connection touchEndConnection_;
 
   /* Ajax only: First and last columns rendered (this somewhat
@@ -246,6 +247,7 @@ private:
   void handleMouseWentUp(bool headerColumns, const WMouseEvent& event);
   void handleTouchSelected(const WTouchEvent& event);
   void handleTouchStarted(const WTouchEvent& event);
+  void handleTouchMoved(const WTouchEvent& event);
   void handleTouchEnded(const WTouchEvent& event);
   WModelIndex translateModelIndex(bool headerColumns, const WMouseEvent& event);
   WModelIndex translateModelIndex(const Touch& touch);

@@ -109,7 +109,7 @@ void WSuggestionPopup::init()
 
   impl_->escapePressed().connect(this, &WWidget::hide);
 
-  filter_.connect(this, &WSuggestionPopup::doFilter);
+  filter_.connect(this, &WSuggestionPopup::scheduleFilter);
   jactivated_.connect(this, &WSuggestionPopup::doActivate);
 }
 
@@ -136,6 +136,8 @@ void WSuggestionPopup::render(WFlags<RenderFlag> flags)
 {
   if (flags.test(RenderFlag::Full))
     defineJavaScript();
+
+  doFilter(currentInputText_);
 
   WPopupWidget::render(flags);
 }
@@ -287,11 +289,6 @@ void WSuggestionPopup::modelLayoutChanged()
 
 void WSuggestionPopup::forEdit(WFormWidget *edit, WFlags<PopupTrigger> triggers)
 {
-	if(!edit)
-		return;
-  if(Utils::indexOf(edits_, edit) != -1)
-	return;
-
   EventSignalBase& b = edit->keyPressed();
 
   connectObjJS(b, "editKeyDown");
@@ -310,40 +307,6 @@ void WSuggestionPopup::forEdit(WFormWidget *edit, WFlags<PopupTrigger> triggers)
   }
 
   edits_.push_back(edit);
-}
-
-
-/*! \brief %Signal that indicates that the model should be filtered.
-*
-* The argument is the initial input. When \link
-* PopupTrigger::Editing Editing\endlink is used as edit
-* trigger, its length will always equal the filterLength(). When
-* \link PopupTrigger::DropDownIcon DropDownIcon\endlink is used
-* as edit trigger, the input length may be less than
-* filterLength(), and the the signal will be called repeatedly as
-* the user provides more input.
-*
-* For example, if you are using a WSortFilterProxyModel, you could
-* react to this signal with:
-* \if cpp
-* \code
-* void MyClass::filterSuggestions(const WString& filter)
-* {
-*   proxyModel->setFilterRegExp(filter + ".*");
-* }
-* \endcode
-* \elseif java
-* \code
-* public filterSuggestions(String filter) {
-*   proxyModel.setFilterRegExp(filter + ".*");
-* }
-* \endcode
-* \endif
-*/
-
-Signal<WT_USTRING, WFormWidget*>& WSuggestionPopup::filterModel()
-{
-	return filterModel_;
 }
 
 void WSuggestionPopup::setDropDownIconUnfiltered(bool isUnfiltered)
@@ -389,23 +352,16 @@ void WSuggestionPopup::setFilterLength(int length)
   filterLength_ = length;
 }
 
-void WSuggestionPopup::doFilter(std::string input, std::string editId)
+void WSuggestionPopup::scheduleFilter(std::string input)
 {
-  WFormWidget *edit = 0;
+  currentInputText_ = input;
+  scheduleRender();
+}
 
-  for (unsigned i = 0; i < edits_.size(); ++i)
-    if (edits_[i]->id() == editId) {
-      edit = edits_[i];
-      break;
-    }
-
-  if (edit == 0) {
-    LOG_ERROR("filter from bogus editor");
-	return;
-  }
-
+void WSuggestionPopup::doFilter(std::string input)
+{
   filtering_ = true;
-  filterModel_.emit(WT_USTRING::fromUTF8(input), edit);
+  filterModel_.emit(WT_USTRING::fromUTF8(input));
   filtering_ = false;
 
   /*

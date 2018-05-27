@@ -541,6 +541,8 @@ public:
    * object, and this method returns localizedStrings() downcasted to
    * this type.
    *
+   * \throws WException when localizedStrings() is not a WMessageResourceBundle
+   *
    * \sa WString::tr(const char *key)
    */
   WMessageResourceBundle& messageResourceBundle();
@@ -1267,7 +1269,7 @@ public:
    *         application and its widgets outside of the event loop.
    *
    * You can use this lock to manipulate widgets outside of the event
-   * loop. LabelOption::Inside the event loop (including events posted using
+   * loop. Inside the event loop (including events posted using
    * WServer::post()), this lock is already held by the library itself.
    *
    * The lock is recursive, so trying to take a lock, while already

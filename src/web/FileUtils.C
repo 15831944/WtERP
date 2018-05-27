@@ -215,5 +215,21 @@ namespace Wt {
 	return file;
     }
 
+    void appendFile(const std::string &srcFile,
+		    const std::string &targetFile)
+    {
+      std::ifstream ss(srcFile.c_str(),
+		       std::ios::in | std::ios::binary);
+      std::ofstream ts(targetFile.c_str(),
+		       std::ios::out | std::ios::binary | std::ios::app);
+      
+      const int LEN = 4096;
+      char buffer[LEN];
+      while (!ss.eof()) {
+	ss.read(buffer, LEN);
+	ts.write(buffer, ss.gcount());
+      } 
+    }
+
   }
 }

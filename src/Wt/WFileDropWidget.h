@@ -12,7 +12,7 @@
 
 namespace Wt {
 
-class WFileDropUploadResource;
+class WMemoryResource;
   
 /*! \class WFileDropWidget Wt/WFileDropWidget.h Wt/WFileDropWidget.h
  *  \brief A widget that allows dropping files for upload.
@@ -25,9 +25,8 @@ class WFileDropUploadResource;
  * The file upload is done sequentially. All files before the currentIndex()
  * have either finished, failed or have been cancelled.
  *
- * The widget has the default style-class 'Wt-filedropzone'. An additional 
- * style class is applied when files are hovered over the widget. This can be
- * configured using the method setHoverStyleClass().
+ * The widget has the default style-class 'Wt-filedropzone'. The style-class
+ * 'Wt-dropzone-hover' is added when files are hovered over the widget.
  */
 class WT_API WFileDropWidget : public WContainerWidget {
 public:
@@ -80,12 +79,20 @@ public:
      */
     Signal<>& uploaded() { return uploaded_; }
 
+    void setFilterEnabled(bool enabled);
+    bool filterEnabled() { return filterEnabled_; }
+
+    bool isFiltered() const { return isFiltered_; }
+
     // Wt internal
-    File(int id, const std::string& fileName, const std::string& type, ::uint64_t size);
+    File(int id, const std::string& fileName, const std::string& type, ::uint64_t size, ::uint64_t chunkSize);
     int uploadId() const { return id_; }
-    void setUploadedFile(const Http::UploadedFile& file);
+    void handleIncomingData(const Http::UploadedFile& file, bool last);
     void cancel();
     bool cancelled() const;
+    void emitDataReceived(::uint64_t current, ::uint64_t total,
+			  bool filterSupported);
+    void setIsFiltered(bool filtered);
     
   private:
     int id_;
@@ -96,8 +103,13 @@ public:
     Signal< ::uint64_t, ::uint64_t > dataReceived_;
     Signal<> uploaded_;
 
+    bool uploadStarted_;
     bool uploadFinished_;
     bool cancelled_;
+    bool filterEnabled_;
+    bool isFiltered_;
+    unsigned nbReceivedChunks_;
+    ::uint64_t chunkSize_;
   };
 
 
@@ -145,8 +157,58 @@ public:
   
   /*! \brief Set the style class that is applied when a file is hovered over 
    * the widget.
+   *
+   * \deprecated Override the css rule '.Wt-filedropzone.Wt-dropzone-hover' instead.
    */
   void setHoverStyleClass(const std::string& className);
+
+  /*! \brief Sets input accept attributes
+   *
+   * The accept attribute may be specified to provide user agents with a 
+   * hint of what file types will be accepted. Use html input accept attributes
+   * as input.
+   * This only affects the popup that is shown when users click on the widget.
+   * A user can still drop any file type.
+   */
+  void setFilters(const std::string& acceptAttributes);
+
+  /*! \brief Highlight widget if a file is dragged anywhere on the page
+   *
+   * As soon as a drag enters anywhere on the page the styleclass
+   * 'Wt-dropzone-indication' is added to this widget. This can be useful to
+   * point the user to the correct place to drop the file. Once the user drags
+   * a file over the widget itself, the styleclass 'hover-style' is also
+   * added.
+   * This can be enabled for multiple dropwidgets if only one of them is
+   * visible at the same time.
+   *
+   * \sa setGlobalDropEnabled()
+   */
+  void setDropIndicationEnabled(bool enable);
+
+  /*! \brief Returns if the widget is highlighted for drags anywhere on the page
+   *
+   * \sa setDropIndicationEnabled()
+   */
+  bool dropIndicationEnabled() const;
+
+  /*! \brief Allow dropping the files anywhere on the page
+   *
+   * If enabled, a drop anywhere on the page will be forwarded to this widget.
+   * 
+   * \sa setDropIndicationEnabled()
+   */
+  void setGlobalDropEnabled(bool enable);
+
+  /*! \brief Returns if all drops are forwarded to this widget.
+   *
+   * \sa setGlobalDropEnabled
+   */
+  bool globalDropEnabled() const;
+
+  /*! \brief Supply a function to process file data before it is uploaded to the server.
+   */
+  void setJavaScriptFilter(const std::string& filterFn, ::uint64_t chunksize = 0, const std::vector<std::string>& imports = std::vector<std::string>());
 
   /*! \brief The signal triggers if one or more files are dropped.
    */
@@ -178,7 +240,9 @@ public:
   Signal<File*>& uploadFailed() { return uploadFailed_; }
 
 protected:
+  virtual std::string renderRemoveJs(bool recursive) override;
   virtual void enableAjax() override;
+  virtual void updateDom(DomElement& element, bool all) override;
 
 private:
   void setup();
@@ -189,20 +253,36 @@ private:
   void stopReceiving();
   void onData(::uint64_t current, ::uint64_t total);
   void onDataExceeded(::uint64_t dataExceeded);
+  void createWorkerResource();
+  void disableJavaScriptFilter();
 
   // Functions for handling incoming requests
-  void setUploadedFile(Http::UploadedFile file);
+  void proceedToNextFile();
   bool incomingIdCheck(int id);
-  
+
+  WMemoryResource *uploadWorkerResource_;
   class WFileDropUploadResource;
   WFileDropUploadResource *resource_;
   unsigned currentFileIdx_;
+
+  static const std::string WORKER_JS;
+  std::string jsFilterFn_;
+  std::vector<std::string> jsFilterImports_;
+  ::uint64_t chunkSize_;
+  bool filterSupported_;
+
+  std::string hoverStyleClass_;
+  bool acceptDrops_;
+  std::string acceptAttributes_;
+  bool dropIndicationEnabled_;
+  bool globalDropEnabled_;
 
   JSignal<std::string> dropSignal_;
   JSignal<int> requestSend_;
   JSignal< ::uint64_t > fileTooLarge_;
   JSignal<int> uploadFinished_;
   JSignal<> doneSending_;
+  JSignal<> jsFilterNotSupported_;
   
   Signal<std::vector<File*> > dropEvent_;
   Signal<File*> uploadStart_;
@@ -211,6 +291,13 @@ private:
   Signal<File*> uploadFailed_;
   
   std::vector<File*> uploads_;
+
+  static const int BIT_HOVERSTYLE_CHANGED  = 0;
+  static const int BIT_ACCEPTDROPS_CHANGED = 1;
+  static const int BIT_FILTERS_CHANGED     = 2;
+  static const int BIT_DRAGOPTIONS_CHANGED = 3;
+  static const int BIT_JSFILTER_CHANGED    = 4;
+  std::bitset<5> updateFlags_;
   
   friend class WFileDropUploadResource;
 };

@@ -346,7 +346,11 @@ void WApplication::destroy()
 #ifndef WT_TARGET_JAVA
 WMessageResourceBundle& WApplication::messageResourceBundle()
 {
-  return *(dynamic_cast<WMessageResourceBundle *>(localizedStrings().get()));
+  auto result = dynamic_cast<WMessageResourceBundle*>(localizedStrings().get());
+  if (result)
+    return *result;
+  else
+    throw WException("messageResourceBundle(): failed to cast localizedStrings() to WMessageResourceBundle*!");
 }
 #endif // !WT_TARGET_JAVA
 
@@ -375,6 +379,13 @@ std::string WApplication::onePixelGifUrl()
 
 WApplication::~WApplication()
 {
+  // First remove all children owned by this WApplication (issue #6282)
+  for (WContainerWidget *domRoot : {domRoot_.get(), domRoot2_.get()}) {
+    if (domRoot)
+      for (WWidget *child : domRoot->children())
+        removeChild(child);
+  }
+
   /* Clear domRoot */
   domRoot_.reset();
 

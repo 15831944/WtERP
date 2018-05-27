@@ -64,8 +64,8 @@ WT_DECLARE_WT_MEMBER
 	       // WPointF
 	       var x = t2[0], y = t2[1];
 	       return [
-	         t1[M11] * x + t1[M12] * y + t1[M13],
-	         t1[M21] * x + t1[M22] * y + t1[M23]
+	         t1[M11] * x + t1[M21] * y + t1[M13],
+	         t1[M12] * x + t1[M22] * y + t1[M23]
 	       ];
 	    }
 	    if (t2.length === 3) {
@@ -75,8 +75,8 @@ WT_DECLARE_WT_MEMBER
 	       // WPainterPath component
 	       var x = t2[0], y = t2[1];
 	       return [
-	         t1[M11] * x + t1[M12] * y + t1[M13],
-	         t1[M21] * x + t1[M22] * y + t1[M23],
+	         t1[M11] * x + t1[M21] * y + t1[M13],
+	         t1[M12] * x + t1[M22] * y + t1[M23],
 		 t2[2]
 	       ];
 	    }
@@ -105,12 +105,12 @@ WT_DECLARE_WT_MEMBER
 	    if (t2.length === 6) {
 	       // WTransform
 	       return [
-		  t1[M11] * t2[M11] + t1[M12] * t2[M21],
-		  t1[M11] * t2[M12] + t1[M12] * t2[M22],
-		  t1[M21] * t2[M11] + t1[M22] * t2[M21],
-		  t1[M21] * t2[M12] + t1[M22] * t2[M22],
-		  t1[M11] * t2[M13] + t1[M12] * t2[M23] + t1[M13],
-		  t1[M21] * t2[M13] + t1[M22] * t2[M23] + t1[M23]
+		  t1[M11] * t2[M11] + t1[M21] * t2[M12],
+		  t1[M12] * t2[M11] + t1[M22] * t2[M12],
+		  t1[M11] * t2[M21] + t1[M21] * t2[M22],
+		  t1[M12] * t2[M21] + t1[M22] * t2[M22],
+		  t1[M11] * t2[M13] + t1[M21] * t2[M23] + t1[M13],
+		  t1[M12] * t2[M13] + t1[M22] * t2[M23] + t1[M23]
 	       ];
 	    }
 	    return [];
@@ -222,6 +222,21 @@ WT_DECLARE_WT_MEMBER
 	    }
 	    return res;
 	 };
+         this.rect_intersection = function(rect1, rect2) {
+           rect1 = self.rect_normalized(rect1);
+           rect2 = self.rect_normalized(rect2);
+           var t = self.rect_top;
+           var b = self.rect_bottom;
+           var l = self.rect_left;
+           var r = self.rect_right;
+           var left = Math.max(l(rect1), l(rect2));
+           var right = Math.min(r(rect1), r(rect2));
+           var top = Math.max(t(rect1), t(rect2));
+           var bottom = Math.min(b(rect1), b(rect2));
+           var width = right - left;
+           var height = bottom - top;
+           return [left, top, width, height];
+         };
 	 this.drawRect = function(ctx, rect, fill, stroke) {
 	    rect = self.rect_normalized(rect);
 	    var t = self.rect_top(rect),
@@ -252,7 +267,91 @@ WT_DECLARE_WT_MEMBER
 		  ctx.moveTo(x(s), y(s));
 		  break;
 	       case LINE_TO:
-		  ctx.lineTo(x(s), y(s));
+                  (function(){
+                    var pos = i === 0 ? [0, 0] : path[i-1];
+                    var THRESHOLD = 0x1000000;
+                    var MARGIN = 50;
+                    if (!fill && !clip && stroke &&
+                        (x(s) - x(pos) > THRESHOLD ||
+                         y(s) - y(pos) > THRESHOLD)) {
+                      var t = ctx.wtTransform ? ctx.wtTransform : [1,0,0,1,0,0];
+                      var t_pos = self.transform_mult(t, pos);
+                      var t_s = self.transform_mult(t, s);
+                      var dx = x(t_s) - x(t_pos);
+                      var dy = y(t_s) - y(t_pos);
+                      var w = ctx.canvas.width;
+                      var h = ctx.canvas.height;
+                      var left = -MARGIN;
+                      var right = w + MARGIN;
+                      var top = -MARGIN;
+                      var bottom = h + MARGIN;
+                      var intersections = [];
+                      var k;
+                      function clamp(my_k) {
+                        if (my_k < 0)
+                          return 0;
+                        if (my_k > 1)
+                          return 1;
+                        else
+                          return my_k;
+                      }
+                      function inXRange(my_k) {
+                        var my_x = x(t_pos) + my_k * dx;
+                        return my_x >= left && my_x <= right;
+                      }
+                      function inYRange(my_k) {
+                        var my_y = y(t_pos) + my_k * dy;
+                        return my_y >= top && my_y <= bottom;
+                      }
+                      if (dx !== 0) {
+                        // Solve left = x(t_pos) + k * dx for k
+                        k = clamp((left - x(t_pos)) / dx);
+                        if (inYRange(k))
+                          intersections.push(k);
+                        // Solve right = x(t_pos) + k * dx for k
+                        k = clamp((right - x(t_pos)) / dx);
+                        if (inYRange(k))
+                          intersections.push(k);
+                      }
+                      if (dy !== 0) {
+                        // Solve top = y(t_pos) + k * dy for k
+                        k = clamp((top - y(t_pos)) / dy);
+                        if (inXRange(k))
+                          intersections.push(k);
+                        // Solve bottom = y(t_pos) + k * dy for k
+                        k = clamp((bottom - y(t_pos)) / dy);
+                        if (inXRange(k))
+                          intersections.push(k);
+                      }
+                      var points = [];
+                      var j = 0;
+                      for (j = 0; j < intersections.length; ++j) {
+                        var k = intersections[j];
+                        points.push([k,
+                                     x(pos) + k * (x(s) - x(pos)),
+                                     y(pos) + k * (y(s) - y(pos))]);
+                      }
+                      // sort on k
+                      points.sort(function(a,b){
+                        return a[0] - b[0];
+                      });
+                      // remove duplicates
+                      j = 1;
+                      while (j < points.length) {
+                        if (points[j][0] === points[j-1][0])
+                          points.splice(j, 1);
+                        else
+                          ++j;
+                      }
+                      if (points.length === 2) {
+                        ctx.moveTo(points[0][1], points[0][2]);
+                        ctx.lineTo(points[1][1], points[1][2]);
+                        ctx.moveTo(x(s), y(s));
+                      }
+                    } else {
+		      ctx.lineTo(x(s), y(s));
+                    }
+                  })();
 		  break;
 	       case CUBIC_C1:
 		  bezier.push(x(s), y(s));

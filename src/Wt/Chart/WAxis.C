@@ -32,6 +32,12 @@ namespace {
   const int AUTO_V_LABEL_PIXELS = 25;
   const int AUTO_H_LABEL_PIXELS = 80;
 
+  bool isfin(double d)
+  {
+    return -std::numeric_limits<double>::infinity() < d &&
+            d < std::numeric_limits<double>::infinity();
+  }
+
   double round125(double v) {
     double n = std::pow(10, std::floor(std::log10(v)));
     double msd = v / n;
@@ -140,6 +146,7 @@ WAxis::Segment::Segment(const Segment &other)
 WAxis::WAxis()
   : chart_(nullptr),
     axis_(Axis::X),
+    yAxis_(0),
     visible_(true),
     location_(AxisValue::Minimum),
     scale_(AxisScale::Linear),
@@ -157,7 +164,9 @@ WAxis::WAxis()
     textPen_(StandardColor::Black),
     titleOrientation_(Orientation::Horizontal),
     maxZoom_(4.0),
+    minZoom_(1.0),
     minimumZoomRange_(AUTO_MINIMUM),
+    maximumZoomRange_(AUTO_MAXIMUM),
     zoomMin_(AUTO_MINIMUM),
     zoomMax_(AUTO_MAXIMUM),
     zoomRangeDirty_(true),
@@ -180,10 +189,11 @@ WAxis::~WAxis()
 { }
 
 void WAxis::init(WAbstractChartImplementation* chart,
-		 Axis axis)
+                 Axis axis)
 {
   chart_ = chart;
   axis_ = axis;
+  yAxis_ = axis == Axis::Y2 ? 1 : 0;
 
   if (axis == Axis::X || axis_ == Axis::X3D || axis_ == Axis::Y3D) {
     if (chart_->chartType() == ChartType::Category) {
@@ -191,9 +201,20 @@ void WAxis::init(WAbstractChartImplementation* chart,
     } else if (scale_ == AxisScale::Discrete)
       scale_ = AxisScale::Linear;
   }
+}
 
-  if (axis == Axis::Y2)
-    visible_ = false;
+void WAxis::initYAxis(WAbstractChartImplementation* chart,
+                 int yAxis)
+{
+  if (yAxis == 0)
+    init(chart, Axis::Y1);
+  else if (yAxis == 1)
+    init(chart, Axis::Y2);
+  else {
+    chart_ = chart;
+    axis_ = Axis::Y;
+    yAxis_ = yAxis;
+  }
 }
 
 void WAxis::setVisible(bool visible)
@@ -856,7 +877,7 @@ void WAxis::computeRange(const Segment& segment) const
       double maximum = -std::numeric_limits<double>::max();
 
       WAbstractChartImplementation::RenderRange rr =
-	chart_->computeRenderRange(axis_, scale_);
+        chart_->computeRenderRange(axis_, yAxis_, scale_);
       minimum = rr.minimum;
       maximum = rr.maximum;
 
@@ -1183,7 +1204,7 @@ void WAxis::setZoomRange(double minimum, double maximum)
 double WAxis::zoomMinimum() const
 {
   double min = drawnMinimum();
-  if (zoomMin_ <= min) {
+  if (isfin(min) && zoomMin_ <= min) {
     return min;
   }
   return zoomMin_;
@@ -1192,7 +1213,7 @@ double WAxis::zoomMinimum() const
 double WAxis::zoomMaximum() const
 {
   double max = drawnMaximum();
-  if (zoomMax_ >= max) {
+  if (isfin(max) && zoomMax_ >= max) {
     return max;
   }
   return zoomMax_;
@@ -1282,7 +1303,9 @@ double WAxis::maxZoom() const
   double min = drawnMinimum();
   double max = drawnMaximum();
   double zoom = (max - min) / minimumZoomRange();
-  if (zoom < 1.0 || zoom != zoom)
+  if (!isfin(zoom))
+    return maxZoom_;
+  else if (zoom < 1.0)
     return 1.0;
   else
     return zoom;
@@ -1295,25 +1318,73 @@ void WAxis::setMinimumZoomRange(double size)
 
 double WAxis::minimumZoomRange() const
 {
-  double min = drawnMinimum();
-  double max = drawnMaximum();
   if (minimumZoomRange_ == AUTO_MINIMUM) {
+    double min = drawnMinimum();
+    double max = drawnMaximum();
     return (max - min) / maxZoom_;
   } else {
     return minimumZoomRange_;
   }
 }
 
+void WAxis::setMinZoom(double minZoom)
+{
+  if (minZoom < 1)
+    minZoom = 1;
+  if (maximumZoomRange_ != AUTO_MAXIMUM) {
+    setMaximumZoomRange((maximum() - minimum()) / minZoom);
+  }
+  set(minZoom_, minZoom);
+}
+
+double WAxis::minZoom() const
+{
+  double min = drawnMinimum();
+  double max = drawnMaximum();
+  double zoom = (max - min) / maximumZoomRange();
+  if (!isfin(zoom))
+    return minZoom_;
+  else if (zoom < 1.0)
+    return 1.0;
+  else
+    return zoom;
+}
+
+void WAxis::setMaximumZoomRange(double size)
+{
+  set(maximumZoomRange_, size);
+}
+
+double WAxis::maximumZoomRange() const
+{
+  if (maximumZoomRange_ == AUTO_MAXIMUM) {
+    double min = drawnMinimum();
+    double max = drawnMaximum();
+    return (max - min) / minZoom_;
+  } else {
+    return maximumZoomRange_;
+  }
+}
+
 void WAxis::getLabelTicks(std::vector<TickLabel>& ticks, int segment, AxisConfig config) const
 {
   static double EPSILON = 1E-3;
-  double divisor = std::pow(2.0, config.zoomLevel - 1);
+  double zoomFactor = std::pow(2.0, config.zoomLevel - 1);
+  if (zoomFactor > maxZoom()) {
+    zoomFactor = maxZoom();
+  }
+
+  double zoomRange = 0, zoomStart = 0, zoomEnd = 0;
+  zoomRange = zoomMaximum() - zoomMinimum();
+  zoomStart = zoomMinimum() - zoomRange;
+  zoomEnd = zoomMaximum() + zoomRange;
 
   const Segment& s = segments_[segment];
 
   switch (scale_) {
   case AxisScale::Discrete: {
-    int renderInterval = std::max(1, static_cast<int>(renderInterval_ / divisor));
+    int renderInterval = std::max(1, 
+                                  static_cast<int>(renderInterval_ / zoomFactor));
     if (renderInterval == 1) {
       ticks.push_back(TickLabel(s.renderMinimum, TickLength::Long));
       for (int i = (int)(s.renderMinimum + 0.5); i < s.renderMaximum; ++i) {
@@ -1334,7 +1405,7 @@ void WAxis::getLabelTicks(std::vector<TickLabel>& ticks, int segment, AxisConfig
     break;
   }
   case AxisScale::Linear: {
-    double interval = renderInterval_ / divisor;
+    double interval = renderInterval_ / zoomFactor;
     // Start labels at a round minimum
     double minimum = roundUp125(s.renderMinimum, interval);
     bool firstTickIsLong = true;
@@ -1349,9 +1420,22 @@ void WAxis::getLabelTicks(std::vector<TickLabel>& ticks, int segment, AxisConfig
 	firstTickIsLong = false;
       }
     }
-    for (int i = 0;; ++i) {
+    long long i = 0;
+    if (config.zoomLevel > 1 &&
+        chart_->onDemandLoadingEnabled()) {
+      // solve zoomStart = minimum + interval * i, and round down
+      long long newI = static_cast<long long>((zoomStart - minimum) / interval);
+      if (newI > 0)
+        i = newI;
+    }
+    for (;; ++i) {
       double v = minimum + interval * i;
 
+      if (config.zoomLevel > 1 &&
+          chart_->onDemandLoadingEnabled() &&
+          v - interval > zoomEnd) {
+        break;
+      }
       if (v - s.renderMaximum > EPSILON * interval)
 	break;
 
@@ -1438,7 +1522,7 @@ void WAxis::getLabelTicks(std::vector<TickLabel>& ticks, int segment, AxisConfig
       } else {
 	daysInterval = renderInterval_ / (60.0 * 60.0 * 24);
       }
-      daysInterval /= divisor;
+      daysInterval /= zoomFactor;
       if (daysInterval > 200) {
 	unit = DateTimeUnit::Years;
 	interval = std::max(1,
@@ -1529,6 +1613,31 @@ void WAxis::getLabelTicks(std::vector<TickLabel>& ticks, int segment, AxisConfig
        static_cast<unsigned int>(DateTimeUnit::Days)) || 
       !(roundLimits_ & AxisValue::Minimum);
 
+    if (config.zoomLevel > 1 &&
+        chart_->onDemandLoadingEnabled() &&
+        scale_ == AxisScale::DateTime) {
+      // Jump ahead to right before zoomStart
+      if (unit == DateTimeUnit::Hours) {
+          long long zs = static_cast<long long>(std::floor(zoomStart));
+          long long dl = zs - ((zs - getDateNumber(dt)) % (interval * 60 * 60));
+          if (dl > zoomStart)
+            dl -= (interval * 60 * 60); // compensate for modulo of negative number
+          dt = WDateTime::fromTime_t(static_cast<std::time_t>(dl));
+      } else if (unit == DateTimeUnit::Minutes) {
+          long long zs = static_cast<long long>(std::floor(zoomStart));
+          long long dl = zs - ((zs - getDateNumber(dt)) % (interval * 60));
+          if (dl > zoomStart)
+            dl -= (interval * 60); // compensate for modulo of negative number
+          dt = WDateTime::fromTime_t(static_cast<std::time_t>(dl));
+      } else if (unit == DateTimeUnit::Seconds) {
+          long long zs = static_cast<long long>(std::floor(zoomStart));
+          long long dl = zs - ((zs - getDateNumber(dt)) % interval);
+          if (dl > zoomStart)
+            dl -= interval; // compensate for modulo of negative number
+          dt = WDateTime::fromTime_t(static_cast<std::time_t>(dl));
+      }
+    }
+
     for (;;) {
       long long dl = getDateNumber(dt);
 
@@ -1549,6 +1658,13 @@ void WAxis::getLabelTicks(std::vector<TickLabel>& ticks, int segment, AxisConfig
 	next = dt.addSecs(interval * 60); break;
       case DateTimeUnit::Seconds:
 	next = dt.addSecs(interval); break;
+      }
+
+      if (config.zoomLevel > 1 &&
+          chart_->onDemandLoadingEnabled() &&
+          getDateNumber(next) < zoomStart) {
+        dt = next;
+        continue;
       }
 
       WString text;
@@ -1583,6 +1699,11 @@ void WAxis::getLabelTicks(std::vector<TickLabel>& ticks, int segment, AxisConfig
 	}
       }
       dt = next;
+
+      if (config.zoomLevel > 1 &&
+          chart_->onDemandLoadingEnabled() &&
+          dl > zoomEnd)
+        break;
     }
 
     break;
@@ -1678,7 +1799,6 @@ long long WAxis::getDateNumber(const WDateTime& dt) const
     return 1;
   }
 }
-
 
 double WAxis::calcAutoNumLabels(Orientation orientation, const Segment& s) const
 {

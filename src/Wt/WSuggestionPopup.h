@@ -32,8 +32,7 @@ enum class PopupTrigger {
   /*! \brief Shows popup when user clicks a drop down icon.
    *
    * The lineedit is modified to show a drop down icon, and clicking
-   * the icon shows the suggestions, very much like a WComboCox.
-   * line edit.
+   * the icon shows the suggestions, very much like a WComboBox.
    */
   DropDownIcon = 0x2
 };
@@ -436,7 +435,7 @@ public:
    * \endcode
    * \endif 
    */
-  Signal<WT_USTRING, WFormWidget*>& filterModel();
+  Signal<WT_USTRING>& filterModel() { return filterModel_; }
 
   /*! \brief %Signal emitted when a suggestion was selected.
    *
@@ -485,18 +484,21 @@ private:
   std::string       matcherJS_;
   std::string       replacerJS_;
 
-  Signal<WT_USTRING, WFormWidget *> filterModel_;
+  Signal<WT_USTRING> filterModel_;
   Signal<int, WFormWidget *> activated_;
 
   std::vector<Wt::Signals::connection> modelConnections_;
 
-  JSignal<std::string, std::string> filter_;
+  std::string currentInputText_;
+
+  JSignal<std::string> filter_;
   JSignal<std::string, std::string> jactivated_;
 
   std::vector<WFormWidget *> edits_;
 
   void init();
-  void doFilter(std::string input, std::string editId);
+  void scheduleFilter(std::string input);
+  void doFilter(std::string input);
   void doActivate(std::string itemId, std::string editId);
   void connectObjJS(EventSignalBase& s, const std::string& methodName);
 
