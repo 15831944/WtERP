@@ -472,6 +472,18 @@ WWidget *WMenuItem::contents() const
   return oContents_.get();
 }
 
+WWidget *WMenuItem::contentsSafe() const
+{
+	if(uContents_)
+		return uContents_.get();
+	else if(oContents_)
+		return oContents_.get();
+	else if(uContentsContainer_)
+		return uContentsContainer_->widget(0);
+	else if(oContentsContainer_)
+		return oContentsContainer_->widget(0);
+}
+
 WWidget *WMenuItem::contentsInStack() const
 {
   if (oContentsContainer_)
