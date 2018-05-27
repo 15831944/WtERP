@@ -16,6 +16,7 @@ namespace ERP
 	public:
 		AdminPageWidget(const std::string basePathComponent);
 
+		Wt::WMenuItem *createMenuItemAndLoad(unique_ptr<RecordFormView> contents);
 		Wt::WMenuItem *createMenuItemWrapped(unique_ptr<RecordFormView> contents);
 		Wt::WMenuItem *createMenuItemWrapped(const Wt::WString &label, const std::string &pathComponent, unique_ptr<AbstractFilteredList> contents);
 		Wt::WMenuItem *createMenuItemWrapped(const Wt::WString &label, const std::string &path, unique_ptr<Wt::WWidget> contents, bool isInternalPath);
@@ -24,7 +25,10 @@ namespace ERP
 		Wt::WMenuItem *createMenuItem(int index, const Wt::WString &label, const std::string &path, unique_ptr<Wt::WWidget> contents, bool isInternalPath);
 		bool checkPathComponentExist(const std::string &pathComponent) const;
 		void connectFormSubmitted(Wt::WMenuItem *item);
+		
 		void setDeniedPermissionWidget();
+		void setRecordNotFoundWidget();
+		void setRecordFormViewErrorWidget();
 
 		const std::string &basePathComponent() const { return _basePathComponent; }
 		Wt::WNavigationBar *sideBar() const { return _sideBar; }
@@ -40,6 +44,8 @@ namespace ERP
 		Wt::WStackedWidget *_stackWidget = nullptr;
 		Wt::WMenu *_menu = nullptr;
 		Wt::WTemplate *_deniedPermissionWidget = nullptr;
+		Wt::WTemplate *_recordNotFoundWidget = nullptr;
+		Wt::WTemplate *_recordFormViewErrorWidget = nullptr;
 		std::string _basePathComponent;
 
 		typedef std::map<Wt::WMenuItem*, Wt::Signals::connection> SignalMap;
@@ -89,6 +95,12 @@ namespace ERP
 	{
 	public:
 		UsersAdminPage();
+	};
+
+	class AssetsAdminPage : public AdminPageWidget
+	{
+	public:
+		AssetsAdminPage();
 	};
 
 }

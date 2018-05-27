@@ -83,6 +83,7 @@
 <message id="Accounts">Accounts</message>
 <message id="account">account</message>
 <message id="Asset">Asset</message>
+<message id="Assets">Assets</message>
 <message id="Liability">Liability</message>
 <message id="Receipt">Receipt</message>
 <message id="Payment">Payment</message>

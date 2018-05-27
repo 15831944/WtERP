@@ -1,0 +1,3 @@
+DO's AND DON'Ts
+
+ALWAYS initialize pointer with a nullptr

@@ -3,17 +3,18 @@
 #include "Dbo/Configuration.h"
 #include "Dbo/PermissionsDatabase.h"
 
-#include "Widgets/FindRecordEdit.h"
 #include "Widgets/AdminPages.h"
-#include "Widgets/EntityView.h"
-#include "Widgets/EntityList.h"
-#include "Widgets/AccountMVC.h"
-#include "Widgets/LocationMVC.h"
-#include "Widgets/EntryCycleMVC.h"
-#include "Widgets/HRMVC.h"
-#include "Widgets/AttendanceMVC.h"
-#include "Widgets/UserMVC.h"
 #include "Widgets/AuthWidget.h"
+
+#include "ModelView/FindRecordEdit.h"
+#include "ModelView/EntityView.h"
+#include "ModelView/EntityList.h"
+#include "ModelView/AccountMVC.h"
+#include "ModelView/LocationMVC.h"
+#include "ModelView/EntryCycleMVC.h"
+#include "ModelView/HRMVC.h"
+#include "ModelView/AttendanceMVC.h"
+#include "ModelView/UserMVC.h"
 
 #include <Wt/WNavigationBar.h>
 #include <Wt/WStackedWidget.h>
@@ -202,7 +203,7 @@ namespace ERP
 			"box-shadow: -1px 1px 2px 0px #000;");
 
 		useStyleSheet(Wt::WLink("style.css"));
-		useStyleSheet(Wt::WLink(resourcesUrl() + "font-awesome/css/font-awesome.min.css"));
+		useStyleSheet(Wt::WLink(relativeResourcesUrl() + "font-awesome/css/font-awesome.min.css"));
 
 		auto theme = make_unique<Wt::WBootstrapTheme>();
 		theme->setVersion(Wt::WBootstrapTheme::Version::v3);
@@ -306,7 +307,7 @@ namespace ERP
 			if(id != -1)
 			{
 				auto view = make_unique<EntityView>(dboSession().loadLazy<Entity>(id));
-				_entitiesAdminPage->createMenuItemWrapped(move(view));
+				_entitiesAdminPage->createMenuItemAndLoad(move(view));
 				return;
 			}
 
@@ -315,7 +316,7 @@ namespace ERP
 			if(id != -1)
 			{
 				auto view = make_unique<EmployeeAssignmentView>(dboSession().loadLazy<EmployeeAssignment>(id));
-				_entitiesAdminPage->createMenuItemWrapped(move(view));
+				_entitiesAdminPage->createMenuItemAndLoad(move(view));
 				return;
 			}
 
@@ -324,7 +325,7 @@ namespace ERP
 			if(id != -1)
 			{
 				auto view = make_unique<ClientAssignmentView>(dboSession().loadLazy<ClientAssignment>(id));
-				_entitiesAdminPage->createMenuItemWrapped(move(view));
+				_entitiesAdminPage->createMenuItemAndLoad(move(view));
 				return;
 			}
 
@@ -333,7 +334,7 @@ namespace ERP
 			if(id != -1)
 			{
 				auto view = make_unique<AccountView>(dboSession().loadLazy<Account>(id));
-				_accountsAdminPage->createMenuItemWrapped(move(view));
+				_accountsAdminPage->createMenuItemAndLoad(move(view));
 				return;
 			}
 
@@ -342,7 +343,7 @@ namespace ERP
 			if(id != -1)
 			{
 				auto view = make_unique<AccountEntryView>(dboSession().loadLazy<AccountEntry>(id));
-				_accountsAdminPage->createMenuItemWrapped(move(view));
+				_accountsAdminPage->createMenuItemAndLoad(move(view));
 				return;
 			}
 
@@ -351,7 +352,7 @@ namespace ERP
 			if(id != -1)
 			{
 				auto view = make_unique<IncomeCycleView>(dboSession().loadLazy<IncomeCycle>(id));
-				_accountsAdminPage->createMenuItemWrapped(move(view));
+				_accountsAdminPage->createMenuItemAndLoad(move(view));
 				return;
 			}
 
@@ -360,7 +361,7 @@ namespace ERP
 			if(id != -1)
 			{
 				auto view = make_unique<ExpenseCycleView>(dboSession().loadLazy<ExpenseCycle>(id));
-				_accountsAdminPage->createMenuItemWrapped(move(view));
+				_accountsAdminPage->createMenuItemAndLoad(move(view));
 				return;
 			}
 
@@ -369,7 +370,7 @@ namespace ERP
 			if(id != -1)
 			{
 				auto view = make_unique<AttendanceEntryView>(dboSession().loadLazy<AttendanceEntry>(id));
-				_attendanceAdminPage->createMenuItemWrapped(move(view));
+				_attendanceAdminPage->createMenuItemAndLoad(move(view));
 				return;
 			}
 
@@ -378,7 +379,7 @@ namespace ERP
 			if(id != -1)
 			{
 				auto view = make_unique<AttendanceDeviceView>(dboSession().loadLazy<AttendanceDevice>(id));
-				_attendanceAdminPage->createMenuItemWrapped(move(view));
+				_attendanceAdminPage->createMenuItemAndLoad(move(view));
 				return;
 			}
 
@@ -387,7 +388,7 @@ namespace ERP
 			if(id != -1)
 			{
 				auto view = make_unique<UserView>(dboSession().loadLazy<AuthInfo>(id));
-				_usersAdminPage->createMenuItemWrapped(move(view));
+				_usersAdminPage->createMenuItemAndLoad(move(view));
 				return;
 			}
 
@@ -396,7 +397,7 @@ namespace ERP
 			if(id != -1)
 			{
 				auto view = make_unique<RegionView>(dboSession().loadLazy<Region>(id));
-				_usersAdminPage->createMenuItemWrapped(move(view));
+				_usersAdminPage->createMenuItemAndLoad(move(view));
 				return;
 			}
 		}
@@ -476,6 +477,7 @@ namespace ERP
 		_dashboardAdminPage = addMenuItem(_adminMenu, tr("Dashboard"), make_unique<DashboardAdminPage>());
 		_entitiesAdminPage = addMenuItem(_adminMenu, tr("Entities"), make_unique<EntitiesAdminPage>());
 		_accountsAdminPage = addMenuItem(_adminMenu, tr("FinancialRecords"), make_unique<AccountsAdminPage>());
+		_assetsAdminPage = addMenuItem(_adminMenu, tr("Assets"), make_unique<AssetsAdminPage>());
 		_attendanceAdminPage = addMenuItem(_adminMenu, tr("Attendance"), make_unique<AttendanceAdminPage>());
 
 		//Users

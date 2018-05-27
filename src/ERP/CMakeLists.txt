@@ -7,13 +7,13 @@ INCLUDE_DIRECTORIES(${GM_INCLUDE_DIRS})
 FILE(GLOB_RECURSE sources_dbo Dbo/*.cpp Dbo/*.h)
 FILE(GLOB_RECURSE sources_application Application/*.cpp Application/*.h)
 FILE(GLOB_RECURSE sources_widgets Widgets/*.cpp Widgets/*.h)
-FILE(GLOB_RECURSE sources_utilities Utilities/*.cpp Utilities/*.h)
+FILE(GLOB_RECURSE sources_modelview ModelView/*.cpp ModelView/*.h)
 FILE(GLOB sources_localdir *.cpp *.h)
 #Group File
 SOURCE_GROUP(Dbo FILES ${sources_dbo})
 SOURCE_GROUP(Application FILES ${sources_application})
 SOURCE_GROUP(Widgets FILES ${sources_widgets})
-SOURCE_GROUP(Utilities FILES ${sources_utilities})
+SOURCE_GROUP(ModelView FILES ${sources_modelview})
 SOURCE_GROUP("" FILES ${sources_localdir})
 
 #Concatenate Files Lists
@@ -21,7 +21,7 @@ SET(ERP_SRCS
 	${sources_dbo}
 	${sources_application}
 	${sources_widgets}
-	${sources_utilities}
+	${sources_modelview}
 	${sources_localdir}
 )
 #Set Target/Project name
@@ -37,12 +37,14 @@ ENDIF(MSVC)
 
 #Link Libraries
 TARGET_LINK_LIBRARIES(${WT_PROJECT_TARGET}
+	PUBLIC
 	wthttp
 	wt
 	wtdbo
 	wtdbosqlite3
 	wtdbomysql
 	${GM_LIBRARIES}
+	PRIVATE ${CMAKE_THREAD_LIBS_INIT}
 #	wtdbofirebird
 #	wtdbopostgres
 )

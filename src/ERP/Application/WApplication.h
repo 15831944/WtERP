@@ -27,6 +27,7 @@ namespace ERP
 	class ServiceProxyModel;
 	class RegionProxyModel;
 	class AccountsAdminPage;
+	class AssetsAdminPage;
 	class AuthWidget;
 	class AdminPageWidget;
 
@@ -181,6 +182,7 @@ namespace ERP
 		EntitiesAdminPage *_entitiesAdminPage = nullptr;
 		AccountsAdminPage *_accountsAdminPage = nullptr;
 		AttendanceAdminPage *_attendanceAdminPage = nullptr;
+		AssetsAdminPage *_assetsAdminPage = nullptr;
 		UsersAdminPage *_usersAdminPage = nullptr;
 
 		unique_ptr<Wt::WDialog> _errorDialog;

@@ -800,6 +800,10 @@ ${</not-readonly>}
 </message>
 
 <message id="ERP.DeniedPermission">
+<div class="container">${block:ERP.DeniedPermissionBlock}</div>
+</message>
+
+<message id="ERP.DeniedPermissionBlock">
 <div class="text-center">
 	<h1><i class="fa fa-lock"></i></h1>
 	<h1>${tr:PermissionDenied}</h1>
@@ -809,42 +813,8 @@ ${</not-readonly>}
 <message id="ERP.RecordFormView">
 ${<s:error>}${block:ERP.RecordFormViewError}${</s:error>}
 ${<s:not-found>}${block:ERP.RecordNotFound}${</s:not-found>}
-${<s:valid>}
-	${<p:denied>}${block:ERP.DeniedPermission}${</p:denied>}
-	${<p:permitted>}{1}${</p:permitted>}
-${</s:valid>}
+${<s:permission-denied>}${block:ERP.DeniedPermission}${</s:permission-denied>}
+${<s:valid>}{1}${</s:valid>}
 </message>
-
-<!-- 
-<message id="ERP.Admin.EmployeeExpenseView.Assignment">
-${assignments}
-<hr />
-${cycles}
-${add-cycle}
-${add-assignment}
-</message>
-<message id="ERP.Admin.EmployeeExpenseView.ExpenseCycle">
-${cycles}
-<hr />
-${assignments}
-${add-assignment}
-${add-cycle}
-</message>
-
-<message id="ERP.Admin.ClientIncomeView.Assignment">
-${assignments}
-<hr />
-${cycles}
-${add-cycle}
-${add-assignment}
-</message>
-<message id="ERP.Admin.ClientIncomeView.IncomeCycle">
-${cycles}
-<hr />
-${assignments}
-${add-assignment}
-${add-cycle}
-</message>
--->
 
 </messages>

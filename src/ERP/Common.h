@@ -61,6 +61,7 @@
 			#define REGION_PREFIX "region-"
 			#define NEW_REGION_PATHC "new"
 
+	#define ASSETS_PATHC "assets"
 #define DEFINE_DBO_TABLENAME(tName) \
 constexpr static const char *tableName() { return tName; } \
 static std::string tStr() { return tName; }
@@ -102,6 +103,12 @@ namespace ERP
 			RegionalUser = 1002,
 		};
 	}
+
+	class PermissionDeniedException : public std::exception
+	{
+	public:
+		virtual const char *what() const noexcept override { return "Permission denied."; }
+	};
 
 	inline Wt::WString tr(const std::string &key) { return Wt::WString::tr(key); }
 	inline Wt::WString tr(const char *key) { return Wt::WString::tr(key); }

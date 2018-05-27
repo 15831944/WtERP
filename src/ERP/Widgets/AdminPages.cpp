@@ -1,12 +1,12 @@
 #include "Widgets/AdminPages.h"
-#include "Widgets/EntityView.h"
-#include "Widgets/EntityList.h"
-#include "Widgets/AccountMVC.h"
-#include "Widgets/EntryCycleMVC.h"
-#include "Widgets/HRMVC.h"
-#include "Widgets/AttendanceMVC.h"
-#include "Widgets/UserMVC.h"
-#include "Widgets/DashboardWidgets.h"
+#include "ModelView/EntityView.h"
+#include "ModelView/EntityList.h"
+#include "ModelView/AccountMVC.h"
+#include "ModelView/EntryCycleMVC.h"
+#include "ModelView/HRMVC.h"
+#include "ModelView/AttendanceMVC.h"
+#include "ModelView/UserMVC.h"
+#include "ModelView/DashboardWidgets.h"
 
 #include <Wt/WNavigationBar.h>
 #include <Wt/WMenu.h>
@@ -32,6 +32,30 @@ namespace ERP
 			_menu->setInternalPathEnabled("/" ADMIN_PATHC "/");
 		else
 			_menu->setInternalPathEnabled("/" ADMIN_PATHC "/" + _basePathComponent + "/");
+	}
+	
+	Wt::WMenuItem *AdminPageWidget::createMenuItemAndLoad(unique_ptr<RecordFormView> contents)
+	{
+		TRANSACTION(APP);
+		try
+		{
+			contents->load();
+			return createMenuItemWrapped(move(contents));
+		}
+		catch(const Wt::Dbo::ObjectNotFoundException &)
+		{
+			setRecordNotFoundWidget();
+		}
+		catch(const PermissionDeniedException &)
+		{
+			setDeniedPermissionWidget();
+		}
+		catch(const Dbo::Exception &e)
+		{
+			Wt::log("error") << "AdminPageWidget::createMenuItemAndLoad(): Dbo error(" << e.code() << "): " << e.what();
+			setRecordFormViewErrorWidget();
+		}
+		return nullptr;
 	}
 
 	Wt::WMenuItem *AdminPageWidget::createMenuItemWrapped(unique_ptr<RecordFormView> contents)
@@ -141,7 +165,24 @@ namespace ERP
 
 		_stackWidget->setCurrentWidget(_deniedPermissionWidget);
 	}
-
+	
+	void AdminPageWidget::setRecordNotFoundWidget()
+	{
+		if(!_recordNotFoundWidget)
+			_recordNotFoundWidget = _stackWidget->addNew<Wt::WTemplate>(tr("ERP.RecordNotFound"));
+		
+		_stackWidget->setCurrentWidget(_recordNotFoundWidget);
+	}
+	
+	void AdminPageWidget::setRecordFormViewErrorWidget()
+	{
+		
+		if(!_recordFormViewErrorWidget)
+			_recordFormViewErrorWidget = _stackWidget->addNew<Wt::WTemplate>(tr("ERP.RecordFormViewError"));
+		
+		_stackWidget->setCurrentWidget(_recordFormViewErrorWidget);
+	}
+	
 	AdminPageContentWidget::AdminPageContentWidget(const Wt::WString &title, unique_ptr<Wt::WWidget> content)
 		: Wt::WTemplate(tr("ERP.Admin.Main.Content"))
 	{
@@ -280,4 +321,9 @@ namespace ERP
 		}
 	}
 
+	AssetsAdminPage::AssetsAdminPage()
+		: AdminPageWidget(ASSETS_PATHC)
+	{
+		menu()->addSeparator();
+	}
 }

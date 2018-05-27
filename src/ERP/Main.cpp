@@ -9,7 +9,6 @@
 //TODO: Check for shared_ptr and Dbo::ptr circular circular references
 //TODO: Localize DateTimes
 //TODO: Modernize code
-//TODO: ViewName() and ViewTitle()
 //TODO: Make Location-Entity a ManyToMany relation
 //TODO: Fix LOG_ERROR(Wt::Dbo::ptr) useless errors
 //TODO: Upgrade Font Awesome
@@ -19,6 +18,7 @@
 //TODO: Follow WMenuItem bug report
 //TODO: Create indexes
 
+//TODO: viewName() and viewTitle()
 //TODO: viewName() for record not found
 //TODO: delete menu items with same internal path on submit handler
 //TODO: FormView error on initView() reload replace object, WApplication::initDboQueryModel exception safety

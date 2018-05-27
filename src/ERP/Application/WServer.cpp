@@ -2,7 +2,7 @@
 #include "Dbo/Dbos.h"
 #include "Dbo/ConfigurationsDatabase.h"
 #include "Dbo/PermissionsDatabase.h"
-#include "Utilities/TaskScheduler.h"
+#include "Application/TaskScheduler.h"
 
 #include <Wt/Dbo/FixedSqlConnectionPool.h>
 #include <Wt/Dbo/backend/MySQL.h>
