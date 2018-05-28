@@ -596,7 +596,7 @@
 	      -->
 	    <!-- <property name="favicon">images/favicon.ico</property> -->
 		
-	    <property name="DbBackend">SQLite</property> <!-- MySQL or SQLite -->
+	    <property name="DbBackend">MySQL</property> <!-- MySQL or SQLite -->
 		
 	    <property name="SQLiteDb">:memory:</property>
 		
@@ -606,7 +606,7 @@
 	    <property name="MySQLUser">root</property>
 	    <property name="MySQLPassword"></property>
 		
-	    <property name="ReinstallDb">true</property>
+	    <property name="ReinstallDb">false</property>
 	</properties>
 
     </application-settings>
