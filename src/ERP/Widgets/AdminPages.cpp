@@ -133,13 +133,18 @@ namespace ERP
 			_submitSignalMap.erase(submittedItem);
 			return;
 		}
-
+		
 		Wt::WMenuItem *newItem = createMenuItem(submittedView->viewName(), submittedView->viewInternalPath(), submittedItem->removeContents(), true);
 		contentContainer->title()->setText(submittedView->viewName());
-
+		
 		auto newFormView = submittedView->createFormView();
 		auto newPageContainer = make_unique<AdminPageContentWidget>(submittedItem->text(), move(newFormView));
+		
+		//Workaround for Wt bug with setContents() after the item has been inserted
+		int index = menu()->indexOf(submittedItem);
+		auto uSubmittedItem = menu()->removeItem(submittedItem);
 		submittedItem->setContents(move(newPageContainer), Wt::ContentLoading::Lazy);
+		menu()->insertItem(index, move(uSubmittedItem));
 
 		_submitSignalMap[submittedItem].disconnect();
 		connectFormSubmitted(submittedItem);

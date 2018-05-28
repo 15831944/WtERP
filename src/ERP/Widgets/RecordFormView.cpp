@@ -243,6 +243,9 @@ namespace ERP
 			resetValidationAll();
 		else
 			_editModeEnabled = false;
+		
+		if(!checkPermissions())
+			_loadState = PermissionDeniedState;
 
 		updateView();
 		if(!nothingSaved)
