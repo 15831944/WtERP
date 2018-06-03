@@ -421,7 +421,7 @@ namespace ERP
 		if(_entityPtr.id() != -1)
 			_baseQuery.where("c.entity_id = ?").bind(_entityPtr.id());
 
-		model->setQuery(generateQuery());
+		model->setQuery(generateFilteredQuery());
 		addColumn(ViewId, model->addColumn("c.id"), tr("ID"), IdColumnWidth);
 		addColumn(ViewCreatedOn, model->addColumn("c.timestamp"), tr("CreatedOn"), DateTimeColumnWidth);
 
@@ -452,7 +452,7 @@ namespace ERP
 		if(_entityPtr.id() != -1)
 			_baseQuery.where("c.entity_id = ?").bind(_entityPtr.id());
 
-		model->setQuery(generateQuery());
+		model->setQuery(generateFilteredQuery());
 		addColumn(ViewId, model->addColumn("c.id"), tr("ID"), IdColumnWidth);
 		addColumn(ViewCreatedOn, model->addColumn("c.timestamp"), tr("CreatedOn"), DateTimeColumnWidth);
 

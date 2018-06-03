@@ -628,7 +628,7 @@ namespace ERP
 
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "a.");
 
-		model->setQuery(generateQuery());
+		model->setQuery(generateFilteredQuery());
 		addColumn(ViewId, model->addColumn("a.id"), tr("ID"), IdColumnWidth);
 		addColumn(ViewCreatedOn, model->addColumn("a.timestamp"), tr("CreatedOn"), DateTimeColumnWidth);
 
@@ -952,7 +952,7 @@ namespace ERP
 
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "ca.");
 
-		model->setQuery(generateQuery());
+		model->setQuery(generateFilteredQuery());
 		addColumn(ViewId, model->addColumn("ca.id"), tr("ID"), IdColumnWidth);
 		addColumn(ViewCreatedOn, model->addColumn("ca.timestamp"), tr("CreatedOn"), DateTimeColumnWidth);
 

@@ -166,7 +166,7 @@ namespace ERP
 		
 	protected:
 		void handleAddFilter();
-		void handleApplyFilters();
+		void applyFilters();
 
 		Wt::WContainerWidget *_filterWidgetsContainer = nullptr;
 		Wt::WComboBox *_filtersComboBox = nullptr;
@@ -183,7 +183,6 @@ namespace ERP
 	{
 	public:
 		virtual void load() override;
-		virtual void applyFilter(const std::string &sqlCondition) = 0;
 		void enableFilters();
 		void resetColumnWidths();
 		int viewIndexToColumn(int viewIndex) const;
@@ -220,8 +219,8 @@ namespace ERP
 		virtual void reload() override;
 
 	protected:
-		virtual void applyFilter(const std::string &sqlCondition) override;
 		virtual Dbo::Query<ResultType> generateQuery() const { return _baseQuery; }
+		Dbo::Query<ResultType> generateFilteredQuery();
 
 		Dbo::Query<ResultType> _baseQuery;
 	};
@@ -297,7 +296,7 @@ namespace ERP
 		try
 		{
 			if(loaded())
-				queryModel()->setQuery(generateQuery(), true);
+				queryModel()->setQuery(generateFilteredQuery(), true);
 			else
 				load();
 		}
@@ -307,40 +306,35 @@ namespace ERP
 			APP->showDbBackendError(e.code());
 		}
 	}
-
+	
 	template<typename T>
-	void QueryModelFilteredList<T>::applyFilter(const std::string &sqlCondition)
+	Dbo::Query<T> QueryModelFilteredList<T>::generateFilteredQuery()
 	{
-		if(!filtersTemplate())
-			return;
-
-		WApplication *app = APP;
 		auto model = queryModel();
-		Dbo::Query<ResultType> query(_baseQuery);
-
-		if(!sqlCondition.empty())
+		Dbo::Query<ResultType> query = generateQuery();
+		
+		if(filtersTemplate())
 		{
-			query.where(sqlCondition);
+			std::string sqlCondition;
 			for(auto model : filtersTemplate()->_modelVector)
 			{
 				if(!model->enabled())
 					continue;
-
+				
+				std::string thisCondition = model->sqlCondition();
+				if(thisCondition.empty())
+					continue;
+				thisCondition = "(" + thisCondition + ")";
+				sqlCondition += thisCondition + " AND ";
+				
 				auto values = model->boundValues();
 				for(const std::string &v : values)
 					query.bind(v);
 			}
+			
+			query.where(sqlCondition.substr(0, sqlCondition.size() - 5));
 		}
-
-		try
-		{
-			model->setQuery(query, true);
-		}
-		catch(const Dbo::Exception &e)
-		{
-			Wt::log("error") << "QueryModelFilteredList::applyFilter(): Dbo error(" << e.code() << "): " << e.what();
-			app->showDbBackendError(e.code());
-		}
+		return query;
 	}
 }
 

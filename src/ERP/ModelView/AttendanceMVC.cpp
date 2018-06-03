@@ -27,7 +27,7 @@ namespace ERP
 			"LEFT JOIN " + Country::tStr() + " cnt ON (cnt.code = l.country_code) "
 			"LEFT JOIN " + City::tStr() + " city ON (city.id = l.city_id)");
 
-		model->setQuery(generateQuery());
+		model->setQuery(generateFilteredQuery());
 		addColumn(ViewId, model->addColumn("d.id"), tr("ID"), IdColumnWidth);
 		addColumn(ViewHostName, model->addColumn("dv.hostName"), tr("Hostname"), 200);
 		addColumn(ViewCountry, model->addColumn("cnt.name"), tr("Country"), 150);
@@ -343,7 +343,7 @@ namespace ERP
 			"LEFT JOIN " + Country::tStr() + " cnt ON (cnt.code = l.country_code) "
 			"LEFT JOIN " + City::tStr() + " city ON (city.id = l.city_id)");
 
-		model->setQuery(generateQuery());
+		model->setQuery(generateFilteredQuery());
 		addColumn(ViewId, model->addColumn("a.id"), tr("ID"), IdColumnWidth);
 		addColumn(ViewEntity, model->addColumn("e.name"), tr("Entity"), 200);
 		addColumn(ViewTimestampIn, model->addColumn("a.timestampIn"), tr("TimeIn"), DateTimeColumnWidth);

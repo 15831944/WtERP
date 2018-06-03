@@ -30,7 +30,7 @@ namespace ERP
 		).bind(Wt::Auth::Identity::LoginName);
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "u.");
 
-		model->setQuery(generateQuery());
+		model->setQuery(generateFilteredQuery());
 		addColumn(ViewId, model->addColumn("ainfo.id"), tr("ID"), IdColumnWidth);
 		addColumn(ViewLoginName, model->addColumn("aid.identity"), tr("UserName"), 150);
 		addColumn(ViewEmail, model->addColumn("ainfo.email"), tr("Email"), EmailColumnWidth);
@@ -401,7 +401,7 @@ namespace ERP
 		_baseQuery = app->dboSession().query<ResultType>(
 			"SELECT r.id, r.name FROM " + Region::tStr() + " r ");
 
-		model->setQuery(generateQuery());
+		model->setQuery(generateFilteredQuery());
 		addColumn(ViewId, model->addColumn("r.id"), tr("ID"), IdColumnWidth);
 		addColumn(ViewName, model->addColumn("r.name"), tr("Name"), 300);
 

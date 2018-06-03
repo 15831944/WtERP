@@ -484,7 +484,7 @@ namespace ERP
 			"LEFT JOIN " + City::tStr() + " city ON city.id = l.city_id "
 			"LEFT JOIN " + Entity::tStr() + " e ON e.id = l.entity_id ");
 
-		model->setQuery(generateQuery());
+		model->setQuery(generateFilteredQuery());
 		addColumn(ViewId, model->addColumn("l.id"), tr("ID"), IdColumnWidth);
 		addColumn(ViewAddress, model->addColumn("l.address"), tr("Address"), AddressColumnWidth);
 		addColumn(ViewCountryName, model->addColumn("cnt.name"), tr("Country"), CountryColumnWidth);

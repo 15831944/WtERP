@@ -126,7 +126,7 @@ namespace ERP
 		addFilter->clicked().connect(this, &FiltersTemplate::handleAddFilter);
 
 		auto applyFilters = bindNew<Wt::WPushButton>("apply-filter", tr("ApplyFilters"));
-		applyFilters->clicked().connect(this, &FiltersTemplate::handleApplyFilters);
+		applyFilters->clicked().connect(this, &FiltersTemplate::applyFilters);
 
 		_filterWidgetsContainer = bindNew<Wt::WContainerWidget>("filters-container");
 	}
@@ -229,6 +229,13 @@ namespace ERP
 	{
 		addFilter(_filtersComboBox->currentIndex());
 	}
+	
+	void FiltersTemplate::applyFilters()
+	{
+		for(const auto &model : _modelVector)
+			model->updateModel();
+		_filteredList->reload();
+	}
 
 	void FiltersTemplate::addFilter(int filtersComboIndex)
 	{
@@ -240,7 +247,7 @@ namespace ERP
 		if(!newWidget)
 			return;
 
-		 Wt::WTemplate *filterTemplate = _filterWidgetsContainer->addNew<Wt::WTemplate>();
+		Wt::WTemplate *filterTemplate = _filterWidgetsContainer->addNew<Wt::WTemplate>();
 		if(auto rangeEdit = dynamic_cast<RangeEdit*>(newWidget.get()))
 		{
 			filterTemplate->setTemplateText(tr("ERP.ListRangeFilterView"));
@@ -255,32 +262,12 @@ namespace ERP
 		model->checkbox()->setChecked(true);
 	}
 
-	void FiltersTemplate::handleApplyFilters()
-	{
-		std::string sqlCondition;
-		for(auto model : _modelVector)
-		{
-			model->updateModel();
-			if(!model->enabled())
-				continue;
-
-			std::string thisCondition = model->sqlCondition();
-			if(thisCondition.empty())
-				continue;
-
-			thisCondition = "(" + thisCondition + ")";
-			sqlCondition += thisCondition + " AND ";
-		}
-		sqlCondition = sqlCondition.substr(0, sqlCondition.size() - 5);
-		_filteredList->applyFilter(sqlCondition);
-	}
-
 	void FiltersTemplate::initIdEdit(Wt::WLineEdit *edit)
 	{
 		edit->setValidator(make_shared<Wt::WIntValidator>());
 		edit->setMaxLength(20);
 	}
-
+	
 	RangeEdit::RangeEdit()
 	{
 		setTextSize(30);

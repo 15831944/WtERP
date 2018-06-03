@@ -35,7 +35,7 @@ namespace ERP
 			"LEFT JOIN " + Entity::tStr() + " e ON (e.bal_account_id = acc.id OR e.pnl_account_id = acc.id)");
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "acc.");
 
-		model->setQuery(generateQuery());
+		model->setQuery(generateFilteredQuery());
 		addColumn(ViewId, model->addColumn("acc.id"), tr("ID"), IdColumnWidth);
 		addColumn(ViewName, model->addColumn("acc.name"), tr("Name"), AccountNameColumnWidth);
 		addColumn(ViewType, model->addColumn("acc.type"), tr("Type"), TypeColumnWidth);
@@ -181,7 +181,7 @@ namespace ERP
 
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "e.");
 
-		model->setQuery(generateQuery());
+		model->setQuery(generateFilteredQuery());
 		addColumn(ViewTimestamp, model->addColumn("e.timestamp"), tr("Timestamp"), DateTimeColumnWidth);
 		addColumn(ViewDescription, model->addColumn("e.description"), tr("Description"), 300);
 		addColumn(ViewOppositeAccount, model->addColumn("e.amount"), tr("OppositeEntryAccount"), AccountNameColumnWidth);
@@ -230,7 +230,7 @@ namespace ERP
 
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "e.");
 
-		model->setQuery(generateQuery());
+		model->setQuery(generateFilteredQuery());
 		addColumn(ViewTimestamp, model->addColumn("e.timestamp"), tr("Timestamp"), DateTimeColumnWidth);
 		addColumn(ViewDescription, model->addColumn("e.description"), tr("Description"), 300);
 		addColumn(ViewAmount, model->addColumn("e.amount"), tr("AmountRs"), AmountColumnWidth);

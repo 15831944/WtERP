@@ -33,7 +33,7 @@ namespace ERP
 			).groupBy("e.id");
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "e.");
 
-		model->setQuery(generateQuery());
+		model->setQuery(generateFilteredQuery());
 		addColumn(ViewId, model->addColumn("e.id"), tr("ID"), IdColumnWidth);
 		addColumn(ViewName, model->addColumn("e.name"), tr("Name"), NameColumnWidth);
 		addColumn(ViewEntityType, model->addColumn("e.type"), tr("Type"), TypeColumnWidth);
@@ -69,7 +69,7 @@ namespace ERP
 			).where("e.type = " + std::to_string(Entity::PersonType)).groupBy("e.id");
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "e.");
 
-		model->setQuery(generateQuery());
+		model->setQuery(generateFilteredQuery());
 		addColumn(ViewId, model->addColumn("e.id"), tr("ID"), IdColumnWidth);
 		addColumn(ViewName, model->addColumn("e.name"), tr("Name"), NameColumnWidth);
 		addColumn(ViewRole, model->addColumn("ea.id"), tr("Roles"), RolesColumnWidth);
@@ -104,7 +104,7 @@ namespace ERP
 			).where("e.type = " + std::to_string(Entity::BusinessType)).groupBy("e.id");
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "e.");
 
-		model->setQuery(generateQuery());
+		model->setQuery(generateFilteredQuery());
 		addColumn(ViewId, model->addColumn("e.id"), tr("ID"), IdColumnWidth);
 		addColumn(ViewName, model->addColumn("e.name"), tr("Name"), NameColumnWidth);
 		addColumn(ViewRole, model->addColumn("ea.id"), tr("Roles"), RolesColumnWidth);
@@ -139,7 +139,7 @@ namespace ERP
 			).groupBy("e.id");
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "e.");
 
-		model->setQuery(generateQuery());
+		model->setQuery(generateFilteredQuery());
 		addColumn(ViewId, model->addColumn("e.id"), tr("ID"), IdColumnWidth);
 		addColumn(ViewName, model->addColumn("e.name"), tr("Name"), NameColumnWidth);
 		addColumn(ViewRole, model->addColumn("ea.id"), tr("Roles"), RolesColumnWidth);
@@ -175,7 +175,7 @@ namespace ERP
 			).groupBy("e.id");
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "e.");
 
-		model->setQuery(generateQuery());
+		model->setQuery(generateFilteredQuery());
 		addColumn(ViewId, model->addColumn("e.id"), tr("ID"), IdColumnWidth);
 		addColumn(ViewName, model->addColumn("e.name"), tr("Name"), NameColumnWidth);
 		addColumn(ViewEntityType, model->addColumn("e.type"), tr("Type"), TypeColumnWidth);
