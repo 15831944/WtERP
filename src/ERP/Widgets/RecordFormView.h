@@ -16,7 +16,7 @@ namespace ERP
 	class AbstractMultipleRecordModel;
 	class RecordFormView;
 
-	class SubmittableRecordWidget
+	class SubmittableRecordWidget : public ReloadOnVisibleWidget<Wt::WTemplateFormView>
 	{
 	public:
 		virtual Wt::WString viewName() const { return tr("Unknown"); }
@@ -25,18 +25,24 @@ namespace ERP
 
 		Wt::Signal<> &submitted() { return _submitted; }
 
+	protected:
+		template<typename ...Args>
+		SubmittableRecordWidget(Args &&...args)
+			: ReloadOnVisibleWidget<Wt::WTemplateFormView>(std::forward<Args>(args)...)
+		{ }
+		
 	private:
 		Wt::Signal<> _submitted;
 	};
 
 	//VIEWS
-	class RecordFormView : public ReloadOnVisibleWidget<Wt::WTemplateFormView>, public SubmittableRecordWidget
+	class RecordFormView : public SubmittableRecordWidget
 	{
 	public:
 		typedef const char *ModelKey;
 
 		RecordFormView() = default;
-		RecordFormView(const Wt::WString &text) : ReloadOnVisibleWidget<Wt::WTemplateFormView>(text) { }
+		RecordFormView(const Wt::WString &text) : SubmittableRecordWidget(text) { }
 
 		virtual void load() override;
 		virtual void reload() override;

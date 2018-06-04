@@ -3,26 +3,26 @@
 #include "Application/WApplication.h"
 
 //TODO: Create indexes
+//TODO: Check exception handling
+//TODO: Check for shared_ptr and Dbo::ptr cyclical circular references
+//TODO: Upgrade Font Awesome
 
-//TODO: Exception handling
 //TODO: Record deletion
-//TODO: Check for shared_ptr and Dbo::ptr circular circular references
-//TODO: Localize DateTimes
-//TODO: Modernize code
 //TODO: Make Location-Entity a ManyToMany relation
 //TODO: Fix LOG_ERROR(Wt::Dbo::ptr) useless errors
-//TODO: Upgrade Font Awesome
 //TODO: Look into QueryModel exception handling
 
 //TODO: Follow Multiple Dialogs error report
+//TODO: Follow MySQL backend error report
+//TODO: Follow WMenuItem::setContents() error report
 
+//TODO: Localize DateTimes
 //TODO: viewName() and viewTitle()
 //TODO: viewName() for record not found
 //TODO: delete menu items with same internal path on submit handler
 //TODO: WApplication::initDboQueryModel exception safety
 //TODO: Improve RecordFormModel API (and remove unnecessary pointers)
 //TODO: Create abstraction for list proxy models
-//TODO: Versioned record keeping for all Record Dbos
 
 int main(int argc, char *argv[])
 {

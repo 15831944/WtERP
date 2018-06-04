@@ -256,6 +256,7 @@ namespace ERP
 	{
 		if(canOptimizeUpdates() && flags.test(Wt::RenderFlag::Full))
 			updateView();
+		SubmittableRecordWidget::render(flags);
 	}
 
 	void RecordFormView::updateView()
