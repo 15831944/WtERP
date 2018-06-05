@@ -508,13 +508,22 @@ namespace ERP
 		if(_countryQueryModel)
 			return;
 
-		_countryQueryModel = make_shared<CountryQueryModel>();
-		_countryQueryModel->setBatchSize(1000);
-		_countryQueryModel->setQuery(dboSession().find<Country>().orderBy("CASE WHEN code = 'PK' THEN 1 ELSE 2 END ASC"));
-		_countryQueryModel->addColumn("name");
-		_countryQueryModel->addColumn("code");
-
-		_countryProxyModel = make_shared<CountryProxyModel>(_countryQueryModel);
+		try
+		{
+			_countryQueryModel = make_shared<CountryQueryModel>();
+			_countryQueryModel->setBatchSize(1000);
+			_countryQueryModel->setQuery(dboSession().find<Country>().orderBy("CASE WHEN code = 'PK' THEN 1 ELSE 2 END ASC"));
+			_countryQueryModel->addColumn("name");
+			_countryQueryModel->addColumn("code");
+			
+			_countryProxyModel = make_shared<CountryProxyModel>(_countryQueryModel);
+		}
+		catch(...)
+		{
+			_countryQueryModel = nullptr;
+			_countryProxyModel = nullptr;
+			throw;
+		}
 	}
 
 	void WApplication::initCityQueryModel()
@@ -522,12 +531,20 @@ namespace ERP
 		if(_cityQueryModel)
 			return;
 
-		_cityQueryModel = make_shared<CityQueryModel>();
-		_cityQueryModel->setBatchSize(100000);
-		_cityQueryModel->setQuery(dboSession().find<City>());
-		_cityQueryModel->addColumn("name");
-		_cityQueryModel->addColumn("id");
-		_cityQueryModel->addColumn("country_code");
+		try
+		{
+			_cityQueryModel = make_shared<CityQueryModel>();
+			_cityQueryModel->setBatchSize(100000);
+			_cityQueryModel->setQuery(dboSession().find<City>());
+			_cityQueryModel->addColumn("name");
+			_cityQueryModel->addColumn("id");
+			_cityQueryModel->addColumn("country_code");
+		}
+		catch(...)
+		{
+			_cityQueryModel = nullptr;
+			throw;
+		}
 	}
 
 	void WApplication::initPositionQueryModel()
@@ -535,13 +552,22 @@ namespace ERP
 		if(_positionQueryModel)
 			return;
 
-		_positionQueryModel = make_shared<PositionQueryModel>();
-		_positionQueryModel->setBatchSize(1000);
-		_positionQueryModel->setQuery(dboSession().find<EmployeePosition>());
-		_positionQueryModel->addColumn("title");
-		_positionQueryModel->addColumn("id");
-
-		_positionProxyModel = make_shared<PositionProxyModel>(_positionQueryModel);
+		try
+		{
+			_positionQueryModel = make_shared<PositionQueryModel>();
+			_positionQueryModel->setBatchSize(1000);
+			_positionQueryModel->setQuery(dboSession().find<EmployeePosition>());
+			_positionQueryModel->addColumn("title");
+			_positionQueryModel->addColumn("id");
+			
+			_positionProxyModel = make_shared<PositionProxyModel>(_positionQueryModel);
+		}
+		catch(...)
+		{
+			_positionQueryModel = nullptr;
+			_positionProxyModel = nullptr;
+			throw;
+		}
 	}
 
 	void WApplication::initServiceQueryModel()
@@ -549,13 +575,22 @@ namespace ERP
 		if(_serviceQueryModel)
 			return;
 
-		_serviceQueryModel = make_shared<ServiceQueryModel>();
-		_serviceQueryModel->setBatchSize(1000);
-		_serviceQueryModel->setQuery(dboSession().find<ClientService>());
-		_serviceQueryModel->addColumn("title");
-		_serviceQueryModel->addColumn("id");
-
-		_serviceProxyModel = make_shared<ServiceProxyModel>(_serviceQueryModel);
+		try
+		{
+			_serviceQueryModel = make_shared<ServiceQueryModel>();
+			_serviceQueryModel->setBatchSize(1000);
+			_serviceQueryModel->setQuery(dboSession().find<ClientService>());
+			_serviceQueryModel->addColumn("title");
+			_serviceQueryModel->addColumn("id");
+			
+			_serviceProxyModel = make_shared<ServiceProxyModel>(_serviceQueryModel);
+		}
+		catch(...)
+		{
+			_serviceQueryModel = nullptr;
+			_serviceProxyModel = nullptr;
+			throw;
+		}
 	}
 
 	void WApplication::initRegionQueryModel()
@@ -563,13 +598,22 @@ namespace ERP
 		if(_regionQueryModel)
 			return;
 
-		_regionQueryModel = make_shared<RegionQueryModel>();
-		_regionQueryModel->setBatchSize(1000);
-		_regionQueryModel->setQuery(dboSession().find<Region>());
-		_regionQueryModel->addColumn("name");
-		_regionQueryModel->addColumn("id");
-
-		_regionProxyModel = make_shared<RegionProxyModel>(_regionQueryModel);
+		try
+		{
+			_regionQueryModel = make_shared<RegionQueryModel>();
+			_regionQueryModel->setBatchSize(1000);
+			_regionQueryModel->setQuery(dboSession().find<Region>());
+			_regionQueryModel->addColumn("name");
+			_regionQueryModel->addColumn("id");
+			
+			_regionProxyModel = make_shared<RegionProxyModel>(_regionQueryModel);
+		}
+		catch(...)
+		{
+			_regionQueryModel = nullptr;
+			_regionProxyModel = nullptr;
+			throw;
+		}
 	}
 
 	void WApplication::showErrorDialog(const Wt::WString &message)

@@ -19,9 +19,6 @@
 //TODO: Localize DateTimes
 //TODO: viewName() and viewTitle()
 //TODO: viewName() for record not found
-//TODO: delete menu items with same internal path on submit handler
-//TODO: WApplication::initDboQueryModel exception safety
-//TODO: Improve RecordFormModel API (and remove unnecessary pointers)
 //TODO: Create abstraction for list proxy models
 
 int main(int argc, char *argv[])
