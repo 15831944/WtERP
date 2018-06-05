@@ -400,6 +400,9 @@ void WSuggestionPopup::scheduleFilter(std::string input, std::string editId)
 
 void WSuggestionPopup::doFilter(std::string input, std::string editId)
 {
+  if(editId.empty())
+    return;
+  
   WFormWidget *edit = 0;
 
   for (unsigned i = 0; i < edits_.size(); ++i)
@@ -408,10 +411,8 @@ void WSuggestionPopup::doFilter(std::string input, std::string editId)
       break;
     }
 
-  if (edit == 0) {
-    LOG_ERROR("filter from bogus editor");
+  if (edit == 0)
 	return;
-  }
 
   filtering_ = true;
   filterModel_.emit(WT_USTRING::fromUTF8(input), edit);
