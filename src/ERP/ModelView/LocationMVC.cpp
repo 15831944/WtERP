@@ -384,7 +384,7 @@ namespace ERP
 			return;
 
 		if(Wt::any_cast<bool>(v) == true)
-			showAddCountryDialog();
+			showAddCityDialog();
 	}
 
 	void LocationView::showAddCountryDialog()
