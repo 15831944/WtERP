@@ -811,7 +811,6 @@ namespace ERP
 		if(!_recordPtr)
 			_recordPtr = app->accountsDatabase().createAccountEntry(amount, debitAccountPtr, creditAccountPtr);
 
-		_recordPtr.modify()->type = AccountEntry::UnspecifiedType;
 		_recordPtr.modify()->description = valueText(descriptionField).toUTF8();
 		_recordPtr.flush();
 

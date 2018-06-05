@@ -33,7 +33,6 @@ namespace ERP
 
 		Dbo::Query<long long> _accountCheckAbnormal;
 		Dbo::Query<long long> _locationCheckAbnormal;
-		Dbo::Query<Dbo::ptr<AttendanceEntry>> _attendanceCheckAbnormal;
 		Dbo::Query<Dbo::ptr<IncomeCycle>> _incomeCycleCheckAbnormal;
 		Dbo::Query<Dbo::ptr<ExpenseCycle>> _expenseCycleCheckAbnormal;
 		Dbo::Query<Dbo::ptr<AccountEntry>> _entryCheckAbnormal;

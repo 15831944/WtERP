@@ -162,21 +162,6 @@
 <message id="NInactive">{1} inactive</message>
 <message id="NNotStarted">{1} not started</message>
 
-<!-- AttendanceDeviceView -->
-<message id="Attendance">Attendance</message>
-<message id="AttendanceDeviceViewName">Attendance Device #{1}</message>
-<message id="AddAttendanceDevice">Add attendance device</message>
-<message id="AttendanceDevice">Attendance device</message>
-<message id="AttendanceDevices">Attendance devices</message>
-<message id="AttendanceDeviceInfo">Attendance Device Information</message>
-
-<!-- AttendanceEntryView -->
-<message id="AttendanceEntryViewName">Attendance Entry #{1}: {2}</message>
-<message id="CreateAttendanceEntry">Create attendance entry</message>
-<message id="AttendanceEntry">Attendance device</message>
-<message id="AttendanceEntries">Attendance entries</message>
-<message id="AttendanceEntryInfo">Attendance Entry Information</message>
-
 <!-- User related and UserView -->
 <message id="User">User</message>
 <message id="Users">Users</message>

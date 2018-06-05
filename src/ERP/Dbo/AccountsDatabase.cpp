@@ -139,7 +139,6 @@ namespace ERP
 			newEntry.modify()->incomeCyclePtr = cyclePtr;
 			newEntry.modify()->_debitAccountPtr = cyclePtr->entityPtr->balAccountPtr;
 			newEntry.modify()->_creditAccountPtr = cyclePtr->entityPtr->pnlAccountPtr;
-			newEntry.modify()->type = AccountEntry::UnspecifiedType;
 			newEntry.modify()->description.arg(tr("income"));
 			if(assignmentCount > 0)
 				newEntry.modify()->description += trn("forNClientAssignments", assignmentCount).arg(assignmentCount).toUTF8();
@@ -175,7 +174,6 @@ namespace ERP
 			newEntry.modify()->expenseCyclePtr = cyclePtr;
 			newEntry.modify()->_debitAccountPtr = cyclePtr->entityPtr->pnlAccountPtr;
 			newEntry.modify()->_creditAccountPtr = cyclePtr->entityPtr->balAccountPtr;
-			newEntry.modify()->type = AccountEntry::UnspecifiedType;
 			newEntry.modify()->description.arg(tr("expense"));
 			if(assignmentCount > 0)
 				newEntry.modify()->description += trn("forNEmployeeAssignments", assignmentCount).arg(assignmentCount).toUTF8();

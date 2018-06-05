@@ -85,12 +85,6 @@ namespace ERP
 		AccountsAdminPage();
 	};
 
-	class AttendanceAdminPage : public AdminPageWidget
-	{
-	public:
-		AttendanceAdminPage();
-	};
-
 	class UsersAdminPage : public AdminPageWidget
 	{
 	public:

@@ -83,15 +83,6 @@ namespace ERP
 	class AccountEntry;
 	typedef Dbo::collection<Dbo::ptr<AccountEntry>> AccountEntryCollection;
 
-	class OvertimeInfo;
-	typedef Dbo::collection<Dbo::ptr<OvertimeInfo>> OvertimeInfoCollection;
-
-	class FineInfo;
-	typedef Dbo::collection<Dbo::ptr<FineInfo>> FineInfoCollection;
-
-	class PettyExpenditureInfo;
-	typedef Dbo::collection<Dbo::ptr<PettyExpenditureInfo>> PettyExpenditureInfoCollection;
-
 	class IncomeCycle;
 	typedef Dbo::collection<Dbo::ptr<IncomeCycle>> IncomeCycleCollection;
 
@@ -100,17 +91,6 @@ namespace ERP
 
 	class UploadedFile;
 	typedef Dbo::collection<Dbo::ptr<UploadedFile>> UploadedFileCollection;
-
-	class AttendanceDevice;
-	class AttendanceDeviceV;
-	typedef Dbo::collection<Dbo::ptr<AttendanceDevice>> AttendanceDeviceCollection;
-	typedef Dbo::collection<Dbo::ptr<AttendanceDeviceV>> AttendanceDeviceVCollection;
-
-	class AttendanceEntry;
-	typedef Dbo::collection<Dbo::ptr<AttendanceEntry>> AttendanceEntryCollection;
-
-//	class Inquiry;
-// 	typedef Dbo::collection<Dbo::ptr<Inquiry>> InquiryCollection;
 }
 
 //Dbo traits
@@ -155,29 +135,6 @@ namespace Wt
 		struct dbo_traits<ERP::Country> : public dbo_default_traits
 		{
 			typedef std::string IdType;
-			static IdType invalidId() { return IdType(); }
-			static const char *surrogateIdField() { return nullptr; }
-		};
-
-		//Accounts
-		template<>
-		struct dbo_traits<ERP::OvertimeInfo> : public dbo_default_traits
-		{
-			typedef ptr<ERP::AccountEntry> IdType;
-			static IdType invalidId() { return IdType(); }
-			static const char *surrogateIdField() { return nullptr; }
-		};
-		template<>
-		struct dbo_traits<ERP::FineInfo> : public dbo_default_traits
-		{
-			typedef ptr<ERP::AccountEntry> IdType;
-			static IdType invalidId() { return IdType(); }
-			static const char *surrogateIdField() { return nullptr; }
-		};
-		template<>
-		struct dbo_traits<ERP::PettyExpenditureInfo> : public dbo_default_traits
-		{
-			typedef ptr<ERP::AccountEntry> IdType;
 			static IdType invalidId() { return IdType(); }
 			static const char *surrogateIdField() { return nullptr; }
 		};
@@ -394,8 +351,6 @@ namespace ERP
 		ExpenseCycleCollection expenseCyclesCollection;
 		UserCollection createdUserCollection;
 
-		AttendanceDeviceVCollection attendanceDeviceVCollection;
-
 		template<class Action>
 		void persist(Action& a)
 		{
@@ -408,8 +363,6 @@ namespace ERP
 			Dbo::hasMany(a, incomeCyclesCollection, Dbo::ManyToOne, "creator_user");
 			Dbo::hasMany(a, expenseCyclesCollection, Dbo::ManyToOne, "creator_user");
 			Dbo::hasMany(a, createdUserCollection, Dbo::ManyToOne, "creator_user");
-
-			Dbo::hasMany(a, attendanceDeviceVCollection, Dbo::ManyToOne, "modifier_user");
 
 			RestrictedRecordDbo::persist(a);
 		}
@@ -517,8 +470,6 @@ namespace ERP
 		ExpenseCycleCollection expenseCycleCollection;
 		EmployeeAssignmentCollection employeeAssignmentCollection;
 		ClientAssignmentCollection clientAssignmentCollection;
-		AttendanceEntryCollection attendanceCollection;
-// 		InquiryCollection inquiryCollection;
 
 		template<class Action>
 		void persist(Action& a)
@@ -538,8 +489,6 @@ namespace ERP
 			Dbo::hasMany(a, expenseCycleCollection, Dbo::ManyToOne, "entity");
 			Dbo::hasMany(a, employeeAssignmentCollection, Dbo::ManyToOne, "entity");
 			Dbo::hasMany(a, clientAssignmentCollection, Dbo::ManyToOne, "entity");
-			Dbo::hasMany(a, attendanceCollection, Dbo::ManyToOne, "entity");
-// 			Dbo::hasMany(a, inquiryCollection, Dbo::ManyToOne, "entity");
 
 			RestrictedRecordDbo::persist(a);
 		}
@@ -724,9 +673,6 @@ namespace ERP
 		Dbo::ptr<City> cityPtr;
 
 		EmployeeAssignmentCollection assignedEmployeeCollection;
-		AttendanceDeviceVCollection attendanceDeviceVCollection;
-		AttendanceEntryCollection attendanceCollection;
-// 		InquiryCollection inquiryCollection;
 
 		template<class Action>
 		void persist(Action& a)
@@ -737,9 +683,6 @@ namespace ERP
 			Dbo::belongsTo(a, cityPtr, "city", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 
 			Dbo::hasMany(a, assignedEmployeeCollection, Dbo::ManyToOne, "location");
-			Dbo::hasMany(a, attendanceDeviceVCollection, Dbo::ManyToOne, "location");
-			Dbo::hasMany(a, attendanceCollection, Dbo::ManyToOne, "location");
-// 			Dbo::hasMany(a, inquiryCollection, Dbo::ManyToOne, "location");
 
 			BaseRecordDbo::persist(a);
 		}
@@ -880,21 +823,12 @@ namespace ERP
 		friend class AccountsDatabase;
 
 	public:
-		enum Type
-		{
-			UnspecifiedType = 0,
-			OvertimeExpense = 1,
-			FineIncome = 2,
-			PettyExpenditure = 3
-		};
-
 		AccountEntry() = default;
 		AccountEntry(AccountEntry &&) = default;
 		static std::string newInternalPath() { return "/" ADMIN_PATHC "/" ACCOUNTS_PATHC "/" NEW_ACCOUNTENTRY_PATHC; }
 		static std::string viewInternalPath(long long id) { return viewInternalPath(std::to_string(id)); }
 		static std::string viewInternalPath(const std::string &idStr) { return "/" ADMIN_PATHC "/" ACCOUNTS_PATHC "/" ACCOUNTENTRY_PREFIX + idStr; }
 
-		Type type = UnspecifiedType;
 		Money amount() const { return Money(_amountInCents, DEFAULT_CURRENCY); }
 		Dbo::ptr<Account> debitAccountPtr() const { return _debitAccountPtr; }
 		Dbo::ptr<Account> creditAccountPtr() const { return _creditAccountPtr; }
@@ -903,71 +837,20 @@ namespace ERP
 		Dbo::ptr<ExpenseCycle> expenseCyclePtr;
 		Dbo::ptr<IncomeCycle> incomeCyclePtr;
 
-		Dbo::weak_ptr<OvertimeInfo> overtimeInfoWPtr;
-		Dbo::weak_ptr<FineInfo> fineInfoWPtr;
-		Dbo::weak_ptr<PettyExpenditureInfo> pettyExpenditureInfoWPtr;
-
 		template<class Action>
 		void persist(Action& a)
 		{
 			Dbo::belongsTo(a, _debitAccountPtr, "debit_account", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
 			Dbo::belongsTo(a, _creditAccountPtr, "credit_account", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
-			Dbo::field(a, type, "type");
 			Dbo::field(a, _amountInCents, "amount");
 			Dbo::field(a, description, "description", 255);
 
 			Dbo::belongsTo(a, expenseCyclePtr, "expensecycle", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 			Dbo::belongsTo(a, incomeCyclePtr, "incomecycle", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 
-			Dbo::hasOne(a, overtimeInfoWPtr, "accountentry");
-			Dbo::hasOne(a, fineInfoWPtr, "accountentry");
-			Dbo::hasOne(a, pettyExpenditureInfoWPtr, "accountentry");
-
 			RestrictedRecordDbo::persist(a);
 		}
 		DEFINE_DBO_TABLENAME("accountentry");
-	};
-
-	class OvertimeInfo
-	{
-	private:
-		Dbo::ptr<AccountEntry> entryPtr;
-
-	public:
-		template<class Action>
-		void persist(Action& a)
-		{
-			Dbo::id(a, entryPtr, "accountentry", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
-		}
-		DEFINE_DBO_TABLENAME("overtimeInfo");
-	};
-
-	class FineInfo
-	{
-	private:
-		Dbo::ptr<AccountEntry> entryPtr;
-
-	public:
-		template<class Action>
-		void persist(Action& a)
-		{
-			Dbo::id(a, entryPtr, "accountentry", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
-		}
-		DEFINE_DBO_TABLENAME("fineinfo");
-	};
-
-	class PettyExpenditureInfo
-	{
-	private:
-		Dbo::ptr<AccountEntry> entryPtr;
-
-	public:
-		template<class Action>
-		void persist(Action& a)
-		{
-			Dbo::id(a, entryPtr, "accountentry", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
-		}
-		DEFINE_DBO_TABLENAME("pettyexpenditureinfo");
 	};
 
 	enum CycleInterval
@@ -1100,98 +983,6 @@ namespace ERP
 		std::string pathToDirectory() const;
 		DEFINE_DBO_TABLENAME("uploadedfile");
 	};
-
-	class AttendanceDevice : public RestrictedRecordDbo
-	{
-	public:
-		AttendanceDeviceVCollection versionsCollection;
-		AttendanceEntryCollection attendanceCollection;
-
-		static std::string newInternalPath() { return "/" ADMIN_PATHC "/" ATTENDANCE_PATHC "/" ATTENDANCEDEVICES_PATHC "/" NEW_ATTENDANCEDEVICE_PATHC; }
-		static std::string viewInternalPath(long long id) { return viewInternalPath(std::to_string(id)); }
-		static std::string viewInternalPath(const std::string &idStr) { return "/" ADMIN_PATHC "/" ATTENDANCE_PATHC "/" ATTENDANCEDEVICES_PATHC "/" ATTENDANCEDEVICE_PREFIX + idStr; }
-
-		template<class Action>
-		void persist(Action& a)
-		{
-			Dbo::hasMany(a, versionsCollection, Dbo::ManyToOne, "parent");
-			Dbo::hasMany(a, attendanceCollection, Dbo::ManyToOne, "attendancedevice");
-
-			RestrictedRecordDbo::persist(a);
-		}
-		DEFINE_DBO_TABLENAME("attendancedevice");
-	};
-	class AttendanceDeviceV : public RecordVersionDbo<AttendanceDevice>
-	{
-	public:
-		AttendanceDeviceV() = default;
-		AttendanceDeviceV(Dbo::ptr<AttendanceDevice> parentPtr) : RecordVersionDbo(move(parentPtr)) { }
-
-		std::string hostName;
-		Dbo::ptr<Location> locationPtr;
-
-		template<class Action>
-		void persist(Action& a)
-		{
-			RecordVersionDbo::persist(a);
-
-			Dbo::field(a, hostName, "hostName", 255);
-			Dbo::belongsTo(a, locationPtr, "location", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
-		}
-		DEFINE_DBO_TABLENAME("attendancedevice_v");
-	};
-
-	class AttendanceEntry : public BaseRecordDbo
-	{
-	public:
-		Wt::WDateTime timestampIn;
-		Wt::WDateTime timestampOut;
-		Dbo::ptr<Entity> entityPtr;
-		Dbo::ptr<AttendanceDevice> attendanceDevicePtr;
-		Dbo::ptr<Location> locationPtr;
-
-		static std::string newInternalPath() { return "/" ADMIN_PATHC "/" ATTENDANCE_PATHC "/" NEW_ATTENDANCEENTRY_PATHC; }
-		static std::string viewInternalPath(long long id) { return viewInternalPath(std::to_string(id)); }
-		static std::string viewInternalPath(const std::string &idStr) { return "/" ADMIN_PATHC "/" ATTENDANCE_PATHC "/" ATTENDANCEENTRY_PREFIX + idStr; }
-
-		template<class Action>
-		void persist(Action& a)
-		{
-			Dbo::field(a, timestampIn, "timestampIn");
-			Dbo::field(a, timestampOut, "timestampOut");
-			Dbo::belongsTo(a, entityPtr, "entity", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
-			Dbo::belongsTo(a, attendanceDevicePtr, "attendancedevice", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
-			Dbo::belongsTo(a, locationPtr, "location", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
-
-			BaseRecordDbo::persist(a);
-		}
-		DEFINE_DBO_TABLENAME("attendanceentry");
-	};
-
-// 	class Inquiry
-// 	{
-// 	public:
-// 		std::string notes;
-// 		Wt::WDateTime startDt;
-// 		Wt::WDateTime resolutionDt;
-// 
-// 		Dbo::ptr<Entity> entityPtr;
-// 		Dbo::ptr<Location> locationPtr;
-// 		Dbo::ptr<Asset> assetPtr;
-// 
-// 		template<class Action>
-// 		void persist(Action& a)
-// 		{
-// 			Dbo::field(a, notes, "notes");
-// 			Dbo::field(a, startDt, "startDt");
-// 			Dbo::field(a, resolutionDt, "resolutionDt");
-// 
-// 			Dbo::belongsTo(a, entityPtr, "entity", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
-// 			Dbo::belongsTo(a, locationPtr, "location", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
-// 			Dbo::belongsTo(a, assetPtr, "asset", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
-// 		}
-// 		DEFINE_DBO_TABLENAME("inquiry");
-// 	};
 
 }
 

@@ -21,7 +21,6 @@ namespace ERP
 	class CountryProxyModel;
 	class EntitiesAdminPage;
 	class DashboardAdminPage;
-	class AttendanceAdminPage;
 	class UsersAdminPage;
 	class PositionProxyModel;
 	class ServiceProxyModel;
@@ -181,7 +180,6 @@ namespace ERP
 		DashboardAdminPage *_dashboardAdminPage = nullptr;
 		EntitiesAdminPage *_entitiesAdminPage = nullptr;
 		AccountsAdminPage *_accountsAdminPage = nullptr;
-		AttendanceAdminPage *_attendanceAdminPage = nullptr;
 		AssetsAdminPage *_assetsAdminPage = nullptr;
 		UsersAdminPage *_usersAdminPage = nullptr;
 

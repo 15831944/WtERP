@@ -13,7 +13,6 @@
 #include "ModelView/LocationMVC.h"
 #include "ModelView/EntryCycleMVC.h"
 #include "ModelView/HRMVC.h"
-#include "ModelView/AttendanceMVC.h"
 #include "ModelView/UserMVC.h"
 
 #include <Wt/WNavigationBar.h>
@@ -365,24 +364,6 @@ namespace ERP
 				return;
 			}
 
-			//attendance entry view
-			id = getUsableIdFromPathPrefix(AttendanceEntry::viewInternalPath(""), _attendanceAdminPage, ATTENDANCEENTRY_PREFIX);
-			if(id != -1)
-			{
-				auto view = make_unique<AttendanceEntryView>(dboSession().loadLazy<AttendanceEntry>(id));
-				_attendanceAdminPage->createMenuItemAndLoad(move(view));
-				return;
-			}
-
-			//attendance device view
-			id = getUsableIdFromPathPrefix(AttendanceDevice::viewInternalPath(""), _attendanceAdminPage, ATTENDANCEDEVICES_PATHC "/" ATTENDANCEDEVICE_PREFIX);
-			if(id != -1)
-			{
-				auto view = make_unique<AttendanceDeviceView>(dboSession().loadLazy<AttendanceDevice>(id));
-				_attendanceAdminPage->createMenuItemAndLoad(move(view));
-				return;
-			}
-
 			//user view
 			id = getUsableIdFromPathPrefix(User::viewInternalPath(""), _usersAdminPage, USER_PREFIX);
 			if(id != -1)
@@ -478,7 +459,6 @@ namespace ERP
 		_entitiesAdminPage = addMenuItem(_adminMenu, tr("Entities"), make_unique<EntitiesAdminPage>());
 		_accountsAdminPage = addMenuItem(_adminMenu, tr("FinancialRecords"), make_unique<AccountsAdminPage>());
 		_assetsAdminPage = addMenuItem(_adminMenu, tr("Assets"), make_unique<AssetsAdminPage>());
-		_attendanceAdminPage = addMenuItem(_adminMenu, tr("Attendance"), make_unique<AttendanceAdminPage>());
 
 		//Users
 		if(authLogin().hasPermission(Permissions::ViewUser))

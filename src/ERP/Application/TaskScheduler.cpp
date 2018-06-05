@@ -51,11 +51,6 @@ namespace ERP
 				).where("city.country_code <> l.country_code");
 		}
 
-		//Abnormal attendance query
-		{
-			_attendanceCheckAbnormal = dboSession.find<AttendanceEntry>().where("timestampOut IS NOT null AND timestampOut < timestampIn");
-		}
-
 		//Entry cycle queries
 		{
 			std::string query = std::string("SELECT cycle, lastEntry FROM %1% cycle ") +
@@ -214,12 +209,6 @@ namespace ERP
 				long long abnormalRecords = _locationCheckAbnormal;
 				if(abnormalRecords > 0)
 					Wt::log("warn") << abnormalRecords << " abnormal Location records were found";
-			}
-			{
-				AttendanceEntryCollection collection = _attendanceCheckAbnormal;
-				size_t abnormalRecords = collection.size();
-				if(abnormalRecords > 0)
-					Wt::log("warn") << abnormalRecords << " abnormal AttendanceEntry records were found";
 			}
 			t.commit();
 		}

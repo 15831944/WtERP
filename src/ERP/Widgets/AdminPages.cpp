@@ -4,7 +4,6 @@
 #include "ModelView/AccountMVC.h"
 #include "ModelView/EntryCycleMVC.h"
 #include "ModelView/HRMVC.h"
-#include "ModelView/AttendanceMVC.h"
 #include "ModelView/UserMVC.h"
 #include "ModelView/DashboardWidgets.h"
 
@@ -269,27 +268,6 @@ namespace ERP
 			auto createRecurringExpenseMenuItem = createMenuItemWrapped(tr("CreateRecurringExpense"), EXPENSECYCLES_PATHC "/" NEW_EXPENSECYCLE_PATHC,
 				make_unique<ExpenseCycleView>(), false);
 			connectFormSubmitted(createRecurringExpenseMenuItem);
-
-			menu()->addSeparator();
-		}
-	}
-
-	AttendanceAdminPage::AttendanceAdminPage()
-		: AdminPageWidget(ATTENDANCE_PATHC)
-	{
-		auto attendanceEntriesMenuItem = createMenuItemWrapped(tr("AttendanceEntries"), "", make_unique<AttendanceEntryList>());
-		auto attendanceDevicesMenuItem = createMenuItemWrapped(tr("AttendanceDevices"), ATTENDANCEDEVICES_PATHC, make_unique<AttendanceDeviceList>());
-		menu()->addSeparator();
-
-		if(APP->authLogin().hasPermission(Permissions::CreateRecord))
-		{
-			auto newAttendanceEntryMenuItem = createMenuItemWrapped(tr("CreateAttendanceEntry"), NEW_ATTENDANCEENTRY_PATHC,
-				make_unique<AttendanceEntryView>(), false);
-			connectFormSubmitted(newAttendanceEntryMenuItem);
-
-			auto newAttendanceDeviceMenuItem = createMenuItemWrapped(tr("AddAttendanceDevice"), ATTENDANCEDEVICES_PATHC "/" NEW_ATTENDANCEDEVICE_PATHC,
-				make_unique<AttendanceDeviceView>(), false);
-			connectFormSubmitted(newAttendanceDeviceMenuItem);
 
 			menu()->addSeparator();
 		}

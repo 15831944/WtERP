@@ -285,54 +285,6 @@ ${block:ERP.RecordCountTemplate.Block ReceivablesBalance receivables}
 ${block:ERP.RecordCountTemplate.Block PayablesBalance payables}
 </message>
 
-<!-- AttendanceDeviceView -->
-<message id="ERP.Admin.AttendanceDeviceView">
-<div class="panel panel-default">
-	<div class="panel-heading">${tr:AttendanceDeviceInfo}</div>
-	<div class="panel-body">
-		${block:ERP.Field hostName Hostname}
-		${block:ERP.Field.CW location Location}
-		${editBtn}
-		${submitBtn class="btn-primary"}
-	</div>
-</div>
-</message>
-
-<!-- AttendanceEntryView -->
-<message id="ERP.Admin.AttendanceEntryView">
-<div class="panel panel-default">
-	<div class="panel-heading">${tr:AttendanceEntryInfo}</div>
-	<div class="panel-body">
-		${block:ERP.Field.CW entity Entity}
-		<div class="form-group">
-			<label class="control-label" for="${id:dateIn}">${tr:TimeIn}</label>
-			<div class="input-group">
-				<label class="input-group-addon" for="${id:dateIn}">${tr:Date}</label>
-				${dateIn}
-				<label class="input-group-addon" for="${id:timeIn}">${tr:Time}</label>
-				${timeIn}
-			</div>
-			<div class="help-block">${dateIn-info}</div>
-			<div class="help-block">${timeIn-info}</div>
-		</div>
-		<div class="form-group">
-			<label class="control-label" for="${id:dateOut}">${tr:TimeOut}</label>
-			<div class="input-group">
-				<label class="input-group-addon" for="${id:dateOut}">${tr:Date}</label>
-				${dateOut}
-				<label class="input-group-addon" for="${id:timeOut}">${tr:Time}</label>
-				${timeOut}
-			</div>
-			<div class="help-block">${dateOut-info}</div>
-			<div class="help-block">${timeOut-info}</div>
-		</div>
-		${block:ERP.Field.CW location Location}
-		${editBtn}
-		${submitBtn class="btn-primary"}
-	</div>
-</div>
-</message>
-
 <!-- EntityView -->
 <message id="ERP.Admin.Entities.New">
 ${<type-selection>}
