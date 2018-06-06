@@ -458,7 +458,6 @@ namespace ERP
 		std::string name;
 		Type type = InvalidType;
 		Dbo::ptr<Account> balAccountPtr;
-		Dbo::ptr<Account> pnlAccountPtr;
 
 		Dbo::weak_ptr<Person> personWPtr;
 		Dbo::weak_ptr<Business> businessWPtr;
@@ -477,7 +476,6 @@ namespace ERP
 			Dbo::field(a, name, "name", 70);
 			Dbo::field(a, type, "type");
 			Dbo::belongsTo(a, balAccountPtr, "bal_account", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
-			Dbo::belongsTo(a, pnlAccountPtr, "pnl_account", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 
 			Dbo::hasOne(a, personWPtr, "entity");
 			Dbo::hasOne(a, businessWPtr, "entity");
@@ -758,44 +756,44 @@ namespace ERP
 	class Account : public RestrictedRecordDbo
 	{
 	public:
-		enum Type
+		enum Nature
 		{
-			Asset = 0,
-			Liability = 1,
-			EntityBalanceAccount = 100,
-			EntityPnlAccount = 101
+			AssetNature = 0,
+			LiabilityNature = 1,
+			BalanceNature = 2,
+			IncomeNature = 3,
+			ExpenseNature = 4,
+			EquityNature = 5
 		};
 
 		Account() = default;
 		Account &operator=(const Account &other) = default;
-		Account(Type t) : type(t) { }
+		Account(Nature t) : nature(t) { }
 
 		static std::string newInternalPath() { return "/" ADMIN_PATHC "/" ACCOUNTS_PATHC "/" NEW_ACCOUNT_PATHC; }
 		static std::string viewInternalPath(long long id) { return viewInternalPath(std::to_string(id)); }
 		static std::string viewInternalPath(const std::string &idStr) { return "/" ADMIN_PATHC "/" ACCOUNTS_PATHC "/" ACCOUNT_PREFIX + idStr; }
 
 		std::string name;
-		Type type = Asset;
+		Nature nature = BalanceNature;
 		Money balance() const { return Money(_balanceInCents, DEFAULT_CURRENCY); }
 		long long balanceInCents() const { return _balanceInCents; }
-
+		
 		AccountEntryCollection debitEntryCollection;
 		AccountEntryCollection creditEntryCollection;
 		Dbo::weak_ptr<Entity> balOfEntityWPtr;
-		Dbo::weak_ptr<Entity> pnlOfEntityWPtr;
 
 		template<class Action>
 		void persist(Action& a)
 		{
 			Dbo::field(a, name, "name", 70);
-			Dbo::field(a, type, "type");
+			Dbo::field(a, nature, "nature");
 			Dbo::field(a, _currency, "currency", 3);
 			Dbo::field(a, _balanceInCents, "balance");
 
 			Dbo::hasMany(a, debitEntryCollection, Dbo::ManyToOne, "debit_account");
 			Dbo::hasMany(a, creditEntryCollection, Dbo::ManyToOne, "credit_account");
 			Dbo::hasOne(a, balOfEntityWPtr, "bal_account");
-			Dbo::hasOne(a, pnlOfEntityWPtr, "pnl_account");
 
 			RestrictedRecordDbo::persist(a);
 		}
@@ -1014,16 +1012,18 @@ namespace Wt
 	};
 
 	template<>
-	struct any_traits<Account::Type> : public any_traits<int>
+	struct any_traits<Account::Nature> : public any_traits<int>
 	{
-		static Wt::WString asString(const Account::Type &value, const Wt::WString &)
+		static Wt::WString asString(const Account::Nature &value, const Wt::WString &)
 		{
 			switch(value)
 			{
-			case Account::EntityBalanceAccount: return tr("EntityBalanceAccount");
-			case Account::EntityPnlAccount: return tr("EntityPnlAccount");
-			case Account::Asset: return tr("Asset");
-			case Account::Liability: return tr("Liability");
+			case Account::AssetNature: return tr("Asset");
+			case Account::LiabilityNature: return tr("Liability");
+			case Account::BalanceNature: return tr("Balance");
+			case Account::IncomeNature: return tr("Income");
+			case Account::ExpenseNature: return tr("Expense");
+			case Account::EquityNature: return tr("Equity");
 			default: return tr("Unknown");
 			}
 		}

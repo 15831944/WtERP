@@ -1,4 +1,5 @@
 #include "Widgets/AdminPages.h"
+#include "Dbo/AccountsDatabase.h"
 #include "ModelView/EntityView.h"
 #include "ModelView/EntityList.h"
 #include "ModelView/AccountMVC.h"
@@ -239,7 +240,7 @@ namespace ERP
 		: AdminPageWidget(ACCOUNTS_PATHC)
 	{
 		WApplication *app = APP;
-		Dbo::ptr<Account> cashAccountPtr = app->accountsDatabase().findOrCreateCashAccount(true);
+		Dbo::ptr<Account> cashAccountPtr = AccountsDatabase::instance().acquireCashAcc(true);
 
 		auto accountsMenuItem = createMenuItemWrapped(tr("Accounts"), "", make_unique<AccountList>());
 		auto transactionsMenuItem = createMenuItemWrapped(tr("Transactions"), ACCOUNT_PREFIX + std::to_string(cashAccountPtr.id()),

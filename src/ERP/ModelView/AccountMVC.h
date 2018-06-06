@@ -32,7 +32,7 @@ namespace ERP
 		int _linkColumn = -1;
 	};
 
-	class AccountList : public QueryModelFilteredList<tuple<long long, std::string, Account::Type, optional<long long>, long long, std::string>>
+	class AccountList : public QueryModelFilteredList<tuple<long long, std::string, Account::Nature, optional<long long>, long long, std::string>>
 	{
 	public:
 		enum ResultColumns { ResId, ResName, ResType, ResEntityId, ResBalance, ResEntityName };
@@ -130,7 +130,7 @@ namespace ERP
 	class AccountFormModel : public RecordFormModel<Account>
 	{
 	public:
-		static const Wt::WFormModel::Field typeField;
+		static const Wt::WFormModel::Field natureField;
 		static const Wt::WFormModel::Field nameField;
 
 		AccountFormModel(AccountView *view, Dbo::ptr<Account> accountPtr = nullptr);

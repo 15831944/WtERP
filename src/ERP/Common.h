@@ -55,6 +55,7 @@
 			#define NEW_REGION_PATHC "new"
 
 	#define ASSETS_PATHC "assets"
+
 #define DEFINE_DBO_TABLENAME(tName) \
 constexpr static const char *tableName() { return tName; } \
 static std::string tStr() { return tName; }

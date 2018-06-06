@@ -173,7 +173,7 @@ namespace ERP
 
 	WApplication::WApplication(const Wt::WEnvironment& env)
 		: Wt::WApplication(env),
-		_startTime(system_clock::now()), _entitiesDatabase(_dboSession), _accountsDatabase(_dboSession), _userDatabase(_dboSession), _login()
+		_startTime(system_clock::now()), _userDatabase(_dboSession), _login()
 	{
 		//Initialize Dbo session
 		WServer *server = SERVER;

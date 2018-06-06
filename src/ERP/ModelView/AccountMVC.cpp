@@ -2,6 +2,7 @@
 #include "ModelView/EntityList.h"
 #include "Application/WServer.h"
 #include "Dbo/ConfigurationsDatabase.h"
+#include "Dbo/AccountsDatabase.h"
 
 #include <Wt/WTableView.h>
 #include <Wt/WTextArea.h>
@@ -31,14 +32,14 @@ namespace ERP
 		
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
-			"SELECT acc.id, acc.name, acc.type, e.id, acc.balance, e.name FROM " + Account::tStr() + " acc "
-			"LEFT JOIN " + Entity::tStr() + " e ON (e.bal_account_id = acc.id OR e.pnl_account_id = acc.id)");
+			"SELECT acc.id, acc.name, acc.nature, e.id, acc.balance, e.name FROM " + Account::tStr() + " acc "
+			"LEFT JOIN " + Entity::tStr() + " e ON e.bal_account_id = acc.id");
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "acc.");
 
 		model->setQuery(generateFilteredQuery());
 		addColumn(ViewId, model->addColumn("acc.id"), tr("ID"), IdColumnWidth);
 		addColumn(ViewName, model->addColumn("acc.name"), tr("Name"), AccountNameColumnWidth);
-		addColumn(ViewType, model->addColumn("acc.type"), tr("Type"), TypeColumnWidth);
+		addColumn(ViewType, model->addColumn("acc.nature"), tr("Nature"), TypeColumnWidth);
 		addColumn(ViewEntity, model->addColumn("e.id"), tr("Entity"), EntityColumnWidth);
 		addColumn(ViewBalance, model->addColumn("acc.balance"), tr("BalanceRs"), BalanceColumnWidth);
 
@@ -102,7 +103,7 @@ namespace ERP
 		if(viewIndex == AccountList::ViewBalance && role == Wt::ItemDataRole::Display)
 		{
 			const AccountList::ResultType &res = static_pointer_cast<Dbo::QueryModel<AccountList::ResultType>>(sourceModel())->resultRow(idx.row());
-			Account::Type type = std::get<AccountList::ResType>(res);
+			Account::Nature type = std::get<AccountList::ResType>(res);
 			long long balanceInCents = std::get<AccountList::ResBalance>(res);
 			Wt::WString balanceStr = Wt::WLocale::currentLocale().toString(Money(std::abs(balanceInCents), DEFAULT_CURRENCY));
 
@@ -112,13 +113,9 @@ namespace ERP
 				if(balanceInCents > 0) return tr("XDebit").arg(balanceStr);
 				else if(balanceInCents < 0) return tr("XCredit").arg(balanceStr);
 				else return balanceStr;
-			case Account::EntityBalanceAccount:
+			case Account::BalanceNature:
 				if(balanceInCents > 0) return tr("XReceivable").arg(balanceStr);
 				else if(balanceInCents < 0) return tr("XPayable").arg(balanceStr);
-				else return balanceStr;
-			case Account::EntityPnlAccount:
-				if(balanceInCents > 0) return tr("XExpense").arg(balanceStr);
-				else if(balanceInCents < 0) return tr("XIncome").arg(balanceStr);
 				else return balanceStr;
 			}
 		}
@@ -448,29 +445,26 @@ namespace ERP
 		return baseResult;
 	}
 
-	const Wt::WFormModel::Field AccountFormModel::typeField = "type";
+	const Wt::WFormModel::Field AccountFormModel::natureField = "nature";
 	const Wt::WFormModel::Field AccountFormModel::nameField = "name";
 
 	AccountFormModel::AccountFormModel(AccountView *view, Dbo::ptr<Account> accountPtr)
 		: RecordFormModel(view, move(accountPtr)), _view(view)
 	{
-		addField(typeField);
+		addField(natureField);
 		addField(nameField);
 	}
 
 	void AccountFormModel::updateFromDb()
 	{
 		TRANSACTION(APP);
-		setValue(typeField, (int)_recordPtr->type);
+		setValue(natureField, (int)_recordPtr->nature);
 		setValue(nameField, Wt::WString::fromUTF8(_recordPtr->name));
-
-		if(_recordPtr->type != Account::Asset && _recordPtr->type != Account::Liability)
-			setVisible(typeField, false);
 	}
 
 	void AccountFormModel::persistedHandler()
 	{
-		setReadOnly(typeField, true);
+		setReadOnly(natureField, true);
 
 		auto entryList = _view->bindNew<AccountChildrenEntryList>("entry-list", recordPtr());
 		entryList->enableFilters();
@@ -505,11 +499,11 @@ namespace ERP
 			name->changed().connect(this, std::bind(&AbstractRecordFormModel::validateUpdateField, this, nameField));
 			return name;
 		}
-		if(field == typeField)
+		if(field == natureField)
 		{
 			auto typeCombo = make_unique<Wt::WComboBox>();
-			typeCombo->insertItem(Account::Asset, Wt::any_traits<Account::Type>::asString(Account::Asset, ""));
-			typeCombo->insertItem(Account::Liability, Wt::any_traits<Account::Type>::asString(Account::Liability, ""));
+			typeCombo->insertItem(Account::AssetNature, Wt::any_traits<Account::Nature>::asString(Account::AssetNature, ""));
+			typeCombo->insertItem(Account::LiabilityNature, Wt::any_traits<Account::Nature>::asString(Account::LiabilityNature, ""));
 			return typeCombo;
 		}
 		return RecordFormModel::createFormWidget(field);
@@ -530,8 +524,7 @@ namespace ERP
 		}
 
 		_recordPtr.modify()->name = valueText(nameField).toUTF8();
-		if(isVisible(typeField))
-			_recordPtr.modify()->type = Account::Type(Wt::any_cast<int>(value(typeField)));
+		_recordPtr.modify()->nature = Account::Nature(Wt::any_cast<int>(value(natureField)));
 
 		t.commit();
 
@@ -620,7 +613,7 @@ namespace ERP
 		TRANSACTION(app);
 
 		Dbo::ptr<Entity> entityPtr = Wt::any_cast<Dbo::ptr<Entity>>(value(entityField));
-		app->accountsDatabase().createEntityAccountsIfNotFound(entityPtr);
+		AccountsDatabase::instance().createEntityBalanceAccIfNotFound(entityPtr);
 		setAccountsFromEntity();
 
 		return BaseAccountEntryFormModel::saveChanges();
@@ -758,17 +751,18 @@ namespace ERP
 		{
 			if(Dbo::ptr<Entity> entityPtr = Wt::any_cast<Dbo::ptr<Entity>>(entityData))
 			{
+				AccountsDatabase &accountsDatabase = AccountsDatabase::instance();
 				WApplication *app = APP;
 				TRANSACTION(app);
 				if(*_isReceipt)
 				{
-					setValue(debitAccountField, app->accountsDatabase().findOrCreateCashAccount());
+					setValue(debitAccountField, accountsDatabase.acquireCashAcc());
 					setValue(creditAccountField, entityPtr->balAccountPtr);
 				}
 				else
 				{
 					setValue(debitAccountField, entityPtr->balAccountPtr);
-					setValue(creditAccountField, app->accountsDatabase().findOrCreateCashAccount());
+					setValue(creditAccountField, accountsDatabase.acquireCashAcc());
 				}
 
 				_view->updateViewField(this, debitAccountField);
@@ -809,7 +803,7 @@ namespace ERP
 		Dbo::ptr<Account> creditAccountPtr = Wt::any_cast<Dbo::ptr<Account>>(value(creditAccountField));
 
 		if(!_recordPtr)
-			_recordPtr = app->accountsDatabase().createAccountEntry(amount, debitAccountPtr, creditAccountPtr);
+			_recordPtr = AccountsDatabase::instance().createAccountEntry(amount, debitAccountPtr, creditAccountPtr);
 
 		_recordPtr.modify()->description = valueText(descriptionField).toUTF8();
 		_recordPtr.flush();

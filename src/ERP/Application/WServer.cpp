@@ -314,13 +314,16 @@ namespace ERP
 			throw;
 		}
 
+		//Accounts Database
+		_accountsDatabase = make_unique<AccountsDatabase>(_dboSession);
+		
 		//Start task scheduler
 		_taskScheduler = make_unique<TaskScheduler>(this, _dboSession);
 
 		//Register Wt::any traits
 		Wt::registerType<Money>();
 		Wt::registerType<Entity::Type>();
-		Wt::registerType<Account::Type>();
+		Wt::registerType<Account::Nature>();
 		Wt::registerType<Wt::WFlags<Entity::SpecificType>>();
 	}
 

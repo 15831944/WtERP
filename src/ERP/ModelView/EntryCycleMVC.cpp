@@ -1,4 +1,5 @@
 #include "Application/WApplication.h"
+#include "Dbo/AccountsDatabase.h"
 #include "ModelView/EntryCycleMVC.h"
 #include "ModelView/EntityView.h"
 #include "ModelView/EntityList.h"
@@ -259,8 +260,8 @@ namespace ERP
 
 		EntryCycleFormModel::updateCycleFromModel(this, _recordPtr, newCycle);
 
-		if(newCycle && _recordPtr->firstEntryAfterCycle == false)
-			app->accountsDatabase().createPendingCycleEntry(_recordPtr, nullptr, Wt::WDateTime::currentDateTime());
+		if(newCycle && !_recordPtr->firstEntryAfterCycle)
+			AccountsDatabase::instance().createPendingCycleEntry(_recordPtr, nullptr, Wt::WDateTime::currentDateTime());
 
 		_recordPtr.flush();
 		t.commit();
@@ -343,7 +344,7 @@ namespace ERP
 		EntryCycleFormModel::updateCycleFromModel(this, _recordPtr, newCycle);
 
 		if(newCycle && _recordPtr->firstEntryAfterCycle == false)
-			app->accountsDatabase().createPendingCycleEntry(_recordPtr, nullptr, Wt::WDateTime::currentDateTime());
+			AccountsDatabase::instance().createPendingCycleEntry(_recordPtr, nullptr, Wt::WDateTime::currentDateTime());
 
 		t.commit();
 		return true;

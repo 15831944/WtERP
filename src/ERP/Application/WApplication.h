@@ -4,8 +4,6 @@
 #include "Common.h"
 #include "Application/DboSession.h"
 #include "Dbo/Dbos.h"
-#include "Dbo/EntitiesDatabase.h"
-#include "Dbo/AccountsDatabase.h"
 
 #include <Wt/WApplication.h>
 #include <Wt/Auth/Login.h>
@@ -90,8 +88,6 @@ namespace ERP
 		DboSession &dboSession() { return _dboSession; }
 		AuthLogin &authLogin() { return _login; }
 		UserDatabase &userDatabase() { return _userDatabase; }
-		EntitiesDatabase &entitiesDatabase() { return _entitiesDatabase; }
-		AccountsDatabase &accountsDatabase() { return _accountsDatabase; }
 
 		//Widgets
 		Wt::WTemplate *mainTemplate() const { return _mainVisitorTemplate; }
@@ -207,8 +203,6 @@ namespace ERP
 
 		//Some databases
 		UserDatabase _userDatabase;
-		EntitiesDatabase _entitiesDatabase;
-		AccountsDatabase _accountsDatabase;
 
 		system_clock::time_point _startTime;
 	};

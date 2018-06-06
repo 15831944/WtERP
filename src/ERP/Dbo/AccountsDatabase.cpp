@@ -1,68 +1,116 @@
 #include "Dbo/AccountsDatabase.h"
 #include "Dbo/ConfigurationsDatabase.h"
 #include "Application/WServer.h"
+#include "Application/WApplication.h"
+
+#include <boost/format.hpp>
 
 namespace ERP
 {
-	Dbo::ptr<Account> AccountsDatabase::findOrCreateCashAccount(bool loadLazy)
+	AccountsDatabase::AccountsDatabase(DboSession &serverDboSession)
+		: _serverDboSession(serverDboSession)
 	{
-		Dbo::Transaction t(dboSession);
+		//Entry cycle queries
+		{
+			std::string query = std::string("SELECT cycle, lastEntry FROM %1% cycle ") +
+				"LEFT JOIN " + AccountEntry::tStr() + " lastEntry ON (cycle.id = lastEntry.%2%) "
+				"LEFT JOIN " + AccountEntry::tStr() + " e2 ON (cycle.id = e2.%2% AND (lastEntry.timestamp < e2.timestamp OR lastEntry.timestamp = e2.timestamp AND lastEntry.id < e2.id)) "
+				"WHERE (e2.id IS null) "
+				"AND (cycle.startDate <= ? AND cycle.timestamp <= ?) "
+				"AND (lastEntry.id IS null OR cycle.endDate IS null OR (lastEntry.timestamp <= ? AND cycle.endDate > lastEntry.timestamp AND cycle.endDate > cycle.startDate))";
+			boost::format fString(query);
+
+			fString % IncomeCycle::tStr() % "incomecycle_id";
+			_incomeCycleQuery = dboSession().query<IncomeCycleTuple>(fString.str());
+
+			fString % ExpenseCycle::tStr() % "expensecycle_id";
+			_expenseCycleQuery = dboSession().query<ExpenseCycleTuple>(fString.str());
+		}
+
+		//Abnormal account entry check query
+		{
+			_accountEntryCheckAbnormal = dboSession().find<AccountEntry>().where("timestamp IS null OR amount < 0");
+		}
+
+		//Abnormal entry cycle check queries
+		{
+			std::string condition = "timestamp IS null OR startDate IS null OR \"interval\" < 0 OR \"interval\" > ? OR "
+				"nIntervals < 1 OR (endDate IS NOT null AND endDate <= startDate)";
+			_incomeCycleCheckAbnormal = dboSession().find<IncomeCycle>().where(condition).bind(YearlyInterval);
+			_expenseCycleCheckAbnormal = dboSession().find<ExpenseCycle>().where(condition).bind(YearlyInterval);
+		}
+		
+		//Recalculate balance update query
+		{
+			//TODO: Rewrite after updating account system
+			Dbo::Transaction t(dboSession());
+			_recalculateBalanceCall = make_unique<Dbo::Call>(dboSession().execute(
+				"UPDATE " + Account::tStr() + " SET balance = "
+				"COALESCE((SELECT SUM(dE.amount) FROM " + AccountEntry::tStr() + " dE WHERE dE.debit_account_id = " + Account::tStr() + ".id), 0)"
+				"-COALESCE((SELECT SUM(cE.amount) FROM " + AccountEntry::tStr() + " cE WHERE cE.credit_account_id = " + Account::tStr() + ".id), 0)"
+				", \"version\" = \"version\" + 1"));
+			t.rollback();
+		}
+	}
+	
+	void AccountsDatabase::createDefaultAccountsIfNotFound()
+	{
+		Dbo::Transaction t(dboSession());
+		acquireCashAcc();
+		acquireRecurringIncomesAcc();
+		acquireRecurringExpensesAcc();
+	}
+	
+	Dbo::ptr<Account> AccountsDatabase::_findOrCreateAccount(const std::string &configName, const Wt::WString &accountName, Account::Nature accountNature, bool loadLazy)
+	{
+		Dbo::Transaction t(dboSession());
 		Dbo::ptr<Account> accountPtr;
 		WServer *server = SERVER;
-
+		
 		//Config found
-		if(server->configs().getLongIntPtr("CashAccountId"))
+		if(server->configs().getLongIntPtr(configName))
 		{
-			long long accountId = server->configs().getLongInt("CashAccountId", -1);
+			long long accountId = server->configs().getLongInt(configName, -1);
 			if(accountId != -1)
 			{
 				if(loadLazy)
-					accountPtr = dboSession.loadLazy<Account>(accountId);
+					accountPtr = dboSession().loadLazy<Account>(accountId);
 				else
-					accountPtr = dboSession.load<Account>(accountId, true);
+					accountPtr = dboSession().load<Account>(accountId, true);
 			}
 		}
-
+		
 		//Create account if not found
 		if(!accountPtr)
 		{
-			Wt::log("erp-info") << "AccountsDatabase: Cash account was not found in database, creating cash account";
-			accountPtr = dboSession.addNew<Account>(Account::Asset);
-			accountPtr.modify()->name = tr("CashAccountName").toUTF8();
+			Wt::log("erp-info") << "AccountsDatabase: Config account " << configName << " was not found in database, creating account and config";
+			accountPtr = dboSession().addNew<Account>(accountNature);
+			accountPtr.modify()->name = accountName.toUTF8();
 			accountPtr.flush();
-
-			if(!server->configs().addLongInt("CashAccountId", accountPtr.id(), &dboSession))
-				throw std::runtime_error("Error creating CashAccountId config, ConfigurationsDatabase::addLongInt() returned null");
+			
+			if(!server->configs().addLongInt(configName, accountPtr.id(), &dboSession()))
+				throw std::runtime_error("Error creating config account " + configName + ", ConfigurationsDatabase::addLongInt() returned null");
 		}
-
+		
 		t.commit();
 		return accountPtr;
 	}
 
-	void AccountsDatabase::createEntityAccountsIfNotFound(Dbo::ptr<Entity> entityPtr)
+	void AccountsDatabase::createEntityBalanceAccIfNotFound(Dbo::ptr<Entity> entityPtr)
 	{
 		if(!entityPtr)
 			return;
 
-		Dbo::Transaction t(dboSession);
+		Dbo::Transaction t(dboSession());
 
 		if(!entityPtr->balAccountPtr)
 		{
-			auto accountPtr = dboSession.addNew<Account>(Account::EntityBalanceAccount);
+			auto accountPtr = dboSession().addNew<Account>(Account::BalanceNature);
 			accountPtr.modify()->_creatorUserPtr = entityPtr->creatorUserPtr();
 			accountPtr.modify()->_regionPtr = entityPtr->regionPtr();
-			accountPtr.modify()->name = tr("EntityIdBalanceAccount").arg(entityPtr.id()).toUTF8();
+			accountPtr.modify()->name = tr("EntityBalanceAccName").arg(entityPtr->name).arg(entityPtr.id()).toUTF8();
 
 			entityPtr.modify()->balAccountPtr = accountPtr;
-		}
-		if(!entityPtr->pnlAccountPtr)
-		{
-			auto accountPtr = dboSession.addNew<Account>(Account::EntityPnlAccount);
-			accountPtr.modify()->_creatorUserPtr = entityPtr->creatorUserPtr();
-			accountPtr.modify()->_regionPtr = entityPtr->regionPtr();
-			accountPtr.modify()->name = tr("EntityIdPnlAccount").arg(entityPtr.id()).toUTF8();
-
-			entityPtr.modify()->pnlAccountPtr = accountPtr;
 		}
 
 		t.commit();
@@ -73,17 +121,17 @@ namespace ERP
 		if(!debitAccountPtr || !creditAccountPtr)
 			return nullptr;
 
-		Dbo::Transaction t(dboSession);
-		auto result = dboSession.add(unique_ptr<AccountEntry>(new AccountEntry(amount, debitAccountPtr, creditAccountPtr)));
+		Dbo::Transaction t(dboSession());
+		auto result = dboSession().add(unique_ptr<AccountEntry>(new AccountEntry(amount, debitAccountPtr, creditAccountPtr)));
 		result.modify()->setCreatedByValues();
-
-		updateAccountBalances(result);
+		
+		_updateAccountBalances(result);
 		t.commit();
 
 		return result;
 	}
 
-	void AccountsDatabase::updateAccountBalances(Dbo::ptr<AccountEntry> accountEntryPtr)
+	void AccountsDatabase::_updateAccountBalances(Dbo::ptr<AccountEntry> accountEntryPtr)
 	{
 		try
 		{
@@ -115,10 +163,46 @@ namespace ERP
 			}
 		}
 	}
+	
+	steady_clock::duration AccountsDatabase::createAllPendingCycleEntries(steady_clock::duration maxEntryDuration)
+	{
+		steady_clock::duration nextEntryDuration = maxEntryDuration;
+		Wt::WDateTime currentDt = Wt::WDateTime::currentDateTime();
+		
+		//Income cycle
+		_incomeCycleQuery.reset();
+		_incomeCycleQuery.bind(currentDt).bind(currentDt).bind(currentDt);
+		
+		IncomeTupleCollection incomeCollection = _incomeCycleQuery;
+		for(auto &tuple : incomeCollection)
+		{
+			Dbo::ptr<IncomeCycle> cyclePtr;
+			Dbo::ptr<AccountEntry> lastEntryPtr;
+			std::tie(cyclePtr, lastEntryPtr) = tuple;
+			
+			createPendingCycleEntry(cyclePtr, lastEntryPtr, currentDt, &nextEntryDuration);
+		}
+		
+		//Expense cycle
+		_expenseCycleQuery.reset();
+		_expenseCycleQuery.bind(currentDt).bind(currentDt).bind(currentDt);
+		
+		ExpenseTupleCollection expenseCollection = _expenseCycleQuery;
+		for(auto &tuple : expenseCollection)
+		{
+			Dbo::ptr<ExpenseCycle> cyclePtr;
+			Dbo::ptr<AccountEntry> lastEntryPtr;
+			std::tie(cyclePtr, lastEntryPtr) = tuple;
+			
+			createPendingCycleEntry(cyclePtr, lastEntryPtr, currentDt, &nextEntryDuration);
+		}
+		
+		return nextEntryDuration;
+	}
 
 	void AccountsDatabase::createPendingCycleEntry(Dbo::ptr<IncomeCycle> cyclePtr, Dbo::ptr<AccountEntry> lastEntryPtr, const Wt::WDateTime &currentDt, steady_clock::duration *nextEntryDuration)
 	{
-		Dbo::Transaction t(dboSession);
+		Dbo::Transaction t(dboSession());
 
 		if(!cyclePtr)
 			throw std::logic_error("AccountsDatabase::createPendingCycleEntry(): cyclePtr was null");
@@ -129,8 +213,8 @@ namespace ERP
 
 		if(lastEntryPtr && lastEntryPtr->incomeCyclePtr && lastEntryPtr->incomeCyclePtr.id() != cyclePtr.id())
 			throw std::logic_error("AccountsDatabase::createPendingCycleEntry(): lastEntryPtr->incomeCyclePtr != cyclePtr");
-
-		createEntityAccountsIfNotFound(cyclePtr->entityPtr);
+		
+		createEntityBalanceAccIfNotFound(cyclePtr->entityPtr);
 
 		auto assignmentCount = cyclePtr->clientAssignmentCollection.size();
 
@@ -138,12 +222,12 @@ namespace ERP
 		{
 			newEntry.modify()->incomeCyclePtr = cyclePtr;
 			newEntry.modify()->_debitAccountPtr = cyclePtr->entityPtr->balAccountPtr;
-			newEntry.modify()->_creditAccountPtr = cyclePtr->entityPtr->pnlAccountPtr;
+			newEntry.modify()->_creditAccountPtr = acquireRecurringIncomesAcc();
 			newEntry.modify()->description.arg(tr("income"));
 			if(assignmentCount > 0)
 				newEntry.modify()->description += trn("forNClientAssignments", assignmentCount).arg(assignmentCount).toUTF8();
-
-			updateAccountBalances(newEntry);
+			
+			_updateAccountBalances(newEntry);
 
 			lastEntryPtr = newEntry;
 		}
@@ -153,7 +237,7 @@ namespace ERP
 
 	void AccountsDatabase::createPendingCycleEntry(Dbo::ptr<ExpenseCycle> cyclePtr, Dbo::ptr<AccountEntry> lastEntryPtr, const Wt::WDateTime &currentDt, steady_clock::duration *nextEntryDuration)
 	{
-		Dbo::Transaction t(dboSession);
+		Dbo::Transaction t(dboSession());
 
 		if(!cyclePtr)
 			throw std::logic_error("AccountsDatabase::createPendingCycleEntry(): cyclePtr was null");
@@ -164,21 +248,21 @@ namespace ERP
 		
 		if(lastEntryPtr && lastEntryPtr->expenseCyclePtr && lastEntryPtr->expenseCyclePtr.id() != cyclePtr.id())
 			throw std::logic_error("AccountsDatabase::createPendingCycleEntry(): lastEntryPtr->expenseCyclePtr != cyclePtr");
-
-		createEntityAccountsIfNotFound(cyclePtr->entityPtr);
+		
+		createEntityBalanceAccIfNotFound(cyclePtr->entityPtr);
 
 		auto assignmentCount = cyclePtr->employeeAssignmentCollection.size();
 
 		while(Dbo::ptr<AccountEntry> newEntry = _createPendingCycleEntry(*cyclePtr, lastEntryPtr, currentDt, nextEntryDuration))
 		{
 			newEntry.modify()->expenseCyclePtr = cyclePtr;
-			newEntry.modify()->_debitAccountPtr = cyclePtr->entityPtr->pnlAccountPtr;
+			newEntry.modify()->_debitAccountPtr = acquireRecurringExpensesAcc();
 			newEntry.modify()->_creditAccountPtr = cyclePtr->entityPtr->balAccountPtr;
 			newEntry.modify()->description.arg(tr("expense"));
 			if(assignmentCount > 0)
 				newEntry.modify()->description += trn("forNEmployeeAssignments", assignmentCount).arg(assignmentCount).toUTF8();
-
-			updateAccountBalances(newEntry);
+			
+			_updateAccountBalances(newEntry);
 
 			lastEntryPtr = newEntry;
 		}
@@ -331,6 +415,19 @@ namespace ERP
 				newEntry.description = tr("RecurringEntry");
 		}
 
-		return dboSession.addNew<AccountEntry>(move(newEntry));
+		return dboSession().addNew<AccountEntry>(move(newEntry));
+	}
+	
+	DboSession &AccountsDatabase::dboSession()
+	{
+		WApplication *app = APP;
+		if(app)
+			return app->dboSession();
+		return _serverDboSession;
+	}
+	
+	AccountsDatabase &AccountsDatabase::instance()
+	{
+		return SERVER->accountsDatabase();
 	}
 }

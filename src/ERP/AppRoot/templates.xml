@@ -607,7 +607,7 @@ ${block:ERP.FieldH.CW entity Entity}
 	<div class="panel-heading">${tr:AccountInfo}</div>
 	<div class="panel-body">
 		${block:ERP.Field name AccountName}
-		${block:ERP.Field type AccountType}
+		${block:ERP.Field nature AccountNature}
         ${editBtn}
 		${submitBtn class="btn-primary"}
 	</div>

@@ -17,6 +17,7 @@ namespace ERP
 	class TaskScheduler;
 	class PermissionsDatabase;
 	class ConfigurationsDatabase;
+	class AccountsDatabase;
 
 	typedef std::vector<unique_ptr<const Wt::Auth::OAuthService>> OAuthServiceMap;
 
@@ -33,6 +34,7 @@ namespace ERP
 		Dbo::SqlConnectionPool &sqlPool() const { return *_sqlPool; }
 		ConfigurationsDatabase &configs() const { return *_configs; }
 		PermissionsDatabase &permissionsDatabase() const { return *_permissionsDatabase; }
+		AccountsDatabase &accountsDatabase() const { return *_accountsDatabase; }
 
 		const Wt::Auth::AuthService &getAuthService() const { return _authService; }
 		const Wt::Auth::PasswordService &getPasswordService() const { return _passwordService; }
@@ -45,6 +47,7 @@ namespace ERP
 		unique_ptr<Dbo::SqlConnectionPool> _sqlPool;
 		unique_ptr<ConfigurationsDatabase> _configs;
 		unique_ptr<PermissionsDatabase> _permissionsDatabase;
+		unique_ptr<AccountsDatabase> _accountsDatabase;
 		unique_ptr<TaskScheduler> _taskScheduler;
 
 		Wt::Auth::AuthService _authService;
