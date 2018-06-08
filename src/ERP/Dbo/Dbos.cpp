@@ -27,6 +27,7 @@ namespace ERP
 		dboSession.mapClass<Location>(Location::tableName());
 		dboSession.mapClass<EmployeeAssignment>(EmployeeAssignment::tableName());
 		dboSession.mapClass<ClientAssignment>(ClientAssignment::tableName());
+		dboSession.mapClass<ControlAccount>(ControlAccount::tableName());
 		dboSession.mapClass<Account>(Account::tableName());
 		dboSession.mapClass<AccountEntry>(AccountEntry::tableName());
 		dboSession.mapClass<IncomeCycle>(IncomeCycle::tableName());

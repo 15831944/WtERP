@@ -42,6 +42,8 @@ namespace ERP
 
 	protected:
 		void configureAuth();
+		void _reinstallDb();
+		void _insertDefaultValuesInDb();
 
 		DboSession _dboSession;
 		unique_ptr<Dbo::SqlConnectionPool> _sqlPool;

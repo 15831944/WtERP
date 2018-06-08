@@ -32,14 +32,13 @@ namespace ERP
 		
 		WApplication *app = APP;
 		_baseQuery = app->dboSession().query<ResultType>(
-			"SELECT acc.id, acc.name, acc.nature, e.id, acc.balance, e.name FROM " + Account::tStr() + " acc "
-			"LEFT JOIN " + Entity::tStr() + " e ON e.bal_account_id = acc.id");
+			"SELECT acc.id, acc.name, e.id, acc.balance, e.name FROM " + Account::tStr() + " acc "
+			"LEFT JOIN " + Entity::tStr() + " e ON acc.id IN (e.bal_account_id, e.incomes_account_id, e.expenses_account_id)");
 		app->authLogin().setPermissionConditionsToQuery(_baseQuery, false, "acc.");
 
 		model->setQuery(generateFilteredQuery());
 		addColumn(ViewId, model->addColumn("acc.id"), tr("ID"), IdColumnWidth);
 		addColumn(ViewName, model->addColumn("acc.name"), tr("Name"), AccountNameColumnWidth);
-		addColumn(ViewType, model->addColumn("acc.nature"), tr("Nature"), TypeColumnWidth);
 		addColumn(ViewEntity, model->addColumn("e.id"), tr("Entity"), EntityColumnWidth);
 		addColumn(ViewBalance, model->addColumn("acc.balance"), tr("BalanceRs"), BalanceColumnWidth);
 
@@ -103,21 +102,12 @@ namespace ERP
 		if(viewIndex == AccountList::ViewBalance && role == Wt::ItemDataRole::Display)
 		{
 			const AccountList::ResultType &res = static_pointer_cast<Dbo::QueryModel<AccountList::ResultType>>(sourceModel())->resultRow(idx.row());
-			Account::Nature type = std::get<AccountList::ResType>(res);
 			long long balanceInCents = std::get<AccountList::ResBalance>(res);
 			Wt::WString balanceStr = Wt::WLocale::currentLocale().toString(Money(std::abs(balanceInCents), DEFAULT_CURRENCY));
-
-			switch(type)
-			{
-			default:
-				if(balanceInCents > 0) return tr("XDebit").arg(balanceStr);
-				else if(balanceInCents < 0) return tr("XCredit").arg(balanceStr);
-				else return balanceStr;
-			case Account::BalanceNature:
-				if(balanceInCents > 0) return tr("XReceivable").arg(balanceStr);
-				else if(balanceInCents < 0) return tr("XPayable").arg(balanceStr);
-				else return balanceStr;
-			}
+			
+			if(balanceInCents > 0) return tr("XDebit").arg(balanceStr);
+			else if(balanceInCents < 0) return tr("XCredit").arg(balanceStr);
+			else return balanceStr;
 		}
 
 		if(viewIndex == AccountList::ViewEntity)
@@ -445,27 +435,22 @@ namespace ERP
 		return baseResult;
 	}
 
-	const Wt::WFormModel::Field AccountFormModel::natureField = "nature";
 	const Wt::WFormModel::Field AccountFormModel::nameField = "name";
 
 	AccountFormModel::AccountFormModel(AccountView *view, Dbo::ptr<Account> accountPtr)
 		: RecordFormModel(view, move(accountPtr)), _view(view)
 	{
-		addField(natureField);
 		addField(nameField);
 	}
 
 	void AccountFormModel::updateFromDb()
 	{
 		TRANSACTION(APP);
-		setValue(natureField, (int)_recordPtr->nature);
 		setValue(nameField, Wt::WString::fromUTF8(_recordPtr->name));
 	}
 
 	void AccountFormModel::persistedHandler()
 	{
-		setReadOnly(natureField, true);
-
 		auto entryList = _view->bindNew<AccountChildrenEntryList>("entry-list", recordPtr());
 		entryList->enableFilters();
 	}
@@ -476,8 +461,8 @@ namespace ERP
 		if(res != AuthLogin::Permitted)
 			return res;
 
-		long long cashAccountId = SERVER->configs().getLongInt("CashAccountId", -1);
-		if(cashAccountId != -1 && _recordPtr.id() == cashAccountId)
+		long long cashAccountId = AccountsDatabase::instance().getAccountId(CashAcc);
+		if(_recordPtr.id() == cashAccountId)
 			return AuthLogin::Denied;
 
 		return res;
@@ -499,13 +484,6 @@ namespace ERP
 			name->changed().connect(this, std::bind(&AbstractRecordFormModel::validateUpdateField, this, nameField));
 			return name;
 		}
-		if(field == natureField)
-		{
-			auto typeCombo = make_unique<Wt::WComboBox>();
-			typeCombo->insertItem(Account::AssetNature, Wt::any_traits<Account::Nature>::asString(Account::AssetNature, ""));
-			typeCombo->insertItem(Account::LiabilityNature, Wt::any_traits<Account::Nature>::asString(Account::LiabilityNature, ""));
-			return typeCombo;
-		}
 		return RecordFormModel::createFormWidget(field);
 	}
 
@@ -524,7 +502,6 @@ namespace ERP
 		}
 
 		_recordPtr.modify()->name = valueText(nameField).toUTF8();
-		_recordPtr.modify()->nature = Account::Nature(Wt::any_cast<int>(value(natureField)));
 
 		t.commit();
 
@@ -690,10 +667,6 @@ namespace ERP
 
 	void BaseAccountEntryFormModel::handleAccountChanged(bool update)
 	{
-		long long cashAccountId = SERVER->configs().getLongInt("CashAccountId", -1);
-		if(cashAccountId == -1)
-			return;
-
 		if(update)
 		{
 			_view->updateModelField(this, debitAccountField);
@@ -721,6 +694,7 @@ namespace ERP
 		}
 
 		TRANSACTION(APP);
+		long long cashAccountId = AccountsDatabase::instance().getAccountId(CashAcc);
 		Dbo::ptr<Entity> entityPtr;
 		if(debitPtr.id() == cashAccountId)
 			entityPtr = creditPtr->balOfEntityWPtr;
@@ -740,10 +714,6 @@ namespace ERP
 		if(!_isReceipt.is_initialized())
 			return;
 
-		long long cashAccountId = SERVER->configs().getLongInt("CashAccountId", -1);
-		if(cashAccountId == -1)
-			return;
-
 		_view->updateModelField(this, entityField);
 		const Wt::any &entityData = value(entityField);
 
@@ -756,13 +726,13 @@ namespace ERP
 				TRANSACTION(app);
 				if(*_isReceipt)
 				{
-					setValue(debitAccountField, accountsDatabase.acquireCashAcc());
-					setValue(creditAccountField, entityPtr->balAccountPtr);
+					setValue(debitAccountField, accountsDatabase.loadAccount(CashAcc));
+					setValue(creditAccountField, entityPtr->balanceAccPtr);
 				}
 				else
 				{
-					setValue(debitAccountField, entityPtr->balAccountPtr);
-					setValue(creditAccountField, accountsDatabase.acquireCashAcc());
+					setValue(debitAccountField, entityPtr->balanceAccPtr);
+					setValue(creditAccountField, accountsDatabase.loadAccount(CashAcc));
 				}
 
 				_view->updateViewField(this, debitAccountField);

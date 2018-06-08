@@ -61,7 +61,8 @@ namespace ERP
 		});
 		auto entityAccounts = bindNew<RecordCountTemplate>("entityAccounts", []() -> long long {
 			return APP->dboSession().query<long long>(
-				"SELECT COUNT(1) FROM " + Account::tStr() + " acc INNER JOIN " + Entity::tStr() + " e ON e.bal_account_id = acc.id"
+				"SELECT COUNT(1) FROM " + Account::tStr() + " acc "
+				"INNER JOIN " + Entity::tStr() + " e ON acc.id IN (e.bal_account_id, e.incomes_account_id, e.expenses_account_id)"
 			);
 		}, totalAccounts);
 
@@ -222,7 +223,7 @@ namespace ERP
 		{
 			WApplication *app = APP;
 			TRANSACTION(app);
-			auto cashAccountPtr = AccountsDatabase::instance().acquireCashAcc();
+			auto cashAccountPtr = AccountsDatabase::instance().loadAccount(CashAcc);
 			Wt::WString balanceStr = Wt::WLocale::currentLocale().toString(Money(std::abs(cashAccountPtr->balanceInCents()), DEFAULT_CURRENCY));
 			if(cashAccountPtr->balanceInCents() > 0)
 			{

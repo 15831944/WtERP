@@ -45,7 +45,6 @@
 <message id="Purpose">Purpose</message>
 <message id="UnspecificPurpose">Unspecific purpose</message>
 <message id="Type">Type</message>
-<message id="Nature">Nature</message>
 <message id="Role">Role</message>
 <message id="Roles">Roles</message>
 <message id="Description">Description</message>
@@ -245,7 +244,7 @@
 <!-- FindAccountEdit -->
 <message id="FindAccountEditPlaceholder">Find account...</message>
 <message id="FindAccountEditValuePrefix">{1} (ID: {2})</message>
-<message id="FindAccountEditValueTemplate">{1}, Type: {2}</message>
+<message id="FindAccountEditValueTemplate">{1}</message>
 <message id="FindAccountEditValueWithEntityTemplate">{1}, Entity: {2}</message>
 
 <!-- FindLocationEdit -->
@@ -312,19 +311,12 @@
 	<plural case="1"> for {1} client assignments</plural>
 </message>
 
-<!-- Account Names -->
-<message id="CashAccName">Cash</message>
-<message id="RecurringIncomesAccName">Recurring Incomes</message>
-<message id="RecurringExpensesAccName">Recurring Expenses</message>
-<message id="EntityBalanceAccName">Balance - #{1} (#{2})</message>
-
 <!-- AccountView, AccountList -->
 <message id="FinancialRecords">Financial Records</message>
 <message id="DebitAccount">Debit account</message>
 <message id="CreditAccount">Credit account</message>
 <message id="AccountName">Account name</message>
 <message id="AccountType">Account type</message>
-<message id="AccountNature">Account nature</message>
 <message id="NewAccount">New Account</message>
 <message id="CreateAccount">Create account</message>
 <message id="AccountInfo">Account Information</message>

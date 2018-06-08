@@ -16,6 +16,7 @@
 //TODO: Follow MySQL backend error report
 //TODO: Follow WMenuItem::setContents() error report
 
+//TODO: Account Entry value must be > 0
 //TODO: Localize DateTimes
 //TODO: viewName() and viewTitle()
 //TODO: viewName() for record not found

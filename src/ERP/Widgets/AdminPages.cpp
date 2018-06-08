@@ -240,7 +240,7 @@ namespace ERP
 		: AdminPageWidget(ACCOUNTS_PATHC)
 	{
 		WApplication *app = APP;
-		Dbo::ptr<Account> cashAccountPtr = AccountsDatabase::instance().acquireCashAcc(true);
+		Dbo::ptr<Account> cashAccountPtr = AccountsDatabase::instance().loadAccount(CashAcc, true);
 
 		auto accountsMenuItem = createMenuItemWrapped(tr("Accounts"), "", make_unique<AccountList>());
 		auto transactionsMenuItem = createMenuItemWrapped(tr("Transactions"), ACCOUNT_PREFIX + std::to_string(cashAccountPtr.id()),

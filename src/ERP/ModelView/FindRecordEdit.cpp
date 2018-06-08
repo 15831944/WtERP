@@ -368,8 +368,7 @@ namespace ERP
 		TRANSACTION(APP);
 		if(valuePtr())
 			_lineEdit->setText(tr("FindAccountEditValueTemplate")
-				.arg(tr("FindAccountEditValuePrefix").arg(valuePtr()->name).arg(valuePtr().id()))
-				.arg(Wt::any_traits<Account::Nature>::asString(valuePtr()->nature, "")));
+				.arg(tr("FindAccountEditValuePrefix").arg(valuePtr()->name).arg(valuePtr().id())));
 		else
 			_lineEdit->setText("");
 	}
@@ -633,9 +632,9 @@ namespace ERP
 		stringList->removeRows(0, stringList->rowCount());
 
 		WApplication *app = APP;
-		typedef tuple<std::string, long long, Account::Nature, std::string> FAMTuple;
-		std::string joinPart = "LEFT JOIN " + Entity::tStr() + " e ON e.bal_account_id = acc.id";
-		auto query = app->dboSession().query<FAMTuple>("SELECT acc.name, acc.id, acc.nature, e.name FROM " + Account::tStr() + " acc " + joinPart).limit(50);
+		typedef tuple<std::string, long long, std::string> FAMTuple;
+		std::string joinPart = "LEFT JOIN " + Entity::tStr() + " e ON acc.id IN (e.bal_account_id, e.incomes_account_id, e.expenses_account_id)";
+		auto query = app->dboSession().query<FAMTuple>("SELECT acc.name, acc.id, e.name FROM " + Account::tStr() + " acc " + joinPart).limit(50);
 		auto countQuery = app->dboSession().query<int>("SELECT COUNT(acc.id) FROM " + Account::tStr() + " acc " + joinPart);
 
 		app->authLogin().setPermissionConditionsToQuery(query, false, "acc.", modifyPermissionRequired);
@@ -678,8 +677,7 @@ namespace ERP
 					.arg(std::get<EntityName>(row)));
 			else
 				stringList->addString(tr("FindAccountEditValueTemplate")
-					.arg(tr("FindAccountEditValuePrefix").arg(std::get<Name>(row)).arg(std::get<Id>(row)))
-					.arg(Wt::any_traits<Account::Nature>::asString(std::get<Nature>(row), "")));
+					.arg(tr("FindAccountEditValuePrefix").arg(std::get<Name>(row)).arg(std::get<Id>(row))));
 
 			stringList->setData(stringList->index(stringList->rowCount() - 1, 0), std::get<Id>(row), Wt::ItemDataRole::User);
 		}

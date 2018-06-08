@@ -184,6 +184,7 @@ namespace ERP
 		//Localization and Strings
 		messageResourceBundle().use(appRoot() + "templates", false); //CHECK_BEFORE_RELEASE
 		messageResourceBundle().use(appRoot() + "strings", false); //CHECK_BEFORE_RELEASE
+		messageResourceBundle().use(appRoot() + "account_names", false); //CHECK_BEFORE_RELEASE
 
 		Wt::WLocale newLocale("en");
 		newLocale.setDateFormat(tr("DateFormat"));

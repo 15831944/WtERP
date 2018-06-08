@@ -339,7 +339,7 @@ namespace ERP
 		view->updateViewField(view->model(), ContactNumberFormModel::entityField);
 
 		auto model = view->model();
-		return std::make_tuple(move(view), model);
+		return make_tuple(move(view), model);
 	}
 
 	//LOCATIONS MANAGER MODEL
@@ -390,7 +390,7 @@ namespace ERP
 		view->updateViewField(view->model(), LocationFormModel::entityField);
 
 		auto model = view->model();
-		return std::make_tuple(move(view), model);
+		return make_tuple(move(view), model);
 	}
 
 	//BUSINESS MODEL

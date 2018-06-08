@@ -140,7 +140,9 @@ namespace ERP
 	using std::static_pointer_cast;
 	using std::dynamic_pointer_cast;
 	using std::pair;
+	using std::make_pair;
 	using std::tuple;
+	using std::make_tuple;
 
 	using boost::optional;
 	using namespace std::placeholders;

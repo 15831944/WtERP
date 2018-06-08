@@ -23,29 +23,9 @@ namespace ERP
 
 		_isConstructing = true;
 		recalculateAccountBalances();
-		createDefaultAccounts(true);
 		checkAbnormalRecords(true);
 		createPendingCycleEntries(true);
 		_isConstructing = false;
-	}
-
-	void TaskScheduler::createDefaultAccounts(bool scheduleNext)
-	{
-		Wt::log("erp-info") << "TaskScheduler: Checking default accounts in database";
-		try
-		{
-			_server->accountsDatabase().createDefaultAccountsIfNotFound();
-		}
-		catch(const std::exception &e)
-		{
-			Wt::log("error") << "TaskScheduler::createDefaultAccounts(): Error: " << e.what();
-			if(_isConstructing)
-				throw;
-		}
-
-		//Repeat every 24 hours
-		if(scheduleNext)
-			_server->ioService().schedule(hours(24), std::bind(&TaskScheduler::createDefaultAccounts, this, true));
 	}
 
 	void TaskScheduler::recalculateAccountBalances()

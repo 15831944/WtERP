@@ -132,7 +132,7 @@ namespace ERP
 	class FindAccountSuggestionPopup : public Wt::WSuggestionPopup
 	{
 	public:
-		enum ResultColumns { Name, Id, Nature, EntityName };
+		enum ResultColumns { Name, Id, EntityName };
 		FindAccountSuggestionPopup();
 
 	protected:
@@ -151,8 +151,7 @@ namespace ERP
 		virtual void setTextFromValuePtr() override;
 		void handleAccountViewSubmitted(AccountView *view);
 		void handleListSelectionChanged(long long id);
-
-		Account::Nature _accountType;
+		
 		Wt::WDialog *_newDialog = nullptr;
 		Wt::WDialog *_listDialog = nullptr;
 

@@ -6,14 +6,80 @@
 
 namespace ERP
 {
+	enum DefaultAccount
+	{
+		CashAcc,
+		DiscountsRecievedAcc,
+		DiscountsAllowedAcc,
+		SalesTaxPayableAcc,
+		BadDebtsAcc,
+		
+		DefaultAccountsCount
+	};
+	enum DefaultControlAcc
+	{ //ENSURE THE LIST IS TOPOLOGICALLY SORTED
+		
+		//Top level
+		CurrentAssetsControlAcc,
+		CurrentLiabilitiesControlAcc,
+		OperatingIncomesControlAcc,
+		OperatingExpensesControlAcc,
+		RevenuesControlAcc,
+		COGSControlAcc,
+		//Lower level
+		AccountsReceivableControlAcc,
+		AccountsPayableControlAcc,
+		DoubtfulDebtsControlAcc,
+		RecurringIncomesControlAcc,
+		RecurringExpensesControlAcc,
+		
+		DefaultControlAccsCount
+	};
+	
 	class AccountsDatabase
 	{
+	private:
+		struct AccountInfo
+		{
+			std::string prefix;
+			DefaultControlAcc controlAcc = DefaultControlAccsCount;
+		};
+		AccountInfo _accInfo[DefaultAccountsCount];
+		AccountInfo _ctrlInfo[DefaultControlAccsCount];
+		void _initAccountsInfo()
+		{
+			//Top level control acounts
+			_ctrlInfo[CurrentAssetsControlAcc] = { "CurrentAssets" };
+			_ctrlInfo[CurrentLiabilitiesControlAcc] = { "CurrentLiabilities" };
+			_ctrlInfo[OperatingIncomesControlAcc] = { "OperatingIncomes" };
+			_ctrlInfo[OperatingExpensesControlAcc] = { "OperatingExpenses" };
+			_ctrlInfo[RevenuesControlAcc] = { "Revenues" };
+			_ctrlInfo[COGSControlAcc] = { "COGS" };
+			
+			//Lower level control accounts
+			_ctrlInfo[AccountsReceivableControlAcc] = { "Receivables", CurrentAssetsControlAcc };
+			_ctrlInfo[AccountsPayableControlAcc] = { "Payables", CurrentLiabilitiesControlAcc };
+			_ctrlInfo[DoubtfulDebtsControlAcc] = { "DoubtfulDebts", CurrentAssetsControlAcc };
+			_ctrlInfo[RecurringIncomesControlAcc] = { "RecurringIncomes", OperatingIncomesControlAcc };
+			_ctrlInfo[RecurringExpensesControlAcc] = { "RecurringExpenses", OperatingExpensesControlAcc };
+			
+			//Simple accounts
+			_accInfo[CashAcc] = { "Cash", CurrentAssetsControlAcc };
+			_accInfo[DiscountsRecievedAcc] = { "DiscReceived", OperatingIncomesControlAcc };
+			_accInfo[DiscountsAllowedAcc] = { "DiscAllowed", OperatingExpensesControlAcc };
+			_accInfo[SalesTaxPayableAcc] = { "SalesTaxPayable", CurrentLiabilitiesControlAcc };
+			_accInfo[BadDebtsAcc] = { "BadDebts", OperatingExpensesControlAcc };
+		}
+		
 	public:
 		AccountsDatabase(DboSession &serverDboSession);
 		static AccountsDatabase &instance();
 		
-		void createDefaultAccountsIfNotFound();
+		void createDefaultAccounts();
 		void createEntityBalanceAccIfNotFound(Dbo::ptr<Entity> entityPtr);
+		void createEntityRecurringIncomesAccIfNotFound(Dbo::ptr<Entity> entityPtr);
+		void createEntityRecurringExpensesAccIfNotFound(Dbo::ptr<Entity> entityPtr);
+		void createEntityDoubtfulDebtsAccIfNotFound(Dbo::ptr<Entity> entityPtr);
 
 		Dbo::ptr<AccountEntry> createAccountEntry(const Money &amount, Dbo::ptr<Account> debitAccountPtr, Dbo::ptr<Account> creditAccountPtr);
 		
@@ -21,22 +87,15 @@ namespace ERP
 		void createPendingCycleEntry(Dbo::ptr<IncomeCycle> cyclePtr, Dbo::ptr<AccountEntry> lastEntryPtr, const Wt::WDateTime &currentDt, steady_clock::duration *nextEntryDuration = nullptr);
 		void createPendingCycleEntry(Dbo::ptr<ExpenseCycle> cyclePtr, Dbo::ptr<AccountEntry> lastEntryPtr, const Wt::WDateTime &currentDt, steady_clock::duration *nextEntryDuration = nullptr);
 		
+		long long getControlAccId(DefaultControlAcc account);
+		long long getAccountId(DefaultAccount account);
+		
+		Dbo::ptr<ControlAccount> loadControlAcc(DefaultControlAcc account, bool loadLazy = false);
+		Dbo::ptr<Account> loadAccount(DefaultAccount account, bool loadLazy = false);
+		
 		AccountEntryCollection abnormalAccountEntries() { return _accountEntryCheckAbnormal; }
 		IncomeCycleCollection abnormalIncomeCycles() { return _incomeCycleCheckAbnormal; }
 		ExpenseCycleCollection abnormalExpenseCycles() { return _expenseCycleCheckAbnormal; }
-		
-		Dbo::ptr<Account> acquireCashAcc(bool loadLazy = false)
-		{
-			return _findOrCreateAccount("CashAccId", tr("CashAccName"), Account::AssetNature, loadLazy);
-		}
-		Dbo::ptr<Account> acquireRecurringIncomesAcc(bool loadLazy = false)
-		{
-			return _findOrCreateAccount("RecurringIncomesAccId", tr("RecurringIncomesAccName"), Account::IncomeNature, loadLazy);
-		}
-		Dbo::ptr<Account> acquireRecurringExpensesAcc(bool loadLazy = false)
-		{
-			return _findOrCreateAccount("RecurringExpensesAccId", tr("RecurringExpensesAccName"), Account::ExpenseNature, loadLazy);
-		}
 
 	private:
 		Dbo::ptr<AccountEntry> _createPendingCycleEntry(
@@ -45,16 +104,10 @@ namespace ERP
 			const Wt::WDateTime &currentDt,
 			steady_clock::duration *nextEntryDuration
 		);
-		
-		Dbo::ptr<Account> _findOrCreateAccount(
-			const std::string &configName,
-			const Wt::WString &accountName,
-			Account::Nature accountNature,
-			bool loadLazy
-		);
 
-		void _updateAccountBalances(Dbo::ptr<AccountEntry> accountEntryPtr);
-		void _recalculateAccountBalances() { _recalculateBalanceCall->run(); }
+		void _updateAccountBalances(Dbo::ptr<AccountEntry> accountEntryPtr, bool secondAttempt);
+		void _updateControlAccountBalances(Dbo::ptr<ControlAccount> controlAccPtr, long long valueInCents);
+		void _recalculateAccountBalances();
 		
 		DboSession &dboSession();
 		
@@ -70,9 +123,6 @@ namespace ERP
 		Dbo::Query<Dbo::ptr<AccountEntry>> _accountEntryCheckAbnormal;
 		Dbo::Query<Dbo::ptr<IncomeCycle>> _incomeCycleCheckAbnormal;
 		Dbo::Query<Dbo::ptr<ExpenseCycle>> _expenseCycleCheckAbnormal;
-		
-		//Recalculate balances query
-		unique_ptr<Dbo::Call> _recalculateBalanceCall;
 		
 		DboSession &_serverDboSession;
 		

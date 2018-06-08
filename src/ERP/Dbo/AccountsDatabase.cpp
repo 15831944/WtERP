@@ -4,12 +4,16 @@
 #include "Application/WApplication.h"
 
 #include <boost/format.hpp>
+#include <stack>
+#include <tuple>
 
 namespace ERP
 {
 	AccountsDatabase::AccountsDatabase(DboSession &serverDboSession)
 		: _serverDboSession(serverDboSession)
 	{
+		_initAccountsInfo();
+		
 		//Entry cycle queries
 		{
 			std::string query = std::string("SELECT cycle, lastEntry FROM %1% cycle ") +
@@ -39,61 +43,88 @@ namespace ERP
 			_incomeCycleCheckAbnormal = dboSession().find<IncomeCycle>().where(condition).bind(YearlyInterval);
 			_expenseCycleCheckAbnormal = dboSession().find<ExpenseCycle>().where(condition).bind(YearlyInterval);
 		}
+	}
+	
+	void AccountsDatabase::createDefaultAccounts()
+	{
+		Dbo::Transaction t(dboSession());
 		
-		//Recalculate balance update query
+		Dbo::ptr<ControlAccount> controlAccounts[DefaultControlAccsCount+1];
+		for(int i = 0; i < DefaultControlAccsCount; ++i)
 		{
-			//TODO: Rewrite after updating account system
-			Dbo::Transaction t(dboSession());
-			_recalculateBalanceCall = make_unique<Dbo::Call>(dboSession().execute(
-				"UPDATE " + Account::tStr() + " SET balance = "
-				"COALESCE((SELECT SUM(dE.amount) FROM " + AccountEntry::tStr() + " dE WHERE dE.debit_account_id = " + Account::tStr() + ".id), 0)"
-				"-COALESCE((SELECT SUM(cE.amount) FROM " + AccountEntry::tStr() + " cE WHERE cE.credit_account_id = " + Account::tStr() + ".id), 0)"
-				", \"version\" = \"version\" + 1"));
-			t.rollback();
+			controlAccounts[i] = dboSession().addNew<ControlAccount>(controlAccounts[_ctrlInfo[i].controlAcc]);
+			controlAccounts[i].modify()->name = tr(_ctrlInfo[i].prefix + "CAccName").toUTF8();
 		}
-	}
-	
-	void AccountsDatabase::createDefaultAccountsIfNotFound()
-	{
-		Dbo::Transaction t(dboSession());
-		acquireCashAcc();
-		acquireRecurringIncomesAcc();
-		acquireRecurringExpensesAcc();
-	}
-	
-	Dbo::ptr<Account> AccountsDatabase::_findOrCreateAccount(const std::string &configName, const Wt::WString &accountName, Account::Nature accountNature, bool loadLazy)
-	{
-		Dbo::Transaction t(dboSession());
-		Dbo::ptr<Account> accountPtr;
+		
+		Dbo::ptr<Account> accounts[DefaultAccountsCount];
+		for(int i = 0; i < DefaultAccountsCount; ++i)
+		{
+			accounts[i] = dboSession().addNew<Account>(controlAccounts[_accInfo[i].controlAcc]);
+			accounts[i].modify()->name = tr(_accInfo[i].prefix + "AccName").toUTF8();
+		}
+		dboSession().flush();
+		
 		WServer *server = SERVER;
-		
-		//Config found
-		if(server->configs().getLongIntPtr(configName))
+		for(int i = 0; i < DefaultControlAccsCount; ++i)
 		{
-			long long accountId = server->configs().getLongInt(configName, -1);
-			if(accountId != -1)
-			{
-				if(loadLazy)
-					accountPtr = dboSession().loadLazy<Account>(accountId);
-				else
-					accountPtr = dboSession().load<Account>(accountId, true);
-			}
-		}
-		
-		//Create account if not found
-		if(!accountPtr)
-		{
-			Wt::log("erp-info") << "AccountsDatabase: Config account " << configName << " was not found in database, creating account and config";
-			accountPtr = dboSession().addNew<Account>(accountNature);
-			accountPtr.modify()->name = accountName.toUTF8();
-			accountPtr.flush();
-			
-			if(!server->configs().addLongInt(configName, accountPtr.id(), &dboSession()))
+			std::string configName = _ctrlInfo[i].prefix + "CAccId";
+			if(!server->configs().addLongInt(configName, controlAccounts[i].id(), &dboSession()))
 				throw std::runtime_error("Error creating config account " + configName + ", ConfigurationsDatabase::addLongInt() returned null");
 		}
+		for(int i = 0; i < DefaultAccountsCount; ++i)
+		{
+			std::string configName = _accInfo[i].prefix + "AccId";
+			if(!server->configs().addLongInt(configName, accounts[i].id(), &dboSession()))
+				throw std::runtime_error("Error creating config account " + configName + ", ConfigurationsDatabase::addLongInt() returned null");
+		}
+	}
+	
+	long long AccountsDatabase::getControlAccId(DefaultControlAcc account)
+	{
+		long long id = SERVER->configs().getLongInt(_ctrlInfo[account].prefix + "CAccId", -1);
+		if(id == -1)
+			throw std::runtime_error("Could not find control account id config for " + _ctrlInfo[account].prefix + ". Is your data corrupted?");
+		return id;
+	}
+	
+	long long AccountsDatabase::getAccountId(DefaultAccount account)
+	{
+		long long id = SERVER->configs().getLongInt(_accInfo[account].prefix + "AccId", -1);
+		if(id == -1)
+			throw std::runtime_error("Could not find account id config for " + _accInfo[account].prefix + ". Is your data corrupted?");
+		return id;
+	}
+	
+	Dbo::ptr<ControlAccount> AccountsDatabase::loadControlAcc(DefaultControlAcc account, bool loadLazy)
+	{
+		WServer *server = SERVER;
+		AccountInfo info = _ctrlInfo[account];
 		
-		t.commit();
-		return accountPtr;
+		long long accountId = server->configs().getLongInt(info.prefix + "CAccId", -1);
+		if(accountId == -1)
+			throw std::runtime_error("Could not find control account id config for " + info.prefix + ". Is your data corrupted?");
+		
+		Dbo::Transaction t(dboSession());
+		if(loadLazy)
+			return dboSession().loadLazy<ControlAccount>(accountId);
+		else
+			return dboSession().load<ControlAccount>(accountId, true);
+	}
+	
+	Dbo::ptr<Account> AccountsDatabase::loadAccount(DefaultAccount account, bool loadLazy)
+	{
+		WServer *server = SERVER;
+		AccountInfo info = _accInfo[account];
+		
+		long long accountId = server->configs().getLongInt(info.prefix + "AccId", -1);
+		if(accountId == -1)
+			throw std::runtime_error("Could not find account id config for " + info.prefix + ". Is your data corrupted?");
+		
+		Dbo::Transaction t(dboSession());
+		if(loadLazy)
+			return dboSession().loadLazy<Account>(accountId);
+		else
+			return dboSession().load<Account>(accountId, true);
 	}
 
 	void AccountsDatabase::createEntityBalanceAccIfNotFound(Dbo::ptr<Entity> entityPtr)
@@ -103,65 +134,80 @@ namespace ERP
 
 		Dbo::Transaction t(dboSession());
 
-		if(!entityPtr->balAccountPtr)
+		if(!entityPtr->balanceAccPtr)
 		{
-			auto accountPtr = dboSession().addNew<Account>(Account::BalanceNature);
+			auto accountPtr = dboSession().addNew<Account>(
+				loadControlAcc(AccountsReceivableControlAcc, true),
+				loadControlAcc(AccountsPayableControlAcc, true)
+			);
 			accountPtr.modify()->_creatorUserPtr = entityPtr->creatorUserPtr();
 			accountPtr.modify()->_regionPtr = entityPtr->regionPtr();
-			accountPtr.modify()->name = tr("EntityBalanceAccName").arg(entityPtr->name).arg(entityPtr.id()).toUTF8();
+			accountPtr.modify()->name = tr("EntityBalanceAccName").arg(entityPtr->name).toUTF8();
 
-			entityPtr.modify()->balAccountPtr = accountPtr;
+			entityPtr.modify()->balanceAccPtr = accountPtr;
 		}
 
 		t.commit();
 	}
-
-	Dbo::ptr<AccountEntry> AccountsDatabase::createAccountEntry(const Money &amount, Dbo::ptr<Account> debitAccountPtr, Dbo::ptr<Account> creditAccountPtr)
+	
+	void AccountsDatabase::createEntityRecurringIncomesAccIfNotFound(Dbo::ptr<Entity> entityPtr)
 	{
-		if(!debitAccountPtr || !creditAccountPtr)
-			return nullptr;
-
-		Dbo::Transaction t(dboSession());
-		auto result = dboSession().add(unique_ptr<AccountEntry>(new AccountEntry(amount, debitAccountPtr, creditAccountPtr)));
-		result.modify()->setCreatedByValues();
+		if(!entityPtr)
+			return;
 		
-		_updateAccountBalances(result);
+		Dbo::Transaction t(dboSession());
+		
+		if(!entityPtr->recurringIncomesAccPtr)
+		{
+			auto accountPtr = dboSession().addNew<Account>(loadControlAcc(RecurringIncomesControlAcc, true));
+			accountPtr.modify()->_creatorUserPtr = entityPtr->creatorUserPtr();
+			accountPtr.modify()->_regionPtr = entityPtr->regionPtr();
+			accountPtr.modify()->name = tr("EntityRecurringIncomesAccName").arg(entityPtr->name).toUTF8();
+			
+			entityPtr.modify()->recurringIncomesAccPtr = accountPtr;
+		}
+		
 		t.commit();
-
-		return result;
 	}
-
-	void AccountsDatabase::_updateAccountBalances(Dbo::ptr<AccountEntry> accountEntryPtr)
+	
+	void AccountsDatabase::createEntityRecurringExpensesAccIfNotFound(Dbo::ptr<Entity> entityPtr)
 	{
-		try
+		if(!entityPtr)
+			return;
+		
+		Dbo::Transaction t(dboSession());
+		
+		if(!entityPtr->recurringExpensesAccPtr)
 		{
-			accountEntryPtr->_debitAccountPtr.modify()->_balanceInCents += accountEntryPtr->amount().valueInCents();
-			accountEntryPtr->_creditAccountPtr.modify()->_balanceInCents -= accountEntryPtr->amount().valueInCents();
-			accountEntryPtr->_debitAccountPtr.flush();
-			accountEntryPtr->_creditAccountPtr.flush();
+			auto accountPtr = dboSession().addNew<Account>(loadControlAcc(RecurringExpensesControlAcc, true));
+			accountPtr.modify()->_creatorUserPtr = entityPtr->creatorUserPtr();
+			accountPtr.modify()->_regionPtr = entityPtr->regionPtr();
+			accountPtr.modify()->name = tr("EntityRecurringExpensesAccName").arg(entityPtr->name).toUTF8();
+			
+			entityPtr.modify()->recurringExpensesAccPtr = accountPtr;
 		}
-		catch(const Dbo::StaleObjectException &)
+		
+		t.commit();
+	}
+	
+	void AccountsDatabase::createEntityDoubtfulDebtsAccIfNotFound(Dbo::ptr<Entity> entityPtr)
+	{
+		if(!entityPtr)
+			return;
+		
+		Dbo::Transaction t(dboSession());
+		
+		if(!entityPtr->doubtfulDebtsAccPtr)
 		{
-			Account debitAccount = *accountEntryPtr->_debitAccountPtr;
-			Account creditAccount = *accountEntryPtr->_creditAccountPtr;
-
-			try
-			{
-				accountEntryPtr.modify()->_debitAccountPtr.reread();
-				accountEntryPtr.modify()->_creditAccountPtr.reread();
-				accountEntryPtr->_debitAccountPtr.modify()->_balanceInCents += accountEntryPtr->amount().valueInCents();
-				accountEntryPtr->_creditAccountPtr.modify()->_balanceInCents -= accountEntryPtr->amount().valueInCents();
-				accountEntryPtr->_debitAccountPtr.flush();
-				accountEntryPtr->_creditAccountPtr.flush();
-			}
-			catch(const Dbo::StaleObjectException &)
-			{
-				Wt::log("warn") << "AccountsDatabase::updateAccountBalances(): StaleObjectException caught twice";
-				accountEntryPtr->_debitAccountPtr.modify()->operator=(debitAccount);
-				accountEntryPtr->_creditAccountPtr.modify()->operator=(creditAccount);
-				throw;
-			}
+			auto accountPtr = dboSession().addNew<Account>(loadControlAcc(DoubtfulDebtsControlAcc, true));
+			accountPtr.modify()->_creatorUserPtr = entityPtr->creatorUserPtr();
+			accountPtr.modify()->_regionPtr = entityPtr->regionPtr();
+			accountPtr.modify()->name = tr("EntityDoubtfulDebtsAccName").arg(entityPtr->name).toUTF8();
+			
+			entityPtr.modify()->doubtfulDebtsAccPtr = accountPtr;
 		}
+		
+		t.commit();
 	}
 	
 	steady_clock::duration AccountsDatabase::createAllPendingCycleEntries(steady_clock::duration maxEntryDuration)
@@ -215,19 +261,20 @@ namespace ERP
 			throw std::logic_error("AccountsDatabase::createPendingCycleEntry(): lastEntryPtr->incomeCyclePtr != cyclePtr");
 		
 		createEntityBalanceAccIfNotFound(cyclePtr->entityPtr);
+		createEntityRecurringIncomesAccIfNotFound(cyclePtr->entityPtr);
 
 		auto assignmentCount = cyclePtr->clientAssignmentCollection.size();
 
 		while(Dbo::ptr<AccountEntry> newEntry = _createPendingCycleEntry(*cyclePtr, lastEntryPtr, currentDt, nextEntryDuration))
 		{
 			newEntry.modify()->incomeCyclePtr = cyclePtr;
-			newEntry.modify()->_debitAccountPtr = cyclePtr->entityPtr->balAccountPtr;
-			newEntry.modify()->_creditAccountPtr = acquireRecurringIncomesAcc();
+			newEntry.modify()->_debitAccountPtr = cyclePtr->entityPtr->balanceAccPtr;
+			newEntry.modify()->_creditAccountPtr = cyclePtr->entityPtr->recurringIncomesAccPtr;
 			newEntry.modify()->description.arg(tr("income"));
 			if(assignmentCount > 0)
 				newEntry.modify()->description += trn("forNClientAssignments", assignmentCount).arg(assignmentCount).toUTF8();
 			
-			_updateAccountBalances(newEntry);
+			_updateAccountBalances(newEntry, false);
 
 			lastEntryPtr = newEntry;
 		}
@@ -250,19 +297,20 @@ namespace ERP
 			throw std::logic_error("AccountsDatabase::createPendingCycleEntry(): lastEntryPtr->expenseCyclePtr != cyclePtr");
 		
 		createEntityBalanceAccIfNotFound(cyclePtr->entityPtr);
+		createEntityRecurringExpensesAccIfNotFound(cyclePtr->entityPtr);
 
 		auto assignmentCount = cyclePtr->employeeAssignmentCollection.size();
 
 		while(Dbo::ptr<AccountEntry> newEntry = _createPendingCycleEntry(*cyclePtr, lastEntryPtr, currentDt, nextEntryDuration))
 		{
 			newEntry.modify()->expenseCyclePtr = cyclePtr;
-			newEntry.modify()->_debitAccountPtr = acquireRecurringExpensesAcc();
-			newEntry.modify()->_creditAccountPtr = cyclePtr->entityPtr->balAccountPtr;
+			newEntry.modify()->_debitAccountPtr = cyclePtr->entityPtr->recurringExpensesAccPtr;
+			newEntry.modify()->_creditAccountPtr = cyclePtr->entityPtr->balanceAccPtr;
 			newEntry.modify()->description.arg(tr("expense"));
 			if(assignmentCount > 0)
 				newEntry.modify()->description += trn("forNEmployeeAssignments", assignmentCount).arg(assignmentCount).toUTF8();
 			
-			_updateAccountBalances(newEntry);
+			_updateAccountBalances(newEntry, false);
 
 			lastEntryPtr = newEntry;
 		}
@@ -416,6 +464,180 @@ namespace ERP
 		}
 
 		return dboSession().addNew<AccountEntry>(move(newEntry));
+	}
+	
+	Dbo::ptr<AccountEntry> AccountsDatabase::createAccountEntry(const Money &amount, Dbo::ptr<Account> debitAccountPtr, Dbo::ptr<Account> creditAccountPtr)
+	{
+		if(!debitAccountPtr || !creditAccountPtr)
+			return nullptr;
+		
+		if(amount.valueInCents() <= 0)
+			return nullptr;
+		
+		Dbo::Transaction t(dboSession());
+		auto result = dboSession().add(unique_ptr<AccountEntry>(new AccountEntry(amount, debitAccountPtr, creditAccountPtr)));
+		result.modify()->setCreatedByValues();
+		
+		_updateAccountBalances(result, false);
+		t.commit();
+		
+		return result;
+	}
+	
+	void AccountsDatabase::_updateAccountBalances(Dbo::ptr<AccountEntry> accountEntryPtr, bool secondAttempt)
+	{
+		long long value = accountEntryPtr->amount().valueInCents();
+		std::list<pair<Dbo::ptr<ControlAccount>, long long>> controlAccsToUpdate;
+		
+		try
+		{
+			//Debit account
+			long long prevDebitAccBalance = accountEntryPtr->debitAccountPtr()->balanceInCents();
+			accountEntryPtr->_debitAccountPtr.modify()->_balanceInCents += value;
+			long long newDebitAccBalance = accountEntryPtr->debitAccountPtr()->balanceInCents();
+			
+			//Debit account's control account
+			if(!accountEntryPtr->debitAccountPtr()->creditControlAccountPtr()) //If control accounts are not divided
+			{
+				//Then simply update the only control account
+				accountEntryPtr->debitAccountPtr()->controlAccountPtr().modify()->_balanceInCents += value;
+				controlAccsToUpdate.emplace_back(accountEntryPtr->debitAccountPtr()->controlAccountPtr()->parentPtr(), value);
+			}
+			else //Otherwise
+			{
+				if(newDebitAccBalance > 0) //If the new balance is in debit
+				{
+					if(prevDebitAccBalance < 0) //and if previously it was in credit
+					{
+						//We remove the effect of this account from the credit control account
+						accountEntryPtr->debitAccountPtr()->creditControlAccountPtr().modify()->_balanceInCents += value - newDebitAccBalance;
+						controlAccsToUpdate.emplace_back(accountEntryPtr->debitAccountPtr()->creditControlAccountPtr()->parentPtr(), value);
+						//And add our new balance to switch over to affecting the debit control account
+						accountEntryPtr->debitAccountPtr()->controlAccountPtr().modify()->_balanceInCents += newDebitAccBalance;
+						controlAccsToUpdate.emplace_back(accountEntryPtr->debitAccountPtr()->controlAccountPtr()->parentPtr(), value);
+					}
+					else //but if previously the balance was either 0 or already in debit
+					{
+						//we just add to the debit control acc
+						accountEntryPtr->debitAccountPtr()->controlAccountPtr().modify()->_balanceInCents += value;
+						controlAccsToUpdate.emplace_back(accountEntryPtr->debitAccountPtr()->controlAccountPtr()->parentPtr(), value);
+					}
+				} //If the new balance is in credit, we can assume that the prev balance was also in credit
+				else
+				{
+					//And we just reduce our credit control account balance
+					accountEntryPtr->debitAccountPtr()->creditControlAccountPtr().modify()->_balanceInCents += value;
+					controlAccsToUpdate.emplace_back(accountEntryPtr->debitAccountPtr()->creditControlAccountPtr()->parentPtr(), value);
+				}
+			}
+			
+			//Credit account
+			long long prevCreditAccBalance = accountEntryPtr->_creditAccountPtr->balanceInCents();
+			accountEntryPtr->_creditAccountPtr.modify()->_balanceInCents -= value;
+			long long newCreditAccBalance = accountEntryPtr->_creditAccountPtr->balanceInCents();
+			
+			//Credit account's control account
+			if(!accountEntryPtr->creditAccountPtr()->creditControlAccountPtr()) //If control accounts are not divided
+			{
+				//Then simply update the only control account
+				accountEntryPtr->creditAccountPtr()->controlAccountPtr().modify()->_balanceInCents -= value;
+				controlAccsToUpdate.emplace_back(accountEntryPtr->creditAccountPtr()->controlAccountPtr()->parentPtr(), -value);
+			}
+			else //Otherwise
+			{
+				if(newCreditAccBalance < 0) //If the new balance is in credit
+				{
+					if(prevCreditAccBalance > 0) //and if previously it was in debit
+					{
+						//We remove the effect of this account from the debit control account
+						accountEntryPtr->creditAccountPtr()->controlAccountPtr().modify()->_balanceInCents -= value - newCreditAccBalance;
+						controlAccsToUpdate.emplace_back(accountEntryPtr->creditAccountPtr()->controlAccountPtr()->parentPtr(), -value);
+						//And subtract our new balance to switch over to affecting the credit control account
+						accountEntryPtr->creditAccountPtr()->creditControlAccountPtr().modify()->_balanceInCents -= newCreditAccBalance;
+						controlAccsToUpdate.emplace_back(accountEntryPtr->creditAccountPtr()->creditControlAccountPtr()->parentPtr(), -value);
+					}
+					else //but if previously the balance was either 0 or already in credit
+					{
+						//we just subtract the credit control acc
+						accountEntryPtr->creditAccountPtr()->creditControlAccountPtr().modify()->_balanceInCents -= value;
+						controlAccsToUpdate.emplace_back(accountEntryPtr->creditAccountPtr()->creditControlAccountPtr()->parentPtr(), -value);
+					}
+				} //If the new balance is in debit, we can assume that the prev balance was also in debit
+				else
+				{
+					//And we just reduce our debit control account balance
+					accountEntryPtr->creditAccountPtr()->controlAccountPtr().modify()->_balanceInCents -= value;
+					controlAccsToUpdate.emplace_back(accountEntryPtr->creditAccountPtr()->controlAccountPtr()->parentPtr(), -value);
+				}
+			}
+			
+			accountEntryPtr->debitAccountPtr()->creditControlAccountPtr().flush();
+			accountEntryPtr->debitAccountPtr()->controlAccountPtr().flush();
+			accountEntryPtr->debitAccountPtr().flush();
+			accountEntryPtr->creditAccountPtr()->creditControlAccountPtr().flush();
+			accountEntryPtr->creditAccountPtr()->controlAccountPtr().flush();
+			accountEntryPtr->creditAccountPtr().flush();
+		}
+		catch(const Dbo::StaleObjectException &)
+		{
+			accountEntryPtr->debitAccountPtr()->creditControlAccountPtr().reread();
+			accountEntryPtr->debitAccountPtr()->controlAccountPtr().reread();
+			accountEntryPtr->debitAccountPtr().reread();
+			accountEntryPtr->creditAccountPtr()->creditControlAccountPtr().reread();
+			accountEntryPtr->creditAccountPtr()->controlAccountPtr().reread();
+			accountEntryPtr->creditAccountPtr().reread();
+			if(secondAttempt)
+			{
+				Wt::log("warn") << "AccountsDatabase::_updateAccountBalances(): StaleObjectException caught twice";
+				throw;
+			}
+			else
+				_updateAccountBalances(accountEntryPtr, true);
+		}
+		
+		for(const auto &v : controlAccsToUpdate)
+			_updateControlAccountBalances(v.first, v.second);
+	}
+	
+	void AccountsDatabase::_updateControlAccountBalances(Dbo::ptr<ControlAccount> controlAccPtr, long long valueInCents)
+	{
+		if(!controlAccPtr)
+			return;
+		
+		try
+		{
+			controlAccPtr.modify()->_balanceInCents += valueInCents;
+			controlAccPtr.flush();
+		}
+		catch(const Dbo::StaleObjectException &)
+		{
+			controlAccPtr.reread();
+			
+			try
+			{
+				controlAccPtr.modify()->_balanceInCents += valueInCents;
+				controlAccPtr.flush();
+			}
+			catch(const Dbo::StaleObjectException &)
+			{
+				Wt::log("warn") << "AccountsDatabase::_updateControlAccountBalances(): StaleObjectException caught twice";
+				throw;
+			}
+		}
+		
+		_updateControlAccountBalances(controlAccPtr->parentPtr(), valueInCents);
+	}
+	
+	void AccountsDatabase::_recalculateAccountBalances()
+	{
+		Dbo::Transaction t(dboSession());
+		
+		dboSession().execute("UPDATE " + Account::tStr() + " SET balance = 0, \"version\" = \"version\" + 1");
+		dboSession().execute("UPDATE " + ControlAccount::tStr() + " SET balance = 0, \"version\" = \"version\" + 1");
+		
+		AccountEntryCollection entriesCollection = dboSession().find<AccountEntry>();
+		for(const auto &entry : entriesCollection)
+			_updateAccountBalances(entry, false);
 	}
 	
 	DboSession &AccountsDatabase::dboSession()

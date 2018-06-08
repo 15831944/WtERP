@@ -18,7 +18,6 @@ namespace ERP
 		TaskScheduler(WServer *server, DboSession &session);
 
 	protected:
-		void createDefaultAccounts(bool scheduleNext);
 		void createPendingCycleEntries(bool scheduleNext);
 		void checkAbnormalRecords(bool scheduleNext);
 		void recalculateAccountBalances();
@@ -29,7 +28,7 @@ namespace ERP
 		WServer *_server = nullptr;
 		bool _isConstructing = false;
 	};
-
+	
 }
 
 #endif

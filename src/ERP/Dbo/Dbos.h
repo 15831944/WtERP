@@ -76,7 +76,10 @@ namespace ERP
 
 	class ClientAssignment;
 	typedef Dbo::collection<Dbo::ptr<ClientAssignment>> ClientAssignmentCollection;
-
+	
+	class ControlAccount;
+	typedef Dbo::collection<Dbo::ptr<ControlAccount>> ControlAccountCollection;
+	
 	class Account;
 	typedef Dbo::collection<Dbo::ptr<Account>> AccountCollection;
 
@@ -457,7 +460,11 @@ namespace ERP
 
 		std::string name;
 		Type type = InvalidType;
-		Dbo::ptr<Account> balAccountPtr;
+		
+		Dbo::ptr<Account> balanceAccPtr;
+		Dbo::ptr<Account> recurringIncomesAccPtr;
+		Dbo::ptr<Account> recurringExpensesAccPtr;
+		Dbo::ptr<Account> doubtfulDebtsAccPtr;
 
 		Dbo::weak_ptr<Person> personWPtr;
 		Dbo::weak_ptr<Business> businessWPtr;
@@ -475,7 +482,11 @@ namespace ERP
 		{
 			Dbo::field(a, name, "name", 70);
 			Dbo::field(a, type, "type");
-			Dbo::belongsTo(a, balAccountPtr, "bal_account", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
+			
+			Dbo::belongsTo(a, balanceAccPtr, "bal_account", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
+			Dbo::belongsTo(a, recurringIncomesAccPtr, "incomes_account", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
+			Dbo::belongsTo(a, recurringExpensesAccPtr, "expenses_account", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
+			Dbo::belongsTo(a, doubtfulDebtsAccPtr, "doubtful_account", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 
 			Dbo::hasOne(a, personWPtr, "entity");
 			Dbo::hasOne(a, businessWPtr, "entity");
@@ -752,56 +763,96 @@ namespace ERP
 		}
 		DEFINE_DBO_TABLENAME("clientassignment");
 	};
+	
+	class ControlAccount : public BaseRecordDbo
+	{
+	public:
+		ControlAccount() = default;
+		ControlAccount(Dbo::ptr<ControlAccount> parentPtr) : _parentPtr(move(parentPtr)) { }
+		
+		std::string name;
+		
+		Money balance() const { return Money(_balanceInCents, DEFAULT_CURRENCY); }
+		long long balanceInCents() const { return _balanceInCents; }
+		Dbo::ptr<ControlAccount> parentPtr() const { return _parentPtr; }
+		
+		ControlAccountCollection childrenControlAccounts;
+		AccountCollection accountCollection;
+		AccountCollection creditAccountCollection;
+		
+		template<class Action>
+		void persist(Action& a)
+		{
+			Dbo::field(a, name, "name", 70);
+			Dbo::field(a, _balanceInCents, "balance");
+			
+			Dbo::belongsTo(a, _parentPtr, "parent", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
+			Dbo::hasMany(a, childrenControlAccounts, Dbo::ManyToOne, "parent");
+			Dbo::hasMany(a, accountCollection, Dbo::ManyToOne, "controlaccount");
+			Dbo::hasMany(a, creditAccountCollection, Dbo::ManyToOne, "credit_controlaccount");
+			
+			BaseRecordDbo::persist(a);
+		}
+		DEFINE_DBO_TABLENAME("controlaccount");
+	
+	private:
+		long long _balanceInCents = 0;
+		Dbo::ptr<ControlAccount> _parentPtr;
+		
+		friend class AccountsDatabase;
+	};
 
 	class Account : public RestrictedRecordDbo
 	{
 	public:
-		enum Nature
-		{
-			AssetNature = 0,
-			LiabilityNature = 1,
-			BalanceNature = 2,
-			IncomeNature = 3,
-			ExpenseNature = 4,
-			EquityNature = 5
-		};
-
 		Account() = default;
 		Account &operator=(const Account &other) = default;
-		Account(Nature t) : nature(t) { }
+		Account(Dbo::ptr<ControlAccount> controlAccount, Dbo::ptr<ControlAccount> creditControlAccount = nullptr)
+			: _controlAccountPtr(move(controlAccount)), _creditControlAccountPtr(move(creditControlAccount))
+		{ }
 
 		static std::string newInternalPath() { return "/" ADMIN_PATHC "/" ACCOUNTS_PATHC "/" NEW_ACCOUNT_PATHC; }
 		static std::string viewInternalPath(long long id) { return viewInternalPath(std::to_string(id)); }
 		static std::string viewInternalPath(const std::string &idStr) { return "/" ADMIN_PATHC "/" ACCOUNTS_PATHC "/" ACCOUNT_PREFIX + idStr; }
 
 		std::string name;
-		Nature nature = BalanceNature;
 		Money balance() const { return Money(_balanceInCents, DEFAULT_CURRENCY); }
 		long long balanceInCents() const { return _balanceInCents; }
+		Dbo::ptr<ControlAccount> controlAccountPtr() const { return _controlAccountPtr; }
+		Dbo::ptr<ControlAccount> creditControlAccountPtr() const { return _creditControlAccountPtr; }
 		
 		AccountEntryCollection debitEntryCollection;
 		AccountEntryCollection creditEntryCollection;
+		
 		Dbo::weak_ptr<Entity> balOfEntityWPtr;
+		Dbo::weak_ptr<Entity> expensesOfEntityWPtr;
+		Dbo::weak_ptr<Entity> incomesOfEntityWPtr;
+		Dbo::weak_ptr<Entity> doubtfulDebtsOfEntityWPtr;
 
 		template<class Action>
 		void persist(Action& a)
 		{
 			Dbo::field(a, name, "name", 70);
-			Dbo::field(a, nature, "nature");
-			Dbo::field(a, _currency, "currency", 3);
 			Dbo::field(a, _balanceInCents, "balance");
+			Dbo::belongsTo(a, _controlAccountPtr, "controlaccount", Dbo::OnDeleteCascade | Dbo::OnUpdateCascade | Dbo::NotNull);
+			Dbo::belongsTo(a, _creditControlAccountPtr, "credit_controlaccount", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 
 			Dbo::hasMany(a, debitEntryCollection, Dbo::ManyToOne, "debit_account");
 			Dbo::hasMany(a, creditEntryCollection, Dbo::ManyToOne, "credit_account");
+			
 			Dbo::hasOne(a, balOfEntityWPtr, "bal_account");
+			Dbo::hasOne(a, expensesOfEntityWPtr, "incomes_account");
+			Dbo::hasOne(a, incomesOfEntityWPtr, "expenses_account");
+			Dbo::hasOne(a, doubtfulDebtsOfEntityWPtr, "doubtful_account");
 
 			RestrictedRecordDbo::persist(a);
 		}
 		DEFINE_DBO_TABLENAME("account");
 
 	private:
-		std::string _currency = DEFAULT_CURRENCY;
 		long long _balanceInCents = 0;
+		Dbo::ptr<ControlAccount> _controlAccountPtr;
+		Dbo::ptr<ControlAccount> _creditControlAccountPtr;
 
 		friend class AccountsDatabase;
 	};
@@ -1006,24 +1057,6 @@ namespace Wt
 			{
 			case Entity::PersonType: return tr("Person");
 			case Entity::BusinessType: return tr("Business");
-			default: return tr("Unknown");
-			}
-		}
-	};
-
-	template<>
-	struct any_traits<Account::Nature> : public any_traits<int>
-	{
-		static Wt::WString asString(const Account::Nature &value, const Wt::WString &)
-		{
-			switch(value)
-			{
-			case Account::AssetNature: return tr("Asset");
-			case Account::LiabilityNature: return tr("Liability");
-			case Account::BalanceNature: return tr("Balance");
-			case Account::IncomeNature: return tr("Income");
-			case Account::ExpenseNature: return tr("Expense");
-			case Account::EquityNature: return tr("Equity");
 			default: return tr("Unknown");
 			}
 		}

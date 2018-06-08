@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<messages>
+	<!-- Top Level Control Accounts -->
+	<message id="CurrentAssetsCAccName">Current Assets</message>
+	<message id="CurrentLiabilitiesCAccName">Current Liabilities</message>
+	<message id="OperatingIncomesCAccName">Operating Incomes</message>
+	<message id="OperatingExpensesCAccName">Operating Expenses</message>
+	<message id="RevenuesCAccName">Revenues</message>
+	<message id="COGSCAccName">Cost of Goods Sold</message>
+
+	<!-- Lower Level Control Accounts -->
+	<message id="ReceivablesCAccName">Accounts Receivable</message>
+	<message id="PayablesCAccName">Accounts Payable</message>
+	<message id="DoubtfulDebtsCAccName">Allowance for Doubtful Debts</message>
+	<message id="RecurringIncomesCAccName">Recurring Incomes</message>
+	<message id="RecurringExpensesCAccName">Recurring Expenses</message>
+
+	<!-- Simple Accounts -->
+	<message id="CashAccName">Cash</message>
+	<message id="DiscReceivedAccName">Discounts Received</message>
+	<message id="DiscAllowedAccName">Discounts Allowed</message>
+	<message id="SalesTaxPayableAccName">Sales Tax Payable</message>
+	<message id="BadDebtsAccName">Bad Debts</message>
+
+	<!-- Entity Accounts -->
+	<message id="EntityBalanceAccName">Balance - #{1}</message>
+	<message id="EntityRecurringIncomesAccName">Recurring Incomes - #{1}</message>
+	<message id="EntityRecurringExpensesAccName">Recurring Expenses - #{1}</message>
+	<message id="EntityDoubtfulDebtsAccName">Allowance for Doubtful Debts - #{1}</message>
+</messages>
