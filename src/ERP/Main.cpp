@@ -16,6 +16,7 @@
 //TODO: Follow MySQL backend error report
 //TODO: Follow WMenuItem::setContents() error report
 
+//TODO: Increase precision of Payment::Money data type
 //TODO: Account Entry value must be > 0
 //TODO: Localize DateTimes
 //TODO: viewName() and viewTitle()
