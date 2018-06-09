@@ -382,8 +382,8 @@ namespace ERP
 				return nullptr;
 
 			steady_clock::duration elapsedDuration = currentDt.toTimePoint() - previousCyclePeriodDt.toTimePoint();
-			steady_clock::duration cycleDuration = nextCyclePeriodDt.toTimePoint() - previousCyclePeriodDt.toTimePoint();
 			nextCyclePeriodDt = addCycleInterval(previousCyclePeriodDt, cycle.interval, cycle.nIntervals);
+			steady_clock::duration cycleDuration = nextCyclePeriodDt.toTimePoint() - previousCyclePeriodDt.toTimePoint();
 
 			if(elapsedDuration >= cycleDuration) //complete cycle
 			{
