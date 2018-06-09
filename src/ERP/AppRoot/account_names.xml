@@ -23,8 +23,8 @@
 	<message id="BadDebtsAccName">Bad Debts</message>
 
 	<!-- Entity Accounts -->
-	<message id="EntityBalanceAccName">Balance - #{1}</message>
-	<message id="EntityRecurringIncomesAccName">Recurring Incomes - #{1}</message>
-	<message id="EntityRecurringExpensesAccName">Recurring Expenses - #{1}</message>
-	<message id="EntityDoubtfulDebtsAccName">Allowance for Doubtful Debts - #{1}</message>
+	<message id="EntityBalanceAccName">Balance - {1}</message>
+	<message id="EntityRecurringIncomesAccName">Recurring Incomes - {1}</message>
+	<message id="EntityRecurringExpensesAccName">Recurring Expenses - {1}</message>
+	<message id="EntityDoubtfulDebtsAccName">Allowance for Doubtful Debts - {1}</message>
 </messages>

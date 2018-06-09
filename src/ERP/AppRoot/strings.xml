@@ -361,6 +361,7 @@
 <message id="ClientAssignment">Client assignment</message>
 <message id="ClientAssignments">Client assignments</message>
 <message id="AssociatedClientAssignment">Associated Client Assignment</message>
+<message id="AssociatedClientAssignments">Associated Client Assignments</message>
 <message id="AssociatedClientAssignmentSummary">Client: {1}, Service: {2}</message>
 <message id="EmployeesAssigned">Employees assigned</message>
 
