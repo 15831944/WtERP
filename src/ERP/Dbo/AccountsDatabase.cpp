@@ -274,7 +274,7 @@ namespace ERP
 			if(assignmentCount > 0)
 				newEntry.modify()->description += trn("forNClientAssignments", assignmentCount).arg(assignmentCount).toUTF8();
 			
-			_updateAccountBalances(newEntry, false);
+			_updateAccountBalances(newEntry, false, false);
 
 			lastEntryPtr = newEntry;
 		}
@@ -310,7 +310,7 @@ namespace ERP
 			if(assignmentCount > 0)
 				newEntry.modify()->description += trn("forNEmployeeAssignments", assignmentCount).arg(assignmentCount).toUTF8();
 			
-			_updateAccountBalances(newEntry, false);
+			_updateAccountBalances(newEntry, false, false);
 
 			lastEntryPtr = newEntry;
 		}
@@ -478,16 +478,16 @@ namespace ERP
 		auto result = dboSession().add(unique_ptr<AccountEntry>(new AccountEntry(amount, debitAccountPtr, creditAccountPtr)));
 		result.modify()->setCreatedByValues();
 		
-		_updateAccountBalances(result, false);
+		_updateAccountBalances(result, false, false);
 		t.commit();
 		
 		return result;
 	}
 	
-	void AccountsDatabase::_updateAccountBalances(Dbo::ptr<AccountEntry> accountEntryPtr, bool secondAttempt)
+	void AccountsDatabase::_updateAccountBalances(Dbo::ptr<AccountEntry> accountEntryPtr, bool secondAttempt, bool disableFlushing)
 	{
 		long long value = accountEntryPtr->amount().valueInCents();
-		std::list<pair<Dbo::ptr<ControlAccount>, long long>> controlAccsToUpdate;
+		std::vector<pair<Dbo::ptr<ControlAccount>, long long>> controlAccsToUpdate;
 		
 		try
 		{
@@ -571,12 +571,15 @@ namespace ERP
 				}
 			}
 			
-			accountEntryPtr->debitAccountPtr()->creditControlAccountPtr().flush();
-			accountEntryPtr->debitAccountPtr()->controlAccountPtr().flush();
-			accountEntryPtr->debitAccountPtr().flush();
-			accountEntryPtr->creditAccountPtr()->creditControlAccountPtr().flush();
-			accountEntryPtr->creditAccountPtr()->controlAccountPtr().flush();
-			accountEntryPtr->creditAccountPtr().flush();
+			if(!disableFlushing)
+			{
+				accountEntryPtr->debitAccountPtr()->creditControlAccountPtr().flush();
+				accountEntryPtr->debitAccountPtr()->controlAccountPtr().flush();
+				accountEntryPtr->debitAccountPtr().flush();
+				accountEntryPtr->creditAccountPtr()->creditControlAccountPtr().flush();
+				accountEntryPtr->creditAccountPtr()->controlAccountPtr().flush();
+				accountEntryPtr->creditAccountPtr().flush();
+			}
 		}
 		catch(const Dbo::StaleObjectException &)
 		{
@@ -592,14 +595,14 @@ namespace ERP
 				throw;
 			}
 			else
-				_updateAccountBalances(accountEntryPtr, true);
+				_updateAccountBalances(accountEntryPtr, true, disableFlushing);
 		}
 		
 		for(const auto &v : controlAccsToUpdate)
-			_updateControlAccountBalances(v.first, v.second);
+			_updateControlAccountBalances(v.first, v.second, disableFlushing);
 	}
 	
-	void AccountsDatabase::_updateControlAccountBalances(Dbo::ptr<ControlAccount> controlAccPtr, long long valueInCents)
+	void AccountsDatabase::_updateControlAccountBalances(Dbo::ptr<ControlAccount> controlAccPtr, long long valueInCents, bool disableFlushing)
 	{
 		if(!controlAccPtr)
 			return;
@@ -607,7 +610,9 @@ namespace ERP
 		try
 		{
 			controlAccPtr.modify()->_balanceInCents += valueInCents;
-			controlAccPtr.flush();
+			
+			if(!disableFlushing)
+				controlAccPtr.flush();
 		}
 		catch(const Dbo::StaleObjectException &)
 		{
@@ -625,19 +630,33 @@ namespace ERP
 			}
 		}
 		
-		_updateControlAccountBalances(controlAccPtr->parentPtr(), valueInCents);
+		_updateControlAccountBalances(controlAccPtr->parentPtr(), valueInCents, disableFlushing);
 	}
 	
 	void AccountsDatabase::_recalculateAccountBalances()
 	{
 		Dbo::Transaction t(dboSession());
+		size_t i;
 		
 		dboSession().execute("UPDATE " + Account::tStr() + " SET balance = 0, \"version\" = \"version\" + 1");
 		dboSession().execute("UPDATE " + ControlAccount::tStr() + " SET balance = 0, \"version\" = \"version\" + 1");
 		
+		//Load all accounts and control accounts
+		ControlAccountCollection controlAccountCollection = dboSession().find<ControlAccount>();
+		std::vector<Dbo::ptr<ControlAccount>> controlAccounts(controlAccountCollection.size());
+		i = 0;
+		for(const auto &ptr : controlAccountCollection)
+			controlAccounts[i++] = ptr;
+		
+		AccountCollection accountCollection = dboSession().find<Account>();
+		std::vector<Dbo::ptr<Account>> accounts(accountCollection.size());
+		i = 0;
+		for(const auto &ptr : controlAccountCollection)
+			controlAccounts[i++] = ptr;
+		
 		AccountEntryCollection entriesCollection = dboSession().find<AccountEntry>();
 		for(const auto &entry : entriesCollection)
-			_updateAccountBalances(entry, false);
+			_updateAccountBalances(entry, false, true);
 	}
 	
 	DboSession &AccountsDatabase::dboSession()

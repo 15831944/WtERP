@@ -105,8 +105,8 @@ namespace ERP
 			steady_clock::duration *nextEntryDuration
 		);
 
-		void _updateAccountBalances(Dbo::ptr<AccountEntry> accountEntryPtr, bool secondAttempt);
-		void _updateControlAccountBalances(Dbo::ptr<ControlAccount> controlAccPtr, long long valueInCents);
+		void _updateAccountBalances(Dbo::ptr<AccountEntry> accountEntryPtr, bool secondAttempt, bool disableFlushing);
+		void _updateControlAccountBalances(Dbo::ptr<ControlAccount> controlAccPtr, long long valueInCents, bool disableFlushing);
 		void _recalculateAccountBalances();
 		
 		DboSession &dboSession();
