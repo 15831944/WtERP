@@ -221,7 +221,7 @@ namespace ERP
 		addColumn(ViewTimestamp, model->addColumn("e.timestamp"), tr("Timestamp"), DateTimeColumnWidth);
 		addColumn(ViewDescription, model->addColumn("e.description"), tr("Description"), 300);
 		addColumn(ViewAmount, model->addColumn("e.amount"), tr("AmountRs"), AmountColumnWidth);
-		addColumn(ViewDebitAccount, model->addColumn("dAcc.name asd"), tr("DebitRs"), AccountNameColumnWidth);
+		addColumn(ViewDebitAccount, model->addColumn("dAcc.name"), tr("DebitRs"), AccountNameColumnWidth);
 		addColumn(ViewCreditAccount, model->addColumn("cAcc.name"), tr("CreditRs"), AccountNameColumnWidth);
 
 		_proxyModel = make_shared<AccountEntryListProxyModel>(_model);
