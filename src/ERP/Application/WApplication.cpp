@@ -19,6 +19,8 @@
 #include <Wt/WStackedWidget.h>
 #include <Wt/WBootstrapTheme.h>
 #include <Wt/WLoadingIndicator.h>
+#include <Wt/Date/tz_private.h>
+
 #include <web/WebUtils.h>
 
 namespace ERP
@@ -192,6 +194,7 @@ namespace ERP
 		newLocale.setDateTimeFormat(tr("DateTimeFormat"));
 		newLocale.setDecimalPoint(tr("DecimalPoint").toUTF8());
 		newLocale.setGroupSeparator(tr("GroupSeparator").toUTF8());
+		newLocale.setTimeZone(date::locate_zone(tr("TimeZone").toUTF8()));
 		setLocale(newLocale);
 
 		//Styling
