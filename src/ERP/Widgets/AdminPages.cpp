@@ -242,7 +242,7 @@ namespace ERP
 		WApplication *app = APP;
 		Dbo::ptr<Account> cashAccountPtr = AccountsDatabase::instance().loadAccount(CashAcc, true);
 
-		auto accountsMenuItem = createMenuItemWrapped(tr("Accounts"), "", make_unique<AccountList>());
+		auto accountsMenuItem = createMenuItemWrapped(tr("Accounts"), "", make_unique<AccountTreeView>(), false);
 		auto transactionsMenuItem = createMenuItemWrapped(tr("Transactions"), ACCOUNT_PREFIX + std::to_string(cashAccountPtr.id()),
 			make_unique<AccountView>(cashAccountPtr), false);
 		auto recurringIncomesMenuItem = createMenuItemWrapped(tr("RecurringIncomes"), INCOMECYCLES_PATHC, make_unique<IncomeCycleList>());

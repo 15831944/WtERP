@@ -240,6 +240,12 @@ ${<filters-enabled>}${filters}${</filters-enabled>}
 ${table-view}
 </message>
 
+<!-- Account Tree View -->
+<message id="ERP.AccountTreeView">
+${<filters-enabled>}${filters}${</filters-enabled>}
+${tree-view}
+</message>
+
 <!-- Overview -->
 <message id="ERP.RecordCountTemplate.Block">
 <div class="row">

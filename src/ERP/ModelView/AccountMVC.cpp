@@ -855,6 +855,271 @@ namespace ERP
 
 		AccountEntryView::submit();
 	}
-
+	
+	AccountTreeModel::AccountTreeModel()
+	{
+		reload();
+	}
+	
+	void AccountTreeModel::reload()
+	{
+		layoutAboutToBeChanged().emit();
+		WApplication *app = APP;
+		TRANSACTION(app);
+		
+		_root.clear();
+		
+		std::multimap<long long, Dbo::ptr<ControlAccount>> controlAccountsByParent;
+		ControlAccountCollection controlAccountCollection = app->dboSession().find<ControlAccount>();
+		for(const auto &ptr : controlAccountCollection)
+			controlAccountsByParent.emplace(ptr->parentPtr().id(), ptr);
+		
+		std::multimap<long long, Dbo::ptr<Account>> accountsByControl;
+		std::multimap<long long, Dbo::ptr<Account>> accountsByDebitControl;
+		std::multimap<long long, Dbo::ptr<Account>> accountsByCreditControl;
+		std::vector<Dbo::ptr<Account>> balancedAccounts;
+		AccountCollection accountCollection = app->dboSession().find<Account>();
+		for(const auto &ptr : accountCollection)
+		{
+			if(!ptr->creditControlAccountPtr())
+				accountsByControl.emplace(ptr->controlAccountPtr().id(), ptr);
+			else
+			{
+				if(ptr->balanceInCents() == 0)
+					balancedAccounts.emplace_back(ptr);
+				else if(ptr->balanceInCents() > 0)
+					accountsByDebitControl.emplace(ptr->controlAccountPtr().id(), ptr);
+				else
+					accountsByCreditControl.emplace(ptr->creditControlAccountPtr().id(), ptr);
+			}
+		}
+		
+		std::function<void(RowData*, std::vector<unique_ptr<RowData>> &)> populateRowData;
+		populateRowData = [&populateRowData, &controlAccountsByParent, &accountsByControl, &accountsByDebitControl, &accountsByCreditControl]
+		(RowData *parentRowData, std::vector<unique_ptr<RowData>> &container) {
+			long long parentId = -1;
+			if(parentRowData)
+				parentId = parentRowData->controlAccPtr.id();
+			
+			auto citrs = controlAccountsByParent.equal_range(parentId);
+			for(auto itr = citrs.first; itr != citrs.second; ++itr)
+			{
+				const auto &ptr = itr->second;
+				container.emplace_back(make_unique<RowData>(parentRowData, container.size(), ptr));
+				auto newRowData = container.back().get();
+				populateRowData(newRowData, newRowData->children);
+			}
+			
+			auto daitrs = accountsByDebitControl.equal_range(parentId);
+			for(auto itr = daitrs.first; itr != daitrs.second; ++itr)
+				container.emplace_back(make_unique<RowData>(parentRowData, container.size(), itr->second));
+			auto caitrs = accountsByCreditControl.equal_range(parentId);
+			for(auto itr = caitrs.first; itr != caitrs.second; ++itr)
+				container.emplace_back(make_unique<RowData>(parentRowData, container.size(), itr->second));
+			auto aitrs = accountsByControl.equal_range(parentId);
+			for(auto itr = aitrs.first; itr != aitrs.second; ++itr)
+				container.emplace_back(make_unique<RowData>(parentRowData, container.size(), itr->second));
+		};
+		populateRowData(nullptr, _root);
+		
+		if(!balancedAccounts.empty())
+		{
+			_root.emplace_back(make_unique<RowData>(_root.size()));
+			auto specialRow = _root.back().get();
+			for(const auto &ptr : balancedAccounts)
+				specialRow->children.emplace_back(make_unique<RowData>(specialRow, specialRow->children.size(), ptr));
+		}
+		
+		layoutChanged().emit();
+	}
+	
+	int AccountTreeModel::rowCount(const Wt::WModelIndex &parent) const
+	{
+		if(!parent.isValid())
+			return _root.size();
+		
+		RowData *parentData = rowDataFromIndex(parent);
+		return parentData ? parentData->children.size() : 0;
+	}
+	
+	Wt::WModelIndex AccountTreeModel::parent(const Wt::WModelIndex &index) const
+	{
+		if(!index.isValid() || index.column() >= columnCount())
+			return Wt::WModelIndex();
+		
+		auto parent = static_cast<RowData*>(index.internalPointer());
+		return indexFromRowData(parent, index.column());
+	}
+	
+	Wt::WModelIndex AccountTreeModel::index(int row, int column, const Wt::WModelIndex &parent) const
+	{
+		if(column < 0 || column >= columnCount() || row < 0)
+			return Wt::WModelIndex();
+		
+		RowData *parentData = rowDataFromIndex(parent);
+		if(parentData)
+		{
+			if(row >= parentData->children.size())
+				return Wt::WModelIndex();
+		}
+		else if(row >= _root.size())
+				return Wt::WModelIndex();
+		
+		return createIndex(row, column, static_cast<void *>(parentData));
+	}
+	
+	Wt::WModelIndex AccountTreeModel::indexFromRowData(AccountTreeModel::RowData *data, int column) const
+	{
+		if(!data || column < 0 || column >= columnCount())
+			return Wt::WModelIndex();
+		return createIndex(data->row, column, static_cast<void*>(data->parent));
+	}
+	
+	AccountTreeModel::RowData *AccountTreeModel::rowDataFromIndex(Wt::WModelIndex index) const
+	{
+		if(!index.isValid() || index.row() < 0 || index.column() < 0 || index.column() >= columnCount())
+			return nullptr;
+		
+		RowData *parentData = static_cast<RowData*>(index.internalPointer());
+		if(parentData)
+		{
+			if(index.row() < parentData->children.size())
+				return parentData->children[index.row()].get();
+		}
+		else
+		{
+			if(index.row() < _root.size())
+				return _root[index.row()].get();
+		}
+		return nullptr;
+	}
+	
+	Wt::any AccountTreeModel::data(const Wt::WModelIndex &index, Wt::ItemDataRole role) const
+	{
+		RowData *data = rowDataFromIndex(index);
+		return data ? data->data(index.column(), role) : Wt::any();
+	}
+	
+	Wt::any AccountTreeModel::headerData(int section, Wt::Orientation orientation, Wt::ItemDataRole role) const
+	{
+		if(section < 0 || section >= columnCount())
+			return WAbstractItemModel::headerData(section, orientation, role);
+		
+		/*if(section == IdCol)
+		{
+			if(role == Wt::ItemDataRole::Display)
+				return tr("ID");
+		}*/
+		if(section == NameCol)
+		{
+			if(role == Wt::ItemDataRole::Display)
+				return tr("AccountName");
+		}
+		else if(section == TypeCol)
+		{
+			if(role == Wt::ItemDataRole::Display)
+				return tr("Type");
+		}
+		else if(section == BelongsToCol)
+		{
+			if(role == Wt::ItemDataRole::Display)
+				return "...";
+		}
+		else if(section == BalanceCol)
+		{
+			if(role == Wt::ItemDataRole::Display)
+				return tr("Balance");
+		}
+		
+		return WAbstractItemModel::headerData(section, orientation, role);
+	}
+	
+	Wt::any AccountTreeModel::RowData::data(int column, Wt::ItemDataRole role)
+	{
+		TRANSACTION(APP);
+		/*if(column == IdCol)
+		{
+			if(role == Wt::ItemDataRole::Display)
+			{
+				if(controlAccPtr)
+					return controlAccPtr.id();
+				else
+					return accountPtr.id();
+			}
+		}*/
+		if(column == NameCol)
+		{
+			if(role == Wt::ItemDataRole::Display)
+			{
+				if(specialBalancedControl)
+					return tr("AccountsBalanced");
+				if(controlAccPtr)
+					return controlAccPtr->name;
+				else
+					return accountPtr->name;
+			}
+		}
+		else if(column == TypeCol)
+		{
+			if(role == Wt::ItemDataRole::Display)
+			{
+				if(specialBalancedControl)
+					return "";
+				if(controlAccPtr)
+					return tr("ControlAccount");
+				else
+					return tr("Account");
+			}
+		}
+		else if(column == BalanceCol)
+		{
+			if(role == Wt::ItemDataRole::Display)
+			{
+				if(specialBalancedControl)
+					return Money(0, DEFAULT_CURRENCY);
+				
+				long long balanceInCents;
+				if(controlAccPtr)
+					balanceInCents = controlAccPtr->balanceInCents();
+				else
+					balanceInCents = accountPtr->balanceInCents();
+				
+				Wt::WString balanceStr = Wt::WLocale::currentLocale().toString(Money(std::abs(balanceInCents), DEFAULT_CURRENCY));
+				
+				if(balanceInCents > 0) return tr("XDebit").arg(balanceStr);
+				else if(balanceInCents < 0) return tr("XCredit").arg(balanceStr);
+				else return balanceStr;
+			}
+		}
+		
+		return Wt::any();
+	}
+	
+	AccountTreeView::AccountTreeView()
+	{
+		setTemplateText(tr("ERP.AccountTreeView"));
+		
+		_treeView = bindNew<Wt::WTreeView>("tree-view");
+		_treeView->setHeaderHeight(Wt::WLength(40, Wt::LengthUnit::Pixel));
+		_treeView->setRowHeight(Wt::WLength(30, Wt::LengthUnit::Pixel));
+		_treeView->setAlternatingRowColors(true);
+		_treeView->setMaximumSize(Wt::WLength::Auto, 600);
+	}
+	
+	void AccountTreeView::load()
+	{
+		if(!loaded())
+		{
+			_treeView->setModel(make_shared<AccountTreeModel>());
+		}
+		ReloadOnVisibleWidget::load();
+	}
+	
+	void AccountTreeView::reload()
+	{
+		auto model = dynamic_pointer_cast<AccountTreeModel>(_treeView->model());
+		if(model)
+			model->reload();
+	}
 }
 

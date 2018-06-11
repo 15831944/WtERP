@@ -12,11 +12,73 @@
 #include <Wt/WBatchEditProxyModel.h>
 #include <Wt/WLengthValidator.h>
 #include <Wt/WCompositeWidget.h>
+#include <Wt/WTreeView.h>
 
 namespace ERP
 {
 	class AccountView;
 	class AccountEntryView;
+	
+	//ACCOUNT List
+	class AccountTreeModel : public Wt::WAbstractItemModel
+	{
+	public:
+		enum Columns
+		{
+			NameCol, TypeCol, BelongsToCol, BalanceCol, ColumnCount
+		};
+		
+		AccountTreeModel();
+		void reload();
+		
+		virtual int columnCount(const Wt::WModelIndex &parent = Wt::WModelIndex()) const override { return ColumnCount; }
+		virtual int rowCount(const Wt::WModelIndex &parent = Wt::WModelIndex()) const override;
+		
+		virtual Wt::WModelIndex parent(const Wt::WModelIndex &index) const override;
+		virtual Wt::WModelIndex index(int row, int column, const Wt::WModelIndex &parent = Wt::WModelIndex()) const override;
+		
+		virtual Wt::any headerData(int section, Wt::Orientation orientation = Wt::Orientation::Horizontal, Wt::ItemDataRole role = Wt::ItemDataRole::Display) const override;
+		virtual Wt::any data(const Wt::WModelIndex &index, Wt::ItemDataRole role = Wt::ItemDataRole::Display) const override;
+	
+	protected:
+		struct RowData
+		{
+			RowData(RowData *parent, int row, Dbo::ptr<ControlAccount> ptr)
+				: parent(parent), controlAccPtr(move(ptr)), row(row)
+			{ }
+			RowData(RowData *parent, int row, Dbo::ptr<Account> ptr)
+				: parent(parent), accountPtr(move(ptr)), row(row)
+			{ }
+			RowData(int row)
+				: row(row), specialBalancedControl(true)
+			{ }
+			
+			RowData *parent = nullptr;
+			int row;
+			std::vector<unique_ptr<RowData>> children;
+			
+			bool specialBalancedControl = false;
+			Dbo::ptr<ControlAccount> controlAccPtr;
+			Dbo::ptr<Account> accountPtr;
+			
+			Wt::any data(int column, Wt::ItemDataRole role);
+		};
+		std::vector<unique_ptr<RowData>> _root;
+		
+		Wt::WModelIndex indexFromRowData(RowData *data, int column) const;
+		RowData *rowDataFromIndex(Wt::WModelIndex index) const;
+	};
+	
+	class AccountTreeView : public ReloadOnVisibleWidget<Wt::WTemplate>
+	{
+	public:
+		AccountTreeView();
+		virtual void load() override;
+		virtual void reload() override;
+		
+	protected:
+		Wt::WTreeView *_treeView = nullptr;
+	};
 
 	//ACCOUNT List
 	class AccountListProxyModel : public Wt::WBatchEditProxyModel

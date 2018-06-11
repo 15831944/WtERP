@@ -81,6 +81,7 @@
 
 <!-- Financials -->
 <message id="Account">Account</message>
+<message id="ControlAccount">Control Account</message>
 <message id="Accounts">Accounts</message>
 <message id="account">account</message>
 <message id="Asset">Asset</message>
