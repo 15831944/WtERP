@@ -511,10 +511,10 @@ namespace ERP
 					{
 						//We remove the effect of this account from the credit control account
 						accountEntryPtr->debitAccountPtr()->creditControlAccountPtr().modify()->_balanceInCents += value - newDebitAccBalance;
-						controlAccsToUpdate.emplace_back(accountEntryPtr->debitAccountPtr()->creditControlAccountPtr()->parentPtr(), value);
+						controlAccsToUpdate.emplace_back(accountEntryPtr->debitAccountPtr()->creditControlAccountPtr()->parentPtr(), value - newDebitAccBalance);
 						//And add our new balance to switch over to affecting the debit control account
 						accountEntryPtr->debitAccountPtr()->controlAccountPtr().modify()->_balanceInCents += newDebitAccBalance;
-						controlAccsToUpdate.emplace_back(accountEntryPtr->debitAccountPtr()->controlAccountPtr()->parentPtr(), value);
+						controlAccsToUpdate.emplace_back(accountEntryPtr->debitAccountPtr()->controlAccountPtr()->parentPtr(), newDebitAccBalance);
 					}
 					else //but if previously the balance was either 0 or already in debit
 					{
@@ -551,7 +551,7 @@ namespace ERP
 					{
 						//We remove the effect of this account from the debit control account
 						accountEntryPtr->creditAccountPtr()->controlAccountPtr().modify()->_balanceInCents -= value - newCreditAccBalance;
-						controlAccsToUpdate.emplace_back(accountEntryPtr->creditAccountPtr()->controlAccountPtr()->parentPtr(), -value);
+						controlAccsToUpdate.emplace_back(accountEntryPtr->creditAccountPtr()->controlAccountPtr()->parentPtr(), -(value - newCreditAccBalance));
 						//And subtract our new balance to switch over to affecting the credit control account
 						accountEntryPtr->creditAccountPtr()->creditControlAccountPtr().modify()->_balanceInCents -= newCreditAccBalance;
 						controlAccsToUpdate.emplace_back(accountEntryPtr->creditAccountPtr()->creditControlAccountPtr()->parentPtr(), -value);
