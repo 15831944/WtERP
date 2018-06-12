@@ -39,6 +39,8 @@ namespace ERP
 		
 		virtual Wt::any headerData(int section, Wt::Orientation orientation = Wt::Orientation::Horizontal, Wt::ItemDataRole role = Wt::ItemDataRole::Display) const override;
 		virtual Wt::any data(const Wt::WModelIndex &index, Wt::ItemDataRole role = Wt::ItemDataRole::Display) const override;
+		
+		virtual void sort(int column, Wt::SortOrder order = Wt::SortOrder::Ascending) override;
 	
 	protected:
 		struct RowData
@@ -61,12 +63,41 @@ namespace ERP
 			Dbo::ptr<ControlAccount> controlAccPtr;
 			Dbo::ptr<Account> accountPtr;
 			
-			Wt::any data(int column, Wt::ItemDataRole role);
+			Wt::WString getName() const
+			{
+				if(specialBalancedControl)
+					return tr("AccountsBalanced");
+				else if(controlAccPtr)
+					return controlAccPtr->name;
+				else
+					return accountPtr->name;
+			}
+			Wt::WString getType() const
+			{
+				if(specialBalancedControl)
+					return "";
+				else if(controlAccPtr)
+					return tr("ControlAccount");
+				else
+					return tr("Account");
+			}
+			Money getBalance() const
+			{
+				if(specialBalancedControl)
+					return Money(0, DEFAULT_CURRENCY);
+				else if(controlAccPtr)
+					return controlAccPtr->balance();
+				else
+					return accountPtr->balance();
+			}
 		};
 		std::vector<unique_ptr<RowData>> _root;
 		
 		Wt::WModelIndex indexFromRowData(RowData *data, int column) const;
 		RowData *rowDataFromIndex(Wt::WModelIndex index) const;
+		
+		void _sort(std::vector<unique_ptr<RowData>> &container, int column, Wt::SortOrder order);
+		
 	};
 	
 	class AccountTreeView : public ReloadOnVisibleWidget<Wt::WTemplate>

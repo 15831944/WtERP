@@ -968,7 +968,7 @@ namespace ERP
 		return createIndex(row, column, static_cast<void *>(parentData));
 	}
 	
-	Wt::WModelIndex AccountTreeModel::indexFromRowData(AccountTreeModel::RowData *data, int column) const
+	Wt::WModelIndex AccountTreeModel::indexFromRowData(RowData *data, int column) const
 	{
 		if(!data || column < 0 || column >= columnCount())
 			return Wt::WModelIndex();
@@ -994,22 +994,11 @@ namespace ERP
 		return nullptr;
 	}
 	
-	Wt::any AccountTreeModel::data(const Wt::WModelIndex &index, Wt::ItemDataRole role) const
-	{
-		RowData *data = rowDataFromIndex(index);
-		return data ? data->data(index.column(), role) : Wt::any();
-	}
-	
 	Wt::any AccountTreeModel::headerData(int section, Wt::Orientation orientation, Wt::ItemDataRole role) const
 	{
 		if(section < 0 || section >= columnCount())
 			return WAbstractItemModel::headerData(section, orientation, role);
 		
-		/*if(section == IdCol)
-		{
-			if(role == Wt::ItemDataRole::Display)
-				return tr("ID");
-		}*/
 		if(section == NameCol)
 		{
 			if(role == Wt::ItemDataRole::Display)
@@ -1034,56 +1023,28 @@ namespace ERP
 		return WAbstractItemModel::headerData(section, orientation, role);
 	}
 	
-	Wt::any AccountTreeModel::RowData::data(int column, Wt::ItemDataRole role)
+	Wt::any AccountTreeModel::data(const Wt::WModelIndex &index, Wt::ItemDataRole role) const
 	{
+		RowData *data = rowDataFromIndex(index);
+		if(!data)
+			return Wt::any();
+		
 		TRANSACTION(APP);
-		/*if(column == IdCol)
+		if(index.column() == NameCol)
 		{
 			if(role == Wt::ItemDataRole::Display)
-			{
-				if(controlAccPtr)
-					return controlAccPtr.id();
-				else
-					return accountPtr.id();
-			}
-		}*/
-		if(column == NameCol)
-		{
-			if(role == Wt::ItemDataRole::Display)
-			{
-				if(specialBalancedControl)
-					return tr("AccountsBalanced");
-				if(controlAccPtr)
-					return controlAccPtr->name;
-				else
-					return accountPtr->name;
-			}
+				return data->getName();
 		}
-		else if(column == TypeCol)
+		else if(index.column() == TypeCol)
 		{
 			if(role == Wt::ItemDataRole::Display)
-			{
-				if(specialBalancedControl)
-					return "";
-				if(controlAccPtr)
-					return tr("ControlAccount");
-				else
-					return tr("Account");
-			}
+				return data->getType();
 		}
-		else if(column == BalanceCol)
+		else if(index.column() == BalanceCol)
 		{
 			if(role == Wt::ItemDataRole::Display)
 			{
-				if(specialBalancedControl)
-					return Money(0, DEFAULT_CURRENCY);
-				
-				long long balanceInCents;
-				if(controlAccPtr)
-					balanceInCents = controlAccPtr->balanceInCents();
-				else
-					balanceInCents = accountPtr->balanceInCents();
-				
+				long long balanceInCents = data->getBalance().valueInCents();
 				Wt::WString balanceStr = Wt::WLocale::currentLocale().toString(Money(std::abs(balanceInCents), DEFAULT_CURRENCY));
 				
 				if(balanceInCents > 0) return tr("XDebit").arg(balanceStr);
@@ -1093,6 +1054,76 @@ namespace ERP
 		}
 		
 		return Wt::any();
+	}
+	
+	void AccountTreeModel::sort(int column, Wt::SortOrder order)
+	{
+		if(column < 0 || column >= ColumnCount)
+			return;
+		
+		layoutAboutToBeChanged().emit();
+		_sort(_root, column, order);
+		layoutChanged().emit();
+	}
+	
+	void AccountTreeModel::_sort(std::vector<unique_ptr<RowData>> &container, int column, Wt::SortOrder order)
+	{
+		if(container.empty())
+			return;
+		
+		if(column == NameCol)
+		{
+			if(order == Wt::SortOrder::Ascending)
+			{
+				std::stable_sort(container.begin(), container.end(), [](const unique_ptr<RowData> &lhs, const unique_ptr<RowData> &rhs) -> bool {
+					return lhs->getName() < rhs->getName();
+				});
+			}
+			else
+			{
+				std::stable_sort(container.begin(), container.end(), [](const unique_ptr<RowData> &lhs, const unique_ptr<RowData> &rhs) -> bool {
+					return lhs->getName() > rhs->getName();
+				});
+			}
+		}
+		else if(column == TypeCol)
+		{
+			if(order == Wt::SortOrder::Ascending)
+			{
+				std::stable_sort(container.begin(), container.end(), [](const unique_ptr<RowData> &lhs, const unique_ptr<RowData> &rhs) -> bool {
+					return lhs->getType() < rhs->getType();
+				});
+			}
+			else
+			{
+				std::stable_sort(container.begin(), container.end(), [](const unique_ptr<RowData> &lhs, const unique_ptr<RowData> &rhs) -> bool {
+					return lhs->getType() > rhs->getType();
+				});
+			}
+		}
+		else if(column == BalanceCol)
+		{
+			if(order == Wt::SortOrder::Ascending)
+			{
+				std::stable_sort(container.begin(), container.end(), [](const unique_ptr<RowData> &lhs, const unique_ptr<RowData> &rhs) -> bool {
+					return lhs->getBalance().valueInCents() < rhs->getBalance().valueInCents();
+				});
+			}
+			else
+			{
+				std::stable_sort(container.begin(), container.end(), [](const unique_ptr<RowData> &lhs, const unique_ptr<RowData> &rhs) -> bool {
+					return lhs->getBalance().valueInCents() > rhs->getBalance().valueInCents();
+				});
+			}
+		}
+		else
+			return;
+		
+		for(int i = 0; i < container.size(); ++i)
+		{
+			container[i]->row = i;
+			_sort(container[i]->children, column, order);
+		}
 	}
 	
 	AccountTreeView::AccountTreeView()
