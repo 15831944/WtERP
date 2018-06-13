@@ -41,8 +41,11 @@ namespace ERP
 		virtual Wt::any data(const Wt::WModelIndex &index, Wt::ItemDataRole role = Wt::ItemDataRole::Display) const override;
 		
 		virtual void sort(int column, Wt::SortOrder order = Wt::SortOrder::Ascending) override;
+		virtual void *toRawIndex(const Wt::WModelIndex &index) const override;
+		virtual Wt::WModelIndex fromRawIndex(void *rawIndex) const override;
 	
 	protected:
+		typedef pair<long long, long long> UniqueIdType;
 		struct RowData
 		{
 			RowData(RowData *parent, int row, Dbo::ptr<ControlAccount> ptr)
@@ -52,52 +55,56 @@ namespace ERP
 				: parent(parent), accountPtr(move(ptr)), row(row)
 			{ }
 			RowData(int row)
-				: row(row), specialBalancedControl(true)
+				: row(row)
 			{ }
 			
 			RowData *parent = nullptr;
 			int row;
 			std::vector<unique_ptr<RowData>> children;
 			
-			bool specialBalancedControl = false;
 			Dbo::ptr<ControlAccount> controlAccPtr;
 			Dbo::ptr<Account> accountPtr;
 			
+			UniqueIdType uniqueId() const
+			{
+				return make_pair(controlAccPtr.id(), accountPtr.id());
+			};
 			Wt::WString getName() const
 			{
-				if(specialBalancedControl)
-					return tr("AccountsBalanced");
-				else if(controlAccPtr)
+				if(controlAccPtr)
 					return controlAccPtr->name;
-				else
+				else if(accountPtr)
 					return accountPtr->name;
+				else
+					return tr("AccountsBalanced");
 			}
 			Wt::WString getType() const
 			{
-				if(specialBalancedControl)
-					return "";
-				else if(controlAccPtr)
+				if(controlAccPtr)
 					return tr("ControlAccount");
-				else
+				else if(accountPtr)
 					return tr("Account");
+				else
+					return "";
 			}
 			Money getBalance() const
 			{
-				if(specialBalancedControl)
-					return Money(0, DEFAULT_CURRENCY);
-				else if(controlAccPtr)
+				if(controlAccPtr)
 					return controlAccPtr->balance();
-				else
+				else if(accountPtr)
 					return accountPtr->balance();
+				else
+					return Money(0, DEFAULT_CURRENCY);
 			}
+			
+			void sortChildren(int column, Wt::SortOrder order);
 		};
-		std::vector<unique_ptr<RowData>> _root;
 		
 		Wt::WModelIndex indexFromRowData(RowData *data, int column) const;
 		RowData *rowDataFromIndex(Wt::WModelIndex index) const;
 		
-		void _sort(std::vector<unique_ptr<RowData>> &container, int column, Wt::SortOrder order);
-		
+		unique_ptr<RowData> _rootData;
+		std::map<UniqueIdType, RowData*> _uniqueIdToRowData;
 	};
 	
 	class AccountTreeView : public ReloadOnVisibleWidget<Wt::WTemplate>

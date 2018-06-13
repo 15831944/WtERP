@@ -863,17 +863,24 @@ namespace ERP
 	
 	void AccountTreeModel::reload()
 	{
-		layoutAboutToBeChanged().emit();
 		WApplication *app = APP;
 		TRANSACTION(app);
 		
-		_root.clear();
+		//Do not delete old root data so that raw indices can be converted to new indices
+		unique_ptr<RowData> oldRootData = move(_rootData);
+		layoutAboutToBeChanged().emit();
 		
+		//Clear
+		_rootData = make_unique<RowData>(-1);
+		_uniqueIdToRowData.clear();
+		
+		//Load all control accounts
 		std::multimap<long long, Dbo::ptr<ControlAccount>> controlAccountsByParent;
 		ControlAccountCollection controlAccountCollection = app->dboSession().find<ControlAccount>();
 		for(const auto &ptr : controlAccountCollection)
 			controlAccountsByParent.emplace(ptr->parentPtr().id(), ptr);
 		
+		//Load all accounts
 		std::multimap<long long, Dbo::ptr<Account>> accountsByControl;
 		std::multimap<long long, Dbo::ptr<Account>> accountsByDebitControl;
 		std::multimap<long long, Dbo::ptr<Account>> accountsByCreditControl;
@@ -894,9 +901,16 @@ namespace ERP
 			}
 		}
 		
-		std::function<void(RowData*, std::vector<unique_ptr<RowData>> &)> populateRowData;
-		populateRowData = [&populateRowData, &controlAccountsByParent, &accountsByControl, &accountsByDebitControl, &accountsByCreditControl]
-		(RowData *parentRowData, std::vector<unique_ptr<RowData>> &container) {
+		//Utility function to add account to children
+		auto addAccountToChildren = [this](RowData *parentRowData, Dbo::ptr<Account> ptr) {
+			parentRowData->children.emplace_back(make_unique<RowData>(parentRowData, parentRowData->children.size(), ptr));
+			auto newRowData = parentRowData->children.back().get();
+			_uniqueIdToRowData.emplace(newRowData->uniqueId(), newRowData);
+		};
+		
+		//Create row data tree
+		std::function<void(RowData*)> populateRowData;
+		populateRowData = [&](RowData *parentRowData) {
 			long long parentId = -1;
 			if(parentRowData)
 				parentId = parentRowData->controlAccPtr.id();
@@ -904,30 +918,36 @@ namespace ERP
 			auto citrs = controlAccountsByParent.equal_range(parentId);
 			for(auto itr = citrs.first; itr != citrs.second; ++itr)
 			{
-				const auto &ptr = itr->second;
-				container.emplace_back(make_unique<RowData>(parentRowData, container.size(), ptr));
-				auto newRowData = container.back().get();
-				populateRowData(newRowData, newRowData->children);
+				parentRowData->children.emplace_back(make_unique<RowData>(parentRowData, parentRowData->children.size(), itr->second));
+				auto newRowData = parentRowData->children.back().get();
+				_uniqueIdToRowData.emplace(newRowData->uniqueId(), newRowData);
+				
+				populateRowData(newRowData);
 			}
 			
 			auto daitrs = accountsByDebitControl.equal_range(parentId);
 			for(auto itr = daitrs.first; itr != daitrs.second; ++itr)
-				container.emplace_back(make_unique<RowData>(parentRowData, container.size(), itr->second));
+				addAccountToChildren(parentRowData, itr->second);
+			
 			auto caitrs = accountsByCreditControl.equal_range(parentId);
 			for(auto itr = caitrs.first; itr != caitrs.second; ++itr)
-				container.emplace_back(make_unique<RowData>(parentRowData, container.size(), itr->second));
+				addAccountToChildren(parentRowData, itr->second);
+			
 			auto aitrs = accountsByControl.equal_range(parentId);
 			for(auto itr = aitrs.first; itr != aitrs.second; ++itr)
-				container.emplace_back(make_unique<RowData>(parentRowData, container.size(), itr->second));
+				addAccountToChildren(parentRowData, itr->second);
 		};
-		populateRowData(nullptr, _root);
+		populateRowData(_rootData.get());
 		
+		//Add remaining balanced accounts in a special row
 		if(!balancedAccounts.empty())
 		{
-			_root.emplace_back(make_unique<RowData>(_root.size()));
-			auto specialRow = _root.back().get();
+			_rootData->children.emplace_back(make_unique<RowData>(_rootData->children.size()));
+			auto specialRow = _rootData->children.back().get();
+			_uniqueIdToRowData.emplace(specialRow->uniqueId(), specialRow);
+			
 			for(const auto &ptr : balancedAccounts)
-				specialRow->children.emplace_back(make_unique<RowData>(specialRow, specialRow->children.size(), ptr));
+				addAccountToChildren(specialRow, ptr);
 		}
 		
 		layoutChanged().emit();
@@ -935,62 +955,51 @@ namespace ERP
 	
 	int AccountTreeModel::rowCount(const Wt::WModelIndex &parent) const
 	{
-		if(!parent.isValid())
-			return _root.size();
-		
 		RowData *parentData = rowDataFromIndex(parent);
-		return parentData ? parentData->children.size() : 0;
+		return parentData ? static_cast<int>(parentData->children.size()) : 0;
 	}
 	
 	Wt::WModelIndex AccountTreeModel::parent(const Wt::WModelIndex &index) const
 	{
-		if(!index.isValid() || index.column() >= columnCount())
+		if(!index.isValid())
 			return Wt::WModelIndex();
 		
-		auto parent = static_cast<RowData*>(index.internalPointer());
-		return indexFromRowData(parent, index.column());
+		auto parentData = static_cast<RowData*>(index.internalPointer());
+		return indexFromRowData(parentData, index.column());
 	}
 	
 	Wt::WModelIndex AccountTreeModel::index(int row, int column, const Wt::WModelIndex &parent) const
 	{
-		if(column < 0 || column >= columnCount() || row < 0)
-			return Wt::WModelIndex();
-		
 		RowData *parentData = rowDataFromIndex(parent);
-		if(parentData)
-		{
-			if(row >= parentData->children.size())
-				return Wt::WModelIndex();
-		}
-		else if(row >= _root.size())
-				return Wt::WModelIndex();
+		if(parentData && row >= 0 && column >= 0 && row < parentData->children.size() && column < columnCount())
+			return createIndex(row, column, static_cast<void *>(parentData));
 		
-		return createIndex(row, column, static_cast<void *>(parentData));
+		return Wt::WModelIndex();
 	}
 	
 	Wt::WModelIndex AccountTreeModel::indexFromRowData(RowData *data, int column) const
 	{
-		if(!data || column < 0 || column >= columnCount())
+		if(data == _rootData.get() || column < 0 || column >= columnCount())
 			return Wt::WModelIndex();
+		
 		return createIndex(data->row, column, static_cast<void*>(data->parent));
 	}
 	
 	AccountTreeModel::RowData *AccountTreeModel::rowDataFromIndex(Wt::WModelIndex index) const
 	{
-		if(!index.isValid() || index.row() < 0 || index.column() < 0 || index.column() >= columnCount())
+		if(!index.isValid())
+			return _rootData.get();
+		
+		if(index.model() != this)
 			return nullptr;
 		
 		RowData *parentData = static_cast<RowData*>(index.internalPointer());
-		if(parentData)
-		{
-			if(index.row() < parentData->children.size())
-				return parentData->children[index.row()].get();
-		}
-		else
-		{
-			if(index.row() < _root.size())
-				return _root[index.row()].get();
-		}
+		if(!parentData)
+			return nullptr;
+		
+		if(index.row() >= 0 && index.row() < parentData->children.size())
+			return parentData->children[index.row()].get();
+		
 		return nullptr;
 	}
 	
@@ -1058,30 +1067,49 @@ namespace ERP
 	
 	void AccountTreeModel::sort(int column, Wt::SortOrder order)
 	{
-		if(column < 0 || column >= ColumnCount)
+		if(column < 0 || column >= columnCount())
 			return;
 		
 		layoutAboutToBeChanged().emit();
-		_sort(_root, column, order);
+		_rootData->sortChildren(column, order);
 		layoutChanged().emit();
 	}
 	
-	void AccountTreeModel::_sort(std::vector<unique_ptr<RowData>> &container, int column, Wt::SortOrder order)
+	void *AccountTreeModel::toRawIndex(const Wt::WModelIndex &index) const
 	{
-		if(container.empty())
+		RowData *data = rowDataFromIndex(index);
+		return static_cast<void *>(data);
+	}
+	
+	Wt::WModelIndex AccountTreeModel::fromRawIndex(void *rawIndex) const
+	{
+		if(!rawIndex)
+			return Wt::WModelIndex();
+		
+		auto oldRowData = reinterpret_cast<RowData*>(rawIndex);
+		auto fitr = _uniqueIdToRowData.find(oldRowData->uniqueId());
+		if(fitr == _uniqueIdToRowData.end() || !fitr->second)
+			return Wt::WModelIndex();
+		
+		return indexFromRowData(fitr->second, 0);
+	}
+	
+	void AccountTreeModel::RowData::sortChildren(int column, Wt::SortOrder order)
+	{
+		if(children.empty())
 			return;
 		
 		if(column == NameCol)
 		{
 			if(order == Wt::SortOrder::Ascending)
 			{
-				std::stable_sort(container.begin(), container.end(), [](const unique_ptr<RowData> &lhs, const unique_ptr<RowData> &rhs) -> bool {
+				std::stable_sort(children.begin(), children.end(), [](const unique_ptr<RowData> &lhs, const unique_ptr<RowData> &rhs) -> bool {
 					return lhs->getName() < rhs->getName();
 				});
 			}
 			else
 			{
-				std::stable_sort(container.begin(), container.end(), [](const unique_ptr<RowData> &lhs, const unique_ptr<RowData> &rhs) -> bool {
+				std::stable_sort(children.begin(), children.end(), [](const unique_ptr<RowData> &lhs, const unique_ptr<RowData> &rhs) -> bool {
 					return lhs->getName() > rhs->getName();
 				});
 			}
@@ -1090,13 +1118,13 @@ namespace ERP
 		{
 			if(order == Wt::SortOrder::Ascending)
 			{
-				std::stable_sort(container.begin(), container.end(), [](const unique_ptr<RowData> &lhs, const unique_ptr<RowData> &rhs) -> bool {
+				std::stable_sort(children.begin(), children.end(), [](const unique_ptr<RowData> &lhs, const unique_ptr<RowData> &rhs) -> bool {
 					return lhs->getType() < rhs->getType();
 				});
 			}
 			else
 			{
-				std::stable_sort(container.begin(), container.end(), [](const unique_ptr<RowData> &lhs, const unique_ptr<RowData> &rhs) -> bool {
+				std::stable_sort(children.begin(), children.end(), [](const unique_ptr<RowData> &lhs, const unique_ptr<RowData> &rhs) -> bool {
 					return lhs->getType() > rhs->getType();
 				});
 			}
@@ -1105,24 +1133,22 @@ namespace ERP
 		{
 			if(order == Wt::SortOrder::Ascending)
 			{
-				std::stable_sort(container.begin(), container.end(), [](const unique_ptr<RowData> &lhs, const unique_ptr<RowData> &rhs) -> bool {
+				std::stable_sort(children.begin(), children.end(), [](const unique_ptr<RowData> &lhs, const unique_ptr<RowData> &rhs) -> bool {
 					return lhs->getBalance().valueInCents() < rhs->getBalance().valueInCents();
 				});
 			}
 			else
 			{
-				std::stable_sort(container.begin(), container.end(), [](const unique_ptr<RowData> &lhs, const unique_ptr<RowData> &rhs) -> bool {
+				std::stable_sort(children.begin(), children.end(), [](const unique_ptr<RowData> &lhs, const unique_ptr<RowData> &rhs) -> bool {
 					return lhs->getBalance().valueInCents() > rhs->getBalance().valueInCents();
 				});
 			}
 		}
-		else
-			return;
 		
-		for(int i = 0; i < container.size(); ++i)
+		for(int i = 0; i < children.size(); ++i)
 		{
-			container[i]->row = i;
-			_sort(container[i]->children, column, order);
+			children[i]->row = i;
+			children[i]->sortChildren(column, order);
 		}
 	}
 	
