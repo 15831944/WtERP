@@ -17,6 +17,8 @@ namespace ERP
 {
 	//Utilities
 	void mapERPDbos(DboSession &dboSession);
+	void createERPDboIndices(DboSession &dboSession);
+	void insertERPDbos(DboSession &dboSession);
 
 	//User related
 	class User;

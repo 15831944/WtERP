@@ -8,6 +8,7 @@
 namespace ERP
 {
 	void mapConfigurationDbos(DboSession &dboSession);
+	void createConfigurationDboIndices(DboSession &dboSession);
 
 	class Configuration;
 	class ConfigurationBool;

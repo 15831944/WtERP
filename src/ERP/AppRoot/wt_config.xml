@@ -606,7 +606,7 @@
 	    <property name="MySQLUser">root</property>
 	    <property name="MySQLPassword"></property>
 		
-	    <property name="ReinstallDb">true</property>
+	    <property name="InstallDb">true</property>
 	</properties>
 
     </application-settings>

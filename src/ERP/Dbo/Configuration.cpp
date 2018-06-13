@@ -14,5 +14,10 @@ namespace ERP
 		dboSession.mapClass<ConfigurationLongInt>(ConfigurationLongInt::tableName());
 		dboSession.mapClass<ConfigurationString>(ConfigurationString::tableName());
 	}
+	
+	void createConfigurationDboIndices(DboSession &dboSession)
+	{
+		dboSession.execute("CREATE UNIQUE INDEX unique_configuration ON " + Configuration::tStr() + " (name, type)");
+	}
 }
 

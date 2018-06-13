@@ -42,7 +42,7 @@ namespace ERP
 
 	protected:
 		void configureAuth();
-		void _reinstallDb();
+		void _createTablesInDb();
 		void _insertDefaultValuesInDb();
 
 		DboSession _dboSession;
