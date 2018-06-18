@@ -96,6 +96,15 @@ namespace ERP
 
 	class UploadedFile;
 	typedef Dbo::collection<Dbo::ptr<UploadedFile>> UploadedFileCollection;
+	
+	class InventoryItem;
+	typedef Dbo::collection<Dbo::ptr<InventoryItem>> InventoryItemCollection;
+	
+	class InventoryLocation;
+	typedef Dbo::collection<Dbo::ptr<InventoryLocation>> InventoryLocationCollection;
+	
+	class InventoryLot;
+	typedef Dbo::collection<Dbo::ptr<InventoryLot>> InventoryLotCollection;
 }
 
 //Dbo traits
@@ -684,6 +693,7 @@ namespace ERP
 		Dbo::ptr<City> cityPtr;
 
 		EmployeeAssignmentCollection assignedEmployeeCollection;
+		InventoryLocationCollection inventoryLocationCollection;
 
 		template<class Action>
 		void persist(Action& a)
@@ -692,8 +702,9 @@ namespace ERP
 			Dbo::field(a, address, "address");
 			Dbo::belongsTo(a, countryPtr, "country", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
 			Dbo::belongsTo(a, cityPtr, "city", Dbo::OnDeleteSetNull | Dbo::OnUpdateCascade);
-
+			
 			Dbo::hasMany(a, assignedEmployeeCollection, Dbo::ManyToOne, "location");
+			Dbo::hasMany(a, inventoryLocationCollection, Dbo::ManyToOne, "location");
 
 			BaseRecordDbo::persist(a);
 		}
@@ -830,6 +841,8 @@ namespace ERP
 		Dbo::weak_ptr<Entity> expensesOfEntityWPtr;
 		Dbo::weak_ptr<Entity> incomesOfEntityWPtr;
 		Dbo::weak_ptr<Entity> doubtfulDebtsOfEntityWPtr;
+		Dbo::weak_ptr<InventoryItem> assetInventoryItemWPtr;
+		Dbo::weak_ptr<InventoryItem> cogsInventoryItemWPtr;
 
 		template<class Action>
 		void persist(Action& a)
@@ -846,6 +859,8 @@ namespace ERP
 			Dbo::hasOne(a, expensesOfEntityWPtr, "incomes_account");
 			Dbo::hasOne(a, incomesOfEntityWPtr, "expenses_account");
 			Dbo::hasOne(a, doubtfulDebtsOfEntityWPtr, "doubtful_account");
+			Dbo::hasOne(a, assetInventoryItemWPtr, "asset_account");
+			Dbo::hasOne(a, cogsInventoryItemWPtr, "cogs_account");
 
 			RestrictedRecordDbo::persist(a);
 		}
@@ -1035,6 +1050,96 @@ namespace ERP
 		DEFINE_DBO_TABLENAME("uploadedfile");
 	};
 
+	class InventoryItem : public BaseRecordDbo
+	{
+	public:
+		std::string name;
+		Dbo::ptr<Account> assetAccountPtr() const { return _assetAccountPtr; }
+		Dbo::ptr<Account> cogsAccountPtr() const { return _cogsAccountPtr; }
+		long long quantity() const { return _quantity; }
+		
+		InventoryLocationCollection inventoryLocationCollection;
+		
+		template<class Action>
+		void persist(Action& a)
+		{
+			Dbo::field(a, name, "name", 70);
+			Dbo::field(a, _quantity, "quantity");
+			Dbo::belongsTo(a, _assetAccountPtr, "asset_account", Wt::Dbo::OnDeleteSetNull | Wt::Dbo::OnUpdateCascade);
+			Dbo::belongsTo(a, _cogsAccountPtr, "cogs_account", Wt::Dbo::OnDeleteSetNull | Wt::Dbo::OnUpdateCascade);
+			
+			Dbo::hasMany(a, inventoryLocationCollection, Dbo::ManyToOne, "inventoryitem");
+			
+			BaseRecordDbo::persist(a);
+		}
+		DEFINE_DBO_TABLENAME("inventoryitem");
+	
+	private:
+		Dbo::ptr<Account> _assetAccountPtr;
+		Dbo::ptr<Account> _cogsAccountPtr;
+		long long _quantity = 0;
+		
+		friend class AccountsDatabase;
+	};
+	
+	class InventoryLocation : public BaseRecordDbo
+	{
+	public:
+		InventoryLocation() = default;
+		InventoryLocation(Dbo::ptr<InventoryItem> inventoryItemPtr, Dbo::ptr<Location> locationPtr)
+			: _inventoryItemPtr(move(inventoryItemPtr)), _locationPtr(move(locationPtr))
+		{ }
+		
+		Dbo::ptr<InventoryItem> inventoryItemPtr() const { return _inventoryItemPtr; }
+		Dbo::ptr<Location> locationPtr() const { return _locationPtr; }
+		long long quantity() const { return _quantity; }
+		
+		InventoryLotCollection inventoryLotCollection;
+		
+		template<class Action>
+		void persist(Action& a)
+		{
+			Dbo::belongsTo(a, _inventoryItemPtr, "inventoryitem", Wt::Dbo::OnDeleteCascade | Wt::Dbo::OnUpdateCascade | Wt::Dbo::NotNull);
+			Dbo::belongsTo(a, _locationPtr, "location", Wt::Dbo::OnDeleteCascade | Wt::Dbo::OnUpdateCascade | Wt::Dbo::NotNull);
+			Dbo::field(a, _quantity, "quantity");
+			
+			Dbo::hasMany(a, inventoryLotCollection, Dbo::ManyToOne, "inventorylocation");
+			
+			BaseRecordDbo::persist(a);
+		}
+		DEFINE_DBO_TABLENAME("inventorylocation");
+	
+	private:
+		Dbo::ptr<InventoryItem> _inventoryItemPtr;
+		Dbo::ptr<Location> _locationPtr;
+		long long _quantity = 0;
+	};
+	
+	class InventoryLot : public BaseRecordDbo
+	{
+	public:
+		InventoryLot() = default;
+		InventoryLot(Dbo::ptr<InventoryLocation> inventoryLocationPtr)
+			: _inventoryLocationPtr(move(inventoryLocationPtr))
+		{ }
+		
+		Dbo::ptr<InventoryLocation> inventoryLocationPtr() const { return _inventoryLocationPtr; }
+		long long quantity() const { return _quantity; }
+		
+		template<class Action>
+		void persist(Action& a)
+		{
+			Dbo::belongsTo(a, _inventoryLocationPtr, "inventorylocation", Wt::Dbo::OnDeleteCascade | Wt::Dbo::OnUpdateCascade | Wt::Dbo::NotNull);
+			Dbo::field(a, _quantity, "quantity");
+			
+			BaseRecordDbo::persist(a);
+		}
+		DEFINE_DBO_TABLENAME("inventorylot");
+	
+	private:
+		Dbo::ptr<InventoryLocation> _inventoryLocationPtr;
+		long long _quantity = 0;
+	};
 }
 
 //Any Traits

@@ -18,6 +18,7 @@ namespace ERP
 	class PermissionsDatabase;
 	class ConfigurationsDatabase;
 	class AccountsDatabase;
+	class InventoryDatabase;
 
 	typedef std::vector<unique_ptr<const Wt::Auth::OAuthService>> OAuthServiceMap;
 
@@ -35,6 +36,7 @@ namespace ERP
 		ConfigurationsDatabase &configs() const { return *_configs; }
 		PermissionsDatabase &permissionsDatabase() const { return *_permissionsDatabase; }
 		AccountsDatabase &accountsDatabase() const { return *_accountsDatabase; }
+		InventoryDatabase &inventoryDatabase() const { return *_inventoryDatabase; }
 
 		const Wt::Auth::AuthService &getAuthService() const { return _authService; }
 		const Wt::Auth::PasswordService &getPasswordService() const { return _passwordService; }
@@ -50,6 +52,7 @@ namespace ERP
 		unique_ptr<ConfigurationsDatabase> _configs;
 		unique_ptr<PermissionsDatabase> _permissionsDatabase;
 		unique_ptr<AccountsDatabase> _accountsDatabase;
+		unique_ptr<InventoryDatabase> _inventoryDatabase;
 		unique_ptr<TaskScheduler> _taskScheduler;
 
 		Wt::Auth::AuthService _authService;

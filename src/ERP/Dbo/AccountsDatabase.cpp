@@ -210,6 +210,40 @@ namespace ERP
 		t.commit();
 	}
 	
+	void AccountsDatabase::createInventoryAssetAccIfNotFound(Dbo::ptr<InventoryItem> inventoryItemPtr)
+	{
+		if(!inventoryItemPtr)
+			return;
+		
+		Dbo::Transaction t(dboSession());
+		
+		if(!inventoryItemPtr->assetAccountPtr())
+		{
+			auto accountPtr = dboSession().addNew<Account>(loadControlAcc(InventoryControlAcc, true));
+			accountPtr.modify()->name = tr("InventoryAssetAccName").arg(inventoryItemPtr->name).toUTF8();
+			inventoryItemPtr.modify()->_assetAccountPtr = accountPtr;
+		}
+		
+		t.commit();
+	}
+	
+	void AccountsDatabase::createInventoryCOGSAccIfNotFound(Dbo::ptr<InventoryItem> inventoryItemPtr)
+	{
+		if(!inventoryItemPtr)
+			return;
+		
+		Dbo::Transaction t(dboSession());
+		
+		if(!inventoryItemPtr->cogsAccountPtr())
+		{
+			auto accountPtr = dboSession().addNew<Account>(loadControlAcc(COGSControlAcc, true));
+			accountPtr.modify()->name = tr("InventoryCOGSAccName").arg(inventoryItemPtr->name).toUTF8();
+			inventoryItemPtr.modify()->_cogsAccountPtr = accountPtr;
+		}
+		
+		t.commit();
+	}
+	
 	steady_clock::duration AccountsDatabase::createAllPendingCycleEntries(steady_clock::duration maxEntryDuration)
 	{
 		steady_clock::duration nextEntryDuration = maxEntryDuration;

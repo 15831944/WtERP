@@ -33,10 +33,14 @@ namespace ERP
 		dboSession.mapClass<IncomeCycle>(IncomeCycle::tableName());
 		dboSession.mapClass<ExpenseCycle>(ExpenseCycle::tableName());
 		dboSession.mapClass<UploadedFile>(UploadedFile::tableName());
+		dboSession.mapClass<InventoryItem>(InventoryItem::tableName());
+		dboSession.mapClass<InventoryLocation>(InventoryLocation::tableName());
+		dboSession.mapClass<InventoryLot>(InventoryLot::tableName());
 	}
 	
 	void createERPDboIndices(DboSession &dboSession)
 	{
+		dboSession.execute("CREATE UNIQUE INDEX unique_inventorylocation ON " + InventoryLocation::tStr() + " (inventoryitem_id, location_id)");
 	}
 	
 	void insertERPDbos(DboSession &dboSession)

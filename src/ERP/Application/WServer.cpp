@@ -2,6 +2,7 @@
 #include "Dbo/Dbos.h"
 #include "Dbo/ConfigurationsDatabase.h"
 #include "Dbo/PermissionsDatabase.h"
+#include "Dbo/InventoryDatabase.h"
 #include "Application/TaskScheduler.h"
 
 #include <Wt/Dbo/FixedSqlConnectionPool.h>
@@ -124,6 +125,9 @@ namespace ERP
 		
 		//Accounts Database
 		_accountsDatabase = make_unique<AccountsDatabase>(_dboSession);
+		
+		//Inventory Database
+		_inventoryDatabase = make_unique<InventoryDatabase>(_dboSession);
 		
 		if(installDb == "true")
 			_insertDefaultValuesInDb();

@@ -32,6 +32,7 @@ namespace ERP
 		DoubtfulDebtsControlAcc,
 		RecurringIncomesControlAcc,
 		RecurringExpensesControlAcc,
+		InventoryControlAcc,
 		
 		DefaultControlAccsCount
 	};
@@ -62,6 +63,7 @@ namespace ERP
 			_ctrlInfo[DoubtfulDebtsControlAcc] = { "DoubtfulDebts", CurrentAssetsControlAcc };
 			_ctrlInfo[RecurringIncomesControlAcc] = { "RecurringIncomes", OperatingIncomesControlAcc };
 			_ctrlInfo[RecurringExpensesControlAcc] = { "RecurringExpenses", OperatingExpensesControlAcc };
+			_ctrlInfo[InventoryControlAcc] = { "Inventory", CurrentAssetsControlAcc };
 			
 			//Simple accounts
 			_accInfo[CashAcc] = { "Cash", CurrentAssetsControlAcc };
@@ -80,6 +82,8 @@ namespace ERP
 		void createEntityRecurringIncomesAccIfNotFound(Dbo::ptr<Entity> entityPtr);
 		void createEntityRecurringExpensesAccIfNotFound(Dbo::ptr<Entity> entityPtr);
 		void createEntityDoubtfulDebtsAccIfNotFound(Dbo::ptr<Entity> entityPtr);
+		void createInventoryAssetAccIfNotFound(Dbo::ptr<InventoryItem> inventoryItemPtr);
+		void createInventoryCOGSAccIfNotFound(Dbo::ptr<InventoryItem> inventoryItemPtr);
 
 		Dbo::ptr<AccountEntry> createAccountEntry(const Money &amount, Dbo::ptr<Account> debitAccountPtr, Dbo::ptr<Account> creditAccountPtr);
 		

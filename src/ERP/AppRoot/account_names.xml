@@ -14,6 +14,7 @@
 	<message id="DoubtfulDebtsCAccName">Allowance for Doubtful Debts</message>
 	<message id="RecurringIncomesCAccName">Recurring Incomes</message>
 	<message id="RecurringExpensesCAccName">Recurring Expenses</message>
+	<message id="InventoryCAccName">Inventory</message>
 
 	<!-- Simple Accounts -->
 	<message id="CashAccName">Cash</message>
@@ -27,6 +28,10 @@
 	<message id="EntityRecurringIncomesAccName">Recurring Incomes - {1}</message>
 	<message id="EntityRecurringExpensesAccName">Recurring Expenses - {1}</message>
 	<message id="EntityDoubtfulDebtsAccName">Allowance for Doubtful Debts - {1}</message>
+
+	<!-- Inventory Accounts -->
+	<message id="InventoryAssetAccName">Inventory - {1}</message>
+	<message id="InventoryCOGSAccName">Cost of Goods Sold - {1}</message>
 
 	<!-- Special -->
 	<message id="AccountsBalanced">Accounts Balanced</message>
