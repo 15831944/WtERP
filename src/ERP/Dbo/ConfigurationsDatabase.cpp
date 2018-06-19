@@ -1,6 +1,9 @@
 #include "Dbo/ConfigurationsDatabase.h"
 #include "Application/WServer.h"
 
+#include <boost/thread/lock_guard.hpp>
+#include <boost/thread/lock_types.hpp>
+
 namespace ERP
 {
 	ConfigurationsDatabase::ConfigurationsDatabase(DboSession &session)

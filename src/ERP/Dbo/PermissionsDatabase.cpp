@@ -1,6 +1,8 @@
 #include "Dbo/PermissionsDatabase.h"
 
 #include <Wt/WLogger.h>
+#include <boost/thread/lock_guard.hpp>
+#include <boost/thread/lock_types.hpp>
 
 namespace ERP
 {
