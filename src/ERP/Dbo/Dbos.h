@@ -105,6 +105,18 @@ namespace ERP
 	
 	class InventoryLot;
 	typedef Dbo::collection<Dbo::ptr<InventoryLot>> InventoryLotCollection;
+	
+	class PurchaseOrder;
+	typedef Dbo::collection<Dbo::ptr<PurchaseOrder>> PurchaseOrderCollection;
+	
+	class PurchaseOrderItem;
+	typedef Dbo::collection<Dbo::ptr<PurchaseOrderItem>> PurchaseOrderItemCollection;
+	
+	class Purchase;
+	typedef Dbo::collection<Dbo::ptr<Purchase>> PurchaseCollection;
+	
+	class PurchaseItem;
+	typedef Dbo::collection<Dbo::ptr<PurchaseItem>> PurchaseItemCollection;
 }
 
 //Dbo traits
