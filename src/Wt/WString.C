@@ -550,11 +550,6 @@ WString& WString::arg(::int64_t value)
   return arg(WLocale::currentLocale().toString(value));
 }
 
-WString& WString::arg(long long value)
-{
-  return arg(WLocale::currentLocale().toString(value));
-}
-
 WString& WString::arg(::uint64_t value)
 {
   return arg(WLocale::currentLocale().toString(value));

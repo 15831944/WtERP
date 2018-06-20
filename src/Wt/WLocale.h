@@ -217,8 +217,6 @@ public:
    */
   WT_USTRING toString(::int64_t value) const;
 
-  WT_USTRING toString(long long value) const;
-
 /*! \brief Formats an integer number.
    */
   WT_USTRING toString(::uint64_t value) const;
