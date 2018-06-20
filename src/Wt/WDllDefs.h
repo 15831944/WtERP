@@ -77,18 +77,18 @@ typedef unsigned __int32 uint32_t;  /* 32 bit unsigned */
 #include <stdint.h>
 #endif // _MSC_VER
 
-#ifdef wt_EXPORTS
-  #define DATE_BUILD_DLL
-#else
-  #ifdef WT_STATIC
-    #define DATE_BUILD_LIB
-  #endif
+#ifndef WT_CXX14
+
+#if __cplusplus >= 201402L || _MSVC_LANG >= 201402L
+#define WT_CXX14
 #endif
 
-#ifdef WT_WIN32
-#define USE_OS_TZDB 0
+#ifdef WT_CXX14
+#define WT_CXX14ONLY(x) x
 #else
-#define USE_OS_TZDB 1
+#define WT_CXX14ONLY(x)
+#endif
+
 #endif
 
 #endif // DLLDEFS_H_

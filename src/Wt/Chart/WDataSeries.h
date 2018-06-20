@@ -9,6 +9,7 @@
 
 #include <Wt/Chart/WAxis.h>
 #include <Wt/WBrush.h>
+#include <Wt/WObject.h>
 #include <Wt/WPen.h>
 #include <Wt/WShadow.h>
 #include <Wt/Chart/WChartGlobal.h>
@@ -77,6 +78,9 @@ enum class CustomFlag {
  * \ingroup charts
  */
 class WT_API WDataSeries
+#ifdef WT_TARGET_JAVA
+  : public Wt::WObject
+#endif // WT_TARGET_JAVA
 {
 public:
   /*! \brief Constructs a new data series.
@@ -101,6 +105,10 @@ public:
    * \sa WCartesianChart::addSeries()
    */
   WDataSeries(int modelColumn, SeriesType seriesType, int yAxis);
+
+  /*! \brief Destructor.
+   */
+  ~WDataSeries();
 
   /*! \brief Sets the bar width.
    *
@@ -590,6 +598,12 @@ private:
   double             scale_;
   mutable bool       offsetDirty_;
   mutable bool       scaleDirty_;
+
+  // connections with the current model, used to disconnect from a model
+  // when the model changes.
+  std::vector<Wt::Signals::connection> modelConnections_;
+
+  void modelReset();
 
   template <typename T>
   bool set(T& m, const T& v);
