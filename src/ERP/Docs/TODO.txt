@@ -1,0 +1,21 @@
+===Short Term TODO list===
+-Money values (Account Entry value) validator must be > 0
+-Localize DateTimes
+-Split viewName() and viewTitle()
+-Create abstraction for list proxy models
+-Make Location-Entity a ManyToMany relation
+
+===Long Term TODO list===
+-Record deletion
+-Fix LOG_ERROR(Wt::Dbo::ptr) useless errors
+
+===Bug report following list===
+-Multiple Dialogs issue: https://redmine.emweb.be/issues/6219
+-WMenuItem::setContents() issue: https://redmine.emweb.be/issues/6404
+
+===On release TODO list===
+-Create indexes
+-Ensure exception handling
+-Check for shared_ptr and Dbo::ptr cyclical circular references
+-Upgrade Font Awesome
+-Configure message resources persisted in memory (CHECK_BEFORE_RELEASE)
