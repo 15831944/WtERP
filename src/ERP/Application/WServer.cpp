@@ -17,6 +17,7 @@
 #include <Wt/Auth/Dbo/UserDatabase.h>
 
 #include <boost/lexical_cast.hpp>
+#include <Wt/Date/tz.h>
 
 namespace ERP
 {
@@ -31,6 +32,8 @@ namespace ERP
 
 	void WServer::initialize()
 	{
+		date::set_install(appRoot() + "tzdata2018e");
+
 		auto resolver = make_shared<Wt::WMessageResourceBundle>();
 		resolver->use(appRoot() + "strings", false); //CHECK_BEFORE_RELEASE
 		resolver->use(appRoot() + "account_names", false); //CHECK_BEFORE_RELEASE
